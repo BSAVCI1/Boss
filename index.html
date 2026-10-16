@@ -141,7 +141,7 @@ case"family":if(i===0){pay(5);Mo(a,20);L(a,15);Me(a,"You supported me when I nee
 case"poach":if(i===0){pay(25);L(a,15);Me(a,"You matched a rival offer");result="You matched the rival’s offer for "+a.n+".";}else{removePerson(a);result="You let "+a.n+" join the rival company.";}break;
 case"praise":if(i===0){L(a,10);Mo(a,10);S.rep+=3;Me(a,"You gave me public credit");result="You shared the client’s praise with "+a.n+".";}else if(i===1){S.rep+=5;L(a,-15);Me(a,"You took credit for my work");result="You took the credit for "+a.n+"’s work.";}else{L(a,5);Mo(a,5);result="You thanked "+a.n+" privately.";}break;
 }
-logIt(result,true);S.ev=null;S.nextEv=S.day+8+R(8);save();structural="";renderStructure();renderIdeas();refresh();}
+logIt(result,true);S.ev=null;S.nextEv=S.day+8+R(8);save();structural="";renderStructure();renderIdeas();refresh();schedule();}
 $("choices").addEventListener("click",e=>{const b=e.target.closest("button[data-choice]");if(b)choose(Number(b.dataset.choice));});
 function showModal(){const m=$("modal");if(!S.ev){m.hidden=true;document.body.classList.remove("modal-open");return;}const d=dilemmaInfo(S.ev);if(!d){S.ev=null;save();m.hidden=true;return;}if(m.hidden||$("modal-title").textContent!==d[0]){$("modal-title").textContent=d[0];$("modal-text").textContent=d[1];$("choices").innerHTML=d[2].map((txt,i)=>'<button type="button" data-choice="'+i+'">'+esc(txt)+'</button>').join("");}m.hidden=false;document.body.classList.add("modal-open");}
 function schedule(){clearTimeout(clock);if(!paused&&!S.ev)clock=setTimeout(()=>{tick();schedule();},1200/spd);}

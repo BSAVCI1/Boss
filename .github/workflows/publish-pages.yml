@@ -1,0 +1,36 @@
+name: Publish Boss
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - .github/workflows/publish-pages.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+      - name: Stage self-contained game
+        run: |
+          mkdir site
+          cp index.html site/index.html
+          touch site/.nojekyll
+      - name: Upload static site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - name: Deploy game
+        id: deploy
+        uses: actions/deploy-pages@v4

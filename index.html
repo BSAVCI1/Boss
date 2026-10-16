@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f6f7fb">
+<title>Boss — Leader Simulation</title>
+<style>
+:root{color-scheme:light;--bg:#f6f7fb;--panel:#fff;--ink:#1a2740;--muted:#637188;--line:#dfe5ef;--accent:#315fc7;--accentWash:#eaf0ff;--bar:#e6ebf3;--good:#3aa571;--warn:#b74646;--shadow:0 4px 20px rgba(22,41,72,.055)}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#101827;--panel:#1c2939;--ink:#f0f4ff;--muted:#a5b2c6;--line:#344358;--accent:#97b7ff;--accentWash:#253858;--bar:#303d4e;--good:#61c78a;--warn:#ff9696;--shadow:0 4px 18px rgba(0,0,0,.12)}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.48 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-tap-highlight-color:transparent}main{max-width:770px;margin:auto;padding:calc(18px + env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}h1{font-size:34px;margin:0 0 13px;letter-spacing:-1.1px}h2{font-size:18px;line-height:1.25;margin:24px 0 11px}button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;min-height:36px;padding:8px 11px;cursor:pointer;touch-action:manipulation}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}button:disabled{cursor:not-allowed;opacity:.4}button.selected{border-color:var(--accent);background:var(--accentWash);color:var(--accent);font-weight:700}.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.stat,.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}.stat{padding:10px 6px;text-align:center}.stat small{display:block;font-size:11px;color:var(--muted)}.stat strong{display:block;font-size:18px;line-height:1.35;font-variant-numeric:tabular-nums;white-space:nowrap}.card{padding:14px;margin-bottom:10px}.office{margin-top:13px;overflow:hidden;padding:7px}.office canvas{width:100%;height:auto;display:block;border-radius:9px;background:var(--bar)}.controls{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}.controls button{flex:1;min-width:56px}.controls .restart{flex:1.2}.small{font-size:12px;color:var(--muted)}.lead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.lead b{font-size:16px}.meta{color:var(--muted);margin-top:4px}.progress{height:8px;border-radius:20px;background:var(--bar);overflow:hidden;margin:8px 0}.progress>i{display:block;height:100%;width:0;background:var(--accent);border-radius:20px;transition:width .2s}.progress.good>i{background:var(--good)}.buttons{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.buttons button{min-height:36px;flex:1 1 auto}.person-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.person-head b{font-size:16px}.color-dot{width:11px;height:11px;border-radius:50%;display:inline-block;margin-right:7px}.skills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;margin:12px 0}.skill-name{font-size:12px;display:flex;justify-content:space-between;gap:6px}.skill-name span{color:var(--muted)}.skill .progress{height:6px;margin:5px 0 0}.memories{color:var(--accent);font-size:12px;margin-top:11px}.memories div{margin-top:5px}.empty{color:var(--muted);padding:17px;text-align:center}.built{margin-top:12px}.built>div{margin-top:8px;font-size:13px}.log-entry{padding:8px 0;border-bottom:1px solid var(--line)}.log-entry:last-child{border:0}.warning{color:var(--warn);font-weight:600}.win{color:var(--good);font-weight:650}.message{margin:11px 0;color:var(--muted);font-size:13px}.overlay{position:fixed;inset:0;background:rgba(7,11,20,.78);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}.overlay[hidden]{display:none}.dialog{max-width:460px;width:100%;background:var(--panel);border-radius:18px;border:1px solid var(--line);padding:20px;box-shadow:0 22px 60px rgba(0,0,0,.3)}.dialog h2{margin:0 0 8px}.dialog p{font-size:15px;margin:0 0 18px}.dialog .buttons{display:grid;grid-template-columns:1fr}.dialog button{text-align:left;padding:12px;min-height:44px}body.modal-open{overflow:hidden}
+@media(max-width:390px){main{padding-left:10px;padding-right:10px}.stat strong{font-size:17px}.stat{padding:9px 3px}.card{padding:12px}.skills{column-gap:8px}}
+</style>
+</head>
+<body>
+<main>
+<h1>Boss</h1>
+<div class="grid4" aria-label="Company statistics">
+<div class="stat"><small>Cash</small><strong id="cash">$90</strong></div>
+<div class="stat"><small>Reputation</small><strong id="rep">0</strong></div>
+<div class="stat"><small>Time</small><strong id="day">Day 0</strong></div>
+<div class="stat"><small>Team</small><strong id="teamcount">3</strong></div>
+</div>
+<div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div>
+<div class="controls" id="controls">
+<button type="button" data-speed="1" class="selected">1x</button>
+<button type="button" data-speed="3">3x</button>
+<button type="button" data-speed="8">8x</button>
+<button type="button" id="pause">Pause</button>
+<button type="button" id="restart" class="restart">Restart</button>
+</div>
+<section aria-labelledby="deals-title"><h2 id="deals-title">Client deals: tap a name to assign</h2><div id="deals"></div></section>
+<section aria-labelledby="team-title"><h2 id="team-title">Your team</h2><div id="people"></div></section>
+<section aria-labelledby="idea-title"><h2 id="idea-title">Idea lab: combine two ideas</h2><div class="card"><div id="ideas"></div><div class="buttons"><button id="combine" type="button" disabled>Combine</button></div><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div></div></section>
+<section aria-labelledby="log-title"><h2 id="log-title">Company log</h2><div class="card" id="log" aria-live="off"></div></section>
+</main>
+<div class="overlay" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="dialog"><h2 id="modal-title"></h2><p id="modal-text"></p><div id="choices" class="buttons"></div></div></div>
+<script>
+(function(){
+"use strict";
+const KEY="tl3";
+const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
+const KEYS=Object.keys(SKILLS);
+const TRAITS=["Curious","Social","Diligent","Creative"];
+const NAMES=["Anna","Peter","Eva","Martin","Zuzana","Tomas","Lucia","Jan","Katka","Marek","Sofia","Adam","Nina","Filip","Dana","Ivo","Mia","Robo","Lena","Oto"];
+const COLORS=["#e05d5d","#4a90e2","#50b36b","#d9a03c","#9b6bd6","#26a69a","#e07bb0","#7a8b99"];
+const CLIENTS=["Nova Cafe","BlueFox Studio","Kappa Logistics","GreenLeaf Shop","Orbit Apps","Dunaj Foods","Peak Fitness","Luna Hotel","Atlas Print","Mint Bakery"];
+const IDEAS={ref:"Referrals",crm:"CRM",story:"Storytelling",cold:"Cold calls",check:"Checklists",fb:"Feedback loops",mentor:"Mentoring",auto:"Automation",price:"Pricing tiers",int:"Customer interviews",stand:"Daily standup",brand:"Branding"};
+const RECIPES=[
+["ref","crm","Ambassador network","Deal rewards +20%","reward",1.2],
+["story","brand","Signature brand","Reputation gains +40%","rep",1.4],
+["check","auto","Smooth operations","Costs -25%","cost",.75],
+["fb","int","Customer-led product","Work speed +20%","speed",1.2],
+["mentor","stand","Learning culture","Learning +60%","learn",1.6],
+["price","ref","Premium offers","Deal rewards +20%","reward",1.2],
+["auto","crm","Autopilot","Work speed +15%","speed",1.15],
+["story","cold","Warm outreach","More client requests +40%","deals",1.4],
+["brand","int","Voice of the customer","More client requests +30%","deals",1.3],
+["check","stand","Team rhythm","Morale +50%","morale",1.5]
+];
+const $=id=>document.getElementById(id);
+const R=n=>Math.floor(Math.random()*n);
+const pick=a=>a[R(a.length)];
+const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let S,spd=1,paused=false,selected=[],ideaMessage="",avatars=new Map(),clock,structural="",lastIdeas="",logSignature="";
+let canvas=$("office"),ctx=canvas.getContext("2d");
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* Private browsing or storage quota: play continues in memory. */}}
+function load(){try{const raw=localStorage.getItem(KEY);if(!raw)return null;const s=JSON.parse(raw);if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;for(const p of s.team){if(!p.s||!p.mem||!KEYS.every(k=>typeof p.s[k]==="number"))return null;}for(const k of ["reward","speed","cost","learn","deals","rep","morale"]){if(typeof s.mod[k]!=="number")return null;}if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;return s;}catch(e){return null;}}
+function logIt(s,highlight=false){S.log.unshift(highlight?'<span class="warning">'+esc(s)+'</span>':esc(s));S.log=S.log.slice(0,80);}
+function createPerson(){const id=S.pid++;const base=NAMES[(id-1)%NAMES.length];return{id:id,n:base+(id>20?" "+(Math.floor((id-1)/20)+1):""),col:COLORS[(id-1)%COLORS.length],trait:pick(TRAITS),s:Object.fromEntries(KEYS.map(k=>[k,+(1+Math.random()*.6).toFixed(2)])),mood:70,loy:60,t:"idle",mem:[]};}
+function createDeal(client,extra=0){const diff=Math.min(12,Math.round((1+Math.random()*(1+S.rep/20+S.day/50))*10)/10);const work=8+Math.floor(diff*4);const d={id:S.did++,cl:client||pick(CLIENTS),need:pick(KEYS),diff:diff,work:work,prog:0,base:20+diff*12+extra,dl:Math.floor(work*1.6+6),w:null};S.deals.push(d);return d;}
+function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:6};for(let i=0;i<3;i++)S.team.push(createPerson());createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function person(id){return S.team.find(p=>p.id===id);}
+function deal(id){return S.deals.find(d=>d.id===id);}
+function taskText(p){if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest"})[p.t]||"idle";}
+function release(p){if(!p)return;for(const d of S.deals)if(d.w===p.id)d.w=null;p.t="idle";}
+function removePerson(p){if(S.team.length<=1)return false;release(p);S.team=S.team.filter(x=>x.id!==p.id);avatars.delete(p.id);return true;}
+function discover(who){const unused=Object.keys(IDEAS).filter(k=>!S.seeds.includes(k));if(!unused.length){if(!S.log[0].includes("All basic ideas"))logIt("All basic ideas are found.");return false;}const key=pick(unused);S.seeds.push(key);logIt(who+" discovered a new idea: "+IDEAS[key]+".");return true;}
+function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
+function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
+function tick(){if(paused||S.ev)return;S.day+=1;let dirty=false,ideaDirty=false;
+if(S.deals.length<2+Math.floor(S.team.length/2)&&Math.random()<Math.min(1,.3*S.mod.deals)){createDeal();dirty=true;}
+for(const p of [...S.team]){const mf=.6+p.mood/250,lb=p.loy>70?1.1:1;let dm=-.2;
+if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed;d.prog+=e;p.s[d.need]+=.05*S.mod.learn;dm=e>=.9?.4:-.3;}else{p.t="idle";dm=-.2;dirty=true;}}
+else if(p.t==="study"){p.s[weakest(p)]+=.14*S.mod.learn*mf;dm=.3;}
+else if(p.t==="teach"&&S.team.length>1){const k=strongest(p),others=S.team.filter(x=>x.id!==p.id).sort((a,b)=>a.s[k]-b.s[k]);const target=others[0];if(target.s[k]<p.s[k]){target.s[k]+=.12*S.mod.learn*mf*(p.trait==="Social"?1.5:1);p.s[k]+=.01;}dm=.3;}
+else if(p.t==="exp"){S.cash=Math.max(0,S.cash-1);const avg=KEYS.reduce((s,k)=>s+p.s[k],0)/4;const chance=(.04+.01*avg)*mf*(p.trait==="Curious"?1.5:1)*(p.trait==="Creative"?1.3:1);if(Math.random()<chance){ideaDirty=discover(p.n)||ideaDirty;}dm=.3;}
+else if(p.t==="rest"){dm=2;}
+p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
+if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);
+if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
+}
+for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){const payout=Math.floor(d.base*S.mod.reward*(1+S.rep/200));S.cash+=payout;S.rep+=(2+d.diff*.5)*S.mod.rep;logIt(d.cl+" paid $"+payout+" for the finished job.");const p=person(d.w);if(p){release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
+else if(d.dl<=0){S.rep=Math.max(0,S.rep-3);logIt("Missed the deadline for "+d.cl+". Reputation dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
+const salary=S.team.length*1.5*S.mod.cost;if(S.cash<salary){S.cash=0;for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford salaries. Team morale dropped.",true);}else S.cash-=salary;
+if(!S.ev&&S.day>=S.nextEv)startDilemma();
+save();if(dirty)renderStructure();if(ideaDirty)renderIdeas();refresh();}
+function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;}save();renderStructure();refresh();}
+function order(pid,t){const p=person(pid);if(!p||S.ev)return;release(p);p.t=t;save();renderStructure();refresh();}
+function updateButtons(){for(const b of document.querySelectorAll("[data-speed]")){const yes=Number(b.dataset.speed)===spd&&!paused;b.classList.toggle("selected",yes);b.setAttribute("aria-pressed",String(yes));}$("pause").classList.toggle("selected",paused);$("pause").textContent=paused?"Resume":"Pause";}
+function paintControls(){updateButtons();}
+$("controls").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.speed){spd=Number(b.dataset.speed);paused=false;paintControls();schedule();}else if(b.id==="pause"){paused=!paused;paintControls();schedule();}else if(b.id==="restart"){if(confirm("Restart the company from zero?")){fresh();selected=[];ideaMessage="";avatars.clear();paused=false;spd=1;save();renderStructure();renderIdeas();refresh();paintControls();schedule();}}});
+$("deals").addEventListener("click",e=>{const b=e.target.closest("button[data-deal]");if(b)assign(Number(b.dataset.deal),Number(b.dataset.person));});
+$("people").addEventListener("click",e=>{const b=e.target.closest("button[data-order]");if(b)order(Number(b.dataset.person),b.dataset.order);});
+$("ideas").addEventListener("click",e=>{const b=e.target.closest("button[data-idea]");if(!b||S.ev)return;const k=b.dataset.idea,at=selected.indexOf(k);if(at>=0)selected.splice(at,1);else{selected.push(k);if(selected.length>2)selected.shift();}renderIdeaButtons();});
+$("combine").addEventListener("click",()=>{if(selected.length!==2||S.ev)return;const recipe=RECIPES.find(r=>selected.includes(r[0])&&selected.includes(r[1]));if(!recipe){ideaMessage="Those two do not fit together yet. Try another pair.";}else if(S.built.some(r=>r[0]===recipe[2])){ideaMessage="You already built that one.";}else{S.mod[recipe[4]]*=recipe[5];S.built.push([recipe[2],recipe[3]]);ideaMessage="Breakthrough: "+recipe[2]+"! "+recipe[3];logIt(ideaMessage,true);}selected=[];save();renderIdeas();refresh();});
+function renderStructure(){const dSig=S.deals.map(d=>d.id+":"+d.w).join(",")+"|"+S.team.map(p=>p.id+":"+p.t).join(",");if(structural===dSig)return;structural=dSig;
+$("deals").innerHTML=S.deals.length?S.deals.map(d=>'<article class="card"><div class="lead"><b>'+esc(d.cl)+'</b><span class="small">$'+Math.floor(d.base*S.mod.reward)+' · <span id="dl-'+d.id+'">'+d.dl+'</span> days left</span></div><div class="meta">Needs '+SKILLS[d.need]+' (difficulty '+d.diff.toFixed(1)+')</div><div class="progress"><i id="deal-bar-'+d.id+'"></i></div><div class="small"><span id="prog-'+d.id+'">0%</span> complete</div><div class="buttons">'+S.team.map(p=>'<button type="button" data-deal="'+d.id+'" data-person="'+p.id+'" '+(d.w===p.id?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+esc(p.n)+' (<span id="bid-'+d.id+'-'+p.id+'">'+p.s[d.need].toFixed(1)+'</span>)</button>').join("")+'</div></article>').join(""):'<div class="card empty">No clients right now. They show up over time, and a better reputation brings more.</div>';
+$("people").innerHTML=S.team.map(p=>'<article class="card"><div class="person-head"><div><b><i class="color-dot" style="background:'+p.col+'"></i>'+esc(p.n)+'</b><div class="small">'+p.trait+'</div></div><span class="small" id="person-v-'+p.id+'"></span></div><div class="progress good"><i id="mood-bar-'+p.id+'"></i></div><div class="skills">'+KEYS.map(k=>'<div class="skill"><div class="skill-name"><b>'+SKILLS[k]+'</b><span id="skill-'+p.id+'-'+k+'"></span></div><div class="progress"><i id="skill-bar-'+p.id+'-'+k+'"></i></div></div>').join("")+'</div><div class="small">Current job: <b>'+esc(taskText(p))+'</b></div><div class="buttons">'+[["study","Study"],["teach","Teach"],["exp","Experiment"],["rest","Rest"]].map(pair=>'<button type="button" data-order="'+pair[0]+'" data-person="'+p.id+'" '+(p.t===pair[0]?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+pair[1]+'</button>').join("")+'</div><div class="memories" id="mem-'+p.id+'"></div></article>').join("");}
+function renderIdeaButtons(){for(const b of $("ideas").querySelectorAll("button")){const ok=selected.includes(b.dataset.idea);b.classList.toggle("selected",ok);b.setAttribute("aria-pressed",String(ok));}$("combine").disabled=selected.length!==2;}
+function renderIdeas(){const keys=S.seeds.filter(k=>IDEAS[k]);$("ideas").innerHTML=keys.length?'<div class="buttons">'+keys.map(k=>'<button type="button" data-idea="'+k+'">'+IDEAS[k]+'</button>').join("")+'</div>':'<div class="empty">No ideas yet. Put someone on Experiment.</div>';$("built").innerHTML=S.built.map(x=>'<div>✓ <strong>'+esc(x[0])+'</strong> — '+esc(x[1])+'</div>').join("");$("idea-message").textContent=ideaMessage||(12-S.seeds.length)+" basic ideas still to discover.";renderIdeaButtons();}
+function refresh(){$("cash").textContent="$"+Math.floor(S.cash);$("rep").textContent=String(Math.floor(S.rep));$("day").textContent="Day "+S.day;$("teamcount").textContent=S.team.length;
+for(const d of S.deals){const bar=$("deal-bar-"+d.id),dl=$("dl-"+d.id),prog=$("prog-"+d.id);if(bar)bar.style.width=clamp(d.prog/d.work*100)+"%";if(dl)dl.textContent=d.dl;if(prog)prog.textContent=Math.floor(clamp(d.prog/d.work*100))+"%";for(const p of S.team){const b=$("bid-"+d.id+"-"+p.id);if(b)b.textContent=p.s[d.need].toFixed(1);}}
+for(const p of S.team){const v=$("person-v-"+p.id),m=$("mood-bar-"+p.id),mem=$("mem-"+p.id);if(v)v.textContent="mood "+Math.floor(p.mood)+"% · loyalty "+Math.floor(p.loy)+"%";if(m)m.style.width=p.mood+"%";if(mem){const content=p.mem.map(s=>"<div>“"+esc(s)+"”</div>").join("");if(mem.innerHTML!==content)mem.innerHTML=content;}for(const k of KEYS){const label=$("skill-"+p.id+"-"+k),bar=$("skill-bar-"+p.id+"-"+k);if(label)label.textContent="Lv "+p.s[k].toFixed(1);if(bar)bar.style.width=((p.s[k]%1)*100)+"%";}}
+const logs=S.log.slice(0,14).join("|");if(logSignature!==logs){logSignature=logs;$("log").innerHTML=S.log.slice(0,14).map(x=>'<div class="log-entry">'+x+'</div>').join("");}
+showModal();}
+function startDilemma(){const possible=["raise","mistake","idea","family","praise"];if(S.team.length>1)possible.push("leave","fight","poach");const a=pick(S.team),b=pick(S.team.filter(x=>x.id!==a.id).length?S.team.filter(x=>x.id!==a.id):[a]);S.ev={k:pick(possible),a:a.id,b:b.id};}
+function L(p,v){if(p)p.loy=clamp(p.loy+v);}
+function Mo(p,v){if(p)p.mood=clamp(p.mood+v);}
+function Me(p,s){if(p){p.mem.unshift(s);p.mem=p.mem.slice(0,3);}}
+function pay(v){S.cash=Math.max(0,S.cash-v);}
+function dilemmaInfo(ev){const a=person(ev.a),b=person(ev.b);if(!a||!b)return null;const n=a.n,m=b.n;switch(ev.k){
+case"raise":return["A raise request",n+" asks for a raise. How do you respond?",["Give a raise (-$20)","Refuse","Maybe later"]];
+case"leave":return["An entrepreneurial dream",n+" wants to leave and start a company.",["Counter-offer (-$30)","Wish them luck","Hold them back"]];
+case"fight":return["Team conflict",n+" and "+m+" are arguing. They both want you to intervene.",["Side with "+n,"Side with "+m,"Team meeting (-$10)"]];
+case"mistake":return["A costly mistake",n+" made a costly mistake at work.",["Blame them","Teach them","Cover it up (-$15)"]];
+case"idea":return["A bold idea",n+" has a crazy idea and asks for a chance to try it.",["Allow it (-$10)","Not now"]];
+case"family":return["Family comes first?",n+" needs a day off for a family situation.",["Of course (-$5)","We are too busy"]];
+case"poach":return["A rival offer","A rival company has made "+n+" an offer.",["Match the offer (-$25)","Let them go"]];
+case"praise":return["Client praise","A client has praised "+n+"’s work.",["Share the credit publicly","Take the credit","Thank them privately"]];
+default:return null;}}
+function choose(i){const ev=S.ev;if(!ev)return;const a=person(ev.a),b=person(ev.b);if(!a||!b){S.ev=null;save();refresh();return;}let result="";
+switch(ev.k){
+case"raise":if(i===0){pay(20);L(a,20);Mo(a,15);Me(a,"You gave me a raise");result="You gave "+a.n+" a raise.";}else if(i===1){L(a,-15);Mo(a,-15);Me(a,"You refused my raise");result="You refused "+a.n+"’s raise.";}else{L(a,-5);Me(a,"You said maybe later");result="You postponed "+a.n+"’s raise.";}break;
+case"leave":if(i===0){pay(30);L(a,25);Mo(a,10);Me(a,"You fought to keep me");result="You convinced "+a.n+" to stay.";}else if(i===1){removePerson(a);createDeal(a.n+"’s startup",40);result="You wished "+a.n+" luck. Their startup became a client.";}else{L(a,-30);Mo(a,-30);Me(a,"You blocked my dream");result="You blocked "+a.n+"’s dream.";}break;
+case"fight":if(i===0){L(a,10);L(b,-10);Mo(b,-10);Me(b,"You sided against me");result="You sided with "+a.n+" against "+b.n+".";}else if(i===1){L(b,10);L(a,-10);Mo(a,-10);Me(a,"You sided against me");result="You sided with "+b.n+" against "+a.n+".";}else{pay(10);Mo(a,5);Mo(b,5);result="You brought "+a.n+" and "+b.n+" together for a meeting.";}break;
+case"mistake":if(i===0){Mo(a,-20);L(a,-10);Me(a,"You blamed me publicly");result="You blamed "+a.n+" for the mistake.";}else if(i===1){a.s[weakest(a)]+=.5;L(a,10);Me(a,"You helped me learn from a mistake");result="You coached "+a.n+" through the mistake.";}else{pay(15);result="You paid to cover "+a.n+"’s mistake.";}break;
+case"idea":if(i===0){pay(10);L(a,5);discover(a.n);Me(a,"You trusted my idea");result="You backed "+a.n+"’s experiment.";}else{L(a,-5);result="You declined "+a.n+"’s idea for now.";}break;
+case"family":if(i===0){pay(5);Mo(a,20);L(a,15);Me(a,"You supported me when I needed it");result="You gave "+a.n+" time for family.";}else{L(a,-20);Mo(a,-10);Me(a,"You said no when I needed help");result="You denied "+a.n+" time off.";}break;
+case"poach":if(i===0){pay(25);L(a,15);Me(a,"You matched a rival offer");result="You matched the rival’s offer for "+a.n+".";}else{removePerson(a);result="You let "+a.n+" join the rival company.";}break;
+case"praise":if(i===0){L(a,10);Mo(a,10);S.rep+=3;Me(a,"You gave me public credit");result="You shared the client’s praise with "+a.n+".";}else if(i===1){S.rep+=5;L(a,-15);Me(a,"You took credit for my work");result="You took the credit for "+a.n+"’s work.";}else{L(a,5);Mo(a,5);result="You thanked "+a.n+" privately.";}break;
+}
+logIt(result,true);S.ev=null;S.nextEv=S.day+8+R(8);save();structural="";renderStructure();renderIdeas();refresh();}
+$("choices").addEventListener("click",e=>{const b=e.target.closest("button[data-choice]");if(b)choose(Number(b.dataset.choice));});
+function showModal(){const m=$("modal");if(!S.ev){m.hidden=true;document.body.classList.remove("modal-open");return;}const d=dilemmaInfo(S.ev);if(!d){S.ev=null;save();m.hidden=true;return;}if(m.hidden||$("modal-title").textContent!==d[0]){$("modal-title").textContent=d[0];$("modal-text").textContent=d[1];$("choices").innerHTML=d[2].map((txt,i)=>'<button type="button" data-choice="'+i+'">'+esc(txt)+'</button>').join("");}m.hidden=false;document.body.classList.add("modal-open");}
+function schedule(){clearTimeout(clock);if(!paused&&!S.ev)clock=setTimeout(()=>{tick();schedule();},1200/spd);}
+function bubble(id,emoji,frames){let a=avatars.get(id);if(!a){a={x:0,y:0,tx:0,ty:0,away:false,hold:0,emoji:"",frames:0};avatars.set(id,a);}a.emoji=emoji;a.frames=frames;}
+function avatarDraw(){const rows=Math.ceil(S.team.length/5),h=Math.max(150,80*rows+50);if(canvas.height!==h)canvas.height=h;const style=getComputedStyle(document.documentElement);const bar=style.getPropertyValue("--bar").trim(),ink=style.getPropertyValue("--ink").trim(),muted=style.getPropertyValue("--muted").trim();ctx.clearRect(0,0,640,h);ctx.fillStyle=bar;ctx.fillRect(0,0,640,h);
+ctx.fillStyle="#b7d7e8";ctx.fillRect(611,(h-32)/2,22,32);ctx.fillStyle="#224b67";ctx.font="9px system-ui";ctx.textAlign="center";ctx.fillText("water",622,(h-32)/2+19);
+S.team.forEach((p,i)=>{const dx=60+(i%5)*130,dy=40+Math.floor(i/5)*80;ctx.fillStyle=muted;ctx.globalAlpha=.33;ctx.fillRect(dx-26,dy-10,52,20);ctx.globalAlpha=1;let a=avatars.get(p.id);if(!a){a={x:dx,y:dy+34,tx:dx,ty:dy+34,away:false,hold:0,emoji:"",frames:0};avatars.set(p.id,a);}
+if(p.t==="idle"||p.t==="rest"){if(!a.away&&Math.random()<.004){a.away=true;a.hold=170+R(130);}if(a.away){a.tx=596;a.ty=h/2+29;if(Math.abs(a.x-a.tx)<7){a.hold--;if(a.hold<=0)a.away=false;}}if(!a.away){a.tx=dx;a.ty=dy+34;}}
+else{a.away=false;a.tx=dx;a.ty=dy+34;}
+a.x+=(a.tx-a.x)*.03;a.y+=(a.ty-a.y)*.03;if(Math.random()<.004){const e=p.mood<30?"😤":p.t.startsWith("d")?pick(["📞","💻","✍️"]):({study:"📖",teach:"🗣️",exp:"💡",rest:"☕",idle:"💤"})[p.t];bubble(p.id,e,150);}
+ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(a.x,a.y,11,0,Math.PI*2);ctx.fill();ctx.fillStyle="#192435";ctx.beginPath();ctx.arc(a.x-3,a.y-2,1.1,0,Math.PI*2);ctx.arc(a.x+3,a.y-2,1.1,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#192435";ctx.lineWidth=1.1;ctx.beginPath();if(p.mood>50)ctx.arc(a.x,a.y+1,4,0,Math.PI);else if(p.mood>25){ctx.moveTo(a.x-4,a.y+5);ctx.lineTo(a.x+4,a.y+5);}else ctx.arc(a.x,a.y+8,4,Math.PI,2*Math.PI);ctx.stroke();ctx.textAlign="center";ctx.fillStyle=ink;ctx.font="12px system-ui";ctx.fillText(p.n,a.x,a.y+25);
+if(a.frames>0){ctx.font="19px system-ui";ctx.fillText(a.emoji,a.x,a.y-17);a.frames--;}
+});requestAnimationFrame(avatarDraw);}
+S=load();if(!S)fresh();if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;save();renderStructure();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
+})();
+</script>
+</body>
+</html>

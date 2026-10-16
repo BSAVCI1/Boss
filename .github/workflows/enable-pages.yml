@@ -1,0 +1,33 @@
+name: Enable Boss GitHub Pages
+on:
+  push:
+    paths:
+      - '.github/workflows/enable-pages.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+jobs:
+  enable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable Pages from main branch root
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          status=$(curl -sS -o /tmp/pages.json -w '%{http_code}' -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28' "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages")
+          echo "Pages status before setup: $status"
+          if [ "$status" = '404' ]; then
+            status=$(curl -sS -o /tmp/create.json -w '%{http_code}' -X POST -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28' -H 'Content-Type: application/json' -d '{"build_type":"legacy","source":{"branch":"main","path":"/"}}' "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages")
+            echo "Pages creation status: $status"
+            cat /tmp/create.json
+            if [ "$status" != '201' ]; then exit 1; fi
+          elif [ "$status" = '200' ]; then
+            echo 'GitHub Pages already enabled.'
+            cat /tmp/pages.json
+          else
+            cat /tmp/pages.json
+            exit 1
+          fi

@@ -157,7 +157,7 @@
 **Potential next iteration after playtesting:** Richer employee narratives and relationships, meaningful rival rematches, more celebratory results and smoother guided first-session learning — without new administrative dashboards.
 
 
-## Boss v18 — CEO & Leadership Edition (DEVELOPMENT; verify release before marking delivered)
+## Delivered: Boss v18 — CEO & Leadership Edition (production on 2026-10-17; v18.1 corrective update)
 - Company identity separates service offer (B2B consulting/delivery), customer industries, and competitive positioning.
 - Today starts with reporting structure (Commercial/Delivery directors plus Executive Assistant), 90-day CEO priorities, and executive decision inbox.
 - Weekly management meetings surface director requests for training, hiring, pay and cost optimization with forecast cost/risk. CEO approves or declines; journal and manager review record results, while actual expense postings and recurring salaries only change on approval.
@@ -166,7 +166,7 @@
 - Market events clearly presented in CEO inbox and retained for 45 days; opportunities remain optional.
 - Mature-game specialist status, renewable strategy objectives, completed upgrade archive, ongoing bounded R&D, fixed office task animation icons.
 - Additive boss18 save migration from boss17 and earlier. Preserve signed contracts, employees, customers, project histories, strategy, rivals and experiments. No external APIs.
-- Acceptance: v15-v18 regression suites, 730+ day simulation, financial reconciliation, desktop/mobile interactions, Pages deployment success, live version verified, and existing Notion board updated.
+- **Release evidence:** PR #7 merged and PR #8 fixed the CEO direction selector. On commit `0cc7ab7`, all five inherited v15/v16/v16.1/v17/v18 regression suites passed (including 730-day simulations, financial reconciliation, legacy migration, and no artificial service-line income); GitHub Pages build and deploy completed successfully on 2026-10-17. Separate browser/mobile QA remains an ongoing quality gate and should not be confused with automated DOM assertions. Existing Notion project records both releases.
 
 ## Backlog (await owner selection)
 - Office expansions and richer multi-level organizations (first department managers delivered v13)

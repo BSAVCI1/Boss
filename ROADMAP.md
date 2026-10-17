@@ -168,7 +168,7 @@
 - Additive boss18 save migration from boss17 and earlier. Preserve signed contracts, employees, customers, project histories, strategy, rivals and experiments. No external APIs.
 - **Release evidence:** PR #7 merged and PR #8 fixed the CEO direction selector. On commit `0cc7ab7`, all five inherited v15/v16/v16.1/v17/v18 regression suites passed (including 730-day simulations, financial reconciliation, legacy migration, and no artificial service-line income); GitHub Pages build and deploy completed successfully on 2026-10-17. Separate browser/mobile QA remains an ongoing quality gate and should not be confused with automated DOM assertions. Existing Notion project records both releases.
 
-## Boss v19 — Organizational Scaling & Executive Delegation (IMPLEMENTED ON DEVELOPMENT BRANCH; RELEASE GATED)
+## Delivered: Boss v19 — Organizational Scaling & Executive Delegation (released 2026-10-17)
 **Origin:** Owner's 2026-10-17 iPhone gameplay at about Day 2443, 14 employees and two managers; implementation authorized in the follow-up. The v19 branch contains a functional implementation covering roles, reporting tree, custom 90/180-day authority with explicit CEO renewal, department objectives, delegated training and hiring, and Today market Act/Pass. Preserve offline one-file architecture, economics, historical accounting and previous browser saves. No valuation, tenure or reputation-rebalance changes in v19.
 
 ### P0 — defects and misleading communication
@@ -200,7 +200,7 @@
 - Reconcile opening cash + tracked receipts - payments with live cash through at least 730 simulated days, preserving signed fees and historical data. Verify no unapproved $8 auto-training or double-charged expenses.
 - Test each opportunity type when pipeline is full, cash is inadequate, retention customers are missing, or no dilemma can interrupt; act/pass directly on Today with reasoned disabled states and no repeated transaction.
 - Test actual mobile viewport near 390px for fixed bottom navigation, compact expandable structures, controls, no overlaps, preserved focus during day ticks and useful CEO decision summaries.
-- **Branch QA:** seven full regression suites passed on `boss-v19-org-autonomy`, including 730-day reconciliations and migration from legacy saves to forward-only `boss19`. Production remains v18.1 until the PR merges and both main CI and Pages deploy pass; mobile interactive verification remains an explicit follow-up.
+- **Branch QA:** seven full regression suites passed on `boss-v19-org-autonomy`, including 730-day reconciliations and migration from legacy saves to forward-only `boss19`. PR #11 merged in main (`8fa6f7051f4f988442c88431a62c869deb5a8b1b`); production [regression checks](https://github.com/BSAVCI1/Boss/actions/runs/39046003370) and [Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39046002839) succeeded. Real Chrome mobile device emulation at 390px verified four tabs, no horizontal overflow, supported management fields and no JavaScript errors. Long-running personal-save interactive playtesting remains an optional next validation.
 - **Deferred separately:** 2026 company-value simulation, tenure anniversaries and any forward-only reputation pricing recalibration; do not silently change economy or signed fees in this patch.
 
 ## Backlog (await owner selection)

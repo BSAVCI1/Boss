@@ -145,7 +145,7 @@
 - Kept employee/career accordions expanded when cards are updated and restored their open states via `boss161` saves; funded-ideas panel is stable and refreshed without reconstructing its details element.
 - Regression path: v15 + v16 + v16.1 tests, 365/730+ day cash reconciliation, migration from `boss16` and prior versions, no runtime external dependencies, live mobile Pages smoke. Source issue: https://github.com/BSAVCI1/Boss/issues/3.
 
-## Boss v17 — Game-First Edition (IMPLEMENTED ON DEVELOPMENT BRANCH; awaiting final release verification)
+## Boss v17 — Game-First Edition (DELIVERED; production Pages and browser interaction verified)
 1. **CEO Desk:** day-by-day business story, earned company chapter, clear next mission with progress and a direct action, short achievement feed, visible animated office, optional seven-day time jump.
 2. **Work:** Customer projects and next opportunities appear first; financial BI, collections, pricing, liabilities and capital decisions remain intact behind **Business records & money**.
 3. **Team:** People are presented ahead of admin, with quick-read mood and wellbeing, while more detailed organizational setup stays under **Managers & organization**.

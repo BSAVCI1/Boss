@@ -82,7 +82,37 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .policy-details{box-shadow:none}
 @media(min-width:760px){.bottom-nav{max-width:940px;left:50%;right:auto;transform:translateX(-50%);width:100%;border:1px solid var(--line);border-radius:14px 14px 0 0}.app-view{min-height:65vh}}
 @media(max-width:380px){.app-header h1{font-size:25px}.compact-controls label{display:none}.stat strong{font-size:15px}.summary-bottom{flex-wrap:wrap}}
-.app-view button{min-height:44px}.project-card button,.employee-card button{min-height:44px}</style>
+.app-view button{min-height:44px}.project-card button,.employee-card button{min-height:44px}
+/* v12 business intelligence (native, offline, mobile-first) */
+.bi-headline{padding:13px;margin:10px 0}
+.bi-headline .lead{margin-bottom:7px}
+.bi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.bi-grid>div{display:flex;flex-direction:column;background:var(--accentWash);padding:10px;border-radius:9px}
+.bi-grid span{font-size:12px;color:var(--muted)}
+.bi-grid strong{font-size:21px;letter-spacing:-.04em}
+.bi-headline-actions{justify-content:end;margin-top:8px}
+.bi-headline-actions button{font-size:13px}
+.bi-report{padding:0 0 12px}
+.bi-section{border-top:1px solid var(--line);padding-top:12px;margin-top:14px}
+.bi-section h3{margin:2px 0 12px;font-size:16px}
+.bi-metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.bi-metric{border:1px solid var(--line);border-radius:9px;padding:9px;min-width:0}
+.bi-metric span{display:block;font-size:11px;color:var(--muted)}
+.bi-metric strong{display:block;font-size:18px;overflow-wrap:anywhere}
+.bi-metric small{display:block;color:var(--muted);font-size:11px}
+.bi-chart{display:flex;align-items:end;gap:8px;height:136px;min-height:136px;margin:16px 0 6px;padding:0 2px}
+.bi-chart-col{display:flex;flex:1;flex-direction:column;align-items:center;gap:4px;min-width:0;height:100%;justify-content:flex-end}
+.bi-chart-pair{display:flex;align-items:end;gap:3px;height:105px;width:100%;justify-content:center}
+.bi-chart-bar{flex:1;max-width:20px;min-width:5px;border-radius:3px 3px 0 0;background:var(--accent);min-height:1px}
+.bi-chart-bar.cost{background:var(--muted)}
+.bi-chart-col small{font-size:10px;color:var(--muted)}
+.bi-chart-legend{font-size:11px;color:var(--muted)}
+.bi-micro-row{border-bottom:1px solid var(--line);padding:8px 0;display:flex;justify-content:space-between;gap:10px;font-size:12px}
+.bi-micro-row span:last-child{text-align:right}
+.bi-transactions{max-height:260px;overflow:auto}
+.bi-negative{color:var(--warn)}
+@media(min-width:650px){.bi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.bi-metric-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+</style>
 </head>
 <body>
 <main id="game-root">
@@ -93,6 +123,13 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
 <div class="overview-card card"><div class="eyebrow">EXECUTIVE BRIEFING</div><h2 id="brief-headline">Your company at a glance</h2><p class="overview-copy" id="brief-summary">Checking your projects, customers and employees.</p>
 <div class="overview-metrics"><span id="brief-projects">0 projects</span><span id="brief-pipeline">0 in pipeline</span><span id="brief-team">Team ready</span></div></div>
+<section class="card bi-headline" aria-labelledby="bi-headline-title"><div class="lead"><b id="bi-headline-title">Business performance</b><span class="small" id="bi-period-note">Tracked since Day 0</span></div>
+<div class="bi-grid">
+<div><span>Revenue earned</span><strong id="bi-revenue">$0</strong></div>
+<div><span>Operating costs</span><strong id="bi-costs">$0</strong></div>
+<div><span>Operating profit</span><strong id="bi-profit">$0</strong></div>
+<div><span>Profit margin</span><strong id="bi-margin">—</strong></div>
+</div><div class="buttons bi-headline-actions"><button type="button" id="bi-open-details">View full performance →</button></div></section>
 <div id="attention-list" class="attention-list" aria-live="off"></div>
 <div class="card focusrow"><div><strong>Focus on current work</strong><div class="small" id="focus-hint">Pause incoming work when you need space.</div></div><button type="button" id="focus-toggle">Enable Focus</button></div>
 <details class="aux-details" id="office-panel"><summary>Office animation &amp; game settings</summary><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div><button type="button" id="restart" class="danger-secondary">Restart company</button></details>
@@ -100,6 +137,17 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </section>
 <section id="view-work" class="app-view" data-page="work" aria-label="Projects and sales" hidden>
 <div class="view-intro"><h2>Work</h2><p>Projects, customers and future contracts</p></div>
+<details class="aux-details" id="performance-panel">
+<summary>Business intelligence — Finance, Sales, Delivery &amp; People</summary>
+<div class="bi-report">
+<div class="filter-grid"><div><label for="bi-range">Reporting period</label><select id="bi-range"><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="all">All tracked days</option></select></div><div><label>Measurement started</label><p id="bi-since" class="small"></p></div></div>
+<div class="bi-section"><h3>Finance · Profit &amp; loss</h3><div id="bi-finance" class="bi-metric-grid"></div><p id="bi-finance-note" class="filter-note"></p>
+<div class="lead"><b>Revenue and costs by period</b><span class="small">15-game-day intervals</span></div><div id="bi-chart" class="bi-chart" aria-label="Revenue and costs trend"></div>
+<details class="aux-details"><summary>Recent cash transactions</summary><div id="bi-transactions" class="bi-transactions"></div></details></div>
+<div class="bi-section"><h3>Sales · Lead quality &amp; conversion</h3><div id="bi-sales" class="bi-metric-grid"></div><div id="bi-sources"></div><p class="filter-note">Qualification rate is qualified leads divided by generated leads. Win rate uses decisions on closed opportunities; leads still in progress are excluded.</p></div>
+<div class="bi-section"><h3>Delivery · Realization &amp; quality</h3><div id="bi-delivery" class="bi-metric-grid"></div><div id="bi-sectors"></div><p class="filter-note">Booked value is estimated at contract award and adjusted for contract changes. Realized revenue is recognized and paid upon completion; invoicing and receivables are not simulated yet. Project contribution margin allocates delivery labor plus direct project expenses, not general overhead.</p></div>
+<div class="bi-section"><h3>People · Capacity &amp; productivity</h3><div id="bi-people" class="bi-metric-grid"></div><p class="filter-note">Billable utilization = delivery workdays / staffed workdays. Remaining capacity can support prospecting, training, rest or leadership.</p></div>
+</div></details>
 <section aria-labelledby="deals-title"><h2 id="deals-title">Client projects: choose assignments and contracts</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
 
 <section aria-labelledby="pipeline-title"><h2 id="pipeline-title">Sales pipeline &amp; workload planning</h2><div class="card">
@@ -150,7 +198,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <script>
 (function(){
 "use strict";
-const KEY="boss10";
+const KEY="boss12";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
 const TRAITS=["Curious","Social","Diligent","Creative"];
@@ -191,7 +239,7 @@ const projectExpanded=new Set(),employeeExpanded=new Set(),careerExpanded=new Se
 let activeView="today";const viewScroll={today:0,work:0,team:0,growth:0};let attentionSignature="";
 let canvas=$("office"),ctx=canvas.getContext("2d");
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* Storage may be unavailable; play continues in memory. */}}
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 if(!INTERESTS[p.interest])p.interest=INTEREST_KEYS[(p.id-1)%INTEREST_KEYS.length];
@@ -249,6 +297,7 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
+ensureBI(s);
 return s;}catch(e){return null;}}
 function logIt(s,highlight=false){S.log.unshift(highlight?'<span class="warning">'+esc(s)+'</span>':esc(s));S.log=S.log.slice(0,80);}
 const GOALS={
@@ -438,7 +487,7 @@ function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99}};for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];S.team.push(p);}createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},bi:null};ensureBI(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];S.team.push(p);}createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}

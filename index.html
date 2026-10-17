@@ -188,7 +188,7 @@ const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let S,spd=1,paused=false,selected=[],ideaMessage="",avatars=new Map(),clock,structural="",lastIdeas="",logSignature="",sectorSignature="",customerSignature="";
 const projectExpanded=new Set(),employeeExpanded=new Set(),careerExpanded=new Set();
-let activeView="today";const viewScroll={today:0,work:0,team:0,growth:0};
+let activeView="today";const viewScroll={today:0,work:0,team:0,growth:0};let attentionSignature="";
 let canvas=$("office"),ctx=canvas.getContext("2d");
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* Storage may be unavailable; play continues in memory. */}}
 function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
@@ -538,7 +538,7 @@ if(typeof window!=="undefined"&&typeof window.scrollTo==="function"){const targe
 $("speed-select").addEventListener("change",()=>{spd=Number($("speed-select").value)||1;paused=false;paintControls();schedule();});
 $("pause").addEventListener("click",()=>{paused=!paused;paintControls();schedule();});
 $("restart").addEventListener("click",()=>{if(!confirm("Restart the company from zero?"))return;
-fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";sectorSignature="";customerSignature="";projectExpanded.clear();employeeExpanded.clear();careerExpanded.clear();for(const name of ["today","work","team","growth"])viewScroll[name]=0;
+fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";sectorSignature="";customerSignature="";projectExpanded.clear();employeeExpanded.clear();careerExpanded.clear();attentionSignature="";for(const name of ["today","work","team","growth"])viewScroll[name]=0;
 paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();navigate("today");schedule();});
 document.querySelector(".bottom-nav").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(b)navigate(b.dataset.view);});
 $("attention-list").addEventListener("click",e=>{const b=e.target.closest("button[data-go]");if(b)navigate(b.dataset.go,b.dataset.project?Number(b.dataset.project):undefined);});
@@ -629,13 +629,14 @@ $("log-recent").textContent=S.log.length+" updates";
 const notices=[];
 for(const f of urgent.slice(0,2)){
 const label=f.risk==="critical"?"Deadline risk":f.risk==="unassigned"?"Needs an owner":"Limited schedule buffer";
-const info=f.d.dl+" days remaining"+(f.eta!==null?" · "+f.eta+" days of work estimated":"");
-notices.push('<div class="card"><h3>'+label+'</h3><p>'+esc(f.d.cl)+' — '+esc(info)+'</p><button type="button" data-go="work" data-project="'+f.d.id+'">Review project →</button></div>');
+const info='<span id="alert-days-'+f.d.id+'"></span> remaining';
+notices.push('<div class="card"><h3>'+label+'</h3><p>'+esc(f.d.cl)+' — '+info+'</p><button type="button" data-go="work" data-project="'+f.d.id+'">Review project →</button></div>');
 }
 if(stressed.length)notices.push('<div class="card"><h3>Team wellbeing</h3><p>'+stressed.length+' employee'+(stressed.length===1?"":"s")+' under high stress. Review workload and recovery.</p><button type="button" data-go="team">Review team →</button></div>');
 if(atRiskMoney)notices.push('<div class="card"><h3>Cash runway</h3><p>Available cash covers fewer than seven days of payroll. Check delivery and new contracts.</p><button type="button" data-go="work">Review work →</button></div>');
 if(!notices.length)notices.push('<div class="card"><h3>No urgent decisions</h3><p>Employees are handling routine activities. Check Work or Growth when you want to make strategic decisions.</p></div>');
-$("attention-list").innerHTML=notices.join("");
+const markup=notices.join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
+for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}
 }
 function refresh(){
 renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderBriefing();

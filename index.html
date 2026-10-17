@@ -225,6 +225,86 @@ else if(task.startsWith("d")&&task.slice(1)&&p.career.talent===deal(Number(task.
 goalProgress(p,task);
 if(c.stress>=80){p.mood=clamp(p.mood-.45);p.loy=clamp(p.loy-.065);}
 }
+const ROLE_NAMES={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations",lead:"Team lead"};
+const ROLE_KEYS=Object.keys(ROLE_NAMES);
+function ensureRole(p){if(!p.role||typeof p.role!=="object")p.role={};
+const r=p.role;if(!ROLE_KEYS.includes(r.primary))r.primary=KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);
+if(!KEYS.includes(r.secondary))r.secondary=KEYS.filter(k=>k!==r.primary).sort((a,b)=>p.s[b]-p.s[a])[0]||"ops";
+r.auto=r.auto!==false;if(typeof r.autoTask!=="boolean")r.autoTask=false;
+if(!Number.isFinite(r.mentored))r.mentored=0;}
+function roleAction(id,action){if(S.ev)return;const p=person(id);if(!p)return;const r=p.role;
+if(action==="resume"){if(p.id===S.ops.assistantId)return;r.auto=true;if(!p.t.startsWith("d")){p.t="idle";r.autoTask=false;}logIt(p.n+" returned to the team work plan.");}
+else if(action==="manual"){r.auto=false;r.autoTask=false;logIt("Manual task control enabled for "+p.n+".");}
+else if(ROLE_KEYS.includes(action)){if(action==="lead"&&p.career.rank<1&&p.career.xp<10)return;
+if(p.id===S.ops.assistantId){S.ops.assistantId=null;}
+r.primary=action;r.auto=true;r.autoTask=false;if(!p.t.startsWith("d"))p.t="idle";
+logIt(p.n+" owns "+ROLE_NAMES[action]+" responsibilities.");}
+else return;save();structural="";renderStructure();renderSkillMap();refresh();}
+function readyForJob(p){return p.t==="idle"&&p.career.recoveryDays<=0&&p.career.stress<72&&!p.career.autoRest;}
+function qualifiedPipeline(){return S.pipeline.leads.filter(l=>l.stage!=="prospect").length;}
+function pipelineCapacity(){return Math.max(2,Math.min(4,2+Math.floor(S.team.length/3)));}
+function addProspect(source){if(S.pipeline.leads.length>=12)return false;
+const sec=S.market.open.includes(S.market.focus)?S.market.focus:pick(S.market.open);
+const returning=Object.entries(S.market.customers).filter(([name,c])=>c.sector===sec&&c.loyalty>=60);
+const cl=returning.length&&Math.random()<.28?pick(returning)[0]:pick(SECTORS[sec].clients);
+S.pipeline.leads.push({id:S.pipeline.seq++,client:cl,sector:sec,stage:"prospect",progress:0,age:0,source,created:S.day});
+return true;}
+function activeProspectors(){return S.team.filter(p=>p.t==="prospect"||p.t==="market").filter(p=>p.career.recoveryDays===0);}
+function pipelineDay(){const leads=S.pipeline.leads;
+if(S.day>=S.pipeline.nextInbound){if(leads.length<12)addProspect("inbound");S.pipeline.nextInbound=S.day+Math.max(8,Math.round(12/S.mod.deals));}
+const sellers=activeProspectors();const energy=sellers.reduce((s,p)=>s+(p.t==="prospect"?p.s.sales*.6:p.s.mkt*.37)*stressFactor(p),0);
+S.pipeline.prospecting+=energy;
+const wanted=S.pipeline.target+Math.max(0,pipelineCapacity()-S.deals.length-1);
+if(S.pipeline.prospecting>=3.2&&leads.length<Math.min(12,wanted+3)){S.pipeline.prospecting-=3.2;addProspect(sellers.length?"team prospecting":"referrals");}
+else if(S.pipeline.prospecting>7)S.pipeline.prospecting=7;
+for(const l of [...leads]){l.age++;const adv=energy>0?Math.min(1.8,.27+energy*.45):.13;
+if(l.stage!=="negotiation")l.progress+=adv;
+const phases={prospect:["qualified",2.6],qualified:["proposal",4],proposal:["negotiation",3]};
+if(phases[l.stage]&&l.progress>=phases[l.stage][1]){l.stage=phases[l.stage][0];l.progress=0;}}
+let converted=false;
+for(const lead of [...leads].filter(l=>l.stage==="negotiation")){
+const cap=pipelineCapacity();if(S.flow.focus||S.deals.length>=cap||converted)continue;
+if(lead.age<6)continue;
+if(Math.random()<.84||S.market.customers[lead.client]?.loyalty>72){
+const d=createDeal(lead.client);d.sector=lead.sector;d.sourceLead=lead.id;S.pipeline.closed++;logIt("Sales won "+lead.client+" ("+SECTORS[lead.sector].name+"). Project booked from pipeline.");converted=true;}
+else logIt("Proposal to "+lead.client+" was declined. Sales will pursue other opportunities.");
+S.pipeline.leads=S.pipeline.leads.filter(x=>x.id!==lead.id);
+}
+S.pipeline.leads=S.pipeline.leads.filter(l=>l.age<100);return converted;}
+function chooseAutoTask(p){const policy=S.pipeline.mode,qualified=qualifiedPipeline();
+const shortage=qualified<S.pipeline.target,stress=p.career.stress;
+if(stress>=63||p.career.burnout>=35)return"rest";
+if(p.role.primary==="sales")return shortage||policy==="growth"?"prospect":(policy==="innovation"?"study":"prospect");
+if(p.role.primary==="mkt")return shortage||policy==="growth"?"market":policy==="innovation"?"exp":"market";
+if(p.role.primary==="lead")return S.team.some(x=>x.id!==p.id&&x.career.stress>55)?"coachteam":"teach";
+if(policy==="growth"&&shortage&&p.role.secondary==="sales")return"prospect";
+if(policy==="innovation")return p.role.primary==="prod"?"exp":p.role.primary==="ops"?"study":"teach";
+if(p.career.goal==="growth"||p.role.primary==="ops")return"study";
+if(p.role.primary==="prod"&&S.market.completed%3===0)return"exp";
+return"teach";}
+function autonomousWork(){if(!S.pipeline.auto)return false;
+let changed=false;for(const p of S.team){
+if(p.id===S.ops.assistantId||!p.role.auto||p.t.startsWith("d")||p.career.recoveryDays>0||p.career.autoRest)continue;
+if(p.t==="idle"||p.role.autoTask&&S.day%5===0){
+const next=chooseAutoTask(p);if(p.t!==next){p.t=next;changed=true;}p.role.autoTask=true;}}
+return changed;}
+function mentorDay(lead){const others=S.team.filter(x=>x.id!==lead.id&&x.career.recoveryDays===0).sort((a,b)=>a.s[strongest(lead)]-b.s[strongest(lead)]);
+const target=others[0];if(target){const k=strongest(lead);if(lead.s[k]>target.s[k]){target.s[k]+=.13*S.mod.learn;target.career.xp+=.12;lead.role.mentored++;target.career.stress=clamp(target.career.stress-1.6);}}
+}
+function capabilityProgress(){let n=0;for(const r of RECIPES){if(S.built.some(b=>b[0]===r[2]))continue;
+if(S.seeds.includes(r[0])&&S.seeds.includes(r[1])){S.mod[r[4]]*=r[5];S.built.push([r[2],r[3]]);n++;logIt("Company capability unlocked: "+r[2]+" — "+r[3]+".");}}
+return n;}
+function discoverFromWork(p){const key=p.t==="prospect"?"ref":p.t==="market"?"story":p.t==="coachteam"?"mentor":p.t==="study"?"stand":"check";
+if(S.day%13===0&&S.seeds.length<12&&Math.random()<.65)return discover(p.n,[key]);
+return false;}
+function renderPipeline(){const stages=["prospect","qualified","proposal","negotiation"],labels=["Prospects","Qualified","Proposals","Negotiating"];
+$("pipeline-summary").textContent=S.pipeline.closed+" won · "+S.pipeline.leads.length+" open";
+$("pipeline-stages").innerHTML=stages.map((k,i)=>'<div class="pipestage"><strong>'+S.pipeline.leads.filter(l=>l.stage===k).length+'</strong>'+labels[i]+'</div>').join("");
+$("pipeline-details").innerHTML=S.pipeline.leads.slice(0,7).map(l=>'<div class="queue-item">'+esc(l.client)+' · '+SECTORS[l.sector].name+' · '+labels[stages.indexOf(l.stage)]+' · '+(S.day-l.created)+' days in pipeline</div>').join("")||'<div class="empty">No leads yet. A salesperson or marketer can build the next opportunity.</div>';}
+function renderSkillMap(){const names=Object.keys(SKILLS);
+const rows=names.map(k=>{const sorted=S.team.slice().sort((a,b)=>b.s[k]-a.s[k]);const best=sorted[0],learn=sorted[sorted.length-1],avg=S.team.reduce((sum,p)=>sum+p.s[k],0)/S.team.length;
+return '<div class="skillmap-row"><b>'+SKILLS[k]+'</b> · Team Lv '+avg.toFixed(1)+' · Mentor '+esc(best?.n||"—")+(best&&learn&&best.id!==learn.id?' → '+esc(learn.n):'')+'</div>';}).join("");
+$("skills-map").innerHTML=rows+'<div class="filter-note">Roles: '+S.team.map(p=>esc(p.n)+" — "+ROLE_NAMES[p.role.primary]+(p.career.revealed?" · "+SKILLS[p.career.talent]+" talent":" · undiscovered talent")).join("; ")+'</div>';}
 function createPerson(){const id=S.pid++;const base=NAMES[(id-1)%NAMES.length];return{id:id,n:base+(id>20?" "+(Math.floor((id-1)/20)+1):""),col:COLORS[(id-1)%COLORS.length],trait:pick(TRAITS),s:Object.fromEntries(KEYS.map(k=>[k,+(1+Math.random()*.6).toFixed(2)])),mood:70,loy:60,t:"idle",mem:[],interest:pick(INTEREST_KEYS),lastCareDay:-99,career:null};}
 function sectorOfClient(client){for(const k of SECTOR_KEYS)if(SECTORS[k].clients.includes(client))return k;return null;}
 function dealTier(){return Math.min(5,1+Math.floor(S.market.completed/5));}

@@ -1864,7 +1864,7 @@ if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5=
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
 labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev||(d.w!==p.id&&!unitAssignmentAllowed(d,p)))return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;performanceAssign(d,p);}save();renderStructure();refresh();}
-function unitAssignmentAllowed(d,p){const owner=unitOfPerson(p.id);return d.unitKey?owner?.key===d.unitKey:!owner;}
+function unitAssignmentAllowed(d,p){const owner=unitOfPerson(p.id);if(owner?.managerId===p.id)return false;return d.unitKey?owner?.key===d.unitKey:!owner;}
 function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;
  const u=d.unitKey?unitOfPerson(p.id):null;
  const unitFit=d.unitKey?(u?.key===d.unitKey?1.08:u?.key?.88:1):1;

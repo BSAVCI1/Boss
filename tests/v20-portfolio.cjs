@@ -146,4 +146,36 @@ test("two independently purchased service lines persist, recover from legacy rec
  reconcile(saved);
 });
 
+test("Executive Assistant shows real financial metrics, department budgets and three priorities",()=>{
+ const s=init();s.day=7;fund(s,200);
+ const values={revenue:120,costs:45,cashIn:90,cashOut:25,wins:2,delivered:1,missed:0};
+ s.bi.daily.push({day:7,values});
+ for(const [k,v] of Object.entries(values))s.bi.totals[k]=(s.bi.totals[k]||0)+v;
+ s.cash+=65;
+ const plan=s.org.departments.commercial.plan;plan.limits.training=100;plan.spent.training=20;
+ el("ea-weekly-report").open=true;G.renderExecutiveWeekly();
+ const body=el("ea-weekly-body").innerHTML;
+ for(const part of ["operating profit","operating costs","net cash movement","Department leaders","remaining","Three CEO priorities","CEO approvals"])
+  assert.ok(body.includes(part),"missing briefing part: "+part);
+ assert.ok(body.includes("$120"),"seven-day revenue missing");
+ assert.ok(body.includes("$45"),"seven-day operating cost missing");
+ assert.ok(body.includes("$75"),"seven-day operating profit missing");
+ assert.ok(body.includes("$65"),"seven-day cash movement missing");
+ reconcile(s);
+});
+test("failed browser write rolls back a business launch with no phantom paid investment",()=>{
+ const s=init();fund(s,300);const beforeCash=s.cash,beforeInvestments=s.bi.totals.investments;
+ const previousWrite=sandbox.localStorage.setItem;
+ sandbox.localStorage.setItem=(key,value)=>{if(key==="boss20")throw Error("storage quota reached");return previousWrite(key,value)};
+ try{assert.equal(G.executiveLaunch("marketing"),false,"purchase must never appear successful without a durable save");}
+ finally{sandbox.localStorage.setItem=previousWrite;}
+ const current=G.get();
+ assert.equal(current.cash,beforeCash);
+ assert.equal(current.bi.totals.investments,beforeInvestments);
+ assert.equal(current.exec.lines.length,0);
+ assert.equal(store.has("boss20_service_line_journal"),false,"journal must not claim failed purchase");
+ assert.equal(store.has("boss20"),false,"failed primary write must not have persisted");
+ assert.ok(el("save-warning").textContent.includes("could not save progress"));
+ reconcile(current);
+});
 console.log("Boss v20 functional and persistence checks passed.");

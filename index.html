@@ -329,7 +329,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <script>
 (function(){
 "use strict";
-const KEY="boss15";
+const KEY="boss151";
 let labHistorySignature="";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
@@ -727,7 +727,7 @@ coachDecision("Commercial policy: "+type,before,"New future contracts use "+valu
 save();refresh();return true;
 }
 
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 if(!INTERESTS[p.interest])p.interest=INTEREST_KEYS[(p.id-1)%INTEREST_KEYS.length];

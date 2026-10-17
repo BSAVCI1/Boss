@@ -1589,13 +1589,14 @@ function ladderReassign(){
  }
  S.org.progression.reportTo=reportTo;
 }
+let inDailyTick=false;
 function ladderPromote(level,id,ceo=false){
  const eligible=ladderEvaluation(level),p=person(id);if(!eligible?.ready||eligible.candidateId!==id||!p)return false;
  const extra=eligible.incremental*S.mod.cost,g=S.org.progression;
  const total=S.team.reduce((sum,x)=>sum+dailySalary(x),0);
  if(S.cash<(total+extra)*14)return false;
  if(!ceo&&ladderPayroll()+extra>g.authorityDaily+1e-6)return false;
- return unitCommit(()=>{
+ const appoint=()=>{
   const node=ladderNode(id);
   if(node){node.level=level;node.since=S.day;}else g.appointments.push({id,level,since:S.day,successorId:null});
   p.career.path="leadership";ladderSignature="";
@@ -1603,7 +1604,9 @@ function ladderPromote(level,id,ceo=false){
   g.events=g.events.slice(-60);ladderReassign();
   logIt(p.n+" became "+LADDER[level].name+"; recurring payroll +"+biCurrency(extra)+"/day.");
   return true;
- });
+ };
+ // The outer daily simulation owns the tick save. Never overlap it with a second save.
+ return inDailyTick?appoint():unitCommit(appoint);
 }
 function ladderSetAuthority(amount){
  if(!Number.isFinite(amount)||amount<0||amount>100||Math.round(amount*100)!==Math.round(amount*10000)/100)return false;
@@ -1612,7 +1615,10 @@ function ladderSetAuthority(amount){
 function ladderDay(){
  const g=S.org.progression;if(S.day%7||g.lastChecked===S.day)return;g.lastChecked=S.day;
  ladderReassign();const next=ladderNext();
- if(next?.ready&&ladderPayroll()+next.incremental*S.mod.cost<=g.authorityDaily)ladderPromote(next.level,next.candidateId,false);
+ if(next?.ready&&ladderPayroll()+next.incremental*S.mod.cost<=g.authorityDaily){
+  inDailyTick=true;
+  try{ladderPromote(next.level,next.candidateId,false);}finally{inDailyTick=false;}
+ }
  ladderCoachSuccessors();
 }
 
@@ -1658,6 +1664,7 @@ function orgPersonPosition(p){
  if(orgManager(p.department)?.id===p.id)return DEPARTMENTS[p.department].name+" "+orgLeaderTitle(p);
  for(const role of DEPARTMENTS[p.department]?.skills||[])
   if(orgSubManager(p.department,role)?.id===p.id)return ROLE_NAMES[role]+" Manager";
+ const ladder=ladderNode(p.id);if(ladder)return (ROLE_NAMES[orgWorkRole(p)]||"Functional")+" "+LADDER[ladder.level].name;
  return p.role.primary==="lead"?"Leadership role · not appointed manager":ROLE_NAMES[p.role.primary]||"Specialist";
 }
 function orgWorkRole(p){return ["sales","mkt","prod","ops"].includes(p?.role?.previousPrimary)?p.role.previousPrimary:p?.role?.primary;}
@@ -1991,7 +1998,9 @@ function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
 function release(p){if(!p)return;for(const d of S.deals)if(d.w===p.id)d.w=null;p.t="idle";}
-function removePerson(p){if(S.team.length<=1)return false;for(const u of S.exec?.units||[]){if(u.managerId===p.id){u.managerId=null;for(const req of S.exec.unitRequests||[])if(req.key===u.key&&req.status==="open"){req.status="withdrawn";req.decidedAt=S.day;}}u.staffIds=u.staffIds.filter(id=>id!==p.id);}if(S.ops.assistantId===p.id)S.ops.assistantId=null;for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===p.id)S.org.departments[k].managerId=null;release(p);S.team=S.team.filter(x=>x.id!==p.id);avatars.delete(p.id);return true;}
+function removePerson(p){if(S.team.length<=1)return false;for(const u of S.exec?.units||[]){if(u.managerId===p.id){u.managerId=null;for(const req of S.exec.unitRequests||[])if(req.key===u.key&&req.status==="open"){req.status="withdrawn";req.decidedAt=S.day;}}u.staffIds=u.staffIds.filter(id=>id!==p.id);}if(S.ops.assistantId===p.id)S.ops.assistantId=null;for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===p.id)S.org.departments[k].managerId=null;release(p);S.team=S.team.filter(x=>x.id!==p.id);
+ if(S.org?.progression){const g=S.org.progression;g.appointments=g.appointments.filter(n=>n.id!==p.id);delete g.reportTo[p.id];for(const id of Object.keys(g.reportTo))if(g.reportTo[id]===p.id)delete g.reportTo[id];ladderReassign();ladderSignature="";}
+ avatars.delete(p.id);return true;}
 function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S.seeds.includes(k));if(!unused.length)return false;
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
@@ -2258,6 +2267,7 @@ function teamReportingGroups(){
   const leader=person(n.id),reporters=S.team.filter(p=>S.org.progression.reportTo[p.id]===n.id&&!ladderNode(p.id));
   add("ladder-"+n.id,(ROLE_NAMES[orgWorkRole(leader)]||"Corporate")+" · Team Lead "+(leader?.n||"Vacant"),[leader,...reporters]);
  }
+ for(const n of S.org.progression.appointments){const leader=person(n.id),staff=S.team.filter(p=>S.org.progression.reportTo[p.id]===n.id);add("ladder-"+n.id,(leader?.n||"Leader")+" · "+LADDER[n.level].name+" → direct reports",[leader,...staff]);}
  for(const u of S.exec?.units||[])add("unit-"+u.key,SERVICE_LINES[u.key].name+" → "+(person(u.managerId)?.n||"Vacant GM"),u.staffIds.map(id=>person(id)));
  for(const dept of DEPT_KEYS){
   const chief=orgManager(dept),label=DEPARTMENTS[dept].name;

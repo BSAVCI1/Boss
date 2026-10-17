@@ -438,7 +438,7 @@ const sec=S.market.open.includes(S.market.focus)?S.market.focus:pick(S.market.op
 const returning=Object.entries(S.market.customers).filter(([name,c])=>c.sector===sec&&c.loyalty>=60);
 const cl=returning.length&&Math.random()<.28?pick(returning)[0]:pick(SECTORS[sec].clients);
 S.pipeline.leads.push({id:S.pipeline.seq++,client:cl,sector:sec,stage:"prospect",progress:0,age:0,source,created:S.day});
-return true;}
+biFunnel("lead",S.pipeline.leads[S.pipeline.leads.length-1]);return true;}
 function activeProspectors(){return S.team.filter(p=>p.t==="prospect"||p.t==="market").filter(p=>p.career.recoveryDays===0);}
 function pipelineDay(){const leads=S.pipeline.leads;
 if(S.day>=S.pipeline.nextInbound){if(leads.length<12)addProspect("inbound");S.pipeline.nextInbound=S.day+Math.max(8,Math.round(12/S.mod.deals));}
@@ -450,14 +450,14 @@ else if(S.pipeline.prospecting>7)S.pipeline.prospecting=7;
 for(const l of [...leads]){l.age++;const adv=energy>0?Math.min(1.8,.27+energy*.45):.13;
 if(l.stage!=="negotiation")l.progress+=adv;
 const phases={prospect:["qualified",2.6],qualified:["proposal",4],proposal:["negotiation",3]};
-if(phases[l.stage]&&l.progress>=phases[l.stage][1]){l.stage=phases[l.stage][0];l.progress=0;}}
+if(phases[l.stage]&&l.progress>=phases[l.stage][1]){l.stage=phases[l.stage][0];l.progress=0;biFunnel(l.stage,l);}}
 let converted=false;
 for(const lead of [...leads].filter(l=>l.stage==="negotiation")){
 const cap=pipelineCapacity();if(S.flow.focus||S.deals.length>=cap||converted||S.day-S.pipeline.lastWon<8)continue;
 if(lead.age<6)continue;
 if(Math.random()<.84||S.market.customers[lead.client]?.loyalty>72){
-const d=createDeal(lead.client);d.sector=lead.sector;d.sourceLead=lead.id;S.pipeline.closed++;S.pipeline.lastWon=S.day;logIt("Sales won "+lead.client+" ("+SECTORS[lead.sector].name+"). Project booked from pipeline.");converted=true;}
-else logIt("Proposal to "+lead.client+" was declined. Sales will pursue other opportunities.");
+const d=createDeal(lead.client);d.sector=lead.sector;d.sourceLead=lead.id;d.leadSource=lead.source;S.pipeline.closed++;S.pipeline.lastWon=S.day;biFunnel("won",lead);logIt("Sales won "+lead.client+" ("+SECTORS[lead.sector].name+"). Project booked from pipeline.");converted=true;}
+else{biFunnel("lost",lead);logIt("Proposal to "+lead.client+" was declined. Sales will pursue other opportunities.");}
 S.pipeline.leads=S.pipeline.leads.filter(x=>x.id!==lead.id);
 }
 S.pipeline.leads=S.pipeline.leads.filter(l=>l.age<100);return converted;}
@@ -508,11 +508,11 @@ if(!customer){sector=Math.random()<.62?S.market.focus:pick(S.market.open);custom
 const diff=+(1+(tier-1)*.32+Math.random()*.4).toFixed(2);
 const work=6+Math.round(diff*2.2)+(tier-1);
 const base=66+Math.floor(diff*13)+(tier-1)*17+extra+(returning?10:0);
-const d={id:S.did++,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning};
-S.deals.push(d);return d;}
+const d={id:S.did++,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning,laborCost:0,directCost:0,biBooked:false,bookVal:0};
+S.deals.push(d);if(S.bi)biBook(d);return d;}
 function sectorAction(key){if(S.ev||!SECTORS[key])return;
 if(S.market.open.includes(key)){if(S.market.focus===key)return;S.market.focus=key;logIt("Your company now specializes in "+SECTORS[key].name+".");}
-else{const sec=SECTORS[key];if(S.rep<sec.rep||S.cash<sec.cost)return;S.cash-=sec.cost;S.market.open.push(key);S.market.focus=key;logIt("Expanded into "+sec.name+" for $"+sec.cost+". New clients can now request work.");}
+else{const sec=SECTORS[key];if(S.rep<sec.rep||S.cash<sec.cost)return;S.cash-=sec.cost;biMoney("expansion",sec.cost,"Enter "+sec.name+" sector");S.market.open.push(key);S.market.focus=key;logIt("Expanded into "+sec.name+" for $"+sec.cost+". New clients can now request work.");}
 save();renderSectorChoices();structural="";renderStructure();refresh();}
 function renderSectorChoices(){$("sector-focus-name").textContent="Focus: "+SECTORS[S.market.focus].name;
 $("sector-level").textContent="Stage "+dealTier()+" · "+S.market.completed+" completed projects";
@@ -531,10 +531,10 @@ if(action==="premium"){d.base=Math.round(d.base*1.25);d.work=Math.ceil(d.work*1.
 else if(action==="fast"){d.base=Math.round(d.base*.92);d.work=Math.max(4,Math.ceil(d.work*.82));d.quality=clamp(d.quality-7);d.change=2;logIt("Agreed a quick, lean delivery with "+d.cl+": less scope, slightly lower fee.");}
 else if(action==="care"){d.base=Math.round(d.base*.95);d.dl+=7;d.quality=clamp(d.quality+8);d.change=3;logIt("Agreed a quality-first arrangement with "+d.cl+".");}
 else return;
-d.negotiated=true;save();structural="";renderStructure();refresh();}
+d.negotiated=true;biReprice(d);save();structural="";renderStructure();refresh();}
 function projectAction(id,action){if(S.ev)return;const d=deal(id);if(!d)return;
-if(action==="extend"&&!d.extended&&d.prog<d.work){d.extended=true;d.dl+=8;d.base=Math.floor(d.base*.90);S.rep=Math.max(0,S.rep-1);logIt("Renegotiated 8 more days with "+d.cl+" in return for a 10% fee reduction.");}
-else if(action==="review"&&!d.reviewed&&d.prog<d.work&&S.cash>=8){d.reviewed=true;S.cash-=8;d.quality=clamp(d.quality+12);logIt("A quality review improved "+d.cl+"'s project for $8.");}
+if(action==="extend"&&!d.extended&&d.prog<d.work){d.extended=true;d.dl+=8;d.base=Math.floor(d.base*.90);biReprice(d);S.rep=Math.max(0,S.rep-1);logIt("Renegotiated 8 more days with "+d.cl+" in return for a 10% fee reduction.");}
+else if(action==="review"&&!d.reviewed&&d.prog<d.work&&S.cash>=8){d.reviewed=true;S.cash-=8;d.directCost=(d.directCost||0)+8;biMoney("quality",8,"Quality review: "+d.cl);d.quality=clamp(d.quality+12);logIt("A quality review improved "+d.cl+"'s project for $8.");}
 else return;save();structural="";renderStructure();refresh();}
 function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:d.sector,loyalty:48,orders:0,quality:0};prev.sector=d.sector;
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
@@ -562,7 +562,7 @@ if((p.t.startsWith("d")||p.t==="assist"||p.t==="exp")&&p.career.stress>=92&&p.ca
 p.career.recoveryDays=4;logIt(p.n+" took a four-day recovery pause after sustained workload.");}
 const recovering=p.career.recoveryDays>0;
 if(recovering){p.career.recoveryDays--;dm=1.5;}
-else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1);d.prog+=e;
+else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1);d.prog+=e;d.laborCost=(d.laborCost||0)+dailySalary(p);
 d.quality=clamp(d.quality+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1)-(p.career.stress>=75?.25:0)-(p.career.burnout>=45?.18:0));
 for(const [index,limit,name] of [[1,.34,"Plan approved"],[2,.73,"Build completed"]])if(d.milestone<index&&d.prog>=d.work*limit){d.milestone=index;logIt(d.cl+": "+name+" ("+Math.round(d.quality)+"% quality).");}
 p.s[d.need]+=.05*S.mod.learn*(aligned?1.12:1);dm=(e>=.9?.4:-.3)+(aligned?.15:0);}else{p.t="idle";dm=-.2;dirty=true;}}
@@ -570,19 +570,21 @@ else if(p.t==="prospect"||p.t==="market"){p.s[p.t==="prospect"?"sales":"mkt"]+=.
 else if(p.t==="coachteam"){mentorDay(p);p.s.ops+=.012*S.mod.learn;dm=.25;if(discoverFromWork(p))ideaDirty=true;}
 else if(p.t==="study"){p.s[weakest(p)]+=.14*S.mod.learn*mf*(p.interest==="learning"?1.2:1);dm=.3;if(discoverFromWork(p))ideaDirty=true;}
 else if(p.t==="teach"&&S.team.length>1){const k=strongest(p),others=S.team.filter(x=>x.id!==p.id).sort((a,b)=>a.s[k]-b.s[k]);const target=others[0];if(target.s[k]<p.s[k]){target.s[k]+=.12*S.mod.learn*mf*(p.trait==="Social"?1.5:1)*(p.interest==="people"?1.2:1);p.s[k]+=.01;}dm=.3;if(discoverFromWork(p))ideaDirty=true;}
-else if(p.t==="exp"){S.cash=Math.max(0,S.cash-1);const avg=KEYS.reduce((s,k)=>s+p.s[k],0)/4;const chance=(.04+.01*avg)*mf*(p.trait==="Curious"?1.5:1)*(p.trait==="Creative"?1.3:1)*(p.interest==="creative"?1.2:1);if(Math.random()<chance){ideaDirty=discover(p.n,[p.role.primary==="sales"?"ref":p.role.primary==="mkt"?"story":p.role.primary==="prod"?"int":"check"])||ideaDirty;}dm=.3;}
+else if(p.t==="exp"){const spent=Math.min(1,S.cash);S.cash-=spent;if(spent>0)biMoney("research",spent,p.n+" research experiment");const avg=KEYS.reduce((s,k)=>s+p.s[k],0)/4;const chance=(.04+.01*avg)*mf*(p.trait==="Curious"?1.5:1)*(p.trait==="Creative"?1.3:1)*(p.interest==="creative"?1.2:1);if(Math.random()<chance){ideaDirty=discover(p.n,[p.role.primary==="sales"?"ref":p.role.primary==="mkt"?"story":p.role.primary==="prod"?"int":"check"])||ideaDirty;}dm=.3;}
 else if(p.t==="rest"){dm=2;}
 else if(p.t==="assist"){p.s.ops+=.025*S.mod.learn;dm=.25;}
 const assignedDeadline=p.t.startsWith("d")?deal(Number(p.t.slice(1)))?.dl??99:99;
-talentAndCareerDay(p,recovering?"rest":p.t,assignedDeadline);
+talentAndCareerDay(p,recovering?"rest":p.t,assignedDeadline);biTeamDay(p);
 p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
 if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
 }
-for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){const payout=feeFor(d);S.cash+=payout;S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" paid $"+payout+" for the finished "+SECTORS[d.sector].name+" project. Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
-else if(d.dl<=0){S.rep=Math.max(0,S.rep-3);recordCustomer(d,false);logIt("Missed the deadline for "+d.cl+". Reputation and customer loyalty dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
+for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){const payout=feeFor(d);S.cash+=payout;biProjectEnd(d,true,payout);S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" paid $"+payout+" for the finished "+SECTORS[d.sector].name+" project. Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
+else if(d.dl<=0){biProjectEnd(d,false);S.rep=Math.max(0,S.rep-3);recordCustomer(d,false);logIt("Missed the deadline for "+d.cl+". Reputation and customer loyalty dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
 assistantDeadlineAlerts();
-const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);if(S.cash<salary){S.cash=0;for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford salaries. Team morale dropped.",true);}else S.cash-=salary;
+const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(S.cash,salary);S.cash-=actuallyPaid;
+biMoney("payroll",salary,"Daily payroll",actuallyPaid);
+if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
 save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;}save();renderStructure();refresh();}

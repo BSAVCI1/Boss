@@ -360,4 +360,30 @@ test("v21 failed browser save cannot register a unit or debit a purchase",()=>{
  assert.equal(G.load().exec.units.length,0,"Reload must not invent the failed conversion");
 });
 
+test("v21 730-day managed-unit payroll never double-posts or loses team and line history",()=>{
+ const s=init();fund(s,120000);s.day=2800;s.deals=[];s.flow.focus=true;s.nextEv=99999;
+ assert.equal(G.executiveLaunch("product"),true);
+ assert.equal(G.executiveLaunch("marketing"),true);
+ assert.equal(G.unitActivate("product"),true);
+ assert.equal(G.unitActivate("marketing"),true);
+ const gm=s.team[0],member=s.team[1],other=s.team[2];
+ gm.career.rank=1;
+ assert.equal(G.unitAppoint("product",gm.id),true);
+ assert.equal(G.unitTransfer("product",member.id),true);
+ assert.equal(G.unitTransfer("marketing",other.id),true);
+ const start=s.day,initialIncome=s.bi.totals.revenue,initialInvestments=s.bi.totals.investments;
+ for(let i=0;i<730;i++)G.tick();
+ assert.equal(s.day,start+730,"The simulation should advance a full two years");
+ assert.equal(s.exec.units.length,2);
+ assert.equal(s.exec.lines.length,2,"Operating a unit cannot relaunch a paid service");
+ assert.equal(s.bi.totals.investments,initialInvestments,"No investment should be charged after initial purchases");
+ assert.equal(s.bi.totals.revenue,initialIncome,"Dedicated unit payroll must not create phantom customer sales");
+ assert.ok(s.exec.units[0].payrollCost>0&&s.exec.units[1].payrollCost>0,"Real dedicated payroll must be tracked");
+ assert.equal(new Set(s.exec.units.flatMap(u=>u.staffIds)).size,3);
+ const loaded=G.load();assert.ok(loaded&&loaded.day===s.day,"Two years of unit operations should survive reload");
+ assert.deepEqual([...loaded.exec.units.map(u=>u.key)].sort(),["marketing","product"]);
+ assert.equal(loaded.exec.lines.length,2);
+ assert.equal(loaded.team.length,s.team.length);
+ reconcile(s);
+});
 console.log("Boss v20 functional and persistence checks passed.");

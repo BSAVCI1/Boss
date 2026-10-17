@@ -598,7 +598,7 @@ function coachManagerProfiles(){return DEPT_KEYS.map(k=>{
 const d=S.org.departments[k],m=orgManager(k),reports=orgReports(k),stat=d.stats;const experience=m?m.career.xp:0;
 const leadership=m?Math.round(managerCompetence(m)):0;
 const attempts=stat.delivered+(stat.missed||0);
-const score=k==="commercial"?(stat.leads>=d.target.leads?"Target reached":stat.leads===0?"No measured leads":"Below lead target"):(attempts>=3?(stat.onTime/attempts*100>=d.target.onTime?"Target reached":"Below on-time target"):"Not enough deliveries");
+const score=k==="commercial"?(stat.leads>=d.target.leads||stat.wins>=Math.max(2,Math.ceil(d.target.leads/2))?"Target reached (leads or wins)":stat.leads===0&&stat.wins===0?"No measured commercial output":"Below target (leads and wins)") :(attempts>=3?(stat.onTime/attempts*100>=d.target.onTime?"Target reached":"Below on-time target"):"Not enough deliveries");
 return'<div class="coach-manager-profile"><b>'+DEPARTMENTS[k].name+': '+esc(m?.n||"Founder-led")+'</b><div class="coach-mini">'+(m?"Leadership competency "+leadership.toFixed(0)+" / 100. Planning "+m.management.planning.toFixed(0)+" · Delegation "+m.management.delegation.toFixed(0)+" · Coaching "+m.management.coaching.toFixed(0)+" · Communication "+m.management.communication.toFixed(0)+". These skills improve with relevant practice.":"Appoint an experienced employee to delegate coaching and team assignments.")+'</div><div class="coach-mini">Direct reports: '+reports.length+' · Performance: '+score+' · Coaching budget '+biCurrency(d.spent)+'/'+biCurrency(d.budget)+' · Coaching sessions '+stat.coached+'</div><div class="coach-mini">'+(m?"May coordinate assigned-department tasks and coach within the approved budget. Must escalate hiring, firing, cross-department transfers and promotions to the CEO.":"You currently own department decisions.")+'</div>'+(d.reviews?.length?'<div class="coach-mini">Last review: '+esc(d.reviews[d.reviews.length-1].result)+' · '+esc(d.reviews[d.reviews.length-1].reading)+'</div>':'')+'</div>';}).join("");}
 function coachSectorReport(){const all=S.market.open;return '<p class="coach-help">Sector focus directs new prospecting, adds about 12% to the fee when a project is agreed, and increases delivery speed for matching active work. <b>Existing agreed fees no longer change when focus changes.</b> Expansion costs cash up front; the game does not guarantee demand or investment payback.</p>'+
 SECTOR_KEYS.map(k=>{const sc=SECTORS[k],wins=S.market.sectorWins[k]||0,tracked=S.bi.sectorTotals[k]||{};
@@ -620,6 +620,7 @@ const noWorker=S.deals.filter(d=>d.w===null);
 if(noWorker.length)issues.push({level:"amber",title:noWorker.length+" unassigned client project(s)",why:"Projects with no employee cannot progress and may miss deadlines.",do:"Assign a suitable specialist or enable eligible assistant delegation.",view:"work"});
 const atRisk=S.deals.filter(d=>d.dl<=5);
 if(atRisk.length)issues.push({level:"red",title:atRisk.length+" project deadline(s) near",why:"Missed projects damage reputation and customer loyalty.",do:"Prioritize the earliest deadline and review workload.",view:"work"});
+if(S.pipeline.leads.length>=S.pipeline.target+3&&S.deals.length<2)issues.push({level:"amber",title:"Negotiation backlog but little delivery work",why:"Prospecting is exceeding contract intake; market competition and capacity-limited sales timing affect conversion.",do:"Review lead win odds, cash and commercial vs delivery staffing before hiring; existing contracts are unchanged.",view:"work"});
 const need=S.pipeline.leads.length<S.pipeline.target;
 if(need)issues.push({level:"amber",title:"Pipeline below your coverage target",why:"Future customer work may not replenish delivery demand.",do:"Allocate Sales or Marketing staff to prospecting.",view:"work"});
 const stressed=S.team.filter(p=>p.career.stress>70||p.career.burnout>35);
@@ -951,7 +952,7 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
-ensureOrganization(s);ensureBI(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureWorld(s);ensureViewState(s);ensureImprovements(s);
+ensureOrganization(s);ensureBI(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureWorld(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
 for(const d of s.deals)if(!Number.isFinite(d.agreedFee))d.agreedFee=d.biBooked&&Number.isFinite(d.bookVal)?d.bookVal:estimatedFee(d,s);
 return s;}catch(e){return null;}}
 const BI_FIELDS=["deliveryEligibleDays","deliveryRoleWorkDays","revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
@@ -1194,8 +1195,8 @@ function orgManager(key){const id=S.org.departments[key]?.managerId;const p=pers
 function orgReports(key){const mgr=orgManager(key);return S.team.filter(p=>p.department===key&&p.id!==mgr?.id&&p.id!==S.ops.assistantId);}
 function orgPeriod(){for(const key of DEPT_KEYS){const d=S.org.departments[key];if(S.day-d.periodStart>=30){
 const v=d.stats,attempts=v.delivered+(v.missed||0),hasEvidence=key==="commercial"?v.leads>0:attempts>=3;
-const achieved=key==="commercial"?v.leads>=d.target.leads:attempts>=3&&Math.round(100*v.onTime/attempts)>=d.target.onTime;
-const reading=key==="commercial"?"Leads "+v.leads+"/"+d.target.leads:"On-time "+(attempts?Math.round(100*v.onTime/attempts)+"%":"no deliveries")+" / "+d.target.onTime+"%";
+const achieved=key==="commercial"?(v.leads>=d.target.leads||v.wins>=Math.max(2,Math.ceil(d.target.leads/2))):attempts>=3&&Math.round(100*v.onTime/attempts)>=d.target.onTime;
+const reading=key==="commercial"?"New leads "+v.leads+"/"+d.target.leads+" · Wins "+v.wins+" (including existing pipeline)":"On-time "+(attempts?Math.round(100*v.onTime/attempts)+"%":"no deliveries")+" / "+d.target.onTime+"%";
 const result={day:S.day,manager:orgManager(key)?.n||"Founder",result:hasEvidence?(achieved?"Target met":"Below target"):"Insufficient evidence",reading,coached:v.coached,spent:d.spent};
 d.reviews.push(result);if(d.reviews.length>6)d.reviews.shift();
 d.periodStart=S.day;d.spent=0;d.stats=orgEmptyStats();
@@ -1397,7 +1398,7 @@ function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4)+(d.worldStrategy==="relationships"?3:0));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -1440,7 +1441,7 @@ if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not 
 }
 for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){performanceFinish(d,true,feeFor(d));orgTrackDelivery(d,true);const payout=feeFor(d);biProjectEnd(d,true,payout);S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" completed "+biCurrency(payout)+" "+SECTORS[d.sector].name+" project; "+(d.paymentTerms===0?"cash collected":"invoice issued, collection due in "+d.paymentTerms+" days")+". Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
 else if(d.dl<=0){performanceFinish(d,false);orgTrackDelivery(d,false);biProjectEnd(d,false);S.rep=Math.max(0,S.rep-3);recordCustomer(d,false);logIt("Missed the deadline for "+d.cl+". Reputation and customer loyalty dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
-assistantDeadlineAlerts();economyDay();
+assistantDeadlineAlerts();economyDay();ideaProgressDay();
 const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(S.cash,salary);S.cash-=actuallyPaid;
 biMoney("payroll",salary,"Daily payroll",actuallyPaid);
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
@@ -1471,7 +1472,7 @@ logIt(boss.n+" assigned "+employee.n+" to "+d.cl+" ("+(lead?DEPARTMENTS[dept].na
 changed=true;
 }return changed;}
 function assistantDecision(ev){const a=person(S.ops.assistantId),policy=S.ops.policy;if(!a||a.t!=="assist"||a.career.recoveryDays>0||ev.a===a.id)return null;
-const cost={praise:0,family:5,mistake:0,idea:10}[ev.k];if(cost===undefined||!policy[ev.k]||cost>policy.budget||S.cash<cost)return null;
+const cost={praise:0,family:5,mistake:0,idea:ev.proposal?.cost??10}[ev.k];if(cost===undefined||!policy[ev.k]||cost>policy.budget||S.cash<cost)return null;
 return ev.k==="mistake"?1:0;}
 function assistantDeadlineAlerts(){const a=person(S.ops.assistantId);if(!a||a.t!=="assist"||a.career.recoveryDays>0||!S.ops.policy.alerts)return;
 const live=new Set(S.deals.map(d=>String(d.id)));for(const k of Object.keys(S.ops.alerted))if(!live.has(k))delete S.ops.alerted[k];
@@ -1626,7 +1627,8 @@ $("idea-summary").textContent=all.length+"/"+Object.keys(IDEAS).length+" discove
 $("ideas").innerHTML=RECIPES.map(r=>{const done=S.built.some(b=>b[0]===r[2]),have=Number(S.seeds.includes(r[0]))+Number(S.seeds.includes(r[1]));
 return '<div class="knowledge-row"><div class="lead"><b>'+esc(r[2])+'</b><span class="small">'+(done?'✓ Active':have+'/2 discoveries')+'</span></div><div class="small">'+esc(IDEAS[r[0]])+' '+(S.seeds.includes(r[0])?'✓':'○')+' · '+esc(IDEAS[r[1]])+' '+(S.seeds.includes(r[1])?'✓':'○')+' · '+esc(r[3])+'</div><div class="progress"><i style="width:'+(done?100:have*45)+'%"></i></div></div>';}).join("");
 $("built").innerHTML=all.length?'<div class="filter-note">Discovered: '+all.map(k=>esc(IDEAS[k])).join(" · ")+'</div>':'<div class="empty">Employees will discover capabilities through work, research and experimentation.</div>';
-$("idea-message").textContent=ideaMessage||"Connected discoveries automatically unlock improvements; no matching required.";}
+$("idea-message").textContent=ideaMessage||"Ideas now have different funding requirements and measured participation. Unlocks depend on results; past discoveries remain intact.";
+$("built").innerHTML+='<details class="aux-details"><summary>Funded idea outcomes · '+S.ideaWork.active.length+' active / '+S.ideaWork.history.length+' completed</summary>'+S.ideaWork.active.map(x=>'<div class="coach-mini">'+esc(x.proposal.name)+' · '+biCurrency(x.cost)+' · '+x.done.toFixed(1)+'/'+x.proposal.days+' days</div>').join("")+S.ideaWork.history.slice(0,10).map(x=>'<div class="coach-mini">Day '+x.finished+' · '+esc(x.proposal.name)+' · '+biCurrency(x.cost)+' · '+esc(x.result)+' · '+x.actualParticipation+' employee-days</div>').join("")+'</details>';}
 function renderBriefing(){
 const urgent=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"||f.risk==="watch");
 const stressed=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35);
@@ -1687,7 +1689,29 @@ if(promo){const readiness=coachCareerStatus(p);promo.textContent=readiness.text+
 if(v)v.textContent="mood "+Math.floor(p.mood)+"% · loyalty "+Math.floor(p.loy)+"%";if(m)m.style.width=p.mood+"%";if(mem){const content=p.mem.map(s=>"<div>“"+esc(s)+"”</div>").join("");if(mem.innerHTML!==content)mem.innerHTML=content;}for(const k of KEYS){const label=$("skill-"+p.id+"-"+k),bar=$("skill-bar-"+p.id+"-"+k);if(label)label.textContent="Lv "+p.s[k].toFixed(1);if(bar)bar.style.width=((p.s[k]%1)*100)+"%";}}
 const logs=S.log.slice(0,14).join("|");if(logSignature!==logs){logSignature=logs;$("log").innerHTML=S.log.slice(0,14).map(x=>'<div class="log-entry">'+x+'</div>').join("");}
 showModal();}
-function startDilemma(){const possible=["raise","mistake","idea","family","praise"];if(S.team.length>1)possible.push("leave","fight","poach");const a=pick(S.team),b=pick(S.team.filter(x=>x.id!==a.id).length?S.team.filter(x=>x.id!==a.id):[a]);S.ev={k:pick(possible),a:a.id,b:b.id};const delegatedChoice=assistantDecision(S.ev);if(delegatedChoice!==null)choose(delegatedChoice,true);}
+
+/* Tiered ideas: immediate cost, real employee involvement and delayed uncertain result. */
+const IDEA_TIERS=[{name:"small pilot",cost:5,days:4,risk:"Low",reward:"Limited discovery"},{name:"team initiative",cost:20,days:10,risk:"Medium",reward:"Potential capability knowledge"},{name:"major initiative",cost:60,days:18,risk:"High",reward:"Larger opportunity, more capacity at risk"}];
+function ensureIdeaWork(state){if(!state.ideaWork||typeof state.ideaWork!=="object")state.ideaWork={since:state.day,active:[],history:[]};if(!Array.isArray(state.ideaWork.active))state.ideaWork.active=[];if(!Array.isArray(state.ideaWork.history))state.ideaWork.history=[];}
+function ideaProposal(p){const i=(p.id+Math.floor(S.day/28))%IDEA_TIERS.length,t=IDEA_TIERS[i];return{type:i,name:t.name,cost:t.cost,days:t.days,risk:t.risk,reward:t.reward,skill:careerRoleSkill(p),suggestion:KEYS.includes(p.career.trainingFocus)?p.career.trainingFocus:careerRoleSkill(p)};}
+function ideaDescription(ev){const p=ev?.proposal;if(!p)return"Legacy idea — $10 one-time funding and immediate discovery attempt.";
+const employee=person(ev.a),labor=employee?biCurrency(employee?dailySalary(employee)*p.days*.5:0):"unknown";
+return p.name+" · "+biCurrency(p.cost)+" one-time cash · "+p.days+" productive participation days · about "+labor+" potential displaced work capacity (already-paid wages, not additional cash) · "+p.risk.toLowerCase()+" risk · "+p.reward+". Success not guaranteed.";}
+function ideaFund(personId,proposal){const p=person(personId);if(!p||!proposal)return false;pay(proposal.cost);
+ensureIdeaWork(S);S.ideaWork.active.push({personId,proposal,start:S.day,done:0,end:S.day+Math.max(12,proposal.days*3),status:"active",cost:proposal.cost});
+logIt("Funded "+proposal.name+" for "+p.n+": "+biCurrency(proposal.cost)+" upfront, "+proposal.days+" participation days. No guaranteed result.");return true;}
+function ideaProgressDay(){for(const item of [...S.ideaWork.active]){const p=person(item.personId),task=p?.career.recoveryDays?"rest":p?.t||"rest";
+if(p&&!task.startsWith("d")&&!["rest","idle"].includes(task)){item.done+=(["exp","improve","streamline","study"].includes(task)?1:.5);if(["exp","improve","streamline"].includes(task))p.career.practice.learning++;}
+if(item.done<item.proposal.days&&S.day<item.end)continue;
+const adequate=item.done>=item.proposal.days,probability=adequate?Math.max(.2,Math.min(.82,.48+(p?.s[item.proposal.skill]||1)/150-(p?.career.stress||0)/350)):0;
+const success=adequate&&Math.random()<probability;
+if(success){if(p)discover(p.n,[item.proposal.suggestion]);if(p){p.career.xp+=1;p.career.satisfaction=clamp(p.career.satisfaction+4);}}
+else if(p)p.career.satisfaction=clamp(p.career.satisfaction-2);
+item.result=success?"Discovery demonstrated":"Unproven — no capability unlocked";item.finished=S.day;item.status="completed";item.actualParticipation=+item.done.toFixed(1);item.estimatedSuccess=+probability.toFixed(2);
+S.ideaWork.history.unshift(item);S.ideaWork.history=S.ideaWork.history.slice(0,40);S.ideaWork.active=S.ideaWork.active.filter(x=>x!==item);
+logIt((p?.n||"Employee")+" "+(success?"completed":"could not validate")+" "+item.proposal.name+" after "+item.actualParticipation+" participation days. "+item.result+".");}}
+
+function startDilemma(){const possible=["raise","mistake","idea","family","praise"];if(S.team.length>1)possible.push("leave","fight","poach");const a=pick(S.team),b=pick(S.team.filter(x=>x.id!==a.id).length?S.team.filter(x=>x.id!==a.id):[a]);S.ev={k:pick(possible),a:a.id,b:b.id};if(S.ev.k==="idea")S.ev.proposal=ideaProposal(a);const delegatedChoice=assistantDecision(S.ev);if(delegatedChoice!==null)choose(delegatedChoice,true);}
 function L(p,v){if(p)p.loy=clamp(p.loy+v);}
 function Mo(p,v){if(p)p.mood=clamp(p.mood+v);}
 function Me(p,s){if(p){p.mem.unshift(s);p.mem=p.mem.slice(0,3);}}
@@ -1697,12 +1721,12 @@ case"raise":return["A raise request",n+" asks for a recurring raise. It would ad
 case"leave":return["An entrepreneurial dream",n+" wants to leave and start a company.",["Counter-offer (-$30)","Wish them luck","Hold them back"]];
 case"fight":return["Team conflict",n+" and "+m+" are arguing. They both want you to intervene.",["Side with "+n,"Side with "+m,"Team meeting (-$10)"]];
 case"mistake":return["A costly mistake",n+" made a costly mistake at work.",["Blame them","Teach them","Cover it up (-$15)"]];
-case"idea":return["A bold idea",n+" has a crazy idea and asks for a chance to try it.",["Allow it (-$10)","Not now"]];
+case"idea":return["A new business proposal",n+" proposes "+ideaDescription(ev),["Fund pilot ("+biCurrency(ev.proposal?.cost??10)+")","Not now"]];
 case"family":return["Family comes first?",n+" needs a day off for a family situation.",["Of course (-$5)","We are too busy"]];
 case"poach":return["A rival offer","A rival company has made "+n+" an offer.",["Match the offer (-$25)","Let them go"]];
 case"praise":return["Client praise","A client has praised "+n+"’s work.",["Share the credit publicly","Take the credit","Thank them privately"]];
 default:return null;}}
-function coachChoiceCost(kind,i){return kind==="leave"&&i===0?30:kind==="fight"&&i===2?10:kind==="mistake"&&i===2?15:kind==="idea"&&i===0?10:kind==="family"&&i===0?5:kind==="poach"&&i===0?25:0;}
+function coachChoiceCost(kind,i){return kind==="leave"&&i===0?30:kind==="fight"&&i===2?10:kind==="mistake"&&i===2?15:kind==="idea"&&i===0?(S.ev?.proposal?.cost??10):kind==="family"&&i===0?5:kind==="poach"&&i===0?25:0;}
 function choose(i,delegated=false){const ev=S.ev;if(!ev)return;
 const required=coachChoiceCost(ev.k,i);if(required>S.cash){logIt("Insufficient cash for this choice: "+biCurrency(required)+" needed. Select an affordable response.",true);$("modal-text").textContent=dilemmaInfo(ev)[1]+" · This choice requires "+biCurrency(required)+" but you have "+biCurrency(S.cash)+". Choose another option.";return;}const a=person(ev.a),b=person(ev.b);if(!a||!b){S.ev=null;save();refresh();return;}const before=coachSnap(a.id);let result="";
 switch(ev.k){
@@ -1710,7 +1734,7 @@ case"raise":if(i===0){a.career.raise=+(a.career.raise+.25).toFixed(2);L(a,20);Mo
 case"leave":if(i===0){pay(30);L(a,25);Mo(a,10);Me(a,"You fought to keep me");result="You convinced "+a.n+" to stay.";}else if(i===1){removePerson(a);createDeal(a.n+"’s startup",40);result="You wished "+a.n+" luck. Their startup became a client.";}else{L(a,-30);Mo(a,-30);Me(a,"You blocked my dream");result="You blocked "+a.n+"’s dream.";}break;
 case"fight":if(i===0){L(a,10);L(b,-10);Mo(b,-10);Me(b,"You sided against me");result="You sided with "+a.n+" against "+b.n+".";}else if(i===1){L(b,10);L(a,-10);Mo(a,-10);Me(a,"You sided against me");result="You sided with "+b.n+" against "+a.n+".";}else{pay(10);Mo(a,5);Mo(b,5);result="You brought "+a.n+" and "+b.n+" together for a meeting.";}break;
 case"mistake":if(i===0){Mo(a,-20);L(a,-10);Me(a,"You blamed me publicly");result="You blamed "+a.n+" for the mistake.";}else if(i===1){a.s[weakest(a)]+=.5;L(a,10);Me(a,"You helped me learn from a mistake");result="You coached "+a.n+" through the mistake.";}else{pay(15);result="You paid to cover "+a.n+"’s mistake.";}break;
-case"idea":if(i===0){pay(10);L(a,5);discover(a.n);Me(a,"You trusted my idea");result="You backed "+a.n+"’s experiment.";}else{L(a,-5);result="You declined "+a.n+"’s idea for now.";}break;
+case"idea":if(i===0){if(ev.proposal){ideaFund(a.id,ev.proposal);result="Funded "+a.n+"'s "+ev.proposal.name+" for "+biCurrency(ev.proposal.cost)+"; delayed results require "+ev.proposal.days+" participated days.";}else{pay(10);discover(a.n);result="Funded a legacy $10 idea and discovered knowledge immediately.";}L(a,5);Me(a,"You trusted my idea");}else{L(a,-5);result="You declined "+a.n+"’s proposal for now.";}break;
 case"family":if(i===0){pay(5);Mo(a,20);L(a,15);Me(a,"You supported me when I needed it");result="You gave "+a.n+" time for family.";}else{L(a,-20);Mo(a,-10);Me(a,"You said no when I needed help");result="You denied "+a.n+" time off.";}break;
 case"poach":if(i===0){pay(25);L(a,15);Me(a,"You matched a rival offer");result="You matched the rival’s offer for "+a.n+".";}else{removePerson(a);result="You let "+a.n+" join the rival company.";}break;
 case"praise":if(i===0){L(a,10);Mo(a,10);S.rep+=3;Me(a,"You gave me public credit");result="You shared the client’s praise with "+a.n+".";}else if(i===1){S.rep+=5;L(a,-15);Me(a,"You took credit for my work");result="You took the credit for "+a.n+"’s work.";}else{L(a,5);Mo(a,5);result="You thanked "+a.n+" privately.";}break;
@@ -1729,7 +1753,7 @@ return({raise:"Expected: recurring payroll +$0.25/day; approving boosts morale, 
 leave:"Consider retention cost against loyalty and the future loss of capacity.",
 fight:"Mediation costs cash; choosing sides changes the affected employees’ relationships.",
 mistake:"Coaching improves a skill and career experience; covering up a mistake spends cash.",
-idea:"Funding an experiment spends $10 and may unlock company knowledge.",
+idea:"Funding a proposal spends real cash and reserves employee work time. "+ideaDescription(S.ev)+" Results will be reviewed after actual participation.",
 family:"Supporting leave costs $5 but reduces employee stress and improves satisfaction.",
 poach:"Matching an outside offer is a one-time retention cost; letting an employee go reduces capacity.",
 praise:"Sharing credit improves employee morale; taking credit favors short-term reputation at a loyalty cost."})[kind]||"The decision journal records immediate changes and reviews later results.";

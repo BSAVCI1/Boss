@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
    sessionStorage.setItem("boss-qa-quota","1");
    let confirmed=false;
    for(let i=0;i<90;i++){
-    if(byId("save-state")?.textContent.includes("extended device storage")){confirmed=true;break;}
+    if(byId("save-state")?.textContent.startsWith("Saved Day ")&&byId("save-state")?.textContent.includes("extended device storage")){confirmed=true;break;}
     await new Promise(r=>setTimeout(r,100));
    }
    sessionStorage.setItem("boss-qa-indexed-saved",confirmed?"1":"0");
@@ -103,6 +103,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
   const oldLocal=JSON.parse(localStorage.getItem("boss20"));
   const restoredDay=Number(byId("day").textContent.replace("Day ",""));
   result.checks.indexedFallbackReload=Number.isFinite(restoredDay)&&restoredDay>previous.dayBefore&&restoredDay>oldLocal.day;
+  result.checks.indexedDayEvidence={before:previous.dayBefore,local:oldLocal.day,restored:restoredDay,status:byId("save-state")?.textContent};
  }catch(e){result.errors.push(String(e.stack||e));}
  document.title="BOSS_QA:"+btoa(unescape(encodeURIComponent(JSON.stringify(result))));
 });

@@ -193,4 +193,20 @@ assert.ok(!html.includes('assist:"Office assistant"'));
 assert.ok(!html.includes('>Promote · $"+careerPromotionPrice(p)+"'));
 });
 
+test("rendered promotion controls show evaluated numeric dollar prices rather than source code",()=>{
+fresh();G.renderStructure();
+const markup=el("people").innerHTML;
+const labels=markup.split('data-career="promote"').slice(1).map(chunk=>{
+ const button=chunk.slice(0,chunk.indexOf("</button>"));
+ return button.slice(button.lastIndexOf(">")+1).trim();
+});
+assert.equal(labels.length,G.get().team.length,"Every employee has a promotion control");
+for(const label of labels){
+ assert.ok(label.startsWith("Promote · $"),"Unexpected promotion label: "+label);
+ const amount=label.slice("Promote · $".length);
+ assert.ok(amount.length>0&&Number.isFinite(Number(amount)),"Promotion price leaked raw JS instead of a number: "+label);
+}
+assert.ok(!markup.includes("careerPromotionPrice(p)"),"Employee HTML must not expose raw promotion source");
+});
+
 console.log("Boss v19 organizational autonomy regressions passed.");

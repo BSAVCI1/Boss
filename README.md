@@ -1,5 +1,13 @@
 # Boss
 
+## Boss v21.3 — GM-owned delivery capacity (release candidate · PR #26)
+
+A dedicated operating unit now runs its own delivery scheduling through its appointed GM. Corporate dispatch cannot silently borrow its specialists and unit delivery cannot use shared employees without a formal transfer; the CEO's manual assignment choices respect the same boundary. An empty GM position or no dedicated specialists can therefore cause genuine delivery delays. Before allocating employees, keep active contracts completed: ownership is by persistent employee ID, not name.
+
+In Growth → Operating units → select a business, the CEO can select **Balanced**, **Quality** (slower delivery, stronger quality) or **Speed** (faster delivery, quality risk), and set 30-day **revenue** and **billable utilization** targets. These affect future work and scorecards, not historical fees or older payroll. Unit capacity measures real staffed versus delivered employee-days from this release forward; older saved units start with zero new capacity history. Reviews present real revenue, attributed operating costs and utilization without additional consolidated company transactions. Open GM staffing requests and unresolved unit delivery capacity also appear on Today; the Executive Assistant includes unit outcomes in the weekly briefing.
+
+**QA/release status:** PR #26 is under release checks; this section does not claim production until merge, regression, Pages and independent browser evidence pass. See [v21 architecture](docs/V21_IMPLEMENTATION.md). The original Safari profile has not been read or reset.
+
 ## Boss v21.2 — GM accountability (released 2026-10-17 · PR #25)
 
 Operating units now support CEO-controlled General Manager authority: a unit-specific coaching budget, per-action cap, quality objective, and 90/180-day expiry. Existing and migrated units default to $0 authorized spend. Eligible weekly coaching costs $4 and uses real company cash and the same corporate financial ledger; renewing budgets does not bypass the seven-day cooldown.

@@ -17,12 +17,12 @@
 
 **Player-confirmed state:** The original iPhone company now saves reliably beyond Day 2864 using extended device storage; business lines include Product Development and Marketing Studio. No original Safari bytes are copied into the repository. **Design rule:** all subsequent migrations must keep saved staffing, signed contracts, accounting and purchased service-line evidence unchanged.
 
-### v20.3 — Leadership/UI consistency and legacy-process audit (in development, PR #23)
+### v20.3 — Leadership/UI consistency and legacy-process audit (released 2026-10-17, PR #23)
 - Show appointment titles consistently on Today and Team: Department Manager, Director, Sales/Marketing/Product/Operations Manager and Executive Assistant. Show career grade separately; no implicit promotion, pay rise or new IDs.
 - Fix cramped dual-column mobile CEO tree at common 390/414px widths; preserve disclosure state through game ticks. Clearly display CEO direct-report span versus entire department.
 - Explain the *real scope* of existing controls: one department-wide spending budget; subordinate managers share only coaching authority; director controls hiring/training/department wellbeing; headcount authorization is not a maximum direct-report count. Retain the existing safe spending gates.
 - Differentiate operating service portfolios from independent business units; current core + launched-line totals must not imply extra profit. Display a 90-day strategic review as overdue rather than Day 561 / 90.
-- Add complete UI/browser regression tests and an explicit legacy-functionality audit; leave economics and boss20/IndexedDB persistence unchanged.
+- Complete UI/browser regression tests and an explicit legacy-functionality audit; economics and boss20/IndexedDB persistence remain unchanged. Released via [PR #23](https://github.com/BSAVCI1/Boss/pull/23) at `a3ad6e8b031c43d3144bff2057f4505870e79aa5`; production [regression](https://github.com/BSAVCI1/Boss/actions/runs/39062977385) and [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39062977282) passed.
 
 ### v21 — Independent business units, accountable leaders and CEO strategy (next major release)
 - **Separate two concepts:** (A) a service offering such as Website Build within an existing unit; (B) a strategic business unit such as Product Development with dedicated ownership, optional headcount and a forward-only operating P&L. An existing paid line is not purchased again when promoted to a unit. The user must decide which line becomes a unit; no automatic duplication.

@@ -599,10 +599,10 @@ return '<div class="coach-mini"><b>'+esc(p.n)+' · '+esc(ROLE_NAMES[role])+' · 
 
 function coachRoles(){const data=S.bi.totals,people=S.team.length,work=data.staffDays||0;
 const commercial=S.org.departments.commercial.stats,delivery=S.org.departments.delivery.stats;
-const staffHTML='<details class="aux-details"><summary>Productivity by employee</summary><p class="small">Forward-only evidence and grade/role-matched peers. Costs are tracked salary; no automatic cross-role ranking.</p>'+S.team.map(p=>performanceScorecard(p)).join("")+'</details>';
-return '<div class="coach-grid"><div><small>Client delivery utilization</small><strong>'+biPercent(data.billableDays,work)+'</strong></div><div><small>Commercial staff time</small><strong>'+biPercent(data.salesDays+data.marketingDays,work)+'</strong></div><div><small>Development time</small><strong>'+biPercent(data.developmentDays,work)+'</strong></div><div><small>Recovery time</small><strong>'+biPercent(data.restDays,work)+'</strong></div></div>'+
+const staffHTML='<details class="aux-details"><summary>Productivity by employee</summary><div class="coach-employee-output"><p class="small">Forward-only evidence and grade/role-matched peers. Costs are tracked salary; no automatic cross-role ranking.</p>'+S.team.map(p=>performanceScorecard(p)).join("")+'</div></details>';
+return '<div class="coach-role-overview"><div class="coach-grid"><div><small>Client delivery utilization</small><strong>'+biPercent(data.billableDays,work)+'</strong></div><div><small>Commercial staff time</small><strong>'+biPercent(data.salesDays+data.marketingDays,work)+'</strong></div><div><small>Development time</small><strong>'+biPercent(data.developmentDays,work)+'</strong></div><div><small>Recovery time</small><strong>'+biPercent(data.restDays,work)+'</strong></div></div>'+
 '<p class="coach-mini">Billable utilization alone is not a performance grade. Salespeople prospect, marketers create demand, managers mentor, and specialists deliver projects. Review outputs alongside time spent.</p>'+
-'<div class="coach-mini">Current 30-day department outcomes: Commercial '+commercial.leads+' leads / '+S.org.departments.commercial.target.leads+' target, '+commercial.wins+' wins; Delivery '+delivery.delivered+' completions, '+(delivery.delivered+delivery.missed?biPercent(delivery.onTime,delivery.delivered+delivery.missed):"insufficient data")+' on time.</div>'+staffHTML;
+'<div class="coach-mini">Current 30-day department outcomes: Commercial '+commercial.leads+' leads / '+S.org.departments.commercial.target.leads+' target, '+commercial.wins+' wins; Delivery '+delivery.delivered+' completions, '+(delivery.delivered+delivery.missed?biPercent(delivery.onTime,delivery.delivered+delivery.missed):"insufficient data")+' on time.</div></div>'+staffHTML;
 }
 function coachManagerProfiles(){return DEPT_KEYS.map(k=>{
 const d=S.org.departments[k],m=orgManager(k),reports=orgReports(k),stat=d.stats;const experience=m?m.career.xp:0;
@@ -656,8 +656,19 @@ const follow=j.follow?'<p><b>After:</b> company cash '+coachAmount(j.after.cash,
 return '<div class="coach-decision"><strong>'+esc(j.title)+'</strong><p>Day '+j.day+' · Immediate cash '+cash+' · Daily payroll '+pay+'</p><p>'+esc(j.detail)+'</p>'+personChange+'<p>'+status+'</p>'+follow+'</div>';
 }).join("")||'<p class="coach-mini">No significant decisions recorded since this version started. Their immediate effects and follow-ups will appear here.</p>';
 const finance=$("coach-kpi-guide");if(finance&&$("performance-panel").open)finance.innerHTML='<div class="coach-help"><b>What to do when a KPI needs attention</b>Loss or low margin: compare revenue per completed contract with wages and research costs. Unpaid payroll: finish client work, reduce optional spending, then settle wages. Low cash runway: examine realistic completion dates before hiring. Cash flow is not the same as operating profit.</div>';
-const role=$("coach-role-performance");if(role&&$("performance-panel").open){const old=role.querySelector("details"),stayOpen=old?old.open:S.ui.productivityOpen;
-const next=coachRoles().replace('<details class="aux-details"><summary>Productivity by employee</summary>','<details class="aux-details" '+(stayOpen?"open":"")+'><summary>Productivity by employee</summary>');if(role.innerHTML!==next)role.innerHTML=next;}
+const role=$("coach-role-performance");if(role&&$("performance-panel").open){
+const existing=role.querySelector("details"),stayOpen=existing?existing.open:S.ui.productivityOpen;
+const next=coachRoles().replace('<details class="aux-details"><summary>Productivity by employee</summary>','<details class="aux-details" '+(stayOpen?"open":"")+'><summary>Productivity by employee</summary>');
+const overview=role.querySelector(".coach-role-overview"),output=role.querySelector(".coach-employee-output");
+const pivot=next.lastIndexOf('</div><details class="aux-details"'),mark='<div class="coach-employee-output">';
+const innerStart=next.indexOf(mark),innerEnd=next.lastIndexOf('</div></details>');
+if(existing&&overview&&output&&pivot>0&&innerStart>pivot&&innerEnd>innerStart){
+const summary=next.slice('<div class="coach-role-overview">'.length,pivot),cards=next.slice(innerStart+mark.length,innerEnd);
+if(overview.innerHTML!==summary)overview.innerHTML=summary;
+if(output.innerHTML!==cards)output.innerHTML=cards;
+existing.open=stayOpen;
+}else if(role.innerHTML!==next)role.innerHTML=next;
+}
 if($("performance-panel").open){
 $("coach-sales-guide").innerHTML='<p class="coach-help"><b>Improving lead quality</b>Low qualification: review sector fit and Marketing effort. Low win rate: improve Sales capacity or customer trust. Estimate acquisition cost using commercial payroll divided by wins; pipeline activity does not guarantee new contracts.</p>';
 $("coach-delivery-guide").innerHTML='<p class="coach-help"><b>Improving realization</b>Assign specialists who match project requirements, review deadlines and quality before spending more. A higher contract fee may require more work; project contribution excludes general overhead.</p>';

@@ -917,7 +917,7 @@ function worldChangeStrategy(key){if(S.ev||!WORLD_STRATEGIES[key]||S.world.strat
 const old=S.world.strategy,before=coachSnap();S.world.strategy=key;S.world.changedAt=S.day;
 coachDecision("Company strategy: "+WORLD_STRATEGIES[key].name,before,"Moved from "+WORLD_STRATEGIES[old].name+". Changes future customer win odds and future contract price/scope, never reprices existing agreements.",null,30);
 logIt("New commercial strategy: "+WORLD_STRATEGIES[key].name+". Review competitive bids and project contribution over 30 days.");save();refresh();return true;}
-function worldNewEvent(){const w=S.world,phase=Math.floor(S.day/50)%4,types=["tender","referrals","slowdown","retention"],type=types[phase];w.activeEvent={id:S.day,opened:S.day,until:S.day+13,type};w.nextEvent=S.day+55;
+function worldNewEvent(){const w=S.world,phase=Math.floor(S.day/50)%4,types=["tender","referrals","slowdown","retention"],type=types[phase];w.activeEvent={id:S.day,opened:S.day,until:S.day+45,type};w.nextEvent=S.day+55;
 if(type==="slowdown")w.shockUntil=S.day+25;
 logIt("New market brief: "+({tender:"Major contract tender",referrals:"Referral window",slowdown:"Competitive slowdown",retention:"Client relationship opportunity"}[type])+". Review Growth when convenient.");
 }
@@ -1450,7 +1450,7 @@ const strategy=S.day===0?WORLD_STRATEGIES.balanced:worldStrategy();
 const work=Math.max(4,Math.ceil((6+Math.round(diff*2.2)+(tier-1))*strategy.scope));
 const base=66+Math.floor(diff*13)+(tier-1)*17+extra+(returning?10:0);
 const d={id:S.did++,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78+strategy.quality,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning,laborCost:0,directCost:0,biBooked:false,bookVal:0,paymentTerms:S.economy?(S.day===0?0:S.economy.terms):0,priceFactor:S.economy?({standard:1,competitive:.94,premium:1.10}[S.economy.pricing]||1):1,termPriceFactor:S.day===0?1:({0:.96,7:1,14:1.04,30:1.08}[S.economy.terms]||1),worldStrategy:S.day===0?"balanced":S.world.strategy,worldPriceFactor:strategy.price};
-d.agreedFee=estimatedFee(d);S.deals.push(d);if(S.bi)biBook(d);return d;}
+d.agreedFee=estimatedFee(d);const line=executiveLineForDeal(d);if(line){d.serviceLine=line.key;d.bookedAt=S.day;}S.deals.push(d);if(S.bi)biBook(d);return d;}
 function sectorAction(key){if(S.ev||!SECTORS[key])return;const before=coachSnap();
 if(S.market.open.includes(key)){if(S.market.focus===key)return;S.market.focus=key;logIt("Your company now specializes in "+SECTORS[key].name+".");}
 else{const sec=SECTORS[key];if(S.rep<sec.rep||S.cash<sec.cost)return;S.cash-=sec.cost;biMoney("investment",sec.cost,"Enter "+sec.name+" sector");S.market.open.push(key);S.market.focus=key;logIt("Expanded into "+sec.name+" for $"+sec.cost+". New clients can now request work.");}
@@ -1460,6 +1460,7 @@ function renderSectorChoices(){$("sector-focus-name").textContent="Focus: "+SECT
 $("sector-level").textContent="Stage "+dealTier()+" · "+S.market.completed+" completed projects";
 const signature=S.market.focus+"|"+S.market.open.join(",")+"|"+SECTOR_KEYS.map(k=>S.market.open.includes(k)?"open":S.rep>=SECTORS[k].rep&&S.cash>=SECTORS[k].cost?"ready":"locked").join(",");
 if(signature===sectorSignature)return;sectorSignature=signature;
+$("market-direction-help").textContent="Your business: B2B client services · Target market: "+SECTORS[S.market.focus].name+" · Strategy: "+worldStrategy().name+". New sectors require sufficient people, cash and demand.";
 $("sector-options").innerHTML=SECTOR_KEYS.map(key=>{const sector=SECTORS[key],open=S.market.open.includes(key),focused=S.market.focus===key,eligible=S.rep>=sector.rep&&S.cash>=sector.cost;
 const detail=(open?(focused?"Current focus":"Switch focus — free"):"Expand $"+sector.cost+" · Rep "+sector.rep)+(sector.premium>1?" · "+Math.round((sector.premium-1)*100)+"% sector premium":"");
 return '<button type="button" data-sector="'+key+'" '+((!open&&!eligible)||focused?'disabled':'')+' class="'+(focused?'selected':'')+'"><b>'+sector.name+'</b><small>'+detail+'</small></button>';}).join("");
@@ -1504,7 +1505,7 @@ if((p.t.startsWith("d")||p.t==="assist"||p.t==="exp")&&p.career.stress>=92&&p.ca
 p.career.recoveryDays=4;logIt(p.n+" took a four-day recovery pause after sustained workload.");}
 const recovering=p.career.recoveryDays>0;
 if(recovering){p.career.recoveryDays--;dm=1.5;}
-else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*(S.economy.invested.operations?1.06:1)*(1+S.improvements.operations);d.prog+=e;d.laborCost=(d.laborCost||0)+dailySalary(p);
+else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*(S.economy.invested.operations?1.06:1)*(1+S.improvements.operations)*(d.serviceLine&&S.exec.lines.some(x=>x.key===d.serviceLine)?1.05:1);d.prog+=e;d.laborCost=(d.laborCost||0)+dailySalary(p);
 d.quality=clamp(d.quality+S.improvements.product*.06+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1)-(p.career.stress>=75?.25:0)-(p.career.burnout>=45?.18:0)+.12*orgEffective("delivery"));
 for(const [index,limit,name] of [[1,.34,"Plan approved"],[2,.73,"Build completed"]])if(d.milestone<index&&d.prog>=d.work*limit){d.milestone=index;logIt(d.cl+": "+name+" ("+Math.round(d.quality)+"% quality).");}
 p.s[d.need]+=.05*S.mod.learn*(aligned?1.12:1);dm=(e>=.9?.4:-.3)+(aligned?.15:0);}else{p.t="idle";dm=-.2;dirty=true;}}
@@ -1523,8 +1524,8 @@ p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
 if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);orgTrackPerson(p,effectiveTask);if(!recovering)orgManagerDay(p);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
 }
-for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){performanceFinish(d,true,feeFor(d));orgTrackDelivery(d,true);const payout=feeFor(d);biProjectEnd(d,true,payout);S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" completed "+biCurrency(payout)+" "+SECTORS[d.sector].name+" project; "+(d.paymentTerms===0?"cash collected":"invoice issued, collection due in "+d.paymentTerms+" days")+". Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
-else if(d.dl<=0){performanceFinish(d,false);orgTrackDelivery(d,false);biProjectEnd(d,false);S.rep=Math.max(0,S.rep-3);recordCustomer(d,false);logIt("Missed the deadline for "+d.cl+". Reputation and customer loyalty dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
+for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){performanceFinish(d,true,feeFor(d));ceoLineFinish(d,true,feeFor(d));orgTrackDelivery(d,true);const payout=feeFor(d);biProjectEnd(d,true,payout);S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" completed "+biCurrency(payout)+" "+SECTORS[d.sector].name+" project; "+(d.paymentTerms===0?"cash collected":"invoice issued, collection due in "+d.paymentTerms+" days")+". Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
+else if(d.dl<=0){performanceFinish(d,false);ceoLineFinish(d,false);orgTrackDelivery(d,false);biProjectEnd(d,false);S.rep=Math.max(0,S.rep-3);recordCustomer(d,false);logIt("Missed the deadline for "+d.cl+". Reputation and customer loyalty dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
 assistantDeadlineAlerts();economyDay();ideaProgressDay();
 const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(S.cash,salary);S.cash-=actuallyPaid;
 biMoney("payroll",salary,"Daily payroll",actuallyPaid);
@@ -1541,20 +1542,18 @@ if(priority==="skills")return b.fit-a.fit||a.d.dl-b.d.dl;
 const aRisk=a.slack===null?-8:a.slack,bRisk=b.slack===null?-8:b.slack;
 return aRisk-bRisk||a.d.dl-b.d.dl||b.fit-a.fit;});}
 function delegateWork(){if(!S.ops.policy.assign)return false;
-const assistant=person(S.ops.assistantId);
-const activeAssistant=assistant&&assistant.t==="assist"&&assistant.career.recoveryDays===0;
+const assistant=person(S.ops.assistantId),activeAssistant=assistant&&assistant.t==="assist"&&assistant.career.recoveryDays===0;
 let changed=false;
 for(const f of rankedProjects()){const d=f.d;if(d.w!==null)continue;
 const dept=["sales","mkt"].includes(d.need)?"commercial":"delivery";
-const m=orgManager(dept);
-const lead=!activeAssistant&&m&&["coachteam","teach"].includes(m.t)&&m.career.recoveryDays===0?m:null;
-const boss=activeAssistant?assistant:lead;if(!boss)continue;
-const employee=bestIdle(d,lead?dept:null);if(!employee)continue;
-d.w=employee.id;employee.t="d"+d.id;employee.role.autoTask=true;S.ops.assigned++;performanceAssign(d,employee);
-if(lead){ensureManagement(lead);lead.management.delegation=clamp(lead.management.delegation+.25);lead.management.planning=clamp(lead.management.planning+.08);}
-logIt(boss.n+" assigned "+employee.n+" to "+d.cl+" ("+(lead?DEPARTMENTS[dept].name+" department":"office assistant")+").");
-changed=true;
-}return changed;}
+const manager=orgManager(dept),active=manager&&manager.career.recoveryDays===0&&!manager.career.autoRest;
+let worker=active?bestIdle(d,dept):null,boss=worker?manager:null;
+if(!worker&&activeAssistant){worker=bestIdle(d);boss=worker?assistant:null;}
+if(!worker||!boss)continue;
+d.w=worker.id;worker.t="d"+d.id;worker.role.autoTask=true;S.ops.assigned++;performanceAssign(d,worker);
+if(boss===manager){ensureManagement(manager);manager.management.delegation=clamp(manager.management.delegation+.25);manager.management.planning=clamp(manager.management.planning+.08);}
+logIt(boss.n+" assigned "+worker.n+" to "+d.cl+" ("+(boss===manager?"department manager":"executive coordination")+").");
+changed=true;}return changed;}
 function assistantDecision(ev){const a=person(S.ops.assistantId),policy=S.ops.policy;if(!a||a.t!=="assist"||a.career.recoveryDays>0||ev.a===a.id)return null;
 const cost={praise:0,family:5,mistake:0,idea:ev.proposal?.cost??10}[ev.k];if(cost===undefined||!policy[ev.k]||cost>policy.budget||S.cash<cost)return null;
 return ev.k==="mistake"?1:0;}
@@ -1578,10 +1577,10 @@ return '<div class="queue-item"><div class="lead"><b>'+(i+1)+'. '+esc(d.cl)+'</b
 }
 function appointAssistant(pid){if(S.ev)return;const p=person(pid);if(!p)return;const old=person(S.ops.assistantId);
 if(old){old.t="idle";S.ops.assistantId=null;}
-if(!old||old.id!==pid){for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===pid)S.org.departments[k].managerId=null;release(p);p.t="assist";S.ops.assistantId=p.id;logIt(p.n+" became your office assistant.");}
+if(!old||old.id!==pid){for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===pid)S.org.departments[k].managerId=null;release(p);p.t="assist";S.ops.assistantId=p.id;logIt(p.n+" became your executive assistant.");}
 else logIt(p.n+" returned to ordinary team duties.");
 save();structural="";renderStructure();refresh();}
-function hireOfficeAssistant(){if(S.ev||S.ops.assistantId||S.cash<20)return;const p=createPerson();p.s.ops=Math.max(2.3,p.s.ops);p.interest="systems";p.trait="Social";p.mood=75;p.loy=70;p.t="assist";S.cash-=20;biMoney("recruiting",20,"Hire office assistant: "+p.n);ensureCareer(p);ensureRole(p);ensureDepartment(p);S.team.push(p);S.ops.assistantId=p.id;logIt("You hired "+p.n+" as office assistant for $20.");save();structural="";renderStructure();refresh();}
+function hireOfficeAssistant(){if(S.ev||S.ops.assistantId||S.cash<20)return;const p=createPerson();p.s.ops=Math.max(2.3,p.s.ops);p.interest="systems";p.trait="Social";p.mood=75;p.loy=70;p.t="assist";S.cash-=20;biMoney("recruiting",20,"Hire office assistant: "+p.n);ensureCareer(p);ensureRole(p);ensureDepartment(p);S.team.push(p);S.ops.assistantId=p.id;logIt("You hired "+p.n+" as executive assistant for $20.");save();structural="";renderStructure();refresh();}
 function toggleFocus(){if(S.ev)return;S.flow.focus=!S.flow.focus;if(!S.flow.focus){S.flow.nextLead=Math.max(S.flow.nextLead,S.day+5);S.flow.lastLeadAt=Date.now();S.nextEv=Math.max(S.nextEv,S.day+12);}logIt(S.flow.focus?"You closed intake to focus on existing work.":"You reopened client inquiries and staff matters.");save();refresh();}
 function order(pid,t){const p=person(pid);if(!p||S.ev)return;p.role.auto=false;p.role.autoTask=false;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===pid)S.ops.assistantId=null;release(p);p.t=t;save();renderStructure();refresh();}
 function updateButtons(){$("speed-select").value=String(spd);$("pause").classList.toggle("selected",paused);$("pause").setAttribute("aria-pressed",String(paused));$("pause").textContent=paused?"Resume":"Pause";}
@@ -1714,11 +1713,14 @@ return '<article class="card"><div class="lead"><b>'+esc(c.n)+'</b><span class="
 $("candidates").innerHTML=S.hr.pool.length?'<div class="filter-note">Candidates matching your search:</div>'+list:'<div class="empty">Select skills or interests and tap Search candidates to meet talent.</div>';
 }
 function renderIdeas(){const all=S.seeds.filter(k=>IDEAS[k]);
-$("idea-summary").textContent=all.length+"/"+Object.keys(IDEAS).length+" discoveries · "+S.built.length+"/"+RECIPES.length+" capabilities";
+const complete=S.built.length>=RECIPES.length;
+$("idea-summary").textContent=complete?"All capabilities unlocked":all.length+"/"+Object.keys(IDEAS).length+" discoveries · "+S.built.length+"/"+RECIPES.length+" capabilities";
+$("upgrades-complete").hidden=!complete;
+$("upgrades-complete").textContent=complete?"Your company has mastered the capability map. Completed upgrades are archived; keep growing through R&D, business lines and leadership.":"";
 $("ideas").innerHTML=RECIPES.map(r=>{const done=S.built.some(b=>b[0]===r[2]),have=Number(S.seeds.includes(r[0]))+Number(S.seeds.includes(r[1]));
 return '<div class="knowledge-row '+(done?"is-unlocked":"is-locked")+'"><div class="lead"><b>'+(done?"✓ ":"◇ ")+esc(r[2])+'</b><span class="small">'+(done?'Unlocked':have+'/2 found')+'</span></div><div class="small">'+esc(IDEAS[r[0]])+' '+(S.seeds.includes(r[0])?'✓':'○')+' · '+esc(IDEAS[r[1]])+' '+(S.seeds.includes(r[1])?'✓':'○')+' · '+esc(r[3])+'</div><div class="progress"><i style="width:'+(done?100:have*45)+'%"></i></div></div>';}).join("");
 $("built").innerHTML=all.length?'<div class="filter-note">Discovered: '+all.map(k=>esc(IDEAS[k])).join(" · ")+'</div>':'<div class="empty">Employees will discover capabilities through work, research and experimentation.</div>';
-$("idea-message").textContent=ideaMessage||"Ideas now have different funding requirements and measured participation. Unlocks depend on results; past discoveries remain intact.";
+$("idea-message").textContent=ideaMessage||(complete?"New R&D can make bounded quality or efficiency improvements instead of repeating old unlocks.":"Ideas require time and funding; success is never guaranteed.");
 renderIdeaProgress();}
 function renderIdeaProgress(){const area=$("idea-progress-content");if(!area)return;
 $("idea-progress-summary").textContent="Funded idea outcomes · "+S.ideaWork.active.length+" active / "+S.ideaWork.history.length+" completed";
@@ -1857,7 +1859,7 @@ $("business-lines").innerHTML=lines.map(x=>'<div class="service-line"><b>'+esc(x
 $("launch-service-line").disabled=!!S.ev||S.cash<120||S.exec.lines.some(x=>x.key===$("service-line-select").value);
 }
 
-function gameChapter(){let n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;return n>=30&&S.team.length>=12&&leaders===2?"Established":n>=12&&S.team.length>=6?"Growing company":n>=3?"Small agency":"Founder";}
+function gameChapter(){const n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;return n>=100&&S.rep>=100?(S.team.length>=12&&leaders===2?"Established company":"Established specialist firm"):n>=30&&leaders===2?"Growing company":n>=12&&S.team.length>=6?"Small company":n>=3?"Small agency":"Founder";}
 function gamePlan(){let n=S.market.completed||0,open=S.deals.filter(d=>!person(d.w));
 if(!n&&open.length)return["Assign a teammate to your first project","Match a worker to a customer. Your first completed project starts your story.",0,2,"work",open[0].id];
 if(!n&&S.deals.length)return["Finish your first client project","Your team is delivering. Keep an eye on deadlines.",1,2,"work",S.deals[0].id];
@@ -1869,7 +1871,7 @@ if(S.team.length<5&&S.cash>=45)return["Build a team that can scale","Make a cons
 if((S.world?.stats?.won||0)<5)return["Compete with the market leaders","Win customers by playing to your strengths.",S.world?.stats?.won||0,5,"growth",null];
 if(S.market.open.length<3)return["Explore a new sector","Expand only when your people and finances are ready.",S.market.open.length,3,"growth",null];
 if(n<30)return["Build a sustainable company","Complete thirty projects while developing your people.",n,30,"work",null];
-return["Write your next chapter","Choose your next business strategy and develop future leaders.",1,1,"growth",null];}
+return["Lead your next strategic chapter",CEO_PRIORITIES[S.exec.priority].explain,Math.min(90,S.day-S.exec.priorityDay),90,"today",null];}
 let lastGameEvent=null,toastTimeout=0;
 function gameToast(message){const t=$("game-toast");if(!t)return;t.textContent=message;t.hidden=false;clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>t.hidden=true,2400);}
 function gameRender(){
@@ -1877,7 +1879,7 @@ const [title,hint,value,max,view,project]=gamePlan(),event={delivered:S.market.c
 if(lastGameEvent){if(event.delivered>lastGameEvent.delivered)gameToast("Client project completed — great work!");else if(event.built>lastGameEvent.built)gameToast("You unlocked a company capability!");else if(event.wins>lastGameEvent.wins)gameToast("Competitive contract won!");}lastGameEvent=event;
 $("game-chapter").textContent=gameChapter()+" · Day "+S.day;
 $("game-goal").textContent=title;$("game-goal-hint").textContent=hint;$("game-goal-progress").textContent=value+" / "+max;$("game-goal-bar").style.width=Math.min(100,Math.max(0,value/Math.max(1,max)*100))+"%";
-$("game-primary").textContent=(project?"Open this project":view==="work"?"See client work":view==="team"?"Meet your team":"Explore Growth")+" →";
+$("game-primary").textContent=(project?"Open this project":view==="work"?"See client work":view==="team"?"Meet your team":view==="today"?"Review leadership meeting":"Explore Growth")+" →";
 $("game-primary").dataset.go=view;if(project)$("game-primary").dataset.project=String(project);else delete $("game-primary").dataset.project;
 const stories=S.log.map(x=>String(x).replace(/<[^>]+>/g,"")).filter(x=>/completed|hired|joined|promot|won|missed|quit|unlocked|founded|discovered/i.test(x)).slice(0,2);
 const html=(stories.length?stories:["Your team's next achievement is waiting."]).map(x=>'<div class="game-story-item">'+esc(x)+'</div>').join("");if($("game-story").innerHTML!==html)$("game-story").innerHTML=html;
@@ -1965,9 +1967,12 @@ if(p&&!task.startsWith("d")&&!["rest","idle"].includes(task)){item.done+=(["exp"
 if(item.done<item.proposal.days&&S.day<item.end)continue;
 const adequate=item.done>=item.proposal.days,probability=adequate?Math.max(.2,Math.min(.82,.48+(p?.s[item.proposal.skill]||1)/150-(p?.career.stress||0)/350)):0;
 const success=adequate&&Math.random()<probability;
-if(success){if(p)discover(p.n,[item.proposal.suggestion]);if(p){p.career.xp+=1;p.career.satisfaction=clamp(p.career.satisfaction+4);}}
+if(success){if(S.built.length>=RECIPES.length){if(item.proposal.skill==="prod")S.improvements.product=Math.min(3,S.improvements.product+.1);
+else S.improvements.operations=Math.min(.06,S.improvements.operations+.002);item.continuedRAndD=true;}
+else if(p)discover(p.n,[item.proposal.suggestion]);
+if(p){p.career.xp+=1;p.career.satisfaction=clamp(p.career.satisfaction+4);}}
 else if(p)p.career.satisfaction=clamp(p.career.satisfaction-2);
-item.result=success?"Discovery demonstrated":"Unproven — no capability unlocked";item.finished=S.day;item.status="completed";item.actualParticipation=+item.done.toFixed(1);item.estimatedSuccess=+probability.toFixed(2);
+item.result=success?(item.continuedRAndD?"Continuous improvement demonstrated":"Discovery demonstrated"):"Unproven — no benefit achieved";item.finished=S.day;item.status="completed";item.actualParticipation=+item.done.toFixed(1);item.estimatedSuccess=+probability.toFixed(2);
 S.ideaWork.history.unshift(item);S.ideaWork.history=S.ideaWork.history.slice(0,40);S.ideaWork.active=S.ideaWork.active.filter(x=>x!==item);
 logIt((p?.n||"Employee")+" "+(success?"completed":"could not validate")+" "+item.proposal.name+" after "+item.actualParticipation+" participation days. "+item.result+".");}}
 
@@ -2020,13 +2025,13 @@ praise:"Sharing credit improves employee morale; taking credit favors short-term
 }
 function showModal(){const m=$("modal");if(!S.ev){m.hidden=true;document.body.classList.remove("modal-open");return;}const d=dilemmaInfo(S.ev);if(!d){S.ev=null;save();m.hidden=true;return;}if(m.hidden||$("modal-title").textContent!==d[0]){$("modal-title").textContent=d[0];$("modal-text").textContent=d[1]+(S.coach.mode==="guided"?"\n\nDecision preview: "+coachDecisionPreview(S.ev.k):"");$("choices").innerHTML=d[2].map((txt,i)=>{const cost=coachChoiceCost(S.ev.k,i);return '<button type="button" data-choice="'+i+'" '+(cost>S.cash?'disabled title="Insufficient cash"':'')+'>'+esc(txt)+(cost>S.cash?' · insufficient cash':'')+'</button>';}).join("");}m.hidden=false;document.body.classList.add("modal-open");}
 function schedule(){clearTimeout(clock);if(!paused&&!S.ev)clock=setTimeout(()=>{tick();schedule();},1200/spd);}
-function bubble(id,emoji,frames){let a=avatars.get(id);if(!a){a={x:0,y:0,tx:0,ty:0,away:false,hold:0,emoji:"",frames:0};avatars.set(id,a);}a.emoji=emoji;a.frames=frames;}
+function bubble(id,emoji,frames){let a=avatars.get(id);if(!a){a={x:0,y:0,tx:0,ty:0,away:false,hold:0,emoji:"",frames:0};avatars.set(id,a);}a.emoji=emoji||"💬";a.frames=frames;}
 function avatarDraw(){if(activeView!=="today"){requestAnimationFrame(avatarDraw);return;}const rows=Math.ceil(S.team.length/5),h=Math.max(150,80*rows+50);if(canvas.height!==h)canvas.height=h;const style=getComputedStyle(document.documentElement);const bar=style.getPropertyValue("--bar").trim(),ink=style.getPropertyValue("--ink").trim(),muted=style.getPropertyValue("--muted").trim();ctx.clearRect(0,0,640,h);ctx.fillStyle=bar;ctx.fillRect(0,0,640,h);
 ctx.fillStyle="#b7d7e8";ctx.fillRect(611,(h-32)/2,22,32);ctx.fillStyle="#224b67";ctx.font="9px system-ui";ctx.textAlign="center";ctx.fillText("water",622,(h-32)/2+19);
 S.team.forEach((p,i)=>{const dx=60+(i%5)*130,dy=40+Math.floor(i/5)*80;ctx.fillStyle=muted;ctx.globalAlpha=.33;ctx.fillRect(dx-26,dy-10,52,20);ctx.globalAlpha=1;let a=avatars.get(p.id);if(!a){a={x:dx,y:dy+34,tx:dx,ty:dy+34,away:false,hold:0,emoji:"",frames:0};avatars.set(p.id,a);}
 if(p.t==="idle"||p.t==="rest"){if(!a.away&&Math.random()<.004){a.away=true;a.hold=170+R(130);}if(a.away){a.tx=596;a.ty=h/2+29;if(Math.abs(a.x-a.tx)<7){a.hold--;if(a.hold<=0)a.away=false;}}if(!a.away){a.tx=dx;a.ty=dy+34;}}
 else{a.away=false;a.tx=dx;a.ty=dy+34;}
-a.x+=(a.tx-a.x)*.03;a.y+=(a.ty-a.y)*.03;if(Math.random()<.004){const e=p.mood<30?"😤":p.t.startsWith("d")?pick(["📞","💻","✍️"]):({study:"📖",teach:"🗣️",exp:"💡",rest:"☕",idle:"💤",assist:"📋"})[p.t];bubble(p.id,e,150);}
+a.x+=(a.tx-a.x)*.03;a.y+=(a.ty-a.y)*.03;if(Math.random()<.004){const e=p.mood<30?"😤":p.t.startsWith("d")?pick(["📞","💻","✍️"]):({study:"📖",teach:"🗣️",exp:"💡",rest:"☕",idle:"💤",assist:"📋",improve:"🔧",streamline:"⚙️",coachteam:"🤝",market:"📣",prospect:"📞"})[p.t]||"💬";bubble(p.id,e,150);}
 ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(a.x,a.y,11,0,Math.PI*2);ctx.fill();ctx.fillStyle="#192435";ctx.beginPath();ctx.arc(a.x-3,a.y-2,1.1,0,Math.PI*2);ctx.arc(a.x+3,a.y-2,1.1,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#192435";ctx.lineWidth=1.1;ctx.beginPath();if(p.mood>50)ctx.arc(a.x,a.y+1,4,0,Math.PI);else if(p.mood>25){ctx.moveTo(a.x-4,a.y+5);ctx.lineTo(a.x+4,a.y+5);}else ctx.arc(a.x,a.y+8,4,Math.PI,2*Math.PI);ctx.stroke();ctx.textAlign="center";ctx.fillStyle=ink;ctx.font="12px system-ui";ctx.fillText(p.n,a.x,a.y+25);
 if(a.frames>0){ctx.font="19px system-ui";ctx.fillText(a.emoji,a.x,a.y-17);a.frames--;}
 });requestAnimationFrame(avatarDraw);}

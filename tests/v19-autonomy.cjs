@@ -11,7 +11,7 @@ const el=id=>{if(!elements.has(id))elements.set(id,{id,innerHTML:"",textContent:
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){}},window:{scrollY:0,innerWidth:390,addEventListener(){},scrollTo(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout:()=>{},getComputedStyle:()=>({getPropertyValue:()=>""}),clearInterval:()=>{},Math,Date,Map,Set,JSON,console};
 vm.createContext(sandbox);
 const boot=javascript.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0,"Missing boot");
-vm.runInContext(javascript.slice(0,boot)+"globalThis.G={fresh,load,get:()=>S,set:x=>S=x,save,tick,gameChapter,gamePlan,gameRender,gameAdvanceDays,renderStructure,renderBriefing,refresh,navigate,ensureExecutive,executiveWeek,executiveProposal,executiveDecision,ceoDirection,draftExecutiveDirection,executiveShow,executiveLaunch,ceoLineFinish,createDeal,worldNewEvent,worldDay,worldEventChoice,renderIdeas,ideaProgressDay,delegateWork,orgChooseManager,feeFor,careerRoleSkill,orgChooseSubManager,orgSubManager,orgSubReports,orgDirectReports,orgChangePolicy,orgPlan,orgFunds,orgBudgetPeriod,orgRenewPlan,orgManagerDay,executiveAutonomous,worldOfferTerms,worldOfferEligibility,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,renderOrganization};})();",sandbox,{timeout:3000});
+vm.runInContext(javascript.slice(0,boot)+"globalThis.G={fresh,load,get:()=>S,set:x=>S=x,save,tick,gameChapter,gamePlan,gameRender,gameAdvanceDays,renderStructure,renderBriefing,refresh,navigate,ensureExecutive,executiveWeek,executiveProposal,executiveDecision,ceoDirection,draftExecutiveDirection,executiveShow,executiveLaunch,ceoLineFinish,createDeal,worldNewEvent,worldDay,worldEventChoice,renderIdeas,ideaProgressDay,delegateWork,orgChooseManager,feeFor,careerRoleSkill,orgChooseSubManager,orgSubManager,orgSubReports,orgDirectReports,orgChangePolicy,orgPlan,orgFunds,orgBudgetPeriod,orgRenewPlan,orgManagerDay,executiveAutonomous,assistantDecision,renderAssistantPolicy,choose,orgLeaderTitle,worldOfferTerms,worldOfferEligibility,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,renderOrganization};})();",sandbox,{timeout:3000});
 const G=sandbox.G;
 function fresh(){store.clear();G.fresh();el("lab-topic").value="learning";el("lab-duration").value="15";el("lab-forecast").value="25";el("lab-sector").value="hospitality";}
 
@@ -114,5 +114,39 @@ fresh();const s=G.get(),manager=s.team[0];manager.department="commercial";manage
 s.org.departments.commercial.plan.limits.coaching=36;s.nextEv=99999;s.flow.focus=true;
 for(let n=0;n<730;n++){if(s.ev)s.ev=null;G.tick();}
 assert.equal(s.day,730);assert.ok(Number.isFinite(s.cash));assert.ok(s.org.departments.commercial.plan.spent.coaching<=36);accounting(s);
+});
+test("executive assistant automatic decisions honor cumulative spending limits",()=>{
+fresh();const state=G.get(),assistant=state.team[0],worker=state.team[1],p=state.ops.policy;
+assistant.t="assist";state.ops.assistantId=assistant.id;p.family=true;p.budget=10;p.totalBudget=5;p.days=90;p.since=0;p.spent=0;
+const first={k:"family",a:worker.id,b:worker.id};
+assert.equal(G.assistantDecision(first),0);
+state.ev=first;const before=state.cash;G.choose(0,true);
+assert.equal(p.spent,5);assert.equal(state.cash,before-5);
+assert.equal(G.assistantDecision(first),null,"Cumulative budget must prevent a second payment");
+state.day=90;assert.equal(G.assistantDecision(first),null,"Expired assistant authority must remain suspended");
+G.renderAssistantPolicy();assert.ok(el("policy-budget-status").textContent.includes("EXPIRED"));accounting(state);
+});
+test("director-title promotion follows real management tiers, not hard-coded labels",()=>{
+fresh();const s=G.get(),director=s.team[0],sub=s.team[1];
+director.department="commercial";director.career.rank=1;director.role.primary="lead";s.org.departments.commercial.managerId=director.id;
+assert.equal(G.orgLeaderTitle(director),"Department Manager");
+sub.department="commercial";sub.role.primary="mkt";sub.career.xp=20;
+assert.ok(G.orgChooseSubManager("commercial","mkt",sub.id));
+assert.equal(G.orgLeaderTitle(director),"Director");
+accounting(s);
+});
+test("quarterly director authority expires with one renewal request, renewed only on CEO approval",()=>{
+fresh();const s=G.get(),director=s.team[0];director.department="commercial";director.role.primary="lead";s.org.departments.commercial.managerId=director.id;
+const p=s.org.departments.commercial.plan;p.limits.coaching=24;p.spent.coaching=12;s.day=91;G.executiveWeek();
+const req=s.exec.proposals.find(x=>x.dept==="commercial");assert.ok(req);assert.equal(req.type,"renew");
+assert.equal(G.orgFunds("commercial","coaching",4),false);
+assert.ok(G.executiveDecision(req.id,"approve"));assert.equal(p.since,91);assert.equal(p.spent.coaching,0);
+assert.ok(G.orgFunds("commercial","coaching",4));accounting(s);
+});
+test("identical low-value weekly decisions are not repeatedly escalated",()=>{
+fresh();const s=G.get(),director=s.team[0];director.department="commercial";director.role.primary="lead";s.org.departments.commercial.managerId=director.id;
+s.day=7;G.executiveWeek();const proposal=s.exec.proposals[0];assert.equal(proposal.type,"training");
+assert.ok(G.executiveDecision(proposal.id,"decline"));s.day=14;G.executiveWeek();
+assert.equal(s.exec.proposals.length,0);accounting(s);
 });
 console.log("Boss v19 organizational autonomy regressions passed.");

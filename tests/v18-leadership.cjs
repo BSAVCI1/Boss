@@ -73,7 +73,7 @@ assert.ok(G.gamePlan()[2]<G.gamePlan()[3],"Mature company needs an unfinished st
 test("market brief is prioritized on Today and stays for 45 days",()=>{
 fresh();const s=G.get();s.day=45;G.worldNewEvent();const ev=s.world.activeEvent;assert.equal(ev.until,90);
 G.executiveShow();assert.ok(el("exec-inbox").innerHTML.includes("Market opportunity"));
-s.day=59;G.worldDay();assert.ok(s.world.activeEvent);assert.ok(G.gamePlan()[0].includes("market opportunity"));
+s.day=59;G.worldDay();assert.ok(s.world.activeEvent);G.executiveShow();assert.ok(el("exec-inbox").innerHTML.includes("Market opportunity"),"Market briefs must remain visible in the CEO inbox even if the next challenge is elsewhere");
 });
 test("company upgrades archive after earning all recipes",()=>{
 fresh();const s=G.get();s.built=[...Array.from({length:10},(_,i)=>["","",String(i)])];

@@ -329,7 +329,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <script>
 (function(){
 "use strict";
-const KEY="boss151";
+const KEY="boss16";
 let labHistorySignature="";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
@@ -727,7 +727,118 @@ coachDecision("Commercial policy: "+type,before,"New future contracts use "+valu
 save();refresh();return true;
 }
 
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+
+/* v16 Living Business World: all competitive outcomes are local, simulated and forward-only. */
+const WORLD_STRATEGIES={
+balanced:{name:"Balanced service",price:1,scope:1,quality:0,prospect:1,win:0,repeat:0,description:"Protect cash, quality and access to new customers. No special fee or scope changes."},
+premium:{name:"Premium specialist",price:1.14,scope:1.12,quality:3,prospect:.97,win:-.075,repeat:0,description:"Higher agreed fees and quality expectations; more delivery work and fewer price-sensitive wins."},
+volume:{name:"Efficient volume",price:.94,scope:.91,quality:-3,prospect:1.13,win:.055,repeat:0,description:"Lower prices and leaner scope; quicker delivery and stronger price competitiveness, but less quality buffer."},
+relationships:{name:"Client partnerships",price:1,scope:1.03,quality:2,prospect:.96,win:.025,repeat:.2,description:"Spend a little more time delivering quality, prioritize trusted repeat clients and future referrals."}
+};
+const WORLD_RIVALS=[
+{id:"harbor",name:"Harbor & Co.",sector:"hospitality",pricing:.93,quality:72,speed:70,rep:45,archetype:"Low-price challenger"},
+{id:"north",name:"Northstar Studio",sector:"creative",pricing:1.13,quality:88,speed:62,rep:54,archetype:"Premium quality specialist"},
+{id:"swift",name:"Swiftline Partners",sector:"logistics",pricing:1.01,quality:77,speed:88,rep:48,archetype:"Fast delivery competitor"}];
+function ensureWorld(state){
+if(!state.world||state.world.version!==16)state.world={
+version:16,since:state.day,strategy:"balanced",changedAt:state.day-45,
+rivals:WORLD_RIVALS.map(x=>({...x,wins:0,losses:0})),
+tenders:[],stats:{won:0,lost:0},
+activeEvent:null,nextEvent:state.day+45,
+boostUntil:0,researchUntil:0,repeatAt:state.day+28,lastRivalCycle:-1};
+const w=state.world;
+if(!WORLD_STRATEGIES[w.strategy])w.strategy="balanced";
+if(!Number.isFinite(w.changedAt))w.changedAt=state.day-45;
+if(!Array.isArray(w.rivals)||w.rivals.length!==3)w.rivals=WORLD_RIVALS.map(x=>({...x,wins:0,losses:0}));
+for(const rival of w.rivals){if(!Number.isFinite(rival.wins))rival.wins=0;if(!Number.isFinite(rival.losses))rival.losses=0;if(!Number.isFinite(rival.rep))rival.rep=48;}
+if(!Array.isArray(w.tenders))w.tenders=[];
+if(!w.stats||typeof w.stats!=="object")w.stats={won:0,lost:0};
+for(const k of ["won","lost"])if(!Number.isFinite(w.stats[k]))w.stats[k]=0;
+for(const k of ["nextEvent","boostUntil","researchUntil","repeatAt","lastRivalCycle"])if(!Number.isFinite(w[k]))w[k]=k==="lastRivalCycle"?-1:state.day+45;
+if(!Number.isFinite(w.since))w.since=state.day;
+}
+function worldStrategy(){return WORLD_STRATEGIES[S.world.strategy]||WORLD_STRATEGIES.balanced;}
+function worldDemand(){return economyPressure().factor*(S.world?.activeEvent?.type==="slowdown"?.92:1);}
+function worldRivalFor(lead){const rivals=S.world.rivals,ix=(lead.id*7+lead.sector.length)%rivals.length;
+const expert=rivals.find(r=>r.sector===lead.sector);return expert||rivals[ix];}
+function worldTenderPreview(lead){const rival=worldRivalFor(lead),policy=worldStrategy(),loyalty=S.market.customers[lead.client]?.loyalty||0;
+const pricePosition=S.economy.pricing,clientNeed=lead.preference||(["price","quality","speed","trust"][(lead.id+lead.client.length)%4]);
+const pos=({premium:1.1,competitive:.94,standard:1}[pricePosition]||1)*policy.price;
+const priceEdge=Math.max(-.10,Math.min(.10,(rival.pricing-pos)*.5));
+const needEdge=clientNeed==="quality"?(policy.quality/70+(S.rep/450)-(rival.quality-75)/250):
+clientNeed==="speed"?(policy.scope<1?.065:-.02)-(rival.speed-75)/330:
+clientNeed==="trust"?(loyalty?loyalty/500:.005)+(S.rep-rival.rep)/500:
+priceEdge*1.5;
+const specialist=lead.sector===S.market.focus?.035:0;
+const opponent=lead.sector===rival.sector?.06:0;
+const base=.77+needEdge+specialist-opponent+policy.win+(loyalty>=60?.075:0)+(S.day<=S.world.researchUntil?.06:0);
+const chance=Math.max(.48,Math.min(.94,base*worldDemand()));
+const feeHint=Math.floor((84+(Math.max(0,dealTier()-1)*18))*(SECTORS[lead.sector]?.premium||1)*pos);
+return{chance,rival,clientNeed,feeHint,rivalIndex:rival.pricing,playerPosition:pos,reason:clientNeed==="price"?"competing mainly on price":clientNeed==="quality"?"comparing quality and reputation":clientNeed==="speed"?"prioritizing reliable delivery":"prioritizing trusted suppliers"};}
+function worldResolveTender(lead){const preview=worldTenderPreview(lead),oldLoyalty=S.market.customers[lead.client]?.loyalty||0;
+const won=Math.random()<preview.chance||(oldLoyalty>=80&&Math.random()<.38);
+const result={day:S.day,client:lead.client,sector:lead.sector,rival:preview.rival.name,priority:preview.clientNeed,strategy:S.world.strategy,policy:S.economy.pricing,probability:+preview.chance.toFixed(3),result:won?"won":"lost",feeHint:preview.feeHint};
+S.world.tenders.unshift(result);if(S.world.tenders.length>70)S.world.tenders.length=70;
+S.world.stats[won?"won":"lost"]++;
+preview.rival[won?"losses":"wins"]++;
+if(!won){preview.rival.rep=Math.min(95,preview.rival.rep+.35);}
+return{won,result,preview};}
+function worldChangeStrategy(key){if(S.ev||!WORLD_STRATEGIES[key]||S.world.strategy===key||S.day-S.world.changedAt<30)return false;
+const old=S.world.strategy,before=coachSnap();S.world.strategy=key;S.world.changedAt=S.day;
+coachDecision("Company strategy: "+WORLD_STRATEGIES[key].name,before,"Moved from "+WORLD_STRATEGIES[old].name+". Changes future customer win odds and future contract price/scope, never reprices existing agreements.",null,30);
+logIt("New commercial strategy: "+WORLD_STRATEGIES[key].name+". Review competitive bids and project contribution over 30 days.");save();refresh();return true;}
+function worldNewEvent(){const w=S.world,phase=Math.floor(S.day/50)%4,types=["tender","referrals","slowdown","retention"],type=types[phase];w.activeEvent={id:S.day,opened:S.day,until:S.day+13,type};w.nextEvent=S.day+55;
+logIt("New market brief: "+({tender:"Major contract tender",referrals:"Referral window",slowdown:"Competitive slowdown",retention:"Client relationship opportunity"}[type])+". Review Growth when convenient.");
+}
+function worldEventChoice(choice){const w=S.world,event=w.activeEvent;if(S.ev||!event||!["act","pass"].includes(choice))return false;
+const before=coachSnap();let info="";
+if(choice==="pass"){info="Skipped optional market opportunity without direct cash cost.";}
+else if(event.type==="tender"){if(S.cash<12)return false;S.cash-=12;biMoney("marketing",12,"Bid preparation: major tender");const sec=S.market.focus,client=SECTORS[sec].clients[(S.day+3)%SECTORS[sec].clients.length];
+const lead={id:S.pipeline.seq++,client,sector:sec,stage:"negotiation",progress:0,age:7,source:"major tender",created:S.day,preference:"quality"};
+if(S.pipeline.leads.length<12){S.pipeline.leads.push(lead);biFunnel("lead",lead);biFunnel("qualified",lead);biFunnel("proposal",lead);biFunnel("negotiation",lead);}
+else{S.cash+=12;biAdd("cashIn",12);/* reverse unusable proposal without double expense below */biMoney("revenue",0,"");return false;}
+info="Spent $12 preparing a major tender; a qualified bid enters negotiation, but capacity and competitors still determine success.";}
+else if(event.type==="referrals"){if(S.cash<10)return false;S.cash-=10;biMoney("marketing",10,"Customer referral campaign");w.boostUntil=S.day+30;info="Spent $10 to expand prospecting for 30 days; sales and delivery capacity remain constraints.";}
+else if(event.type==="slowdown"){if(S.cash<10)return false;S.cash-=10;biMoney("research",10,"Competitive market intelligence");w.researchUntil=S.day+30;info="Spent $10 on customer/competitor research; a small bid-readiness advantage lasts 30 days.";}
+else if(event.type==="retention"){const found=Object.entries(S.market.customers).filter(([,c])=>c.loyalty>=55&&S.market.open.includes(c.sector));
+if(!found.length)return false;
+const [client,cust]=found.sort((a,b)=>b[1].loyalty-a[1].loyalty)[0];
+if(S.pipeline.leads.length>=12)return false;
+const lead={id:S.pipeline.seq++,client,sector:cust.sector,stage:"qualified",progress:0,age:4,source:"account renewal",created:S.day,preference:"trust"};
+S.pipeline.leads.push(lead);biFunnel("lead",lead);biFunnel("qualified",lead);
+info="Proactively invited "+client+" to renew. This creates an opportunity rather than guaranteed revenue, at no direct cash cost.";}
+if(!info)return false;
+w.activeEvent=null;coachDecision("Market brief: "+event.type+" — "+choice,before,info+" Review observed effects after 30 days, not causal proof.",null,30);
+logIt(info);save();refresh();return true;
+}
+function worldDay(){
+const w=S.world,cycle=Math.floor(S.day/30);
+if(cycle!==w.lastRivalCycle&&S.day>w.since){w.lastRivalCycle=cycle;for(let i=0;i<w.rivals.length;i++){const r=w.rivals[i];const drift=([-.9,.3,1.1,0][(cycle+i)%4]);r.rep=Math.max(30,Math.min(94,r.rep+drift));r.pricing=+(WORLD_RIVALS[i].pricing+(Math.floor(cycle/2+i)%3-1)*.02).toFixed(2);}}
+if(w.activeEvent&&S.day>w.activeEvent.until){logIt("Market brief expired; no compulsory decision.");w.activeEvent=null;}
+if(!w.activeEvent&&S.day>=w.nextEvent)worldNewEvent();
+if(S.world.strategy==="relationships"&&S.day>=w.repeatAt){w.repeatAt=S.day+32;
+const pool=Object.entries(S.market.customers).filter(([name,c])=>c.loyalty>=65&&S.market.open.includes(c.sector)&&!S.pipeline.leads.some(l=>l.client===name)&&!S.deals.some(d=>d.cl===name));
+if(pool.length&&S.pipeline.leads.length<12){const [client,c]=pool.sort((a,b)=>b[1].loyalty-a[1].loyalty)[0];
+const lead={id:S.pipeline.seq++,client,sector:c.sector,stage:"prospect",progress:1.4,age:0,source:"account relationship",created:S.day,preference:"trust"};S.pipeline.leads.push(lead);biFunnel("lead",lead);logIt("Account team earned another opportunity from "+client+"; not yet a contract.");}}
+}
+function worldRender(){
+const panel=$("world-panel"),w=S.world;
+$("world-summary").textContent=w.stats.won+" won · "+w.stats.lost+" lost · "+w.rivals.length+" rivals";
+if(!panel.open)return;
+$("world-strategy").value=w.strategy;
+$("world-strategy").disabled=!!S.ev||S.day-w.changedAt<30;
+$("world-strategy-note").textContent=worldStrategy().description+" · Next strategy change "+(S.day-w.changedAt<30?"in "+(30-(S.day-w.changedAt))+" game days":"available now")+". Contract changes apply only to new agreements.";
+$("world-rivals").innerHTML=w.rivals.map(r=>'<div class="coach-row"><b>'+esc(r.name)+'</b> · '+esc(r.archetype)+'<div class="coach-mini">Focus: '+esc(SECTORS[r.sector].name)+' · Price index '+r.pricing.toFixed(2)+' · Quality '+Math.round(r.quality)+' · Speed '+Math.round(r.speed)+' · Reputation '+Math.round(r.rep)+'</div><div class="coach-mini">Observed shared tenders: '+r.wins+' rival wins · '+r.losses+' bids beaten by you (tracked since Day '+w.since+')</div></div>').join("");
+$("world-tenders").innerHTML=w.tenders.slice(0,7).map(t=>'<div class="coach-row"><b>'+esc(t.client)+'</b> · '+(t.result==="won"?"Won":"Lost")+' against '+esc(t.rival)+'<div class="coach-mini">Day '+t.day+' · '+esc(t.priority)+' buyer · '+esc(t.strategy)+' strategy · Estimated win chance '+Math.round(100*t.probability)+'%. Probability is a game model, not a guarantee.</div></div>').join("")||'<p class="small">No competitive tender outcomes recorded yet. New bids will accumulate as Sales converts prospects.</p>';
+$("world-market-info").textContent=economyPressure().name+" · "+(45-S.day%45)+" days until next market cycle · Bid outcomes depend on customer needs, competitive offers, reputation and your strategy.";
+const brief=w.activeEvent,labels={tender:"A major customer is accepting bids",referrals:"Customers are open to referrals",slowdown:"Competitive pressure is rising",retention:"A trusted customer may renew"};
+$("world-event").innerHTML=brief?'<div class="coach-row coach-amber"><b>'+labels[brief.type]+'</b><div class="coach-mini">Decision window: until Day '+brief.until+'. '+(brief.type==="tender"?"Prepare a qualified tender proposal for $12; the contract is not guaranteed.":brief.type==="referrals"?"Run a $10 referral campaign; 30-day prospecting boost.":brief.type==="slowdown"?"Spend $10 on competitive research to improve bid readiness for 30 days.":"Invite a loyal customer to a new qualified opportunity without promising a sale.")+'</div><div class="buttons"><button type="button" data-world-event="act">Take opportunity</button><button type="button" data-world-event="pass">Pass</button></div></div>':
+'<p class="small">No action required. Next optional market brief around Day '+w.nextEvent+'.</p>';
+if(brief){const button=$("world-event").querySelector("button[data-world-event=act]");
+if(button)button.disabled=!!S.ev||(brief.type==="tender"&&S.cash<12)||(brief.type==="referrals"&&S.cash<10)||(brief.type==="slowdown"&&S.cash<10)||(brief.type==="retention"&&!Object.values(S.market.customers).some(c=>c.loyalty>=55))||S.pipeline.leads.length>=12;}
+}
+
+function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 if(!INTERESTS[p.interest])p.interest=INTEREST_KEYS[(p.id-1)%INTEREST_KEYS.length];
@@ -785,7 +896,7 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
-ensureOrganization(s);ensureBI(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);
+ensureOrganization(s);ensureBI(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureWorld(s);
 for(const d of s.deals)if(!Number.isFinite(d.agreedFee))d.agreedFee=d.biBooked&&Number.isFinite(d.bookVal)?d.bookVal:estimatedFee(d,s);
 return s;}catch(e){return null;}}
 const BI_FIELDS=["revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
@@ -1219,7 +1330,7 @@ function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}

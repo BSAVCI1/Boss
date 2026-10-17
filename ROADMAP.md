@@ -1,5 +1,17 @@
 # Boss — simulation development roadmap
 
+## v21.2 — General Manager autonomy with CEO authorization (release candidate)
+
+[PR #25](https://github.com/BSAVCI1/Boss/pull/25) builds on v21.1, leaving historical staff, contracts, purchased lines, financial ledgers and Safari saves intact.
+
+- Each business unit receives an independent coaching cap, per-action cap, 90/180-day validity and measurable quality target. The default delegated spending is zero.
+- General Managers can execute a real $4 coaching decision within available cash and authorized budget, no more than once in seven game days. Renewal does not bypass the cooldown.
+- Thirty-day scorecards track unit delivery, missed jobs, quality and spending from real attributed history, identifying insufficient evidence.
+- Managers suggest new staff only when real unit backlog justifies it. A CEO approval incurs exactly one $20 recruiting cost plus recurring payroll. Declines and duplicate taps do not hire.
+- Save protections remain forward-only, including transactional IndexedDB fallback; unit costs remain analytical slices of one corporate ledger.
+- Merge gate: 730-day legacy financial tests, default-zero/migration regressions, coaching limits/expiry/renewal, hiring no-double-charge and real 390px mobile IndexedDB save/reload plus 414px responsive layout.
+- v21.3–v21.4 will add broader GM strategy, dedicated capacity allocation, quarterly CEO portfolio meetings and better visual organization. v22 offices, v23 investments/acquisitions, v24 factories remain future work.
+
 ## Released increment — v21.1 Independent Operating Units
 
 **Released:** [PR #24](https://github.com/BSAVCI1/Boss/pull/24) merged at `b59a76e7cab474ec553deffaccb9a00089922177`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39065136825) and [Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39065136237) passed. v21.2 remains a separate engineering release with unit-specific authority and actual GM autonomy.

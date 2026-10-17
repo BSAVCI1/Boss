@@ -9,7 +9,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,open:false,innerHTML:""
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,unitApplyPreset,unitApplyDraft,unitRecordInput,unitPresetValues,unitCareerReadiness,unitDevelopSuccessor,unitDevelopTeam,delegateWork,assign,beginEditableInteraction,finishEditableInteraction,editableInteractionPending,renderBusinessUnits,refresh,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
+const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,unitApplyPreset,unitApplyDraft,unitRecordInput,unitPresetValues,unitCareerReadiness,unitDevelopSuccessor,unitDevelopTeam,ladderEvaluation,ladderNext,ladderPromote,ladderSetAuthority,ladderDay,ladderPayroll,ladderLaunchReadiness,ladderReassign,renderLadder,renderLaunchGuide,delegateWork,assign,beginEditableInteraction,finishEditableInteraction,editableInteractionPending,renderBusinessUnits,refresh,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exported+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -712,6 +712,69 @@ test("v21.4 successor development spends real cash once and respects period limi
  G.unitAutonomousDay();assert.equal(s.bi.totals.costs,previousSpent,"same-day action may not be duplicated");
  u.plan.days=1;s.day+=2;G.unitAutonomousDay();
  assert.equal(s.bi.totals.costs,previousSpent,"expired authority never spends");
+ reconcile(s);
+});
+
+
+test("v21.4b new founder company starts below the five-person Team Lead milestone",()=>{
+ const s=init();
+ assert.equal(s.team.length,3);assert.ok(s.org.progression);assert.equal(s.org.progression.appointments.length,0);
+ const c=G.ladderEvaluation("lead");assert.equal(c.need,5);assert.equal(c.count,3);assert.equal(c.ready,false);
+ assert.ok(c.reasons.some(x=>x.includes("5 company employees")));
+ assert.equal(s.org.progression.authorityDaily,0,"new manager payroll authority defaults to zero");
+ reconcile(s);
+});
+test("v21.4b strongest eligible candidate becomes a Team Lead only with CEO authority",()=>{
+ const s=init();fund(s,1400);s.deals=[];s.day=70;
+ for(let i=0;i<2;i++){const p=G.createPerson();G.ensureCareer(p);G.ensureRole(p);G.ensureDepartment(p);G.ensurePerformance(p,20);s.team.push(p);}
+ for(const p of s.team){p.perf.days=25;p.career.rank=1;p.career.xp=25;}
+ s.team[1].management.coaching=95;s.team[1].management.delegation=95;
+ const proposed=G.ladderEvaluation("lead");
+ assert.equal(proposed.count,5);assert.equal(proposed.ready,true);
+ const expected=proposed.candidateId,person=s.team.find(x=>x.id===expected);
+ const existingSalary=G.dailySalary?G.dailySalary(person):null;
+ const cash=s.cash,ledger=s.bi.totals.cashOut;
+ assert.equal(G.ladderPromote("lead",expected,false),false,"no management spending authority");
+ assert.equal(s.org.progression.appointments.length,0);
+ assert.equal(G.ladderSetAuthority(.5),true);
+ assert.equal(G.ladderPromote("lead",expected,false),true);
+ assert.equal(s.org.progression.appointments[0].id,expected);
+ assert.equal(s.cash,cash);assert.equal(s.bi.totals.cashOut,ledger);
+ assert.ok(s.org.progression.reportTo&&Object.keys(s.org.progression.reportTo).length<=3);
+ assert.equal(new Set(Object.keys(s.org.progression.reportTo)).size,Object.keys(s.org.progression.reportTo).length);
+ assert.equal(G.ladderPayroll(),.5*s.mod.cost);
+ assert.equal(G.ladderPromote("lead",expected,true),false,"same leader cannot be promoted twice");
+ assert.equal(G.load().org.progression.appointments[0].id,expected);
+ reconcile(s);
+});
+test("v21.4b CEO exception approves sustainable promotion without silently expanding authority",()=>{
+ const s=init();fund(s,1250);s.day=84;s.deals=[];
+ for(let i=0;i<2;i++){const p=G.createPerson();G.ensureCareer(p);G.ensureRole(p);G.ensureDepartment(p);G.ensurePerformance(p,25);s.team.push(p);}
+ for(const p of s.team){p.perf.days=35;p.career.rank=1;p.career.xp=30;}
+ const proposal=G.ladderEvaluation("lead");assert.equal(proposal.ready,true);
+ assert.equal(G.ladderPromote("lead",proposal.candidateId,false),false);
+ assert.equal(G.ladderPromote("lead",proposal.candidateId,true),true);
+ assert.equal(s.org.progression.authorityDaily,0);
+ assert.equal(s.org.progression.events.at(-1).action,"CEO exception");
+ reconcile(s);
+});
+test("v21.4b historical saves migrate additively without inventing a salary or purchase",()=>{
+ const s=init();fund(s,555);s.day=2895;s.rep=99;s.market.completed=23;
+ const beforeCash=s.cash,invest=s.bi.totals.investments;delete s.org.progression;
+ assert.ok(G.save());const old=store.get("boss20");
+ const state=G.load(old);assert.equal(state.cash,beforeCash);assert.equal(state.day,2895);
+ assert.equal(state.bi.totals.investments,invest);
+ assert.equal(state.org.progression.appointments.length,0);
+ assert.equal(state.org.progression.authorityDaily,0);
+ G.set(state);reconcile(state);
+});
+test("v21.4b gate checklist describes financial and people requirements without charging cash",()=>{
+ const s=init();fund(s,1000);s.day=200;
+ const oldCash=s.cash,investment=s.bi.totals.investments;
+ const readiness=G.ladderLaunchReadiness();
+ assert.equal(readiness.ready,false);assert.equal(readiness.checks.length,4);
+ assert.ok(readiness.checks.some(x=>x.label.includes("Team Lead")&&!x.met));
+ assert.equal(s.cash,oldCash);assert.equal(s.bi.totals.investments,investment);
  reconcile(s);
 });
 

@@ -5,7 +5,7 @@ assert.ok(browser,"A real Chromium browser is required for viewport smoke (not a
 const html=fs.readFileSync("index.html","utf8");
 const instrumentation=String.raw`
 window.addEventListener("error",e=>{window.__mobileErrors=(window.__mobileErrors||[]).concat(String(e.message||"unknown error"))});
-document.addEventListener("DOMContentLoaded",()=>{
+window.__bossRunMobileQa=()=>{
  const result={width:window.innerWidth,views:[],errors:[],checks:{}};
  try{
   const byId=id=>document.getElementById(id);
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   result.errors=(window.__mobileErrors||[]);
  }catch(e){result.errors.push(String(e.stack||e));}
  document.title="BOSS_QA:"+btoa(unescape(encodeURIComponent(JSON.stringify(result))));
-});
+};
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
 fs.writeFileSync(file,html.replace("</body>","<script>"+instrumentation+"</script></body>"));
@@ -66,7 +66,7 @@ async function runBrowser(){
    await sleep(150);
   }
   assert.ok(tabs?.length,"Chromium DevTools did not open: "+stderr);
-  const tab=tabs.find(x=>x.type==="page")||tabs[0];
+  const tab=tabs.find(x=>x.type==="page"&&x.url?.startsWith("file://"))||tabs.find(x=>x.type==="page")||tabs[0];
   ws=new WebSocket(tab.webSocketDebuggerUrl);
   await new Promise((resolve,reject)=>{const wait=setTimeout(()=>reject(new Error("CDP connection timeout")),8000);ws.addEventListener("open",()=>{clearTimeout(wait);resolve()},{once:true});ws.addEventListener("error",()=>{clearTimeout(wait);reject(new Error("CDP WebSocket failed"))},{once:true})});
   const pending=new Map();let id=0;
@@ -90,13 +90,14 @@ async function runBrowser(){
   }
   assert.ok(loaded,"Chrome game file did not finish loading before mobile emulation");
   await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,screenWidth:390,screenHeight:844,deviceScaleFactor:1,mobile:true});
-  await send("Runtime.evaluate",{expression:"document.title='Boss mobile QA reload pending'",returnByValue:true});
-  await send("Page.reload",{ignoreCache:true});
-  let title="";
-  for(let i=0;i<75;i++){
-   try{const result=await send("Runtime.evaluate",{expression:"document.title",returnByValue:true});title=result.result?.value||"";if(title.startsWith("BOSS_QA:"))break;}catch{}
-   await sleep(150);
-  }
+  // Measure the attached renderer without navigating. Reloading can silently
+  // move Chrome to a new process, losing the page-scoped metric override.
+  const measured=await send("Runtime.evaluate",{expression:"window.innerWidth",returnByValue:true});
+  assert.ok(measured.result?.value>=385&&measured.result?.value<=395,
+    "CDP cannot establish a true 390px viewport on active game renderer: "+measured.result?.value);
+  const trigger=await send("Runtime.evaluate",{expression:"typeof window.__bossRunMobileQa==='function'&&window.__bossRunMobileQa()",returnByValue:true});
+  assert.notEqual(trigger.result?.value,false,"Mobile QA instrumentation was not installed on the active game page");
+  const title=(await send("Runtime.evaluate",{expression:"document.title",returnByValue:true})).result?.value||"";
   assert.ok(title.startsWith("BOSS_QA:"),"UI smoke script did not finish");
   const outcome=JSON.parse(Buffer.from(title.slice(8),"base64").toString("utf8"));
   console.log("Mobile browser verification:",JSON.stringify(outcome));

@@ -1,12 +1,14 @@
 # Boss
 
-## Boss v21.2 — GM accountability (release candidate, PR #25)
+## Boss v21.2 — GM accountability (released 2026-10-17 · PR #25)
 
 Operating units now support CEO-controlled General Manager authority: a unit-specific coaching budget, per-action cap, quality objective, and 90/180-day expiry. Existing and migrated units default to $0 authorized spend. Eligible weekly coaching costs $4 and uses real company cash and the same corporate financial ledger; renewing budgets does not bypass the seven-day cooldown.
 
 In Growth → Operating units, the CEO can review each GM's tracked 30-day delivery/quality results. Managers may propose recruiting only when unit workload supports it, but the CEO must explicitly approve the actual $20 recruiting expense and new recurring payroll. Repeated approvals do not create a duplicate employee. Unit financial views contain attributed costs, not new corporate income.
 
 Existing contracts, employee IDs, prior paid service lines, historical company accounting and Safari fallback storage are preserved. General Managers do not yet control independent company bank accounts, broad hiring authority or acquisitions. v21.3–v21.4 will expand strategic delegation and presentation.
+
+**Release verification:** [PR #25](https://github.com/BSAVCI1/Boss/pull/25) merged to production at `25e09e0febf22227b44dad1c350f374a88302ed1`. [Production financial, save migration and mobile tests](https://github.com/BSAVCI1/Boss/actions/runs/39066315475) passed; [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39066315191) passed. Actual owner-device Safari storage remains private; a live anonymous browser test cannot verify it.
 
 ## Boss v21.1 — Operating Units Foundation (released 2026-10-17 · PR #24)
 

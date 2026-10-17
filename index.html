@@ -2225,7 +2225,13 @@ renderExecutiveWeekly();
 if($("exec-history").parentNode.open)$("exec-history").innerHTML=S.exec.history.slice(0,12).map(x=>'<p class="small">Day '+x.day+' · '+esc(x.manager)+' · '+esc(x.action)+' — '+esc(x.result)+'</p>').join("")||'<p class="small">No executive decisions yet.</p>';
 const lines=[{key:"core",since:0,delivered:S.market.completed,baseline:true},...S.exec.lines];
 $("business-lines-summary").textContent=lines.length+" operating";
-$("business-lines").innerHTML=lines.map(x=>'<div class="service-line"><b>'+esc(x.key==="core"?"General business services":SERVICE_LINES[x.key].name)+'</b><div class="small">'+(x.baseline?"Core company; lifetime projects "+x.delivered:"Opened Day "+x.since+" · "+(x.delivered||0)+" completed · "+biCurrency(x.revenue||0)+" earned since opening")+'</div></div>').join("");
+$("business-lines").innerHTML=lines.map(x=>{
+ if(x.baseline)return '<div class="service-line"><b>General business services</b><div class="small">Consolidated company history: '+x.delivered+' completed (including service lines, not additional revenue)</div></div>';
+ const offers=SERVICE_OFFERS[x.key],level=(x.delivered||0)>=10?2:(x.delivered||0)>=3?1:0;
+ const specialists=S.team.filter(p=>p.role.primary===SERVICE_LINES[x.key].need&&p.id!==S.ops.assistantId).length;
+ const quality=x.delivered?Math.round((x.qualityTotal||0)/x.delivered)+'%':'Not yet measured';
+ return '<div class="service-line"><b>'+esc(SERVICE_LINES[x.key].name)+'</b><div class="small">Opened Day '+x.since+' · '+(x.delivered||0)+' delivered · '+(x.missed||0)+' missed · Revenue '+biCurrency(x.revenue||0)+' · Contribution '+biCurrency(x.contribution||0)+'</div><div class="small">Offering: '+esc(offers[level][0])+' · Tier '+(level+1)+'/3 · Quality '+quality+' · '+specialists+' specialist(s)</div>'+(level<2?'<div class="small">'+((level===0?3:10)-(x.delivered||0))+' further deliveries unlock '+esc(offers[level+1][0])+'</div>':'')+(!x.delivered&&S.day-x.since>=30?'<p class="small risk-watch">No deliveries since launch. Review demand, staffing and active opportunities.</p>':'')+'</div>';
+}).join("");
 $("launch-service-line").disabled=!!S.ev||S.cash<120||S.exec.lines.some(x=>x.key===$("service-line-select").value);
 }
 

@@ -39,7 +39,7 @@ window.__runBossMobileSmoke=()=>{
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
 fs.writeFileSync(file,html.replace("</body>","<script>"+instrumentation+"</script></body>"));
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),"boss-cdp-"));
-const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--remote-debugging-port=0","--user-data-dir="+profile,"about:blank"];
+const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--remote-debugging-port=0","--user-data-dir="+profile,"file://"+file];
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const http=require("node:http");
 function getJson(url){
@@ -76,7 +76,6 @@ async function runBrowser(){
   await send("Page.enable");await send("Runtime.enable");
   // Navigate to the actual file renderer first, then apply device emulation.
   // A fresh about:blank -> file process swap can discard Chrome's first override.
-  await send("Page.navigate",{url:"file://"+file});
   let isReady=false;
   for(let i=0;i<90;i++){
    try{

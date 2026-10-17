@@ -815,7 +815,7 @@ test("v21.4b a weekly review may autonomously promote only inside the CEO payrol
  assert.equal(G.ladderSetAuthority(.5),true);
  s.org.progression.lastChecked=-1;G.ladderDay();
  assert.equal(s.org.progression.appointments.length,1);
- assert.equal(s.org.progression.events.at(-1).action,"within payroll authority");
+ assert.ok(s.org.progression.events.some(x=>x.action==="within payroll authority"),"the actual promotion is authorized within the payroll ceiling, even if successor mentoring follows it in the same review");
  reconcile(s);
 });
 

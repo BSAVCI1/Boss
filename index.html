@@ -2267,7 +2267,7 @@ e.units=e.units.filter(u=>{
  if(!Number.isFinite(p.baselineStaffDays))p.baselineStaffDays=u.staffDays;
  if(![90,180].includes(p.days))p.days=90;
  p.qualityTarget=Math.max(65,Math.min(100,p.qualityTarget));
- for(const [key,def] of Object.entries({trainingLimit:0,trainingSpent:0,teamLimit:0,teamSpent:0,staffingTarget:5,lastTraining:-99,lastTeam:-99})){
+ for(const [key,def] of Object.entries({trainingLimit:0,trainingSpent:0,teamLimit:0,teamSpent:0,staffingTarget:5,lastTraining:-99,lastTeam:-99,successionSessions:0})){
    if(!Number.isFinite(p[key])||(p[key]<0&&key!=="lastTraining"&&key!=="lastTeam"))p[key]=def;
   }
   if(!["fresh","manager","senior","custom","unassigned"].includes(p.preset))p.preset="custom";
@@ -2366,7 +2366,7 @@ function unitCommit(action){
 function unitActivate(key){
  if(!SERVICE_LINES[key]||!S.exec.lines.some(x=>x.key===key)||S.exec.units.some(u=>u.key===key))return false;
  return unitCommit(()=>{
-  S.exec.units.push({key,since:S.day,managerId:null,staffIds:[],revenue:0,directCost:0,sharedLaborCost:0,payrollCost:0,developmentCost:0,staffDays:0,billableDays:0,delivered:0,missed:0,qualityTotal:0,plan:{since:S.day,days:90,coachingLimit:0,perAction:0,spent:0,lastCoached:-99,qualityTarget:80,focus:"balanced",revenueTarget:0,utilizationTarget:65,lastReview:S.day,baselineDelivered:0,baselineQuality:0,baselineMissed:0,baselineRevenue:0,baselineCosts:0,baselineStaffDays:0,baselineBillableDays:0,trainingLimit:0,trainingSpent:0,teamLimit:0,teamSpent:0,staffingTarget:5,preset:"unassigned",lastTraining:-99,lastTeam:-99,successorId:null},reviews:[]});
+  S.exec.units.push({key,since:S.day,managerId:null,staffIds:[],revenue:0,directCost:0,sharedLaborCost:0,payrollCost:0,developmentCost:0,staffDays:0,billableDays:0,delivered:0,missed:0,qualityTotal:0,plan:{since:S.day,days:90,coachingLimit:0,perAction:0,spent:0,lastCoached:-99,qualityTarget:80,focus:"balanced",revenueTarget:0,utilizationTarget:65,lastReview:S.day,baselineDelivered:0,baselineQuality:0,baselineMissed:0,baselineRevenue:0,baselineCosts:0,baselineStaffDays:0,baselineBillableDays:0,trainingLimit:0,trainingSpent:0,teamLimit:0,teamSpent:0,staffingTarget:5,preset:"unassigned",lastTraining:-99,lastTeam:-99,successorId:null,successionSessions:0},reviews:[]});
   unitRecord(key,"activated","Created a managed operating unit from an existing paid service portfolio. No purchase charged.");
   logIt(SERVICE_LINES[key].name+" now has an operating unit (no additional investment).");
   return true;
@@ -2460,6 +2460,39 @@ function unitRenewAuthority(key){
   return true;
  });
 }
+function unitDevelopSuccessor(u,gm,staff){
+ const p=u.plan;if(!staff.length)return;
+ let trainee=staff.find(x=>x.id===p.successorId);
+ if(!trainee){trainee=staff.slice().sort((a,b)=>managerCompetence(b)-managerCompetence(a)||a.id-b.id)[0];p.successorId=trainee.id;
+  unitRecord(u.key,"succession","GM identified "+trainee.n+" (#"+trainee.id+") as a potential successor; no promotion or payroll change.");}
+ if(!trainee||S.day-p.lastTraining<14||S.day>=p.since+p.days||p.trainingLimit-p.trainingSpent<8||p.perAction<8||S.cash<8)return;
+ const skill=SERVICE_LINES[u.key].need;
+ S.cash-=8;biMoney("development",8,SERVICE_LINES[u.key].name+" successor training: "+trainee.n);
+ u.developmentCost+=8;p.trainingSpent+=8;p.lastTraining=S.day;
+ ensureManagement(trainee);trainee.management.coaching=clamp(trainee.management.coaching+1.5);
+ trainee.management.delegation=clamp(trainee.management.delegation+1);
+ trainee.s[skill]+=.08*S.mod.learn;trainee.career.xp+=1;
+ p.successionSessions=(p.successionSessions||0)+1;
+ unitRecord(u.key,"succession","GM trained successor "+trainee.n+" ($8 actual company development cost).");
+}
+function unitDevelopTeam(u,gm,staff){
+ const p=u.plan;if(staff.length<2||S.day-p.lastTeam<30||S.day>=p.since+p.days||p.teamLimit-p.teamSpent<6||p.perAction<6||S.cash<6)return;
+ const stress=staff.reduce((v,x)=>v+x.career.stress,0)/staff.length;
+ if(stress<60)return;
+ S.cash-=6;biMoney("people",6,SERVICE_LINES[u.key].name+" GM team development");
+ u.developmentCost+=6;p.teamSpent+=6;p.lastTeam=S.day;
+ for(const x of staff){x.career.stress=clamp(x.career.stress-4);x.career.satisfaction=clamp(x.career.satisfaction+2);}
+ unitRecord(u.key,"delegated","GM organized stress-reduction session ($6) within authorized team budget.");
+}
+function unitCareerReadiness(u){
+ const gm=person(u.managerId),people=u.staffIds.filter(id=>id!==u.managerId).map(id=>person(id)).filter(Boolean);
+ const reviews=u.reviews.filter(r=>r.managerId===u.managerId&&r.result==="Target met").length;
+ const successor=people.find(x=>x.id===u.plan.successorId)||null;
+ return {gm,people:people.length,reviews,successor,sessions:u.plan.successionSessions||0,
+  next:people.length>5?"Delegate 3 specialists to an approved team lead":people.length>=5?"Prepare a successor as the team grows beyond five":"Develop a qualified successor and grow profitable demand",
+  successorReady:!!successor&&managerCompetence(successor)>=55&&(u.plan.successionSessions||0)>=3,
+  managementReady:!!gm&&reviews>=2&&!!successor&&managerCompetence(gm)>=60};
+}
 function unitAutonomousDay(){
  for(const u of S.exec.units){
   const p=u.plan,gm=person(u.managerId);
@@ -2475,6 +2508,7 @@ function unitAutonomousDay(){
    unitRecord(u.key,"delegated",gm.n+" coached "+target.n+" under CEO-authorized budget ($4).");
    logIt(gm.n+" coached "+target.n+" within "+SERVICE_LINES[u.key].name+" unit authority.");
   }
+  unitDevelopSuccessor(u,gm,staff);unitDevelopTeam(u,gm,staff);
   if(S.day-p.lastReview<30)continue;
   const delivered=Math.max(0,u.delivered-p.baselineDelivered),missed=Math.max(0,u.missed-p.baselineMissed);
   const quality=delivered?Math.round((u.qualityTotal-p.baselineQuality)/delivered):null;

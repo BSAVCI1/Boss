@@ -167,7 +167,8 @@ G.set(restored);
 assert.equal(G.orgSubManager("commercial","sales").id,sales.id);
 assert.equal(G.orgSubManager("commercial","mkt").id,marketing.id);
 assert.equal(G.orgDirectReports("commercial").length,2);
-assert.equal(G.orgLeaderTitle(G.orgSubManager("commercial","sales")),"Department Manager");
+assert.equal(G.orgLeaderTitle(G.orgSubManager("commercial","sales")),"Team Manager");
+assert.equal(G.orgLeaderTitle(restored.team.find(p=>p.id===director.id)),"Director");
 accounting(restored);
 });
 test("periodic refresh cannot destroy an actively edited department budget control",()=>{

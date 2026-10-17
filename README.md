@@ -1,5 +1,11 @@
 # Boss
 
+## Boss v20.1 — release hardening (PR #19)
+
+The [v20.1 correction](https://github.com/BSAVCI1/Boss/pull/19) makes each new $120 business-line investment conditional on a successful local `boss20` write. A storage failure rolls back cash, investment ledger, company line and decision history rather than claiming a successful purchase. It pauses gameplay with a browser-storage warning; it never erases older saves. The independent line journal is written only after successful primary persistence.
+
+The Executive Assistant's expandable weekly report now distinguishes **revenue from cash**, reports seven-day operating costs, operating profit, cash movement and balance, summarizes existing department budgets and measured review status, shows actual delegated decisions and CEO actions, and recommends three evidence-based CEO priorities. The report is read-only; routine management continues. Existing accepted contracts and historic accounting are unchanged. Automated regression covers simulated storage failure, 730-day reconciliation and real 390px Chromium; real iOS Safari save behavior still requires testing on the player's device.
+
 Boss is a free, ad-free, offline-capable, mobile-first, endless leader simulation. Begin with a three-person team, then recruit specialists, support people, and lead through client work, learning, experimentation, dilemmas, and company decisions. No sign-in, tracking, external libraries, fonts or network requests are required.
 
 **Play:** https://bsavci1.github.io/Boss/.
@@ -31,7 +37,7 @@ The game works offline in one page with no login or real purchases. Choose 1×, 
 ## How to change the game
 The complete offline HTML, CSS and JavaScript remain in [index.html](index.html). Prepare changes on a feature branch, run all seven regression suites, open a pull request and merge to `main` only after checks succeed. Record release changes in [CHANGELOG.md](CHANGELOG.md), [ROADMAP.md](ROADMAP.md) and the existing Boss Notion project.
 
-**Save compatibility:** The active browser-save key for v19 is `boss19`. It imports `boss18`, `boss17`, `boss161`, `boss16`, `boss151`, `boss15` and other supported older saves **without overwriting any earlier save key**. New management tiers, approval policies and histories start forward-only. Existing employees, signed contracts, money ledger, customers and long-running game progress are preserved. Do not clear browser storage.
+**Save compatibility:** The active browser-save key for v20 is `boss20`, importing `boss19` without modifying it. It imports `boss18`, `boss17`, `boss161`, `boss16`, `boss151`, `boss15` and other supported older saves **without overwriting any earlier save key**. New management tiers, approval policies and histories start forward-only. Existing employees, signed contracts, money ledger, customers and long-running game progress are preserved. Do not clear browser storage.
 
 ## Publishing
 GitHub Pages publishes the root of `main`. See [deployment runs](https://github.com/BSAVCI1/Boss/actions). Boss v19 was merged in [PR #11](https://github.com/BSAVCI1/Boss/pull/11); [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39046003370) and [Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39046002839) passed. A real Chromium 390px mobile UI smoke test passed. Browser saves remain local; retaining the same browser storage is essential.

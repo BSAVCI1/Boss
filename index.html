@@ -793,7 +793,12 @@ try{
  S._saveRevision=Math.max(persistedRevision,Number(S._saveRevision)||0)+1;
  localStorage.setItem(KEY,JSON.stringify(S));persistedRevision=S._saveRevision;
  return true;
-}catch(e){return false;}
+}catch(e){
+ paused=true;
+ const warning=$("save-warning");
+ if(warning){warning.hidden=false;warning.textContent="Boss could not save progress in this browser. The simulation is paused. Check browser storage; do not clear site data.";}
+ return false;
+}
 }
 function launchJournal(){
  try{const x=JSON.parse(localStorage.getItem(LAUNCH_JOURNAL_KEY)||"[]");return Array.isArray(x)?x.filter(t=>t&&SERVICE_LINES[t.key]&&Number.isFinite(t.since)):[];}catch{return [];}
@@ -1805,7 +1810,7 @@ const priority=ceoDraftPriority??$("ceo-priority").value;
 if(!ceoDirection(priority))$("ceo-direction-confirm").textContent=S.ev?"Resolve the current CEO decision before changing direction.":"Direction unchanged. Choose a different strategy or wait for the next review.";
 });
 $("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
-$("launch-service-line").addEventListener("click",()=>{if(executiveLaunch($("service-line-select").value)){save();refresh();}});
+$("launch-service-line").addEventListener("click",()=>{if(executiveLaunch($("service-line-select").value))refresh();});
 $("service-line-select").addEventListener("change",()=>executiveShow());
 $("game-primary").addEventListener("click",()=>{const b=$("game-primary"),view=b.dataset.go||"work";
 navigate(view,b.dataset.project?Number(b.dataset.project):undefined);
@@ -2047,11 +2052,15 @@ function executiveLaunch(key){
 if(!SERVICE_LINES[key]||S.exec.lines.some(x=>x.key===key)||S.cash<120||S.ev)return false;
 if(saveConflict)return false;
 const old=localStorage.getItem(KEY);if(old){try{const r=JSON.parse(old);if((Number(r._saveRevision)||0)>persistedRevision){save();return false;}}catch{}}
-const before=coachSnap();S.cash-=120;biMoney("investment",120,"New business line: "+SERVICE_LINES[key].name);
+// Do not report a purchase until the primary save is durable.
+const checkpoint=JSON.stringify(S),before=coachSnap();
+S.cash-=120;biMoney("investment",120,"New business line: "+SERVICE_LINES[key].name);
 const launch={key,since:S.day,spent:120,delivered:0,missed:0,revenue:0};
-S.exec.lines.push(launch);recordLineLaunch(launch);
+S.exec.lines.push(launch);
 coachDecision("Launched "+SERVICE_LINES[key].name,before,"$120 launch investment. Matching future contracts receive a small delivery-readiness benefit; income is measured only on new line-attributed deals, no guaranteed demand.",null,30);
-logIt("Launched "+SERVICE_LINES[key].name+"; the team can now build its first trackable service-line results.");save();return true;
+logIt("Launched "+SERVICE_LINES[key].name+"; the team can now build its first trackable service-line results.");
+if(!save()){S=JSON.parse(checkpoint);return false;}
+recordLineLaunch(launch);return true;
 }
 function executiveAutonomous(dept,spec){
 const director=orgManager(dept),plan=orgPlan(dept);
@@ -2116,38 +2125,56 @@ if(S.day-S.exec.since>21)return null;
 return{type:"training",dept,cost:8,benefit:"Build a key colleague's skill and reduce workload strain",risk:"Training costs cash without guaranteed results"};
 }
 function executiveWeeklySnapshot(){
- const weekly=S.bi.daily.filter(b=>b.day>S.day-7&&b.day<=S.day);
- const sum=k=>weekly.reduce((n,b)=>n+(b.values?.[k]||0),0);
- const risks=S.deals.filter(d=>d.dl<=5&&d.prog<d.work).length;
- const staff=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35).length;
- const dept=DEPT_KEYS.map(key=>{const head=orgManager(key),d=S.org.departments[key],staff=orgReports(key);return{key,head:head?.n||"Founder",staff:staff.length,review:d.reviews[d.reviews.length-1]?.result||null};});
- const services=S.exec.lines.map(x=>({key:x.key,delivered:x.delivered||0,days:S.day-x.since}));
- return{day:S.day,periodDays:Math.min(7,weekly.length),revenue:sum("revenue"),cashIn:sum("cashIn"),cashOut:sum("cashOut"),wins:sum("wins"),delivered:sum("delivered"),missed:sum("missed"),active:S.deals.length,pipeline:S.pipeline.leads.length,proposals:S.exec.proposals.length,risks,staff,dept,services};
+ const rows=S.bi.daily.filter(b=>b.day>S.day-7&&b.day<=S.day),sum=k=>rows.reduce((n,b)=>n+(b.values?.[k]||0),0);
+ const revenue=sum("revenue"),costs=sum("costs"),cashIn=sum("cashIn"),cashOut=sum("cashOut");
+ const dept=DEPT_KEYS.map(key=>{
+  const d=S.org.departments[key],p=d.plan,review=d.reviews[d.reviews.length-1];
+  const spent=Object.values(p?.spent||{}).reduce((n,x)=>n+(Number(x)||0),0);
+  const limit=Object.values(p?.limits||{}).reduce((n,x)=>n+(Number(x)||0),0);
+  return{key,head:orgManager(key)?.n||"Founder",staff:orgReports(key).length,review:review?.result||null,reading:review?.reading||null,spent,limit,expiry:p?p.since+p.days:0};
+ });
+ return{day:S.day,periodDays:rows.length,revenue,costs,operatingProfit:revenue-costs,cashIn,cashOut,cashChange:cashIn-cashOut,
+ wins:sum("wins"),delivered:sum("delivered"),missed:sum("missed"),active:S.deals.length,pipeline:S.pipeline.leads.length,
+ proposals:S.exec.proposals.length,risks:S.deals.filter(d=>d.dl<=5&&d.prog<d.work).length,
+ staff:S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35).length,dept,
+ services:S.exec.lines.map(x=>({key:x.key,delivered:x.delivered||0,days:S.day-x.since,revenue:x.revenue||0,contribution:x.contribution||0})),
+ recentDecisions:S.exec.history.filter(x=>x.day>S.day-7&&x.day<=S.day)};
 }
 function updateExecutiveWeekly(){
  const latest=executiveWeeklySnapshot();
- if(S.exec.weeklyReports[0]?.day!==S.day){
-  S.exec.weeklyReports.unshift(latest);S.exec.weeklyReports=S.exec.weeklyReports.slice(0,12);
- }else S.exec.weeklyReports[0]=latest;
+ if(S.exec.weeklyReports[0]?.day!==S.day){S.exec.weeklyReports.unshift(latest);S.exec.weeklyReports=S.exec.weeklyReports.slice(0,12);}
+ else S.exec.weeklyReports[0]=latest;
 }
 function renderExecutiveWeekly(){
  const panel=$("ea-weekly-report");if(!panel||!panel.open)return;
- const report=S.exec.weeklyReports[0],live=executiveWeeklySnapshot(),a=person(S.ops.assistantId),since=report?.day;
- const warnings=[];
- if(live.risks)warnings.push(live.risks+" projects need a deadline review");
- if(live.staff)warnings.push(live.staff+" colleagues have elevated stress or burnout");
- for(const d of live.dept)if(d.staff>5&&!DEPARTMENTS[d.key].skills.some(role=>orgSubManager(d.key,role)))warnings.push(DEPARTMENTS[d.key].name+" has a wide reporting span");
- for(const line of live.services)if(line.days>=30&&!line.delivered)warnings.push(SERVICE_LINES[line.key].name+" has not completed any attributed engagements since launch");
- if(S.exec.proposals.length)warnings.push(S.exec.proposals.length+" management proposals awaiting a CEO response");
- if(!warnings.length)warnings.push("No urgent cross-department escalation identified");
- const dept=live.dept.map(d=>'<p class="small"><b>'+esc(DEPARTMENTS[d.key].name)+'</b> · '+esc(d.head)+' · '+d.staff+' staff'+(d.review?' · last review: '+esc(String(d.review)):'')+'</p>').join("");
- const lines=live.services.map(x=>'<p class="small">'+esc(SERVICE_LINES[x.key].name)+' · '+x.delivered+' delivered · '+x.days+' days since launch</p>').join("");
- $("ea-weekly-body").innerHTML='<p class="small"><b>'+esc(a?.n||"Founder")+'</b> · Current assessment at Day '+S.day+(since?' · last scheduled meeting Day '+since:' · no scheduled meeting recorded yet')+'</p>'+
- '<p class="small">Previous '+live.periodDays+' tracked days: '+live.wins+' won · '+live.delivered+' delivered · '+live.missed+' missed · cash received '+biCurrency(live.cashIn)+' · cash paid '+biCurrency(live.cashOut)+'. Current cash '+biCurrency(S.cash)+'.</p>'+
- '<p class="small">Today: '+live.active+' active jobs · '+live.pipeline+' open leads · '+S.team.length+' employees. Company priority: '+esc(CEO_PRIORITIES[S.exec.priority].name)+'.</p><b>Direct-report briefing</b>'+dept+
- '<b>Exceptions &amp; recommendations</b><ul>'+warnings.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>'+
- (lines?'<b>Business development</b>'+lines:"")+
- '<p class="small">This is a read-only report. Managers continue delegated work. Approvals remain in the executive inbox below.</p>';
+ const live=executiveWeeklySnapshot(),since=S.exec.weeklyReports[0]?.day,a=person(S.ops.assistantId);
+ const risks=[],priorities=[];
+ if(live.proposals){risks.push(live.proposals+" CEO approvals pending");priorities.push("Decide on "+live.proposals+" management proposals");}
+ if(live.risks){risks.push(live.risks+" client deadlines at risk");priorities.push("Resolve "+live.risks+" threatened delivery deadlines");}
+ if(live.staff){risks.push(live.staff+" stressed colleagues");priorities.push("Rebalance workload for "+live.staff+" colleagues");}
+ const payroll=S.team.reduce((n,p)=>n+dailySalary(p),0);
+ if(payroll>0&&S.cash<payroll*7){risks.push("Cash covers fewer than seven payroll days");priorities.push("Protect the coming week's payroll");}
+ for(const d of live.dept)if(d.staff>5&&!DEPARTMENTS[d.key].skills.some(role=>orgSubManager(d.key,role)))risks.push(DEPARTMENTS[d.key].name+" has a wide reporting span");
+ for(const line of live.services)if(line.days>=30&&!line.delivered)risks.push(SERVICE_LINES[line.key].name+" has no attributed delivery since launch");
+ if(!risks.length)risks.push("No important cross-department escalation identified");
+ if(live.pipeline)priorities.push("Convert "+live.pipeline+" existing leads");
+ else priorities.push("Build a qualified customer pipeline");
+ priorities.push("Review delivery quality and capacity","Develop the next service capability");
+ const dept=live.dept.map(d=>'<p class="small"><b>'+esc(DEPARTMENTS[d.key].name)+'</b> · '+esc(d.head)+' · '+d.staff+' reports · last measured review: '+esc(d.review||"no review yet")+(d.reading?' ('+esc(d.reading)+')':'')+' · delegated spend '+biCurrency(d.spent)+' of '+biCurrency(d.limit)+' · remaining '+biCurrency(Math.max(0,d.limit-d.spent))+(S.day>=d.expiry?' · authority inactive':' · valid through Day '+d.expiry)+'</p>').join("");
+ const recent=(kind)=>live.recentDecisions.filter(x=>(x.action==="delegated")===kind);
+ const actions=arr=>arr.length?'<ul>'+arr.slice(0,4).map(x=>'<li>Day '+x.day+' · '+esc(x.result||x.proposal||x.action)+'</li>').join("")+'</ul>':'<p class="small">No recorded actions in this seven-day window.</p>';
+ const lines=live.services.map(x=>'<p class="small">'+esc(SERVICE_LINES[x.key].name)+' · '+x.delivered+' delivered · attributed revenue '+biCurrency(x.revenue)+' · contribution '+biCurrency(x.contribution)+' (cumulative, not additional company income)</p>').join("");
+ const pending=S.exec.proposals.length?'<p class="small">'+live.proposals+' pending manager requests. Review the CEO inbox below for costs and approval options.</p>':'<p class="small">No CEO approvals needed currently.</p>';
+ $("ea-weekly-body").innerHTML='<p class="small"><b>'+esc(a?.n||"Founder")+'</b> · Day '+S.day+(since?' · last scheduled meeting Day '+since:' · no scheduled meeting yet')+'</p>'+
+ '<p class="small"><b>Last '+live.periodDays+' tracked days:</b> revenue '+biCurrency(live.revenue)+' · operating costs '+biCurrency(live.costs)+' · operating '+(live.operatingProfit>=0?'profit ':'loss ')+biCurrency(Math.abs(live.operatingProfit))+'. Cash received '+biCurrency(live.cashIn)+' · cash paid '+biCurrency(live.cashOut)+' · net cash movement '+biCurrency(live.cashChange)+' · balance '+biCurrency(S.cash)+'. Investments affect cash, not operating profit.</p>'+
+ '<p class="small"><b>Sales &amp; delivery:</b> '+live.wins+' wins · '+live.pipeline+' open leads · '+live.delivered+' delivered · '+live.missed+' missed · '+live.active+' active jobs.</p>'+
+ '<b>Direct-report briefing</b><b>Department leaders, reviews &amp; budgets</b>'+dept+
+ '<b>Managers acted autonomously (last seven days)</b>'+actions(recent(true))+
+ '<b>Earlier CEO decisions (last seven days)</b>'+actions(recent(false))+
+ '<b>Exceptions &amp; CEO approvals</b><ul>'+risks.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>'+pending+
+ (lines?'<b>Service performance</b>'+lines:'')+
+ '<b>Three CEO priorities for next week</b><ol>'+priorities.slice(0,3).map(x=>'<li>'+esc(x)+'</li>').join("")+'</ol>'+
+ '<p class="small">Based only on tracked game records. Earlier untracked history is not reconstructed, and recorded actions do not guarantee later performance. Routine work stays delegated.</p>';
 }
 function executiveWeek(){
 const e=S.exec;if(S.day<e.nextMeeting)return;

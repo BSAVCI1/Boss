@@ -4,6 +4,10 @@
 
 **Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss14`, `boss13`, `boss12`, `boss10`, `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
 
+## v20.1 — Save-failure safety and Executive Assistant briefing completion
+
+**Implementation:** [PR #19](https://github.com/BSAVCI1/Boss/pull/19), a narrowly scoped correction to already-released v20. If writing a newly purchased line to `boss20` fails, roll back the entire in-memory financial transaction and display a storage warning; write the supplementary journal only after persistence succeeds. Seven-day Executive Assistant reporting includes revenue, operating expenses, profit, receipts/payments, delegated authority usage, actual manager/CEO decisions and three CEO priorities. Historical iPhone data is not remotely accessible and cannot be reconstructed without independent receipt evidence. Verify all inherited regression suites, new failure/reconciliation assertions, 390px Chromium and Pages before release.
+
 ## Released: v20 — Service Portfolio & Autonomous Business Leadership
 
 **Approved additions from iPhone gameplay at Days 2800–2900:**

@@ -1784,7 +1784,12 @@ const manager=orgManager(dept);if(!manager)return null;
 const v=S.org.departments[dept].stats,people=orgReports(dept);
 const burden=dept==="commercial"?S.pipeline.leads.length:S.deals.filter(d=>["prod","ops"].includes(d.need)).length;
 const busy=people.filter(p=>p.t.startsWith("d")).length;
-if(S.exec.priority==="newline")return{type:"training",dept,cost:8,benefit:"Build practical capability for the proposed business line",risk:"Training uses employee time and may not unlock revenue immediately"};
+if(S.exec.priority==="newline"){
+if(dept==="delivery"){
+const key=S.exec.lines.some(x=>x.key==="operations")?"product":"operations";
+if(!S.exec.lines.some(x=>x.key))return{type:"line",dept,key,cost:120,benefit:"Launch "+SERVICE_LINES[key].name+" as a new client service with existing staff",risk:"$120 upfront; demand and delivery readiness are uncertain"};
+}
+return{type:"training",dept,cost:8,benefit:"Prepare team capability for a new business line",risk:"Uses budget and staff time; no guaranteed new customers"};}
 if(S.exec.priority==="people"){
 const retention=people.filter(p=>p.career.satisfaction<=52&&!p.career.autoRest);
 if(retention.length){const target=retention.sort((a,b)=>a.career.satisfaction-b.career.satisfaction)[0];
@@ -1820,6 +1825,9 @@ const who=[...peers].sort((a,b)=>a.s[DEPARTMENTS[p.dept].skills[0]]-b.s[DEPARTME
 S.cash-=p.cost;biMoney("development",p.cost,"CEO-approved development plan: "+who.n);
 const skill=DEPARTMENTS[p.dept].skills[0];who.s[skill]+=.3;who.career.satisfaction=clamp(who.career.satisfaction+3);manager.management.coaching=clamp(manager.management.coaching+.35);
 message="Approved "+biCurrency(p.cost)+" development for "+who.n+". Real skills improved; future results are still uncertain.";
+}else if(p.type==="line"){
+if(!executiveLaunch(p.key))return false;
+message="Approved director proposal to launch "+SERVICE_LINES[p.key].name+". New project outcomes will be tracked from launch.";
 }else if(p.type==="raise"){
 const who=person(p.personId);if(!who||who.department!==p.dept)return false;
 who.career.raise=(who.career.raise||0)+.25;who.career.satisfaction=clamp(who.career.satisfaction+3);
@@ -1860,7 +1868,7 @@ $("executive-meeting-summary").textContent="Weekly manager proposals, monthly pe
 const brief=ev?'<div class="exec-proposal exec-opportunity"><b>Market opportunity — '+esc(ev.type)+'</b><p>Available through Day '+ev.until+'. Optional; evaluate in Growth before it expires.</p><button type="button" data-go="growth">Review opportunity →</button></div>':"";
 $("exec-inbox").innerHTML=brief+(inbox.map(p=>{
 const chief=person(p.managerId),cost=biCurrency(p.cost),affordable=S.cash>=p.cost;
-return '<div class="exec-proposal"><b>'+esc(chief?.n||"Director")+' · '+esc(DEPARTMENTS[p.dept].name)+'</b><p>'+esc(p.benefit)+' · '+cost+' one-time'+(p.type==="hire"?" + salary $1.50/day":p.type==="raise"?" · salary +$0.25/day":"")+'</p><p><b>Risk:</b> '+esc(p.risk)+'</p><div class="buttons"><button data-exec-action="approve" data-exec-id="'+p.id+'" '+(affordable?"":"disabled")+' type="button">Approve</button><button data-exec-action="decline" data-exec-id="'+p.id+'" type="button">Decline</button></div></div>';}).join("")||(!ev?'<p class="small">No CEO approvals needed. Your managers continue running their departments.</p>':""));
+return '<div class="exec-proposal"><b>'+esc(chief?.n||"Director")+' · '+esc(DEPARTMENTS[p.dept].name)+'</b><p>'+esc(p.benefit)+' · '+cost+' one-time'+(p.type==="hire"?" + salary $1.50/day":p.type==="raise"?" · salary +$0.25/day":p.type==="line"?" · new service-line investment":"")+'</p><p><b>Risk:</b> '+esc(p.risk)+'</p><div class="buttons"><button data-exec-action="approve" data-exec-id="'+p.id+'" '+(affordable?"":"disabled")+' type="button">Approve</button><button data-exec-action="decline" data-exec-id="'+p.id+'" type="button">Decline</button></div></div>';}).join("")||(!ev?'<p class="small">No CEO approvals needed. Your managers continue running their departments.</p>':""));
 if($("exec-history").parentNode.open)$("exec-history").innerHTML=S.exec.history.slice(0,12).map(x=>'<p class="small">Day '+x.day+' · '+esc(x.manager)+' · '+esc(x.action)+' — '+esc(x.result)+'</p>').join("")||'<p class="small">No executive decisions yet.</p>';
 const lines=[{key:"core",since:0,delivered:S.market.completed,baseline:true},...S.exec.lines];
 $("business-lines-summary").textContent=lines.length+" operating";

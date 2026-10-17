@@ -9,7 +9,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,open:false,innerHTML:""
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
+const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exported+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -276,6 +276,81 @@ test("delegated budgets remain one shared departmental envelope even with subord
  assert.ok(controls.includes("No maximum team size is set here"));
  assert.ok(controls.includes("not independent subsidiaries"));
  reconcile(s);
+});
+
+
+test("v21 migration retains all original purchased lines and does not invent an operating unit",()=>{
+ const s=init();fund(s,500);s.day=2864;
+ assert.equal(G.executiveLaunch("product"),true);assert.equal(G.executiveLaunch("marketing"),true);
+ const expected=store.get("boss20"),cash=s.cash;
+ assert.equal(s.exec.units.length,0,"Purchased service portfolios are not automatically subsidiaries");
+ const loaded=G.load();assert.equal(loaded.exec.units.length,0);assert.deepEqual([...loaded.exec.lines.map(x=>x.key)].sort(),["marketing","product"]);
+ assert.equal(loaded.cash,cash);assert.equal(store.get("boss20"),expected);assert.equal(loaded.day,2864);reconcile(loaded);
+});
+test("v21 CEO converts existing paid line exactly once and keeps all financial balances",()=>{
+ const s=init();fund(s,500);s.day=2864;
+ assert.equal(G.executiveLaunch("product"),true);
+ const beforeCash=s.cash,ledger=JSON.stringify(s.bi.totals),line=JSON.stringify(s.exec.lines);
+ assert.equal(G.unitActivate("product"),true);
+ assert.equal(G.unitActivate("product"),false);
+ assert.equal(s.exec.units.length,1);assert.equal(s.exec.units[0].since,2864);
+ assert.equal(s.cash,beforeCash);assert.equal(JSON.stringify(s.bi.totals),ledger);
+ assert.equal(JSON.stringify(s.exec.lines),line,"Paid line journal must not change");
+ assert.equal(G.load().exec.units[0].key,"product");reconcile(s);
+});
+test("v21 each worker has exactly one operating unit and GM salary changes only after appointment",()=>{
+ const s=init();fund(s,650);s.deals=[];s.day=200;
+ G.executiveLaunch("product");G.executiveLaunch("marketing");
+ assert.equal(G.unitActivate("product"),true);assert.equal(G.unitActivate("marketing"),true);
+ const gm=s.team[0],specialist=s.team[1],other=s.team[2];gm.career.rank=1;
+ const baseSalary=1.5+.75;
+ assert.equal(G.unitAppoint("product",gm.id),true);
+ assert.equal(G.unitAppoint("marketing",gm.id),false);
+ assert.equal(G.unitTransfer("product",specialist.id),true);
+ assert.equal(G.unitTransfer("marketing",specialist.id),false);
+ assert.equal(G.unitTransfer("marketing",other.id),true);
+ assert.equal(G.unitOfPerson(specialist.id).key,"product");
+ assert.equal(G.unitOfPerson(other.id).key,"marketing");
+ assert.equal(G.unitOfPerson(gm.id).managerId,gm.id);
+ const members=s.exec.units.flatMap(u=>u.staffIds);
+ assert.equal(new Set(members).size,members.length);
+ const ids=G.teamReportingGroups().flatMap(g=>g.people.map(p=>p.id));
+ assert.equal(new Set(ids).size,s.team.length);assert.equal(ids.length,s.team.length);
+ assert.ok(G.orgPersonPosition(gm).includes("General Manager"));
+ assert.equal(G.unitRelease("product",specialist.id),true);
+ assert.equal(G.unitOfPerson(specialist.id),null);
+ assert.equal(s.bi.totals.cashOut,240,"Only the two original $120 service launches cost cash");
+ assert.equal(G.load().exec.units.length,2);
+ assert.ok(baseSalary>0);reconcile(s);
+});
+test("v21 unit financial report only attributes future unit-tagged contracts and does not post second income",()=>{
+ const s=init();fund(s,550);s.deals=[];s.day=110;
+ G.executiveLaunch("product");
+ const before=G.createDeal("Past customer",0,"hospitality");
+ assert.equal(before.unitKey,undefined,"Pre-unit signed work remains historical");
+ assert.equal(G.unitActivate("product"),true);
+ const worker=s.team[1];assert.equal(G.unitTransfer("product",worker.id),true);
+ const newDeal=G.createDeal("New customer",0,"hospitality");
+ assert.equal(newDeal.unitKey,"product");
+ const cash=s.cash,rev=s.bi.totals.revenue,initial=s.exec.units[0].revenue;
+ newDeal.directCost=7;newDeal.laborCost=12;newDeal.w=worker.id;newDeal.quality=87;
+ G.ceoLineFinish(newDeal,true,200);
+ const u=s.exec.units[0];assert.equal(u.revenue,initial+200);
+ assert.equal(u.directCost,7);assert.equal(u.sharedLaborCost,0);
+ assert.equal(u.delivered,1);assert.equal(u.qualityTotal,87);
+ G.unitPayrollDay();assert.ok(u.payrollCost>0);
+ assert.equal(s.cash,cash);assert.equal(s.bi.totals.revenue,rev);
+ assert.equal(before.unitKey,undefined);reconcile(s);
+});
+test("v21 failed browser save cannot register a unit or debit a purchase",()=>{
+ const s=init();fund(s,250);G.executiveLaunch("marketing");const old=store.get("boss20"),cash=s.cash;
+ const write=sandbox.localStorage.setItem;
+ sandbox.localStorage.setItem=(key,value)=>{if(key==="boss20")throw Error("simulated full browser");return write(key,value)};
+ try{assert.equal(G.unitActivate("marketing"),false);}
+ finally{sandbox.localStorage.setItem=write;}
+ assert.equal(s.exec.units.length,0);
+ assert.equal(G.get().exec.units.length,0);
+ assert.equal(G.get().cash,cash);assert.equal(store.get("boss20"),old);
 });
 
 console.log("Boss v20 functional and persistence checks passed.");

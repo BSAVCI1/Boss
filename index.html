@@ -2168,7 +2168,7 @@ function renderExecutiveWeekly(){
  $("ea-weekly-body").innerHTML='<p class="small"><b>'+esc(a?.n||"Founder")+'</b> · Day '+S.day+(since?' · last scheduled meeting Day '+since:' · no scheduled meeting yet')+'</p>'+
  '<p class="small"><b>Last '+live.periodDays+' tracked days:</b> revenue '+biCurrency(live.revenue)+' · operating costs '+biCurrency(live.costs)+' · operating '+(live.operatingProfit>=0?'profit ':'loss ')+biCurrency(Math.abs(live.operatingProfit))+'. Cash received '+biCurrency(live.cashIn)+' · cash paid '+biCurrency(live.cashOut)+' · net cash movement '+biCurrency(live.cashChange)+' · balance '+biCurrency(S.cash)+'. Investments affect cash, not operating profit.</p>'+
  '<p class="small"><b>Sales &amp; delivery:</b> '+live.wins+' wins · '+live.pipeline+' open leads · '+live.delivered+' delivered · '+live.missed+' missed · '+live.active+' active jobs.</p>'+
- '<b>Department leaders, reviews &amp; budgets</b>'+dept+
+ '<b>Direct-report briefing</b><b>Department leaders, reviews &amp; budgets</b>'+dept+
  '<b>Managers acted autonomously (last seven days)</b>'+actions(recent(true))+
  '<b>Earlier CEO decisions (last seven days)</b>'+actions(recent(false))+
  '<b>Exceptions &amp; CEO approvals</b><ul>'+risks.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>'+pending+

@@ -9,7 +9,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,open:false,innerHTML:""
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,delegateWork,assign,beginEditableInteraction,finishEditableInteraction,editableInteractionPending,renderBusinessUnits,refresh,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
+const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,unitApplyPreset,unitApplyDraft,unitRecordInput,unitPresetValues,unitCareerReadiness,unitDevelopSuccessor,unitDevelopTeam,delegateWork,assign,beginEditableInteraction,finishEditableInteraction,editableInteractionPending,renderBusinessUnits,refresh,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exported+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -646,6 +646,72 @@ test("v21.3.1 input typing retains its DOM during roster redraw",()=>{
  s.team[0].role.primary="mkt";s.day+=1;G.renderStructure();
  assert.equal(el("people").innerHTML,people,"typing should not reconstruct interactive sections");
  G.finishEditableInteraction({target:input});
+ reconcile(s);
+});
+
+
+test("v21.4 presets provide 25 percent manager budget steps with zero upfront expense",()=>{
+ const s=init();fund(s,1200);s.deals=[];s.day=220;
+ assert.equal(G.executiveLaunch("product"),true);assert.equal(G.unitActivate("product"),true);
+ const gm=s.team[0];gm.career.rank=1;assert.equal(G.unitAppoint("product",gm.id),true);
+ const u=s.exec.units[0];
+ assert.equal(u.plan.coachingLimit,0,"new manager remains unauthorized until CEO applies");
+ assert.equal(u.plan.recommendedPreset,"fresh");
+ const first=G.unitPresetValues("fresh"),manager=G.unitPresetValues("manager"),senior=G.unitPresetValues("senior");
+ assert.equal(first.coachingLimit,24);assert.equal(first.trainingLimit,24);
+ assert.equal(manager.coachingLimit,30);assert.equal(manager.trainingLimit,30);
+ assert.equal(senior.coachingLimit,38);assert.equal(senior.trainingLimit,38);
+ const cash=s.cash,spent=s.bi.totals.cashOut;
+ assert.equal(G.unitApplyPreset("product","fresh"),true);assert.equal(u.plan.preset,"fresh");
+ assert.equal(u.plan.coachingLimit,24);assert.equal(u.plan.trainingLimit,24);assert.equal(u.plan.teamLimit,12);
+ assert.equal(s.cash,cash);assert.equal(s.bi.totals.cashOut,spent);
+ assert.equal(G.unitApplyPreset("product","manager"),true);assert.equal(u.plan.coachingLimit,30);
+ assert.equal(G.unitApplyPreset("product","senior"),true);assert.equal(u.plan.coachingLimit,38);
+ assert.equal(G.unitApplyPreset("product","invalid"),false);
+ assert.equal(G.load().exec.units[0].plan.preset,"senior");
+ reconcile(s);
+});
+test("v21.4 GM edits keep multi-digit drafts until one atomic Apply",()=>{
+ const s=init();fund(s,1200);s.deals=[];s.day=150;
+ assert.equal(G.executiveLaunch("marketing"),true);assert.equal(G.unitActivate("marketing"),true);
+ const u=s.exec.units[0],cash=s.cash,spend=s.bi.totals.cashOut;
+ const field=(name,value)=>G.unitRecordInput({dataset:{unitKey:"marketing",unitField:name},value});
+ for(const digit of ["3","30","300","3000","30000","300000"])field("revenueTarget",digit);
+ field("coachingLimit","1000");field("trainingLimit","80");field("teamLimit","25");
+ field("perAction","20");field("staffingTarget","8");
+ field("qualityTarget","8"); // in-progress numeric is invalid but must not reprice the company
+ assert.equal(u.plan.revenueTarget,0);
+ assert.equal(G.unitApplyDraft("marketing"),false,"incomplete quality must not commit");
+ assert.equal(u.plan.revenueTarget,0);assert.equal(s.cash,cash);
+ field("qualityTarget","88");field("utilizationTarget","75");
+ assert.equal(G.unitApplyDraft("marketing"),true);
+ assert.equal(u.plan.revenueTarget,300000);assert.equal(u.plan.coachingLimit,1000);
+ assert.equal(u.plan.trainingLimit,80);assert.equal(u.plan.teamLimit,25);
+ assert.equal(u.plan.perAction,20);assert.equal(u.plan.staffingTarget,8);assert.equal(u.plan.preset,"custom");
+ assert.equal(s.cash,cash);assert.equal(s.bi.totals.cashOut,spend);
+ const restored=G.load().exec.units[0];assert.equal(restored.plan.revenueTarget,300000);assert.equal(restored.plan.staffingTarget,8);
+ reconcile(s);
+});
+test("v21.4 successor development spends real cash once and respects period limits",()=>{
+ const s=init();fund(s,1500);s.deals=[];s.day=170;
+ assert.equal(G.executiveLaunch("product"),true);assert.equal(G.unitActivate("product"),true);
+ const gm=s.team[0];gm.career.rank=1;
+ assert.equal(G.unitAppoint("product",gm.id),true);assert.equal(G.unitTransfer("product",s.team[1].id),true);assert.equal(G.unitTransfer("product",s.team[2].id),true);
+ const u=s.exec.units[0],initialCash=s.cash,cost=s.bi.totals.costs;
+ G.unitAutonomousDay();assert.equal(s.cash,initialCash,"no spending before CEO approval");
+ assert.equal(G.unitApplyPreset("product","fresh"),true);
+ const worker=s.team[1];worker.career.stress=75;s.team[2].career.stress=80;
+ G.unitAutonomousDay();
+ assert.ok(u.plan.successorId&&u.staffIds.includes(u.plan.successorId));
+ assert.equal(u.plan.trainingSpent,8);assert.equal(u.plan.teamSpent,6);
+ assert.equal(u.plan.spent,4);
+ assert.equal(s.cash,initialCash-18,"$4 coaching + $8 training + $6 team event");
+ assert.equal(s.bi.totals.costs,cost+18,"one corporate ledger posts all actual expenses");
+ const career=G.unitCareerReadiness(u);assert.ok(career.successor);
+ const previousSpent=s.bi.totals.costs;
+ G.unitAutonomousDay();assert.equal(s.bi.totals.costs,previousSpent,"same-day action may not be duplicated");
+ u.plan.days=1;s.day+=2;G.unitAutonomousDay();
+ assert.equal(s.bi.totals.costs,previousSpent,"expired authority never spends");
  reconcile(s);
 });
 

@@ -1036,7 +1036,7 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
-ensureOrganization(s);ensureBI(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureWorld(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
+ensureOrganization(s);ensureExecutive(s);ensureBI(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureWorld(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
 for(const d of s.deals)if(!Number.isFinite(d.agreedFee))d.agreedFee=d.biBooked&&Number.isFinite(d.bookVal)?d.bookVal:estimatedFee(d,s);
 return s;}catch(e){return null;}}
 const BI_FIELDS=["deliveryEligibleDays","deliveryRoleWorkDays","revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
@@ -1482,7 +1482,7 @@ function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4)+(d.worldStrategy==="relationships"?3:0));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -1492,7 +1492,7 @@ function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
-function tick(){if(paused||S.ev)return;S.day+=1;orgPeriod();worldDay();let dirty=false,ideaDirty=false;
+function tick(){if(paused||S.ev)return;S.day+=1;orgPeriod();executiveWeek();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
 if(delegateWork())dirty=true;
 if(autonomousWork())dirty=true;
@@ -1600,6 +1600,10 @@ $("restart").addEventListener("click",()=>{if(!confirm("Restart the company from
 fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";sectorSignature="";customerSignature="";projectExpanded.clear();employeeExpanded.clear();careerExpanded.clear();roadmapExpanded.clear();attentionSignature="";orgControlsSignature="";for(const name of ["today","work","team","growth"])viewScroll[name]=0;
 paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();navigate("today");schedule();});
 document.querySelector(".bottom-nav").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(b)navigate(b.dataset.view);});
+$("ceo-set-direction").addEventListener("click",()=>ceoDirection($("ceo-priority").value));
+$("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}});
+$("launch-service-line").addEventListener("click",()=>{if(executiveLaunch($("service-line-select").value)){save();refresh();}});
+$("service-line-select").addEventListener("change",()=>executiveShow());
 $("game-primary").addEventListener("click",()=>{const b=$("game-primary");navigate(b.dataset.go||"work",b.dataset.project?Number(b.dataset.project):undefined);});
 $("game-forward").addEventListener("click",gameAdvanceDays);
 $("game-journey").addEventListener("toggle",()=>{if($("game-journey").open)gameRender();});
@@ -1724,6 +1728,135 @@ S.ideaWork.history.slice(0,12).map(x=>'<div class="coach-mini">Day '+x.finished+
 if(area.innerHTML!==rows)area.innerHTML=rows||'<p class="small">No funded proposals yet; new requests will offer three price tiers with participation requirements.</p>';}
 
 /* v17 narrative presentation; all rewards and progression derive from existing simulation state. */
+
+/* v18 CEO layer: real saved proposals, optional decisions and delegated department work. */
+const CEO_PRIORITIES={
+grow:{name:"Grow the company",explain:"Commercial develops qualified demand; Delivery protects capacity. Approve headcount only when projects justify payroll."},
+specialize:{name:"Specialize",explain:"Deepen existing sector expertise and customer quality before expanding."},
+rd:{name:"Invest in innovation",explain:"Develop useful capabilities and measurable internal Product or Operations improvements."},
+newline:{name:"Launch a business line",explain:"Explore a new service supported by existing skills and customer markets."},
+profit:{name:"Strengthen profitability",explain:"Protect cash, eliminate avoidable spending and improve quality of work."},
+people:{name:"Develop leaders",explain:"Build managers, coaching and internal successors before increasing headcount."}
+};
+const SERVICE_LINES={marketing:{name:"Marketing studio",need:"mkt"},product:{name:"Product development",need:"prod"},operations:{name:"Operations consulting",need:"ops"},technology:{name:"Technology advisory",need:"prod"}};
+function ensureExecutive(state){
+if(!state.exec||typeof state.exec!=="object")state.exec={since:state.day,priority:"grow",priorityDay:state.day,nextMeeting:state.day+7,lastMeeting:state.day,proposals:[],history:[],sequence:1,lines:[]};
+const e=state.exec;
+if(!CEO_PRIORITIES[e.priority])e.priority="grow";
+if(!Number.isFinite(e.since))e.since=state.day;
+if(!Number.isFinite(e.priorityDay))e.priorityDay=state.day;
+if(!Number.isFinite(e.nextMeeting))e.nextMeeting=state.day+7;
+if(!Number.isFinite(e.lastMeeting))e.lastMeeting=state.day;
+if(!Array.isArray(e.proposals))e.proposals=[];
+if(!Array.isArray(e.history))e.history=[];
+if(!Array.isArray(e.lines))e.lines=[];
+if(!Number.isFinite(e.sequence))e.sequence=1;
+e.proposals=e.proposals.filter(p=>p&&p.type&&p.id).slice(-12);
+e.history=e.history.slice(-40);
+e.lines=e.lines.filter(x=>x&&SERVICE_LINES[x.key]&&Number.isFinite(x.since));
+}
+function ceoDirection(priority){
+if(!CEO_PRIORITIES[priority]||S.ev)return false;
+const before=coachSnap(),old=S.exec.priority;
+if(old===priority&&S.day-S.exec.priorityDay<15)return false;
+S.exec.priority=priority;S.exec.priorityDay=S.day;S.exec.proposals=S.exec.proposals.filter(p=>p.type==="launch");
+const suggested={grow:"growth",rd:"innovation",specialize:"balanced",newline:"balanced",profit:"balanced",people:"balanced"}[priority];
+S.pipeline.mode=suggested;
+coachDecision("CEO direction: "+CEO_PRIORITIES[priority].name,before,"90-day strategic priority. Department plans will reflect the choice; no automatic spending or guaranteed performance improvement.",null,30);
+logIt("CEO set the strategic direction to "+CEO_PRIORITIES[priority].name+".");save();refresh();return true;
+}
+function ceoProjectValue(line,d){return line&&d&&d.need===SERVICE_LINES[line.key]?.need&&S.day>=line.since;}
+function executiveLineForDeal(d){return S.exec.lines.find(x=>x&&x.since<=S.day&&SERVICE_LINES[x.key]?.need===d.need)||null;}
+function ceoLineFinish(d,success,payout=0){const line=S.exec.lines.find(x=>x.key===d.serviceLine&&x.since<=(d.bookedAt??S.day));if(!line)return;
+if(success){line.delivered=(line.delivered||0)+1;line.revenue=(line.revenue||0)+payout;}else line.missed=(line.missed||0)+1;
+}
+function executiveLaunch(key){
+if(!SERVICE_LINES[key]||S.exec.lines.some(x=>x.key===key)||S.cash<120||S.ev)return false;
+const before=coachSnap();S.cash-=120;biMoney("investment",120,"New business line: "+SERVICE_LINES[key].name);
+S.exec.lines.push({key,since:S.day,spent:120,delivered:0,missed:0,revenue:0});
+coachDecision("Launched "+SERVICE_LINES[key].name,before,"$120 launch investment. Matching future contracts receive a small delivery-readiness benefit; income is measured only on new line-attributed deals, no guaranteed demand.",null,30);
+logIt("Launched "+SERVICE_LINES[key].name+"; the team can now build its first trackable service-line results.");return true;
+}
+function executiveProposal(dept){
+const manager=orgManager(dept);if(!manager)return null;
+const v=S.org.departments[dept].stats,people=orgReports(dept);
+const burden=dept==="commercial"?S.pipeline.leads.length:S.deals.filter(d=>["prod","ops"].includes(d.need)).length;
+const busy=people.filter(p=>p.t.startsWith("d")).length;
+if(S.exec.priority==="newline")return{type:"training",dept,cost:8,benefit:"Build practical capability for the proposed business line",risk:"Training uses employee time and may not unlock revenue immediately"};
+if(S.exec.priority==="rd"||S.exec.priority==="people")return{type:"training",dept,cost:8,benefit:"Improve role skills, manager coaching and long-term readiness",risk:"Training does not guarantee a contract or promotion"};
+if(S.exec.priority==="profit")return{type:"optimize",dept,cost:0,benefit:"Reduce new prospecting or unnecessary spending while protecting delivery",risk:"Lower acquisition effort may reduce future demand"};
+if((burden>Math.max(4,people.length+2))&&S.cash>=120&&people.length<9)return{type:"hire",dept,cost:20,benefit:"Add one specialist to increase available capacity",risk:"Additional recurring payroll $1.50/day (before modifiers); demand may not justify it"};
+return{type:"training",dept,cost:8,benefit:"Build a key colleague's skill and reduce workload strain",risk:"Training costs cash without guaranteed results"};
+}
+function executiveWeek(){
+const e=S.exec;if(S.day<e.nextMeeting)return;
+e.lastMeeting=S.day;e.nextMeeting=S.day+7;
+for(const dept of DEPT_KEYS){
+if(!orgManager(dept)||e.proposals.some(p=>p.dept===dept))continue;
+const spec=executiveProposal(dept);if(!spec)continue;
+e.proposals.push({...spec,id:e.sequence++,day:S.day,managerId:orgManager(dept).id,priority:e.priority});
+}
+logIt("Executive Assistant prepared the weekly leadership meeting for Day "+S.day+".");
+}
+function executiveDecision(id,action){
+const e=S.exec,p=e.proposals.find(x=>x.id===id);if(!p||S.ev||!["approve","decline"].includes(action))return false;
+let message=action==="decline"?"CEO declined the proposal; the department continues under existing policy.":"";
+const manager=orgManager(p.dept),same=manager&&manager.id===p.managerId;
+const before=coachSnap();
+if(action==="approve"){
+if(!same)return false;
+if(p.type==="training"){
+if(S.cash<p.cost)return false;
+const peers=orgReports(p.dept).filter(x=>x.career.recoveryDays===0);
+if(!peers.length)return false;
+const who=[...peers].sort((a,b)=>a.s[DEPARTMENTS[p.dept].skills[0]]-b.s[DEPARTMENTS[p.dept].skills[0]])[0];
+S.cash-=p.cost;biMoney("development",p.cost,"CEO-approved development plan: "+who.n);
+const skill=DEPARTMENTS[p.dept].skills[0];who.s[skill]+=.3;who.career.satisfaction=clamp(who.career.satisfaction+3);manager.management.coaching=clamp(manager.management.coaching+.35);
+message="Approved "+biCurrency(p.cost)+" development for "+who.n+". Real skills improved; future results are still uncertain.";
+}else if(p.type==="hire"){
+if(S.cash<p.cost)return false;
+const personNew=createPerson();ensureCareer(personNew);ensureRole(personNew);
+personNew.role.primary=p.dept==="commercial"?"sales":"ops";personNew.department=p.dept;ensureDepartment(personNew);ensurePerformance(personNew,S.day);
+S.cash-=p.cost;biMoney("recruiting",p.cost,"CEO-approved department hire: "+personNew.n);
+S.team.push(personNew);structural="";
+message="Hired "+personNew.n+" for "+DEPARTMENTS[p.dept].name+"; $20 paid and recurring salary added.";
+}else if(p.type==="optimize"){
+S.pipeline.mode="balanced";message="Manager instructed to prioritize efficient use of existing people. No immediate cash impact.";
+}else return false;
+}
+e.proposals=e.proposals.filter(x=>x.id!==id);
+e.history.unshift({day:S.day,dept:p.dept,manager:manager?.n||"Former manager",priority:p.priority,action,result:message,proposal:p.type});
+e.history=e.history.slice(0,40);
+coachDecision("Leadership meeting: "+p.dept+" — "+action,before,message+" Review department results after 30 days.",p.managerId,30);
+logIt(message);save();renderStructure();refresh();return true;
+}
+function executiveShow(){
+const a=person(S.ops.assistantId);
+$("company-name").textContent="Business Services Group";
+const primary=SECTORS[S.market.focus]?.name||"Services",strategy=worldStrategy().name;
+$("company-identity").textContent="B2B client services · Serving "+primary+" and "+S.market.open.length+" industries · "+strategy+".";
+$("ceo-direct-reports").innerHTML=DEPT_KEYS.map(key=>{
+const m=orgManager(key),staff=orgReports(key);
+return '<div class="ceo-report"><b>'+DEPARTMENTS[key].name+'</b><div>'+(m?esc(m.n)+" · Director · "+staff.length+" reports":"Founder-led · "+staff.length+" team members")+'</div></div>';}).join("");
+$("ceo-assistant").textContent=a? a.n+" · CEO coordination and manager follow-ups":"Unfilled · appointment optional";
+$("ceo-priority").value=S.exec.priority;
+$("ceo-direction-time").textContent="Day "+Math.max(0,S.day-S.exec.priorityDay)+" / 90";
+$("ceo-direction-note").textContent=CEO_PRIORITIES[S.exec.priority].explain;
+$("ceo-set-direction").disabled=!!S.ev;
+const inbox=S.exec.proposals,ev=S.world.activeEvent;
+$("exec-count").textContent=inbox.length+" manager requests"+(ev?" · 1 market brief":"");
+$("executive-meeting-summary").textContent="Weekly manager proposals, optional market opportunities and CEO approvals. Routine department work stays delegated.";
+const brief=ev?'<div class="exec-proposal exec-opportunity"><b>Market opportunity — '+esc(ev.type)+'</b><p>Available through Day '+ev.until+'. Optional; evaluate in Growth before it expires.</p><button type="button" data-go="growth">Review opportunity →</button></div>':"";
+$("exec-inbox").innerHTML=brief+(inbox.map(p=>{
+const chief=person(p.managerId),cost=biCurrency(p.cost),affordable=S.cash>=p.cost;
+return '<div class="exec-proposal"><b>'+esc(chief?.n||"Director")+' · '+esc(DEPARTMENTS[p.dept].name)+'</b><p>'+esc(p.benefit)+' · '+cost+' one-time'+(p.type==="hire"?" + salary $1.50/day":"")+'</p><p><b>Risk:</b> '+esc(p.risk)+'</p><div class="buttons"><button data-exec-action="approve" data-exec-id="'+p.id+'" '+(affordable?"":"disabled")+' type="button">Approve</button><button data-exec-action="decline" data-exec-id="'+p.id+'" type="button">Decline</button></div></div>';}).join("")||(!ev?'<p class="small">No CEO approvals needed. Your managers continue running their departments.</p>':""));
+if($("exec-history").parentNode.open)$("exec-history").innerHTML=S.exec.history.slice(0,12).map(x=>'<p class="small">Day '+x.day+' · '+esc(x.manager)+' · '+esc(x.action)+' — '+esc(x.result)+'</p>').join("")||'<p class="small">No executive decisions yet.</p>';
+const lines=[{key:"core",since:0,delivered:S.market.completed,baseline:true},...S.exec.lines];
+$("business-lines-summary").textContent=lines.length+" operating";
+$("business-lines").innerHTML=lines.map(x=>'<div class="service-line"><b>'+esc(x.key==="core"?"General business services":SERVICE_LINES[x.key].name)+'</b><div class="small">'+(x.baseline?"Core company; lifetime projects "+x.delivered:"Opened Day "+x.since+" · "+(x.delivered||0)+" completed · "+biCurrency(x.revenue||0)+" earned since opening")+'</div></div>').join("");
+$("launch-service-line").disabled=!!S.ev||S.cash<120||S.exec.lines.some(x=>x.key===$("service-line-select").value);
+}
+
 function gameChapter(){let n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;return n>=30&&S.team.length>=12&&leaders===2?"Established":n>=12&&S.team.length>=6?"Growing company":n>=3?"Small agency":"Founder";}
 function gamePlan(){let n=S.market.completed||0,open=S.deals.filter(d=>!person(d.w));
 if(!n&&open.length)return["Assign a teammate to your first project","Match a worker to a customer. Your first completed project starts your story.",0,2,"work",open[0].id];
@@ -1781,7 +1914,7 @@ const markup=notices.slice(0,2).join("");if(markup!==attentionSignature){attenti
 for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}
 }
 function refresh(){
-economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
+economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();executiveShow();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);

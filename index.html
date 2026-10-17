@@ -319,7 +319,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <script>
 (function(){
 "use strict";
-const KEY="boss141";
+const KEY="boss15";
 let labHistorySignature="";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
@@ -596,7 +596,88 @@ if(S.market.open.includes(b.sector))S.market.focus=b.sector;
 last.restored=true;coachDecision("Restore settings after experiment #"+id,before,"Returned the controllable policies to their pre-experiment settings.");save();renderAssistantPolicy();renderSectorChoices();refresh();return true;
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* Storage may be unavailable; play continues in memory. */}}
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+
+/* v15 advanced economy: forward-only invoicing, credit and demand. No invented historical events. */
+function ensureEconomy(state){
+if(!state.economy||state.economy.version!==15){
+state.economy={version:15,since:state.day,nextId:1,terms:7,pricing:"standard",invoices:[],loan:0,interestDue:0,creditLimit:150,invested:{operations:false,commercial:false},lastFinancingDay:-99};
+for(const d of state.deals)if(!Number.isFinite(d.paymentTerms))d.paymentTerms=0;
+}
+const x=state.economy;
+if(!Array.isArray(x.invoices))x.invoices=[];
+if(!Number.isInteger(x.nextId)||x.nextId<1)x.nextId=Math.max(1,...x.invoices.map(i=>(i.id||0)+1));
+if(![0,7,14,30].includes(x.terms))x.terms=7;
+if(!["standard","competitive","premium"].includes(x.pricing))x.pricing="standard";
+if(!Number.isFinite(x.loan)||x.loan<0)x.loan=0;
+if(!Number.isFinite(x.interestDue)||x.interestDue<0)x.interestDue=0;
+if(!Number.isFinite(x.creditLimit)||x.creditLimit<150)x.creditLimit=150;
+if(!x.invested||typeof x.invested!=="object")x.invested={operations:false,commercial:false};
+if(!Number.isFinite(x.since))x.since=state.day;
+}
+function economyPressure(){const cycle=Math.floor(S.day/45)%4;
+return[{name:"Stable demand",factor:1},{name:"Growing demand",factor:1.10},{name:"Competitive slowdown",factor:.9},{name:"Recovering demand",factor:1.03}][cycle];}
+function economyReceivables(){return S.economy.invoices.filter(i=>i.status==="open");}
+function economyOutstanding(){return economyReceivables().reduce((n,i)=>n+i.amount,0);}
+function economyCollect(inv,discount=0){
+if(!inv||inv.status!=="open")return 0;
+const fee=+(inv.amount*discount).toFixed(2),amount=+(inv.amount-fee).toFixed(2);
+inv.status="paid";inv.collectedDay=S.day;inv.received=amount;
+S.cash+=amount;biAdd("cashIn",amount);biEvent("collection",amount,"Customer collection: "+inv.client,amount);
+if(fee>0)biMoney("financing",fee,"Early collection fee for "+inv.client,0);
+return amount;
+}
+function economyInvoice(d,fee){const e=S.economy,days=[0,7,14,30].includes(d.paymentTerms)?d.paymentTerms:0;
+const inv={id:e.nextId++,client:d.cl,projectId:d.id,day:S.day,due:S.day+days,amount:fee,status:"open",terms:days};
+e.invoices.push(inv);
+biMoney("revenue",fee,"Earned revenue: "+d.cl+" invoice #"+inv.id,0);
+if(days===0)economyCollect(inv);
+return inv;
+}
+function economyDay(){
+const e=S.economy;
+for(const inv of economyReceivables())if(S.day>=inv.due+(inv.id%5===0?3:0)){const amount=economyCollect(inv);if(S.day>inv.due)logIt("Collected overdue invoice #"+inv.id+" from "+inv.client+" ("+biCurrency(amount)+").");}
+if(e.loan>0){const interest=+(e.loan*.001).toFixed(2);if(interest>0){e.interestDue=+(e.interestDue+interest).toFixed(2);biMoney("interest",interest,"Daily credit interest (0.1%)",0);}}
+e.invoices=e.invoices.filter(i=>i.status==="open").concat(e.invoices.filter(i=>i.status!=="open").slice(-60)).sort((a,b)=>a.id-b.id);
+}
+function economyBorrow(){if(S.ev)return false;const e=S.economy,amount=Math.min(50,e.creditLimit-e.loan);if(amount<1)return false;
+const before=coachSnap();e.loan=+(e.loan+amount).toFixed(2);S.cash+=amount;biAdd("cashIn",amount);biEvent("borrow",amount,"Working-capital credit draw",amount);
+coachDecision("Draw working capital",before,"Added "+biCurrency(amount)+" cash and equal loan principal; interest is 0.1% per day, recorded as an expense.",null,30);
+logIt("Drew "+biCurrency(amount)+" of working-capital credit. Repay principal and accrued interest when able.");save();refresh();return true;}
+function economyRepay(){if(S.ev)return false;const e=S.economy,owed=e.loan+e.interestDue,amount=Math.min(S.cash,owed,50);if(amount<.01)return false;
+const before=coachSnap(),interest=Math.min(amount,e.interestDue),principal=amount-interest;
+e.interestDue=+(e.interestDue-interest).toFixed(2);e.loan=+(e.loan-principal).toFixed(2);S.cash=+(S.cash-amount).toFixed(2);
+biAdd("cashOut",amount);biEvent("repay",amount,"Repay credit principal and accrued interest",amount);
+coachDecision("Repay working capital",before,"Paid "+biCurrency(interest)+" already-expensed interest and "+biCurrency(principal)+" loan principal. No second expense.",null,30);
+save();refresh();return true;}
+function economyEarlyCollection(){if(S.ev)return false;const inv=economyReceivables().filter(i=>i.due>S.day).sort((a,b)=>a.due-b.due)[0];if(!inv)return false;
+const before=coachSnap(),fee=+(inv.amount*.03).toFixed(2),amount=economyCollect(inv,.03);
+coachDecision("Accelerate customer collection",before,"Received "+biCurrency(amount)+" on invoice #"+inv.id+" after a "+biCurrency(fee)+" financing fee (3%). Earned revenue not counted twice.",null,7);
+logIt("Collected invoice #"+inv.id+" early for a 3% fee.");save();refresh();return true;}
+function economyInvest(kind){if(S.ev||!["operations","commercial"].includes(kind)||S.economy.invested[kind])return false;const fee=kind==="operations"?65:55;if(S.cash<fee)return false;
+const before=coachSnap();S.cash-=fee;S.economy.invested[kind]=true;biMoney("investment",fee,kind+" capital asset");
+coachDecision("Invest in "+kind,before,"Paid "+biCurrency(fee)+" capital cash (not an operating expense). "+(kind==="operations"?"Delivery speed +6%":"New prospecting output +8%")+". Track outcomes over time; ROI is not established by correlation.",null,30);
+logIt("Invested "+biCurrency(fee)+" in "+kind+" capacity; cash reduced, no immediate P&L expense.");save();refresh();return true;}
+function economyRender(){
+const panel=$("economy-panel"),e=S.economy,open=economyReceivables(),ar=economyOutstanding(),overdue=open.filter(i=>S.day>i.due),debt=e.loan+e.interestDue;
+$("economy-summary").textContent=biCurrency(ar)+" receivable · "+overdue.length+" overdue · "+biCurrency(debt)+" debt";
+if(!panel.open)return;
+$("economy-terms").value=String(e.terms);$("economy-pricing").value=e.pricing;
+$("economy-stats").innerHTML='<div class="coach-grid"><div><small>Cash available</small><strong>'+biCurrency(S.cash)+'</strong></div><div><small>Uncollected invoices</small><strong>'+biCurrency(ar)+'</strong></div><div><small>Overdue invoices</small><strong>'+overdue.length+'</strong></div><div><small>Unpaid payroll</small><strong>'+biCurrency(S.bi.unpaidPayroll||0)+'</strong></div><div><small>Loan principal</small><strong>'+biCurrency(e.loan)+'</strong></div><div><small>Accrued interest</small><strong>'+biCurrency(e.interestDue)+'</strong></div></div>';
+$("economy-market").textContent=economyPressure().name+' · next shift in '+(45-S.day%45)+' game days. Premium prices (+10% to newly agreed fees) lower the win probability; competitive pricing (-6%) can increase conversions. Already agreed fees stay locked.';
+$("economy-invoices").innerHTML=open.slice().sort((a,b)=>a.due-b.due).slice(0,12).map(i=>'<div class="bi-micro-row"><span>'+esc(i.client)+' · Invoice #'+i.id+' · Day '+i.day+'</span><span>'+biCurrency(i.amount)+' · '+(S.day>i.due?'Overdue '+(S.day-i.due)+'d':'Due Day '+i.due)+'</span></div>').join("")||'<p class="small">No unpaid customer invoices. Future completed projects will create invoices.</p>';
+$("economy-borrow").disabled=!!S.ev||e.loan>=e.creditLimit;$("economy-repay").disabled=!!S.ev||debt<.01||S.cash<.01;
+$("economy-factor").disabled=!!S.ev||!open.some(i=>i.due>S.day);
+for(const kind of ["operations","commercial"]){const b=$("economy-invest-"+kind),fee=kind==="operations"?65:55;b.disabled=!!S.ev||e.invested[kind]||S.cash<fee;b.textContent=e.invested[kind]?"Investment active":kind==="operations"?"Invest $65 — Delivery toolkit (+6% speed)":"Invest $55 — Sales toolkit (+8% prospecting)";}
+}
+function economyChangePolicy(type,value){if(S.ev)return false;const e=S.economy,before=coachSnap();
+if(type==="terms"){const terms=Number(value);if(![0,7,14,30].includes(terms))return false;e.terms=terms;}
+else if(type==="pricing"){if(!["standard","competitive","premium"].includes(value))return false;e.pricing=value;}
+else return false;
+coachDecision("Commercial policy: "+type,before,"New future contracts use "+value+"; existing contract prices and invoices are unchanged.",null,30);
+save();refresh();return true;
+}
+
+function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 if(!INTERESTS[p.interest])p.interest=INTEREST_KEYS[(p.id-1)%INTEREST_KEYS.length];
@@ -654,7 +735,7 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
-ensureOrganization(s);ensureBI(s);ensureLab(s);ensureCoach(s);
+ensureOrganization(s);ensureBI(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);
 for(const d of s.deals)if(!Number.isFinite(d.agreedFee))d.agreedFee=d.biBooked&&Number.isFinite(d.bookVal)?d.bookVal:estimatedFee(d,s);
 return s;}catch(e){return null;}}
 const BI_FIELDS=["revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
@@ -683,7 +764,7 @@ const bucket=biBucket().sources;const day=bucket[source]||(bucket[source]={});da
 function biSector(sector,values){const all=S.bi.sectorTotals[sector]||(S.bi.sectorTotals[sector]={});const day=biBucket().sectors[sector]||(biBucket().sectors[sector]={});for(const [k,v]of Object.entries(values)){all[k]=(all[k]||0)+v;day[k]=(day[k]||0)+v;}}
 function biTeamDay(p,task=p.t){biAdd("staffDays",1);if(task.startsWith("d"))biAdd("billableDays",1);else if(task==="prospect"){biAdd("salesDays",1);biAdd("acquisitionLabor",dailySalary(p));}else if(task==="market"){biAdd("marketingDays",1);biAdd("acquisitionLabor",dailySalary(p));}else if(["study","teach","exp","coachteam"].includes(task))biAdd("developmentDays",1);else if(task==="rest"||p.career.recoveryDays>0)biAdd("restDays",1);}
 function biProjectEnd(d,success,payout=0){const quality=Number.isFinite(d.quality)?d.quality:75;const labor=d.laborCost||0,direct=d.directCost||0;
-if(success){biMoney("revenue",payout,"Payment from "+d.cl,payout);if(d.biBooked){biAdd("bookedDelivered",d.bookVal);biAdd("realizedComparable",payout);}biAdd("delivered",1);if(d.dl>=0)biAdd("onTime",1);biAdd("qualityTotal",quality);biAdd("projectContribution",payout-labor-direct);biSector(d.sector,{delivered:1,revenue:payout,qualityTotal:quality,contribution:payout-labor-direct});}
+if(success){economyInvoice(d,payout);if(d.biBooked){biAdd("bookedDelivered",d.bookVal);biAdd("realizedComparable",payout);}biAdd("delivered",1);if(d.dl>=0)biAdd("onTime",1);biAdd("qualityTotal",quality);biAdd("projectContribution",payout-labor-direct);biSector(d.sector,{delivered:1,revenue:payout,qualityTotal:quality,contribution:payout-labor-direct});}
 else{biAdd("missed",1);biAdd("projectContribution",-labor-direct);biSector(d.sector,{missed:1,contribution:-labor-direct});}
 const item={day:S.day,client:d.cl,sector:d.sector,fee:payout,booked:d.biBooked?d.bookVal:null,quality:Math.round(quality),labor:+labor.toFixed(2),direct:+direct.toFixed(2),margin:+(payout-labor-direct).toFixed(2),success,onTime:success&&d.dl>=0,source:d.leadSource||"untracked"};
 S.bi.projects.unshift(item);if(S.bi.projects.length>120)S.bi.projects.length=120;}
@@ -976,7 +1057,7 @@ biFunnel("lead",S.pipeline.leads[S.pipeline.leads.length-1]);return true;}
 function activeProspectors(){return S.team.filter(p=>p.t==="prospect"||p.t==="market").filter(p=>p.career.recoveryDays===0);}
 function pipelineDay(){const leads=S.pipeline.leads;
 if(S.day>=S.pipeline.nextInbound){if(leads.length<12)addProspect("inbound");S.pipeline.nextInbound=S.day+Math.max(8,Math.round(12/S.mod.deals));}
-const sellers=activeProspectors();const energy=sellers.reduce((s,p)=>s+(p.t==="prospect"?p.s.sales*.6:p.s.mkt*.37)*stressFactor(p)*orgManagerBoost(p),0);
+const sellers=activeProspectors();const energy=sellers.reduce((s,p)=>s+(p.t==="prospect"?p.s.sales*.6:p.s.mkt*.37)*stressFactor(p)*orgManagerBoost(p),0)*(S.economy.invested.commercial?1.08:1)*economyPressure().factor;
 S.pipeline.prospecting+=energy;
 const wanted=S.pipeline.target+Math.max(0,pipelineCapacity()-S.deals.length-1);
 if(S.pipeline.prospecting>=3.2&&leads.length<Math.min(12,wanted+3)){S.pipeline.prospecting-=3.2;addProspect(sellers.length?"team prospecting":"referrals");}
@@ -989,7 +1070,7 @@ let converted=false;
 for(const lead of [...leads].filter(l=>l.stage==="negotiation")){
 const cap=pipelineCapacity();if(S.flow.focus||S.deals.length>=cap||converted||S.day-S.pipeline.lastWon<8)continue;
 if(lead.age<6)continue;
-if(Math.random()<.84||S.market.customers[lead.client]?.loyalty>72){
+if(Math.random()<Math.max(.65,Math.min(.93,.84*economyPressure().factor*({premium:.9,standard:1,competitive:1.07}[S.economy.pricing]||1)))||S.market.customers[lead.client]?.loyalty>72){
 const d=createDeal(lead.client);d.sector=lead.sector;d.sourceLead=lead.id;d.leadSource=lead.source;S.pipeline.closed++;S.pipeline.lastWon=S.day;biFunnel("won",lead);logIt("Sales won "+lead.client+" ("+SECTORS[lead.sector].name+"). Project booked from pipeline.");converted=true;}
 else{biFunnel("lost",lead);logIt("Proposal to "+lead.client+" was declined. Sales will pursue other opportunities.");}
 S.pipeline.leads=S.pipeline.leads.filter(x=>x.id!==lead.id);
@@ -1033,7 +1114,7 @@ $("skills-map").innerHTML='<p class="filter-note">Skill coverage map · Lv 1.85 
 function createPerson(){const id=S.pid++;const base=NAMES[(id-1)%NAMES.length];return{id:id,n:base+(id>20?" "+(Math.floor((id-1)/20)+1):""),col:COLORS[(id-1)%COLORS.length],trait:pick(TRAITS),s:Object.fromEntries(KEYS.map(k=>[k,+(1+Math.random()*.6).toFixed(2)])),mood:70,loy:60,t:"idle",mem:[],interest:pick(INTEREST_KEYS),lastCareDay:-99,career:null};}
 function sectorOfClient(client){for(const k of SECTOR_KEYS)if(SECTORS[k].clients.includes(client))return k;return null;}
 function dealTier(){return Math.min(5,1+Math.floor(S.market.completed/5));}
-function estimatedFee(d,game=S){const focusBonus=d.sector===game.market.focus?1.12:1;return Math.floor(d.base*game.mod.reward*(1+game.rep/200)*focusBonus*(SECTORS[d.sector].premium||1));}
+function estimatedFee(d,game=S){const focusBonus=d.sector===game.market.focus?1.12:1;return Math.floor(d.base*game.mod.reward*(1+game.rep/200)*focusBonus*(SECTORS[d.sector].premium||1)*(d.priceFactor||1));}
 function feeFor(d){return Number.isFinite(d.agreedFee)?d.agreedFee:estimatedFee(d);}
 function lockDealFee(d){d.agreedFee=estimatedFee(d);if(d.biBooked)biReprice(d);}
 function createDeal(client,extra=0){const tier=dealTier();let sector=client?sectorOfClient(client):null;if(!sector||!S.market.open.includes(sector))sector=S.market.focus;
@@ -1045,7 +1126,7 @@ if(!customer){sector=Math.random()<.62?S.market.focus:pick(S.market.open);custom
 const diff=+(1+(tier-1)*.32+Math.random()*.4).toFixed(2);
 const work=6+Math.round(diff*2.2)+(tier-1);
 const base=66+Math.floor(diff*13)+(tier-1)*17+extra+(returning?10:0);
-const d={id:S.did++,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning,laborCost:0,directCost:0,biBooked:false,bookVal:0};
+const d={id:S.did++,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning,laborCost:0,directCost:0,biBooked:false,bookVal:0,paymentTerms:S.economy?(S.day===0?0:S.economy.terms):0,priceFactor:S.economy?({standard:1,competitive:.94,premium:1.10}[S.economy.pricing]||1):1};
 d.agreedFee=estimatedFee(d);S.deals.push(d);if(S.bi)biBook(d);return d;}
 function sectorAction(key){if(S.ev||!SECTORS[key])return;const before=coachSnap();
 if(S.market.open.includes(key)){if(S.market.focus===key)return;S.market.focus=key;logIt("Your company now specializes in "+SECTORS[key].name+".");}
@@ -1078,7 +1159,7 @@ function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null};ensureBI(S);ensureLab(S);ensureCoach(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -1100,7 +1181,7 @@ if((p.t.startsWith("d")||p.t==="assist"||p.t==="exp")&&p.career.stress>=92&&p.ca
 p.career.recoveryDays=4;logIt(p.n+" took a four-day recovery pause after sustained workload.");}
 const recovering=p.career.recoveryDays>0;
 if(recovering){p.career.recoveryDays--;dm=1.5;}
-else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p);d.prog+=e;d.laborCost=(d.laborCost||0)+dailySalary(p);
+else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*(S.economy.invested.operations?1.06:1);d.prog+=e;d.laborCost=(d.laborCost||0)+dailySalary(p);
 d.quality=clamp(d.quality+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1)-(p.career.stress>=75?.25:0)-(p.career.burnout>=45?.18:0)+.12*orgEffective("delivery"));
 for(const [index,limit,name] of [[1,.34,"Plan approved"],[2,.73,"Build completed"]])if(d.milestone<index&&d.prog>=d.work*limit){d.milestone=index;logIt(d.cl+": "+name+" ("+Math.round(d.quality)+"% quality).");}
 p.s[d.need]+=.05*S.mod.learn*(aligned?1.12:1);dm=(e>=.9?.4:-.3)+(aligned?.15:0);}else{p.t="idle";dm=-.2;dirty=true;}}
@@ -1117,9 +1198,9 @@ p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
 if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);orgTrackPerson(p,effectiveTask);if(!recovering)orgManagerDay(p);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
 }
-for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){orgTrackDelivery(d,true);const payout=feeFor(d);S.cash+=payout;biProjectEnd(d,true,payout);S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" paid $"+payout+" for the finished "+SECTORS[d.sector].name+" project. Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
+for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){orgTrackDelivery(d,true);const payout=feeFor(d);biProjectEnd(d,true,payout);S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" completed "+biCurrency(payout)+" "+SECTORS[d.sector].name+" project; "+(d.paymentTerms===0?"cash collected":"invoice issued, collection due in "+d.paymentTerms+" days")+". Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
 else if(d.dl<=0){orgTrackDelivery(d,false);biProjectEnd(d,false);S.rep=Math.max(0,S.rep-3);recordCustomer(d,false);logIt("Missed the deadline for "+d.cl+". Reputation and customer loyalty dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
-assistantDeadlineAlerts();
+assistantDeadlineAlerts();economyDay();
 const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(S.cash,salary);S.cash-=actuallyPaid;
 biMoney("payroll",salary,"Daily payroll",actuallyPaid);
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}

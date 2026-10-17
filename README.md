@@ -1,8 +1,10 @@
 # Boss
 
-## Boss v21.1 — Operating Units Foundation (PR #24 · release candidate)
+## Boss v21.1 — Operating Units Foundation (released 2026-10-17 · PR #24)
 
 Building on the verified v20.3 CEO interface, the CEO can organize an **already purchased** service portfolio into an operating unit **without another $120 charge**, appoint an eligible General Manager and transfer available employees by unique ID. Staff members belong to only one unit, and dedicated unit teams no longer appear in shared department spans; incompatible department-manager or Executive Assistant appointments are blocked. Existing signed deals stay untouched when transferring. A new deal can be attributed to the operating unit, and its **forward-only** delivered revenue, direct cost, shared delivery work and allocated daily staff payroll are shown as a unit operating view. There is still only **one legal company and one cash/ledger system**; units are not independent subsidiaries or bank accounts.
+
+**Release evidence:** [PR #24](https://github.com/BSAVCI1/Boss/pull/24) merged as `b59a76e7cab474ec553deffaccb9a00089922177`. [Production regression](https://github.com/BSAVCI1/Boss/actions/runs/39065136825) and [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39065136237) passed. The owner’s original Safari game was not inspected during this automated release. Unit-specific GM delegation remains for v21.2.
 
 **State safety:** Upgrade the existing `boss20` state additively; keep old `boss19`, localStorage and IndexedDB data. No auto-conversion, invented past results, duplicated payroll or second investment. Changes are confirmed only after a durable save; an unwritable browser rolls them back in place. Active-contract assignees cannot transfer until the contract is completed. Real-browser checks cover the 390px UI and quota-failure reload; full financial and 730-day checks are release gates.
 

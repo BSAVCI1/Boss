@@ -1311,7 +1311,10 @@ if(!Number.isFinite(p.lastTraining))p.lastTraining=-99;
 if(!Number.isFinite(p.amendments)||p.amendments<0)p.amendments=0;
 
 }}
-function orgLeaderTitle(p){return p&&p.career?.rank>=4&&p.career.path==="leadership"?"Director":"Department Manager";}
+function orgLeaderTitle(p){
+if(!p)return"Department Manager";
+return p.career?.rank>=4&&p.career.path==="leadership"||DEPARTMENTS[p.department]?.skills.some(role=>orgSubManager(p.department,role))?"Director":"Department Manager";
+}
 function orgWorkRole(p){return ["sales","mkt","prod","ops"].includes(p?.role?.previousPrimary)?p.role.previousPrimary:p?.role?.primary;}
 function orgSubManager(key,role){const id=S.org.departments[key]?.subManagers?.[role],p=person(id);return p&&p.department===key&&p.role.primary==="lead"&&orgManager(key)?.id!==p.id?p:null;}
 function orgSubReports(key,role){const m=orgSubManager(key,role);return orgReports(key).filter(p=>p.id!==m?.id&&orgWorkRole(p)===role);}
@@ -1993,7 +1996,11 @@ e.lastMeeting=S.day;e.nextMeeting=S.day+7;
 let proposed=0,delegated=0;
 for(const dept of DEPT_KEYS){
 if(!orgManager(dept)||e.proposals.some(p=>p.dept===dept))continue;
-const spec=executiveProposal(dept);if(!spec)continue;
+const plan=orgPlan(dept),expired=plan&&S.day>=plan.since+plan.days;
+const spec=expired&&Object.values(plan.limits).some(v=>v>0)?
+{type:"renew",dept,cost:0,benefit:"Renew "+DEPARTMENTS[dept].name+" delegated authority for "+plan.days+" days using existing approved limits",risk:"Unspent authorization does not charge cash; renewed managers can execute within category and payroll caps"}:executiveProposal(dept);
+if(!spec)continue;
+if(e.history.some(x=>x.dept===dept&&x.proposal===spec.type&&x.action!=="delegated"&&S.day-x.day<28))continue;
 if(executiveAutonomous(dept,spec)){delegated++;continue;}
 e.proposals.push({...spec,id:e.sequence++,day:S.day,managerId:orgManager(dept).id,priority:e.priority});proposed++;
 }
@@ -2028,6 +2035,9 @@ personNew.role.primary=p.dept==="commercial"?"sales":"ops";personNew.department=
 S.cash-=p.cost;biMoney("recruiting",p.cost,"CEO-approved department hire: "+personNew.n);
 S.team.push(personNew);structural="";
 message="Hired "+personNew.n+" for "+DEPARTMENTS[p.dept].name+"; $20 paid and recurring salary added.";
+}else if(p.type==="renew"){
+if(!orgRenewPlan(p.dept))return false;
+message="CEO renewed "+DEPARTMENTS[p.dept].name+" delegation authority for "+orgPlan(p.dept).days+" days; previous budgets and payroll ceilings remain unchanged.";
 }else if(p.type==="budget"){
 const plan=orgPlan(p.dept);if(!plan||plan.amendments>=1||!p.amount)return false;
 plan.limits.training+=p.amount;plan.amendments++;

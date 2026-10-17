@@ -2588,7 +2588,7 @@ function updateExecutiveWeekly(){
 }
 function renderExecutiveWeekly(){
  const panel=$("ea-weekly-report");if(!panel||!panel.open)return;
- const live=executiveWeeklySnapshot(),since=S.exec.weeklyReports[0]?.day,a=person(S.ops.assistantId);
+ const live=executiveWeeklySnapshot(),since=S.exec.weeklyReports[0]?.day,a=person(S.ops.assistantId),units=S.exec.units.map(u=>({u,gm:person(u.managerId),last:u.reviews.at(-1),active:S.deals.filter(d=>d.unitKey===u.key).length}));
  const risks=[],priorities=[];
  if(live.proposals){risks.push(live.proposals+" CEO approvals pending");priorities.push("Decide on "+live.proposals+" management proposals");}
  if(live.risks){risks.push(live.risks+" client deadlines at risk");priorities.push("Resolve "+live.risks+" threatened delivery deadlines");}
@@ -2597,6 +2597,12 @@ function renderExecutiveWeekly(){
  if(payroll>0&&S.cash<payroll*7){risks.push("Cash covers fewer than seven payroll days");priorities.push("Protect the coming week's payroll");}
  for(const d of live.dept)if(d.staff>5&&!DEPARTMENTS[d.key].skills.some(role=>orgSubManager(d.key,role)))risks.push(DEPARTMENTS[d.key].name+" has a wide reporting span");
  for(const line of live.services)if(line.days>=30&&!line.delivered)risks.push(SERVICE_LINES[line.key].name+" has no attributed delivery since launch");
+ for(const x of units){
+  if(x.active&&!x.gm){risks.push(SERVICE_LINES[x.u.key].name+" needs a General Manager");priorities.push("Appoint a GM to "+SERVICE_LINES[x.u.key].name);}
+  else if(x.active&&!x.u.staffIds.some(id=>id!==x.u.managerId)){risks.push(SERVICE_LINES[x.u.key].name+" has contracts but no dedicated specialists");priorities.push("Resolve staffing for "+SERVICE_LINES[x.u.key].name);}
+  if(x.last?.result==="Below target")risks.push(SERVICE_LINES[x.u.key].name+" did not meet its previous quality objective");
+  if(x.last&&Number.isFinite(x.last.revenue)&&x.last.revenueTarget>0&&x.last.revenue<x.last.revenueTarget)risks.push(SERVICE_LINES[x.u.key].name+" revenue "+biCurrency(x.last.revenue)+" below target "+biCurrency(x.last.revenueTarget));
+ }
  if(!risks.length)risks.push("No important cross-department escalation identified");
  if(live.pipeline)priorities.push("Convert "+live.pipeline+" existing leads");
  else priorities.push("Build a qualified customer pipeline");
@@ -2610,6 +2616,7 @@ function renderExecutiveWeekly(){
  '<p class="small"><b>Last '+live.periodDays+' tracked days:</b> revenue '+biCurrency(live.revenue)+' · operating costs '+biCurrency(live.costs)+' · operating '+(live.operatingProfit>=0?'profit ':'loss ')+biCurrency(Math.abs(live.operatingProfit))+'. Cash received '+biCurrency(live.cashIn)+' · cash paid '+biCurrency(live.cashOut)+' · net cash movement '+biCurrency(live.cashChange)+' · balance '+biCurrency(S.cash)+'. Investments affect cash, not operating profit.</p>'+
  '<p class="small"><b>Sales &amp; delivery:</b> '+live.wins+' wins · '+live.pipeline+' open leads · '+live.delivered+' delivered · '+live.missed+' missed · '+live.active+' active jobs.</p>'+
  '<b>Direct-report briefing</b><b>Department leaders, reviews &amp; budgets</b>'+dept+
+ (units.length?'<b>General Managers · unit outcomes</b>'+units.map(x=>'<p class="small">'+esc(SERVICE_LINES[x.u.key].name)+' · '+esc(x.gm?.n||"Vacant GM")+' · '+x.active+' live contracts · '+(x.last?'Last Day '+x.last.day+' review '+esc(x.last.result)+(Number.isFinite(x.last.revenue)?' · Revenue '+biCurrency(x.last.revenue)+' · Billable '+(x.last.utilization===null?'no capacity':x.last.utilization+'%'):''):'Awaiting 30-day evidence')+'</p>').join(""):'')+
  '<b>Managers acted autonomously (last seven days)</b>'+actions(recent(true))+
  '<b>Earlier CEO decisions (last seven days)</b>'+actions(recent(false))+
  '<b>Exceptions &amp; CEO approvals</b><ul>'+risks.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>'+pending+
@@ -2776,14 +2783,18 @@ function renderBriefing(){
 const urgent=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"||f.risk==="watch");
 const stressed=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35);
 const atRiskMoney=S.cash<S.team.reduce((sum,p)=>sum+dailySalary(p),0)*7;
-const actionable=urgent.length+stressed.length+(atRiskMoney?1:0);
+const unitRequests=(S.exec?.unitRequests||[]).filter(x=>x.status==="open"),unitShortages=(S.exec?.units||[]).filter(u=>S.deals.some(d=>d.unitKey===u.key&&!d.w));
+const actionable=urgent.length+stressed.length+(atRiskMoney?1:0)+unitRequests.length+unitShortages.length;
 $("brief-headline").textContent=actionable?actionable+" area"+(actionable===1?"":"s")+" to review":"Your company is on track";
-$("brief-summary").textContent=actionable?"Your office assistant has identified issues worth reviewing. Routine work continues without intervention.":"Projects and development are moving forward. You're free to focus on strategy.";
+$("brief-summary").textContent=actionable?"Your Executive Assistant has highlighted decisions requiring CEO attention. Routine work continues without intervention.":"Projects and development are moving forward. You're free to focus on strategy.";
 $("brief-projects").textContent=S.deals.length+" active project"+(S.deals.length===1?"":"s");
 $("brief-pipeline").textContent=S.pipeline.leads.length+" pipeline leads";
 $("brief-team").textContent=S.team.length+" employees";
 $("log-recent").textContent=S.log.length+" updates";
 const notices=[];
+if(unitRequests.length)notices.push('<div class="card"><h3>CEO decision · GM staffing</h3><p>'+unitRequests.length+' specialist recruitment proposal(s) require CEO approval before any expense or new payroll.</p><button type="button" data-go="growth">Review GM proposals →</button></div>');
+if(S.world.activeEvent)notices.push('<div class="card"><h3>Optional market opportunity</h3><p>A market offer is available until Day '+S.world.activeEvent.until+'. The CEO can act or pass in Growth.</p><button type="button" data-go="growth">Review opportunity →</button></div>');
+if(unitShortages.length)notices.push('<div class="card"><h3>GM capacity exception</h3><p>'+unitShortages.length+' operating unit(s) have unassigned work. Review GM appointments and dedicated staff.</p><button type="button" data-go="growth">Review unit capacity →</button></div>');
 for(const f of urgent.slice(0,2)){
 const label=f.risk==="critical"?"Deadline risk":f.risk==="unassigned"?"Needs an owner":"Limited schedule buffer";
 const info='<span id="alert-days-'+f.d.id+'"></span> remaining';
@@ -2791,9 +2802,9 @@ notices.push('<div class="card"><h3>'+label+'</h3><p>'+esc(f.d.cl)+' — '+info+
 }
 if(stressed.length)notices.push('<div class="card"><h3>Team wellbeing</h3><p>'+stressed.length+' employee'+(stressed.length===1?"":"s")+' under high stress. Review workload and recovery.</p><button type="button" data-go="team">Review team →</button></div>');
 if(atRiskMoney)notices.push('<div class="card"><h3>Cash runway</h3><p>Available cash covers fewer than seven days of payroll. Check delivery and new contracts.</p><button type="button" data-go="work">Review work →</button></div>');
-if(S.world.activeEvent)notices.push('<div class="card"><h3>Optional market opportunity</h3><p>A market brief is ready until Day '+S.world.activeEvent.until+'. Choose whether to act or pass in Growth. No interruption is required.</p><button type="button" data-go="growth">Review market →</button></div>');
+
 if(!notices.length)notices.push('<div class="card"><h3>No urgent decisions</h3><p>Employees are handling routine activities. Check Work or Growth when you want to make strategic decisions.</p></div>');
-const markup=notices.slice(0,2).join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
+const markup=notices.slice(0,3).join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
 for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}
 }
 function refresh(){

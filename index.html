@@ -2489,6 +2489,10 @@ function renderBusinessUnits(){
 if(editableInteractionPending())return;
  const target=$("business-units");if(!target)return;
  const open=new Set([...target.querySelectorAll("details[data-unit-open]")].filter(p=>p.open).map(p=>p.dataset.unitOpen));
+ // A committed picker value is a player's draft decision until they press Appoint/Transfer.
+ // Preserve it across redraws without prematurely changing the saved company.
+ const selectedChoices=new Map([...target.querySelectorAll('select[id^="unit-"]')].map(el=>[el.id,el.value]));
+ const openAuthority=new Set([...target.querySelectorAll('details[data-unit-open]')].filter(el=>el.querySelector('details.aux-details')?.open).map(el=>el.dataset.unitOpen));
  const signature=JSON.stringify({units:S.exec.units,requests:S.exec.unitRequests,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id])});
  if(signature===unitViewSignature)return;unitViewSignature=signature;
  const choices=S.exec.lines.map(l=>{
@@ -2521,6 +2525,8 @@ if(editableInteractionPending())return;
    '<p class="small">Active customer contracts finish before transfers. Each employee has one primary unit; departmental spending authority remains shared.</p>'+authority+proposals+'</details>';
  }).join("");
  target.innerHTML='<h3>Operating units</h3><p class="small">Build an independent management structure from a service you already purchased; no second launch fee. Managers and dedicated employees affect future work, while all cash and signed contract history remain consolidated.</p>'+choices;
+ for(const [id,value] of selectedChoices){const el=$(id);if(el&&[...el.options].some(option=>option.value===value))el.value=value;}
+ for(const el of target.querySelectorAll('details[data-unit-open]'))if(openAuthority.has(el.dataset.unitOpen)){const nested=el.querySelector('details.aux-details');if(nested)nested.open=true;}
 }
 
 function executiveLaunch(key){

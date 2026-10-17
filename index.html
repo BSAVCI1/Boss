@@ -338,9 +338,8 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </section>
 <section id="view-team" class="app-view" data-page="team" aria-label="People and delegation" hidden>
 <div class="view-intro"><h2>Team</h2><p>Employees, roles and culture</p></div>
-<section aria-labelledby="team-title"><h2 id="team-title">Your people</h2><p class="small" id="team-wellbeing">Career progress, stress and wellbeing</p><div id="people"></div></section>
-
 <section class="card" aria-label="Leadership development"><div id="leadership-growth"></div></section>
+<section aria-labelledby="team-title"><h2 id="team-title">Your people</h2><p class="small" id="team-wellbeing">Career progress, stress and wellbeing</p><div id="people"></div></section>
 <section aria-labelledby="hiring-title"><h2 id="hiring-title">Grow the team</h2><div class="card"><details class="aux-details" id="recruitment-panel"><summary>Search and hire employees</summary><div class="filter-grid"><div><label for="hire-skill">Specialty to find</label><select id="hire-skill"><option value="">Any skill</option><option value="sales">Sales</option><option value="mkt">Marketing</option><option value="prod">Product</option><option value="ops">Operations</option></select></div><div><label for="hire-interest">Personal interest</label><select id="hire-interest"><option value="">Any interest</option><option value="customers">Customer relationships</option><option value="creative">Creative projects</option><option value="technology">Technology</option><option value="learning">Learning and growth</option><option value="people">Helping colleagues</option><option value="systems">Better processes</option></select></div></div><p class="filter-note">Search is free; hiring has a one-time fee. Each teammate adds $1.50 per day in salary costs, before cost breakthroughs.</p><div class="buttons"><button type="button" id="search-talent">Search candidates</button></div><div class="candidate-list" id="candidates"></div></details><div class="team-culture"><b>Executive assistant · CEO support</b><p class="filter-note" id="assistant-status">No executive assistant appointed.</p><div class="buttons"><button type="button" id="hire-assistant">Hire executive assistant ($20)</button></div>
 <p class="filter-note">Hire for $20 or appoint an existing colleague. Configure exactly what the assistant may do; they never displace someone you assigned. Your high-stakes people decisions stay with you.</p>
 <details class="assistant-settings"><summary>Delegation rules — customize your assistant</summary>
@@ -1608,7 +1607,7 @@ function ladderPromote(level,id,ceo=false){
 }
 function ladderSetAuthority(amount){
  if(!Number.isFinite(amount)||amount<0||amount>100||Math.round(amount*100)!==Math.round(amount*10000)/100)return false;
- return unitCommit(()=>{ladderSignature="";S.org.progression.authorityDaily=amount;S.org.progression.events.push({day:S.day,action:"CEO set new-leadership payroll limit",limit:amount});return true;});
+ return unitCommit(()=>{ladderSignature="";ladderBudgetDraft=null;S.org.progression.authorityDaily=amount;S.org.progression.events.push({day:S.day,action:"CEO set new-leadership payroll limit",limit:amount});return true;});
 }
 function ladderDay(){
  const g=S.org.progression;if(S.day%7||g.lastChecked===S.day)return;g.lastChecked=S.day;
@@ -1840,6 +1839,7 @@ number("perAction","Maximum cost per delegated decision ($)",p.perAction)+number
 '</div>';
 }).join("");
 }
+$("leadership-growth").addEventListener("input",e=>{if(e.target?.id==="leadership-budget")ladderBudgetDraft=e.target.value;});
 $("leadership-growth").addEventListener("click",e=>{
  const button=e.target.closest("button[data-ladder-action]");if(!button)return;
  if(button.dataset.ladderAction==="budget"){
@@ -3021,10 +3021,11 @@ $("launch-service-line").disabled=!!S.ev||S.cash<120||S.exec.lines.some(x=>x.key
 }
 
 
-let ladderSignature="";
+let ladderSignature="",ladderBudgetDraft=null;
 function renderLadder(){
  const target=$("leadership-growth");if(!target||editableInteractionPending())return;
  const g=S.org.progression,next=ladderNext(),salary=ladderPayroll(),launch=ladderLaunchReadiness();
+ const authorityOpen=target.querySelector("details.aux-details")?.open;
  const sig=JSON.stringify({authority:g.authorityDaily,roles:g.appointments,reporting:g.reportTo,
   team:S.team.map(p=>[p.id,p.perf?.days,p.career?.rank,p.career?.xp,p.t]),week:Math.floor(S.day/7),
   ready:next?.ready,blocked:next?.reasons,cash:Math.floor(S.cash)});
@@ -3050,11 +3051,12 @@ function renderLadder(){
  (reasons?'<ul class="small">'+reasons+'</ul>':'')+step+
  '<details class="aux-details"><summary>CEO delegation and payroll</summary><p class="small">Recurring payroll authority is separate from coaching and recruitment budgets. Set a maximum additional salary per game day. Within this ceiling, ready promotions can happen automatically on weekly leadership reviews; beyond it, CEO approval is required. Keep 14 days of full payroll in cash before any promotion.</p>'+
  '<label for="leadership-budget">Maximum extra daily management payroll ($)</label>'+
- '<input type="number" min="0" max="100" step="0.25" inputmode="decimal" id="leadership-budget" value="'+g.authorityDaily+'">'+
+ '<input type="number" min="0" max="100" step="0.25" inputmode="decimal" id="leadership-budget" value="'+esc(ladderBudgetDraft===null?g.authorityDaily:ladderBudgetDraft)+'">'+
  '<button type="button" data-ladder-action="budget">Approve payroll ceiling</button>'+
  '<p class="small">Additional leadership payroll '+biCurrency(salary)+'/day of '+biCurrency(g.authorityDaily)+'/day approved. A budget limit authorizes future actions; it does not spend money immediately.</p></details>'+
  '<details class="aux-details"><summary>Reporting lines and successors</summary>'+(roster||'<p class="small">Founder-led team. Reporting groups appear as you promote leaders.</p>')+'</details>'+
  '<p class="small">Next business-line readiness: '+launch.checks.filter(c=>c.met).length+'/'+launch.checks.length+' criteria met. Unmet: '+esc(launch.checks.filter(c=>!c.met).map(c=>c.label).join(" · ")||"none")+'.</p>';
+ if(authorityOpen){const details=target.querySelector("details.aux-details");if(details)details.open=true;}
 }
 function renderLaunchGuide(){
  const t=$("company-unlock-guide");if(!t||editableInteractionPending())return;

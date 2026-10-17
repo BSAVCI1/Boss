@@ -2185,7 +2185,7 @@ message="Approved $0.25/day recurring raise for "+who.n+" after director recomme
 }else if(p.type==="hire"){
 if(S.cash<p.cost)return false;
 const personNew=createPerson();ensureCareer(personNew);ensureRole(personNew);
-personNew.role.primary=p.dept==="commercial"?"sales":"ops";personNew.department=p.dept;ensureDepartment(personNew);ensurePerformance(personNew,S.day);
+personNew.role.primary=DEPARTMENTS[p.dept].skills.includes(p.role)?p.role:p.dept==="commercial"?"sales":"ops";personNew.department=p.dept;ensureDepartment(personNew);ensurePerformance(personNew,S.day);
 S.cash-=p.cost;biMoney("recruiting",p.cost,"CEO-approved department hire: "+personNew.n);
 S.team.push(personNew);structural="";
 message="Hired "+personNew.n+" for "+DEPARTMENTS[p.dept].name+"; $20 paid and recurring salary added.";

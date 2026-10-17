@@ -199,7 +199,7 @@ const teamCost=S.team.length*5,teamRemaining=Math.max(0,12-(S.day-S.hr.lastTeamD
 for(const p of S.team){const v=$("person-v-"+p.id),m=$("mood-bar-"+p.id),mem=$("mem-"+p.id);if(v)v.textContent="mood "+Math.floor(p.mood)+"% · loyalty "+Math.floor(p.loy)+"%";if(m)m.style.width=p.mood+"%";if(mem){const content=p.mem.map(s=>"<div>“"+esc(s)+"”</div>").join("");if(mem.innerHTML!==content)mem.innerHTML=content;}for(const k of KEYS){const label=$("skill-"+p.id+"-"+k),bar=$("skill-bar-"+p.id+"-"+k);if(label)label.textContent="Lv "+p.s[k].toFixed(1);if(bar)bar.style.width=((p.s[k]%1)*100)+"%";}}
 const logs=S.log.slice(0,14).join("|");if(logSignature!==logs){logSignature=logs;$("log").innerHTML=S.log.slice(0,14).map(x=>'<div class="log-entry">'+x+'</div>').join("");}
 showModal();}
-function startDilemma(){const possible=["raise","mistake","idea","family","praise"];if(S.team.length>1)possible.push("leave","fight","poach");const a=pick(S.team),b=pick(S.team.filter(x=>x.id!==a.id).length?S.team.filter(x=>x.id!==a.id):[a]);S.ev={k:pick(possible),a:a.id,b:b.id};if(S.ops.assistantId&&(S.ev.k==="praise"||(S.ev.k==="family"&&S.cash>=5)))choose(0,true);}
+function startDilemma(){const possible=["raise","mistake","idea","family","praise"];if(S.team.length>1)possible.push("leave","fight","poach");const a=pick(S.team),b=pick(S.team.filter(x=>x.id!==a.id).length?S.team.filter(x=>x.id!==a.id):[a]);S.ev={k:pick(possible),a:a.id,b:b.id};if(S.ops.assistantId&&S.ev.a!==S.ops.assistantId&&(S.ev.k==="praise"||(S.ev.k==="family"&&S.cash>=5)))choose(0,true);}
 function L(p,v){if(p)p.loy=clamp(p.loy+v);}
 function Mo(p,v){if(p)p.mood=clamp(p.mood+v);}
 function Me(p,s){if(p){p.mem.unshift(s);p.mem=p.mem.slice(0,3);}}

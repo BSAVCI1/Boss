@@ -31,7 +31,7 @@ fresh();const old=G.get();old.day=2443;old.cash+=30000;old.bi.openingCash+=30000
 old.deals[0].agreedFee=314;for(const d of Object.values(old.org.departments)){delete d.plan;delete d.subManagers;}
 store.set("boss18",JSON.stringify(old));const original=store.get("boss18");
 const s=G.load();assert.equal(s.day,2443);assert.equal(s.cash,old.cash);assert.equal(s.rep,1708);assert.equal(s.deals[0].agreedFee,314);assert.equal(s.org.departments.commercial.plan.days,90);
-assert.equal(s.org.departments.delivery.subManagers.ops??null,null);assert.equal(store.get("boss18"),original);G.set(s);G.save();assert.ok(store.get("boss19"));assert.equal(store.get("boss18"),original);accounting(s);
+assert.equal(s.org.departments.delivery.subManagers.ops??null,null);assert.equal(store.get("boss18"),original);G.set(s);G.save();assert.ok(store.get("boss20"));assert.equal(store.get("boss18"),original);accounting(s);
 });
 test("CEO controls 90/180-day budgets, authority and numeric targets",()=>{
 fresh();const s=G.get(),day=s.day;assert.ok(G.orgChangePolicy("commercial","days",180));
@@ -158,7 +158,7 @@ assert.ok(G.orgChooseSubManager("commercial","sales",sales.id));
 assert.ok(G.orgChooseSubManager("commercial","mkt",marketing.id));
 const earlier=state.org.departments.commercial.subManagers;
 assert.equal(earlier.sales,sales.id);assert.equal(earlier.mkt,marketing.id);
-G.save();const saved=store.get("boss19");
+G.save();const saved=store.get("boss20");
 assert.ok(saved&&saved.includes('"subManagers"'));
 const restored=G.load();assert.ok(restored);
 assert.equal(restored.org.departments.commercial.subManagers.sales,sales.id);

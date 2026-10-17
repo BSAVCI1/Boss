@@ -188,7 +188,7 @@ if(c.satisfaction<25&&S.day%7===0){p.mood=clamp(p.mood-2);p.loy=clamp(p.loy-1);}
 }
 function talentAndCareerDay(p,task,deadline){const c=p.career;
 let shift=task.startsWith("d")?2.25+(deadline<=5?1.15:0):
-task==="exp"?.75:task==="assist"?.55:task==="rest"?-9:
+task==="exp"?.75:task==="assist"?.10:task==="rest"?-9:
 task==="study"?-1.4:task==="teach"?-.9:-3;
 if(c.goal==="balance"&&task.startsWith("d"))shift+=.35;
 c.stress=clamp(c.stress+shift);
@@ -266,7 +266,7 @@ for(const p of [...S.team]){
 if(p.career.autoRest&&p.career.stress<=34&&p.career.burnout<=12){p.career.autoRest=false;p.t="idle";logIt(p.n+" returned after a recovery break.");dirty=true;}
 else if(p.t==="idle"&&p.career.stress>=72){p.t="rest";p.career.autoRest=true;logIt(p.n+" chose a recovery break after sustained work.");dirty=true;}
 const mf=.6+p.mood/250,lb=p.loy>70?1.1:1;let dm=-.2;
-if(p.t.startsWith("d")&&p.career.stress>=92&&p.career.burnout>=18&&p.career.recoveryDays<=0){
+if((p.t.startsWith("d")||p.t==="assist"||p.t==="exp")&&p.career.stress>=92&&p.career.burnout>=18&&p.career.recoveryDays<=0){
 p.career.recoveryDays=4;logIt(p.n+" took a four-day recovery pause after sustained workload.");}
 const recovering=p.career.recoveryDays>0;
 if(recovering){p.career.recoveryDays--;dm=1.5;}
@@ -300,12 +300,12 @@ if(priority==="deadline")return a.d.dl-b.d.dl||b.fit-a.fit;
 if(priority==="skills")return b.fit-a.fit||a.d.dl-b.d.dl;
 const aRisk=a.slack===null?-8:a.slack,bRisk=b.slack===null?-8:b.slack;
 return aRisk-bRisk||a.d.dl-b.d.dl||b.fit-a.fit;});}
-function delegateWork(){const a=person(S.ops.assistantId);if(!a||a.t!=="assist"||!S.ops.policy.assign)return false;let changed=false;
+function delegateWork(){const a=person(S.ops.assistantId);if(!a||a.t!=="assist"||a.career.recoveryDays>0||!S.ops.policy.assign)return false;let changed=false;
 for(const f of rankedProjects()){const d=f.d;if(d.w!==null)continue;const p=bestIdle(d);if(!p)break;d.w=p.id;p.t="d"+d.id;S.ops.assigned++;logIt(a.n+" assigned "+p.n+" to "+d.cl+" ("+S.ops.policy.priority+" priority).");changed=true;}return changed;}
-function assistantDecision(ev){const a=person(S.ops.assistantId),policy=S.ops.policy;if(!a||a.t!=="assist"||ev.a===a.id)return null;
+function assistantDecision(ev){const a=person(S.ops.assistantId),policy=S.ops.policy;if(!a||a.t!=="assist"||a.career.recoveryDays>0||ev.a===a.id)return null;
 const cost={praise:0,family:5,mistake:0,idea:10}[ev.k];if(cost===undefined||!policy[ev.k]||cost>policy.budget||S.cash<cost)return null;
 return ev.k==="mistake"?1:0;}
-function assistantDeadlineAlerts(){const a=person(S.ops.assistantId);if(!a||a.t!=="assist"||!S.ops.policy.alerts)return;
+function assistantDeadlineAlerts(){const a=person(S.ops.assistantId);if(!a||a.t!=="assist"||a.career.recoveryDays>0||!S.ops.policy.alerts)return;
 const live=new Set(S.deals.map(d=>String(d.id)));for(const k of Object.keys(S.ops.alerted))if(!live.has(k))delete S.ops.alerted[k];
 for(const f of S.deals.map(forecast)){const key=String(f.d.id),level=f.risk;
 if((level==="critical"||level==="watch"||level==="unassigned")&&S.ops.alerted[key]!==level){

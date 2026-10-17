@@ -1867,6 +1867,7 @@ if(!n)return["Find your first customer","Build an opportunity without overspendi
 if(n<3)return["Earn three customer wins","Build trust through finished work, not just new leads.",n,3,"work",null];
 if(S.world?.activeEvent)return["A market opportunity is waiting","Decide whether to act or pass. There is no compulsory penalty.",0,1,"growth",null];
 if(S.rep<40)return["Become known for quality","Deliver reliably to build reputation.",Math.max(0,Math.floor(S.rep)),40,"work",null];
+if(n>=100&&S.rep>=100){const elapsed=S.day-S.exec.priorityDay;return elapsed>=90?["Review and renew your CEO direction","Your last 90-day strategic period has ended. Choose the next company priority.",0,1,"today",null]:["Lead your next strategic chapter",CEO_PRIORITIES[S.exec.priority].explain,elapsed,90,"today",null];}
 if(S.team.length<5&&S.cash>=45)return["Build a team that can scale","Make a considered staffing decision before adding payroll.",S.team.length,5,"team",null];
 if((S.world?.stats?.won||0)<5)return["Compete with the market leaders","Win customers by playing to your strengths.",S.world?.stats?.won||0,5,"growth",null];
 if(S.market.open.length<3)return["Explore a new sector","Expand only when your people and finances are ready.",S.market.open.length,3,"growth",null];

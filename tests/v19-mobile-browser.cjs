@@ -37,7 +37,8 @@ document.addEventListener("DOMContentLoaded",()=>{
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
 fs.writeFileSync(file,html.replace("</body>","<script>"+instrumentation+"</script></body>"));
-const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--remote-debugging-port=9223","--user-data-dir="+path.join(os.tmpdir(),"boss-cdp-"+process.pid),"about:blank"];
+const profile=fs.mkdtempSync(path.join(os.tmpdir(),"boss-cdp-"));
+const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--remote-debugging-port=0","--user-data-dir="+profile,"about:blank"];
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const http=require("node:http");
 function getJson(url){
@@ -47,12 +48,19 @@ function getJson(url){
 }
 async function runBrowser(){
  assert.ok(globalThis.WebSocket,"Enable global browser WebSocket: node --experimental-websocket");
- const chrome=cp.spawn(browser,args,{stdio:"ignore"});
+ const chrome=cp.spawn(browser,args,{stdio:["ignore","ignore","pipe"]});
+ let stderr="";chrome.stderr.on("data",b=>{stderr=(stderr+b.toString()).slice(-2500)});
  let ws;
  try{
-  let tabs;
-  for(let i=0;i<70;i++){try{tabs=await getJson("http://127.0.0.1:9223/json");if(tabs?.length)break;}catch{}await sleep(150)}
-  assert.ok(tabs?.length,"Chromium DevTools did not open");
+  let tabs,port=0;
+  const portFile=path.join(profile,"DevToolsActivePort");
+  for(let i=0;i<130;i++){
+   if(fs.existsSync(portFile)){const candidate=Number(fs.readFileSync(portFile,"utf8").split("\\n")[0]);if(candidate>0)port=candidate;}
+   if(port){try{tabs=await getJson("http://127.0.0.1:"+port+"/json");if(tabs?.length)break;}catch{}}
+   if(chrome.exitCode!==null)break;
+   await sleep(150);
+  }
+  assert.ok(tabs?.length,"Chromium DevTools did not open: "+stderr);
   const tab=tabs.find(x=>x.type==="page")||tabs[0];
   ws=new WebSocket(tab.webSocketDebuggerUrl);
   await new Promise((resolve,reject)=>{const wait=setTimeout(()=>reject(new Error("CDP connection timeout")),8000);ws.addEventListener("open",()=>{clearTimeout(wait);resolve()},{once:true});ws.addEventListener("error",()=>{clearTimeout(wait);reject(new Error("CDP WebSocket failed"))},{once:true})});
@@ -84,6 +92,6 @@ async function runBrowser(){
   assert.equal(outcome.checks.noVisibleUndefined,true);
   assert.deepEqual(outcome.errors,[]);
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
- }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM")}
+ }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");fs.rmSync(profile,{recursive:true,force:true})}
 }
 runBrowser().catch(err=>{console.error(err);process.exitCode=1});

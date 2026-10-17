@@ -6,3 +6,4 @@
 - 2026-10-17 — Added automatic GitHub Pages publishing workflow; deployment artifact passed checks, but first-time Pages activation requires owner permission.
 - 2026-10-17 — Published Boss v4 through native GitHub Pages (main/root); removed redundant Actions deployment workflow and updated play instructions.
 - 2026-10-17 — Boss v5: skill/interest-based recruiting, hiring and firing, personal and team motivation, meaningful interest bonuses, and safe tl3→boss5 migration.
+- 2026-10-17 — Boss v6: paced client leads, longer deadlines, fewer dilemmas, Focus mode, hire/appoint an office assistant, automatic task intake and routine HR delegation; saves migrate to boss6.

@@ -1,8 +1,8 @@
 # Boss — simulation development roadmap
 
-**Approved order (2026-10-17):** 1. Smarter Office Assistant (v7, delivered). 2. Smarter Employees (v8, next). 3. Realistic Projects & Customers (v9, after v8). Other features below are backlog and do not displace this order.
+**Owner-updated order (2026-10-17):** 1. Smarter Office Assistant (v7 delivered). 2. Projects & Customers, shorter/higher-paid work and sector expansion (v8 delivered first at owner request). 3. Smarter Employees (v9 next). Other features remain backlog.
 
-**Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss6`, `boss5`, and `tl3`.
+**Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss7`, `boss6`, `boss5`, and `tl3`.
 
 ## Delivered: v7 — Smarter Office Assistant
 - A collapsible Delegation Desk. Owner can set automatic task assignment on/off, and choose project order: **balanced urgency and skills**, **earliest deadline**, or **best skill fit**.
@@ -13,21 +13,22 @@
 - Retain manual assignment authority, Focus mode, slower client intake, hiring/firing, idea combinations and speed controls. Migrates old progress to `boss7`.
 - **QA:** syntax/static offline checks; initial state; configurable rules; capped budgets; high-stakes escalations; protected manual orders; risk-alert deduplication; saved-game migration; restart.
 
-## Next: v8 — Smarter Employees (selected priority 2)
+## Delivered: v8 — Projects & Customers, sector specialization
+- **Faster starts:** opening projects need about 8–9 units of work instead of 12–17, with higher fees that cover early payroll more comfortably. Complexity grows from actual completions: five stages, about one new stage per five projects.
+- **Negotiable contracts:** premium, quick, or customer-first deal terms; visible trade-offs in fees, work, time and quality. One deadline renegotiation and one optional paid quality review per project.
+- **Three-phase delivery:** plan, build, review milestones with explicit status and company-log updates; quality scores evolve with skill, engagement and expertise.
+- **Customer retention:** project outcomes update loyalty and repeat orders. Customer portfolio makes trust, sector, previous quality and repeat sales visible.
+- **Sector strategy:** Hospitality + Retail unlocked initially. Focus awards +12% payout and speed. Permanent in-game expansion: Creative ($55 / rep 6, +12% premium), Logistics ($75 / rep 12, +20%), Technology ($95 / rep 20, +30%).
+- **Balanced high speed:** when the active pipeline empties, the next eligible lead does not wait out the real-time cooldown; Focus mode still blocks arrivals. Previous open projects are shortened and repriced once on migration to `boss8`.
+- **Validated:** 32 checks, including 180-day 8x simulation, negotiation restrictions, milestones, earnings, sector unlocks, customers, quality control and legacy saves.
+
+## Next: v9 — Smarter Employees (selected priority 2)
 - **Individual goals** such as skill mastery, pay, client ownership, mentoring, creative freedom or work-life balance. Goals should matter to daily behavior, not be merely labels.
 - **Stress/burnout:** accumulated workload and deadlines change morale, productivity, retention, mistakes and recovery; recognition and reasonable breaks help but cannot instantly erase chronic burnout.
 - **Ambitions:** advancement requests and growth plans with transparent trade-offs; promotions and role changes should connect to demonstrated strengths.
 - **Hidden talents:** discoverable through experiments, mentoring, role rotation and observations. Avoid random undisclosed skill changes with no clues.
 - **Changing behavior:** consequences of praise, layoffs, coaching and employer decisions accumulate over time, with simple explainable rule-based logic; no external AI dependency.
 - **Acceptance:** sensible pacing, understandable staff profiles and explanations, performance under long-running simulation, mobile readability, no regressions, migrated saves.
-
-## Then: v9 — Realistic Projects & Customers (selected priority 3)
-- **Negotiation:** scope, fee, deadline and trade-offs in contracts; fair decision paths, no unavoidable spam.
-- **Milestones:** defined phases with progress, review and occasional meaningful client checkpoints.
-- **Quality vs. speed:** rushed work increases rework and unhappy customers, while strong teams can deliver consistently.
-- **Delay handling:** renegotiate deadlines, allocate effort, or communicate with clients; the assistant can flag risks but should not approve contract concessions without authorization.
-- **Customer retention:** satisfaction and repeated business react to delivery quality, treatment and reputation.
-- **Acceptance:** projects can be finished without interruption overload, with usable planning, understandable economics, and a clear difference between milestones and emergencies.
 
 ## Backlog (not selected for the next two releases)
 - Departments/managers and office expansions

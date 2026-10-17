@@ -1,8 +1,8 @@
 # Boss — simulation development roadmap
 
-**Owner-updated progress (2026-10-17):** v7 Smart Office Assistant, v8 Projects & Customers and sector expansion, v9 Smarter Employees, v10 Company Operating System (continuous pipeline, persistent roles, autonomous work and capability/skill maps), v11 Mobile UI Simplification, and v12 Business Intelligence delivered. Owner-approved next priorities: v13 Organization & Leadership, v14 Entrepreneurship Lab, v15 Advanced Business Economy.
+**Owner-updated progress (2026-10-17):** v7 Smart Office Assistant, v8 Projects & Customers and sector expansion, v9 Smarter Employees, v10 Company Operating System (continuous pipeline, persistent roles, autonomous work and capability/skill maps), v11 Mobile UI Simplification, v12 Business Intelligence and v13 Organization & Leadership delivered. Owner-approved next priorities: v14 Entrepreneurship Lab, then v15 Advanced Business Economy.
 
-**Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss10`, `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
+**Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss12`, `boss10`, `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
 
 ## Delivered: v7 — Smarter Office Assistant
 - A collapsible Delegation Desk. Owner can set automatic task assignment on/off, and choose project order: **balanced urgency and skills**, **earliest deadline**, or **best skill fit**.
@@ -71,14 +71,16 @@
 - Today KPI highlights reflect operating loss and profit margin. Save key `boss12`, offline deployment, and existing organization/learning roadmap remain unchanged.
 - Regression: independence of accordions, threshold extremes, insufficient-data readiness, 150-day simulation, persistence, single-file source.
 
-## Next: v13 — Organization & Leadership
-- **Formal structure:** permanent departments with explicit manager/team-lead assignments, direct reports, authority and span of control. A Team Lead must manage a chosen department or project team, not the entire company by default.
-- **Accountable targets:** sales, marketing, delivery and operations managers own measurable quarterly objectives and departmental budgets, not only skill labels.
-- **Leadership tradeoffs:** managerial time reduces direct billable capacity; coaching and staffing quality can raise productivity and retention. Delegated authority uses explicit caps and escalation rules.
-- **Organizational growth:** early small business remains flat; management layers become helpful only with team size and complexity. Transparent costs, promotions and performance reviews.
-- **Acceptance:** clear reporting lines, meaningful manager selection/assignment, offline rule-based decisions, simulated KPIs, direct boss override, no unnecessary interruptions.
+## Delivered: v13 — Organization & Leadership
+- **Formal departments:** Commercial owns Sales/Marketing and lead conversion; Delivery owns Product/Operations, client work and quality. Explicit employee department, permanent reporting line and manager appointments replace the v10 generic company-wide Team Lead.
+- **Promotion path:** eligible manager candidates have Senior rank or ≥10 experience points. Leadership is an appointment to exactly one department, not an arbitrary title; removes their individual billable capacity and adds $0.75/day salary premium.
+- **Authority:** managers without an office assistant delegate only relevant work to available autonomous direct reports; office assistant remains cross-company. Coaching/teaching applies only to that department, and manual boss orders always win.
+- **Budget and behavioral effects:** $0 / $8 / $16 / $30 coaching allocation per 30 days, with limited $4 weekly coaching actions; improves employees while incurring real costs. Active management offers up to a 7% direct-report performance benefit, decreasing as span increases.
+- **Department performance:** new forward-only 30-day stats, reports and goals: Commercial lead target and wins; Delivery deliveries, missed deadlines, on-time rate, coaching investment, and staffing. Founder can leave departments flat until managers become useful.
+- **Lifecycle rules:** safe unassignment on manager exit, firing, cross-team transfer, assistant appointment or specialist-role change; preserve existing business and financial history and no network dependencies.
+- **Validated:** scoped authority, budgets, salary impact, migration, 24 functional cases and unchanged baseline economy during a 360-day flat-organization comparison with v12.1.
 
-## Then: v14 — Entrepreneurship & Leadership Lab
+## Next: v14 — Entrepreneurship & Leadership Lab
 - **Hypothesis and forecast:** player chooses a learning question (pricing, recruiting, marketing mix, industry focus, management structure), specifies an expected outcome, then runs a time-bounded experiment.
 - **Scorecard:** compare baseline to subsequent profit, leads, conversion, delivery, workload and customer results. Show both positive and negative consequences, not just prizes.
 - **Reflection:** display original hypothesis, measurable outcome, possible confounders and alternative choices; do not claim simulation outcomes prove real-world business causation.
@@ -92,7 +94,7 @@
 - **Acceptance:** accurate ledger and recoverable saves, realistic business tradeoffs, stable small-company play and no soft-lock due to unavoidable debt.
 
 ## Backlog (await owner selection)
-- Departments/managers and office expansions
+- Office expansions and richer multi-level organizations (first department managers delivered v13)
 - Reactive rival companies
 - Richer team relationships, trust and politics
 - Living markets, new industries and seasons (financial dashboards delivered in v12)

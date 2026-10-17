@@ -1,5 +1,14 @@
 # Boss
 
+## Boss v20.3 — CEO clarity & organizational audit (development PR #23)
+
+Following the owner's confirmed iPhone Day 2864 extended-storage recovery, the next safe incremental release clarifies leadership and departmental governance before adding genuinely autonomous business units. The Team roster will show each person's **appointed role** (Director, Department Manager, Team Manager or Executive Assistant) separately from their **career grade**. Department authority is one shared budget across the department; subordinate managers currently coach using that budget, while directors own authorized hiring/training and department-wide wellbeing. Headcount authorization does not limit team reporting span.
+
+Mobile CEO reporting is being expanded from cramped two-column cards, 90-day strategy reviews show when overdue, and service lines will explicitly identify themselves as offerings using shared employees and cash rather than independent subsidiaries. Regression gates preserve boss20/IndexedDB saves, existing employee identities and full financial history. [PR #23](https://github.com/BSAVCI1/Boss/pull/23).
+
+**Newly prioritized roadmap:** v21 independent business units and accountable leaders; v22 rent/buy offices and buildings with visual company campus; v23 investments, acquisitions and valuation; v24 factory and product supply-chain operations. These are planned future releases, not features available in v20.3. See [ROADMAP.md](ROADMAP.md) for costs/authority, finance, stage-gates and migration rules.
+
+
 ## Boss v20.2 — Full-game save recovery (released 2026-10-17)
 
 **Why this release exists:** A long-running iPhone Safari company repeatedly returned to Day 2642 on refresh. The entire company's progress, not just editable settings, was failing to persist. The exact on-device browser failure code cannot be inferred remotely.

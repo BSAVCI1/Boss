@@ -1,6 +1,6 @@
 # Boss — simulation development roadmap
 
-**Owner-updated progress (2026-10-17):** v7 Smart Office Assistant, v8 Projects & Customers and sector expansion, v9 Smarter Employees, and v10 Company Operating System (continuous pipeline, persistent roles, autonomous work and capability/skill maps) all delivered. Further priorities await owner selection.
+**Owner-updated progress (2026-10-17):** v7 Smart Office Assistant, v8 Projects & Customers and sector expansion, v9 Smarter Employees, v10 Company Operating System (continuous pipeline, persistent roles, autonomous work and capability/skill maps), and v11 Mobile UI Simplification all delivered. Further priorities await owner selection.
 
 **Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
 
@@ -46,6 +46,14 @@
 - **Skills/mentor map:** View the company's comparative skill strengths, candidate mentor-to-learner pairings, roles and evolving hidden talents.
 - **Balance:** Existing customer/sector/career systems continue. Verify onboarding, save migration from boss9 and earlier, contract spacing, stable cash flow, no forced pop-ups, mobile single-file offline operation, and long-run accelerated simulation.
 - **Future improvements (not automatically approved):** richer sales forecasting and lead-specific negotiations, explicit departmental budgets, deeper manager performance reviews, more nuanced market competition and capability investment decisions.
+
+## Delivered: v11 — Mobile UI Simplification
+- **Today / Work / Team / Growth** four-destination mobile-first design with persistent bottom navigation, compact header, and executive briefing. Critical project and wellbeing issues come before routine information; market settings no longer bury current decisions.
+- **Compact cards:** projects show customer, owner, payment, progress and deadline by default; employees show role, active task, mood and stress. Open the card for original detailed controls. Recruitment, policies and logs are collapsible.
+- **Less visual competition:** speed selector + Pause replace five equally prominent speed/restart buttons. Restart remains confirmed under Today settings; office animation is optional and suspended while closed.
+- **State-safe:** preserve expanded project/employee/career panels and per-tab scroll during live simulation updates; keep warning actions clickable at 8× without re-rendering each tick.
+- **Standards:** 44px touch controls, meaningful text hierarchy, one primary action per summary, low initial scroll depth and offline single-file operation with no change to `boss10` saves.
+- **QA:** DOM structure, syntax, controls, tab navigation, state preservation and v10/v11 accelerated 400-day economy equivalence. Live mobile browser inspection required after Pages deploy.
 
 ## Backlog (await owner selection)
 - Departments/managers and office expansions

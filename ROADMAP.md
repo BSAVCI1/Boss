@@ -1,5 +1,58 @@
 # Boss — simulation development roadmap
 
+## Next development program — CEO-first multi-business game (approved direction, not implemented)
+
+**Player-confirmed state:** The original iPhone company now saves reliably beyond Day 2864 using extended device storage; business lines include Product Development and Marketing Studio. No original Safari bytes are copied into the repository. **Design rule:** all subsequent migrations must keep saved staffing, signed contracts, accounting and purchased service-line evidence unchanged.
+
+### v20.3 — Leadership/UI consistency and legacy-process audit (in development, PR #23)
+- Show appointment titles consistently on Today and Team: Department Manager, Director, Sales/Marketing/Product/Operations Manager and Executive Assistant. Show career grade separately; no implicit promotion, pay rise or new IDs.
+- Fix cramped dual-column mobile CEO tree at common 390/414px widths; preserve disclosure state through game ticks. Clearly display CEO direct-report span versus entire department.
+- Explain the *real scope* of existing controls: one department-wide spending budget; subordinate managers share only coaching authority; director controls hiring/training/department wellbeing; headcount authorization is not a maximum direct-report count. Retain the existing safe spending gates.
+- Differentiate operating service portfolios from independent business units; current core + launched-line totals must not imply extra profit. Display a 90-day strategic review as overdue rather than Day 561 / 90.
+- Add complete UI/browser regression tests and an explicit legacy-functionality audit; leave economics and boss20/IndexedDB persistence unchanged.
+
+### v21 — Independent business units, accountable leaders and CEO strategy (next major release)
+- **Separate two concepts:** (A) a service offering such as Website Build within an existing unit; (B) a strategic business unit such as Product Development with dedicated ownership, optional headcount and a forward-only operating P&L. An existing paid line is not purchased again when promoted to a unit. The user must decide which line becomes a unit; no automatic duplication.
+- Proposed hierarchy: **CEO → Business Unit Director / GM → functional department heads → team managers → individual employees**, with shared-services option. Every real employee has a unique ID, one primary reporting line and at most one primary payroll owner. Shared employees require explicit tracked allocation of employee-days.
+- Business unit leaders propose strategic plans, budgets, recruitment, training, service launches and capacity decisions; functional managers execute approved routine decisions under strict tiered delegation. Each approved envelope has actual category cap, per-decision cap, headcount/recurring-payroll ceiling and expiry. Managers cannot spend from an imaginary duplicate pool.
+- Show each unit's backlog, revenue, real direct labor, allocated shared expenses, contribution, delivery quality, customer mix and risks. **One contract contributes revenue to the consolidated ledger exactly once**; unit attribution must reconcile without double counting. Legacy delivered work remains core/unattributed unless authenticated evidence exists.
+- Unit launch, investment, internal employee transfers, split operations, merger or closure must be reversible where possible and never erase past deal IDs, salaries, receipts or career records.
+- CEO/EA gets a true weekly cross-unit briefing with exceptions, choices and outcomes, not daily approvals. Implement a compact interactive unit hierarchy and real milestones, preserving fun/game pacing.
+- QA: migration of 2,500+ game-day, 13+ employee saves and multiple purchased lines, 730-day automated unit economics, permission boundaries, offline mobile 390/414px and failed IndexedDB save handling.
+
+### v22 — Offices, premises and company-world visualization
+- Begin from an inexpensive founder workspace; choose **home office, coworking, leased office, purchased office, floors in a headquarters building**, with optional branches after actual growth. Choose capacity, location attractiveness, commute/staff morale, coordination/quality benefit, rent, running costs, security/maintenance and vacancy exposure.
+- Renting creates bounded recurring operating expense and optional deposits; buying creates an asset and one-time cash outflow or explicit financing debt, not instant operational profit. Depreciation and resale changes are forward-only, visible and reconciled. No retroactive creation of properties.
+- Facilities have realistic capacity constraints, not arbitrary wealth multipliers. Upgrades are gated by company stage, staffing needs and available cash.
+- Introduce a responsive **visual company campus**: illustrated office floor/rooms, departments, active projects, manager conversations, unit identity and equipment status. Use embedded SVG/CSS/canvas and offline assets, no network-dependent artwork. CEO can collapse or disable the view for speed.
+
+### v23 — Investment, capital allocation, acquisitions and valuation
+- Add controlled long-term allocations: research, technology, financial investments, selected startup/business acquisitions and property portfolios with a distinct investment asset ledger; uncertainty and market cycles matter. Holding cash must remain a valid strategic decision.
+- Build explainable and non-spendable enterprise/equity valuations using actual earnings, cash, debt, receivables, customer concentration and unit risk. Mark estimates. Do not turn paper gains into cash without realization.
+- Acquisitions involve due diligence, price, integration overhead, leadership/employee retention, compatibility, liabilities and post-deal outcomes. Preserve original group history and financial reconciliation.
+
+### v24 — Product companies, factories and industrial operations
+- Permit a deliberate shift from services into physical product lines and manufacturing only after adequate capital, specialist leadership and infrastructure.
+- Factory proposals specify property/lease, machinery, skilled workers, material sourcing, capacity, production cycle, inventory, defect rates, quality control, energy/maintenance and delivery/sales channels. Model work in process, unsold stock, COGS, financing exposure and possible obsolescence; production is not guaranteed revenue.
+- A visual factory and supply-chain panel should reward good operational choices without creating an administrative spreadsheet simulator.
+
+### Cross-version UX direction
+- Today: concise company story, current strategy, CEOs' actual direct reports, one important decision and a compact EA summary.
+- Businesses: distinguish service portfolios from true strategic units, with optional unit org chart and coherent financial performance.
+- Team: titles, unique IDs, meaningful career progression, scoped hiring/coaching authority and collapsible reporting groups.
+- Assets/World: visual office, buildings, equipment and later factory; clear effects from choices.
+- Preserve one-file offline HTML, low scrolling, safe mobile text entry, meaningful gameplay and voluntary use of advanced financial reports.
+
+### Legacy-functionality findings to retire deliberately (not silent deletions)
+- Functional `Team lead` button is not a management appointment; preserve legacy state while labeling organizational positions accurately.
+- Subordinate managers currently coach only, while department heads hire/train and run department wellbeing. Independent tiered manager envelopes are future v21 logic.
+- CEO strategic direction keeps affecting priorities past its nominal 90-day review date; show overdue review and keep renewal user-controlled.
+- Current service line profitability is tagged forward-only but has **no independently owned employees, unit governance or separate cash**; service-line launch should not pretend to create an autonomous subsidiary.
+- Executive Assistant retains older office-routine delegation and project coordination rules; v21 should distinguish Chief of Staff reporting from line management without duplicating approvals.
+- Late-stage reputation-based contract multipliers and tiny historic transaction prices can overwhelm realism for a company with hundreds of completed projects; model a forward-only optional scale-balance revision separately, never rewrite signed contract fees.
+- Incomplete historical invoices, missing purchase receipts, nonexistent staff tenure and past unit costs must never be fabricated to fill an attractive dashboard.
+
+
 ## v20.2 P0 — Full-game Safari save recovery (released 2026-10-17)
 
 **Source:** Owner's original 14-person company repeatedly reloaded to Day 2642. This is whole-game persistence failure, not merely a form-value defect. iPhone's exact storage exception and quota cannot be remotely examined.

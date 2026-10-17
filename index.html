@@ -2010,8 +2010,26 @@ logIt("CEO set the strategic direction to "+CEO_PRIORITIES[priority].name+".");s
 }
 function ceoProjectValue(line,d){return line&&d&&d.need===SERVICE_LINES[line.key]?.need&&S.day>=line.since;}
 function executiveLineForDeal(d){return S.exec.lines.find(x=>x&&x.since<=S.day&&SERVICE_LINES[x.key]?.need===d.need)||null;}
-function ceoLineFinish(d,success,payout=0){const line=S.exec.lines.find(x=>x.key===d.serviceLine&&x.since<=(d.bookedAt??S.day));if(!line)return;
-if(success){line.delivered=(line.delivered||0)+1;line.revenue=(line.revenue||0)+payout;}else line.missed=(line.missed||0)+1;
+function ceoLineFinish(d,success,payout=0){
+ const line=S.exec.lines.find(x=>x.key===d.serviceLine&&x.since<=(d.bookedAt??S.day));if(!line)return;
+ const cost=(d.laborCost||0)+(d.directCost||0);
+ line.contribution=(line.contribution||0)+(success?payout:0)-cost;
+ if(success){line.delivered=(line.delivered||0)+1;line.revenue=(line.revenue||0)+payout;line.qualityTotal=(line.qualityTotal||0)+(Number(d.quality)||75);}
+ else line.missed=(line.missed||0)+1;
+ line.lastDeliveryDay=S.day;
+}
+function chooseServiceOffer(d){
+ const lines=S.exec.lines.filter(x=>x&&SERVICE_OFFERS[x.key]&&x.since<=S.day);
+ if(!lines.length)return;
+ const best=[...lines].sort((a,b)=>{
+  const aa=(a.delivered||0)+S.deals.filter(z=>z.serviceLine===a.key).length;
+  const bb=(b.delivered||0)+S.deals.filter(z=>z.serviceLine===b.key).length;
+  return aa-bb||a.since-b.since;
+ })[0];
+ const level=best.delivered>=10?2:best.delivered>=3?1:0;
+ const [name,price,scope,target]=SERVICE_OFFERS[best.key][level];
+ d.serviceLine=best.key;d.serviceOffer=name;d.serviceTier=level+1;d.need=SERVICE_LINES[best.key].need;d.bookedAt=S.day;
+ d.serviceQualityTarget=target;d.base=Math.round(d.base*price);d.work=Math.ceil(d.work*scope);d.dl=Math.ceil(d.dl*scope);
 }
 function executiveLaunch(key){
 if(!SERVICE_LINES[key]||S.exec.lines.some(x=>x.key===key)||S.cash<120||S.ev)return false;

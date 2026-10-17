@@ -625,6 +625,11 @@ test("v21.3.1 native GM dropdown survives live simulated financial and roster ch
  G.beginEditableInteraction({target:select});
  assert.equal(G.editableInteractionPending(),true);
  s.team[0].t="study";s.exec.units[0].revenue+=5;
+ // Tick must advance and post to the same corporate ledger while the UI is protected.
+ s.flow.focus=true;s.nextEv=999999;
+ const dayBefore=s.day;
+ G.tick();
+ assert.equal(s.day,dayBefore+1,"interactive UI guard must not pause simulation");
  G.renderBusinessUnits();
  assert.equal(el("business-units").innerHTML,before,"native dropdown must not be recreated");
  G.refresh();

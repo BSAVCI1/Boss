@@ -884,7 +884,7 @@ function orgTrackLead(stage){const x=S.org.departments.commercial.stats;if(stage
 function orgTrackDelivery(d,success){const m=S.org.departments.delivery.stats;if(success){m.delivered++;if(d.dl>=0)m.onTime++;m.qualityTotal+=d.quality;}else m.missed++;}
 
 function orgRestoreSpecialist(p){if(!p)return;p.role.primary=["sales","mkt","prod","ops"].includes(p.role.previousPrimary)?p.role.previousPrimary:(p.department==="commercial"?"sales":"ops");delete p.role.previousPrimary;if(!p.t.startsWith("d")){p.t="idle";p.role.autoTask=false;}}
-function orgChooseManager(dept,id){if(S.ev||!DEPARTMENTS[dept])return;const d=S.org.departments[dept];
+function orgChooseManager(dept,id){if(S.ev||!DEPARTMENTS[dept])return;const d=S.org.departments[dept];const before=coachSnap(id||S.org.departments[dept].managerId);
 if(!id){const prior=orgManager(dept);d.managerId=null;if(prior){orgRestoreSpecialist(prior);logIt(prior.n+" stepped down as "+DEPARTMENTS[dept].name+" manager.");}}
 else{const p=person(id);if(!p||p.department!==dept||p.id===S.ops.assistantId||!(p.career.rank>=1||p.career.xp>=10))return;
 for(const key of DEPT_KEYS)if(S.org.departments[key].managerId===id)S.org.departments[key].managerId=null;
@@ -893,6 +893,7 @@ for(const d of S.deals)if(d.w===p.id)d.w=null;
 if(p.role.primary!=="lead")p.role.previousPrimary=p.role.primary;
 p.t="idle";p.role.primary="lead";p.role.auto=true;p.role.autoTask=false;
 d.managerId=id;logIt(p.n+" now manages "+DEPARTMENTS[dept].name+". Salary rises by $0.75/day; direct delivery time is reduced.");}
+coachDecision(DEPARTMENTS[dept].name+" management change",before,"Reporting lines and supervisor salary/capacity have changed. Review department outcomes after 30 days.",id||null,30);
 structural="";save();renderStructure();renderOrganization();refresh();}
 function orgChangeDepartment(pid,dept){if(S.ev||!DEPARTMENTS[dept])return;const p=person(pid);if(!p||p.id===S.ops.assistantId||p.department===dept)return;
 let wasManager=false;for(const key of DEPT_KEYS)if(S.org.departments[key].managerId===pid){S.org.departments[key].managerId=null;wasManager=true;}
@@ -1026,9 +1027,10 @@ const work=6+Math.round(diff*2.2)+(tier-1);
 const base=66+Math.floor(diff*13)+(tier-1)*17+extra+(returning?10:0);
 const d={id:S.did++,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning,laborCost:0,directCost:0,biBooked:false,bookVal:0};
 d.agreedFee=estimatedFee(d);S.deals.push(d);if(S.bi)biBook(d);return d;}
-function sectorAction(key){if(S.ev||!SECTORS[key])return;
+function sectorAction(key){if(S.ev||!SECTORS[key])return;const before=coachSnap();
 if(S.market.open.includes(key)){if(S.market.focus===key)return;S.market.focus=key;logIt("Your company now specializes in "+SECTORS[key].name+".");}
 else{const sec=SECTORS[key];if(S.rep<sec.rep||S.cash<sec.cost)return;S.cash-=sec.cost;biMoney("investment",sec.cost,"Enter "+sec.name+" sector");S.market.open.push(key);S.market.focus=key;logIt("Expanded into "+sec.name+" for $"+sec.cost+". New clients can now request work.");}
+coachDecision("Market strategy: "+SECTORS[key].name,before,"Sector focus and/or entry investment. Forecast demand remains uncertain; existing agreed fees are unchanged.");
 save();renderSectorChoices();structural="";renderStructure();refresh();}
 function renderSectorChoices(){$("sector-focus-name").textContent="Focus: "+SECTORS[S.market.focus].name;
 $("sector-level").textContent="Stage "+dealTier()+" · "+S.market.completed+" completed projects";
@@ -1042,16 +1044,16 @@ function renderCustomerPortfolio(){const sig=JSON.stringify(S.market.customers);
 const customers=Object.entries(S.market.customers).sort((a,b)=>b[1].orders-a[1].orders||b[1].loyalty-a[1].loyalty);
 $("customer-summary").textContent=customers.length+" clients · "+S.market.completed+" completed";
 $("customer-portfolio").innerHTML=customers.length?customers.slice(0,6).map(([name,c])=>'<div class="queue-item"><div class="lead"><b>'+esc(name)+'</b><span class="small">'+c.orders+' completed contract'+(c.orders===1?'':'s')+'</span></div><div class="small">'+(SECTORS[c.sector]?.name||"General")+' · Trust '+Math.round(c.loyalty)+' / 100 · Last quality '+Math.round(c.quality||0)+'%</div></div>').join(""):'<div class="empty">Finish a contract to begin building loyal customers.</div>';}
-function negotiateDeal(id,action){if(S.ev)return;const d=deal(id);if(!d||d.negotiated||d.prog>=d.work*.2)return;
+function negotiateDeal(id,action){if(S.ev)return;const d=deal(id);if(!d||d.negotiated||d.prog>=d.work*.2)return;const before=coachSnap();const originalFee=feeFor(d);
 if(action==="premium"){d.base=Math.round(d.base*1.25);d.work=Math.ceil(d.work*1.14);d.dl+=4;d.change=1;logIt("Negotiated premium scope with "+d.cl+": higher fee, a little more work.");}
 else if(action==="fast"){d.base=Math.round(d.base*.92);d.work=Math.max(4,Math.ceil(d.work*.82));d.quality=clamp(d.quality-7);d.change=2;logIt("Agreed a quick, lean delivery with "+d.cl+": less scope, slightly lower fee.");}
 else if(action==="care"){d.base=Math.round(d.base*.95);d.dl+=7;d.quality=clamp(d.quality+8);d.change=3;logIt("Agreed a quality-first arrangement with "+d.cl+".");}
 else return;
-d.negotiated=true;lockDealFee(d);save();structural="";renderStructure();refresh();}
-function projectAction(id,action){if(S.ev)return;const d=deal(id);if(!d)return;
+d.negotiated=true;lockDealFee(d);coachDecision("Negotiate "+d.cl,before,"Agreed fee "+biCurrency(originalFee)+" → "+biCurrency(feeFor(d))+"; scope, timing and quality may also change.",null,30);save();structural="";renderStructure();refresh();}
+function projectAction(id,action){if(S.ev)return;const d=deal(id);if(!d)return;const before=coachSnap();
 if(action==="extend"&&!d.extended&&d.prog<d.work){d.extended=true;d.dl+=8;d.base=Math.floor(d.base*.90);d.agreedFee=Math.floor(feeFor(d)*.90);biReprice(d);S.rep=Math.max(0,S.rep-1);logIt("Renegotiated 8 more days with "+d.cl+" in return for a 10% fee reduction.");}
 else if(action==="review"&&!d.reviewed&&d.prog<d.work&&S.cash>=8){d.reviewed=true;S.cash-=8;d.directCost=(d.directCost||0)+8;biMoney("quality",8,"Quality review: "+d.cl);d.quality=clamp(d.quality+12);logIt("A quality review improved "+d.cl+"'s project for $8.");}
-else return;save();structural="";renderStructure();refresh();}
+else return;coachDecision("Project: "+action+" for "+d.cl,before,"Review changed cost, agreed fee, deadline and final delivery quality.",null,7);save();structural="";renderStructure();refresh();}
 function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:d.sector,loyalty:48,orders:0,quality:0};prev.sector=d.sector;
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
@@ -1230,11 +1232,11 @@ return '<details class="card employee-card" data-employee-id="'+p.id+'" '+(emplo
 function searchCandidates(){if(S.ev)return;S.hr.skill=$("hire-skill").value;S.hr.interest=$("hire-interest").value;S.hr.pool=[];
 for(let i=0;i<4;i++){const id=++S.hr.searchNumber,focus=S.hr.skill||pick(KEYS),interest=S.hr.interest||pick(INTEREST_KEYS),skills=Object.fromEntries(KEYS.map(k=>[k,+(1+Math.random()*.85).toFixed(2)]));skills[focus]=+(2+Math.random()*1.4).toFixed(2);S.hr.pool.push({id:id,n:candidateName(),trait:pick(TRAITS),interest:interest,focus:focus,s:skills,fee:Math.floor(20+skills[focus]*12+Math.max(0,S.team.length-3)*3)});}
 save();renderCandidates();refresh();}
-function hireCandidate(id){if(S.ev)return;const index=S.hr.pool.findIndex(x=>x.id===id);if(index<0)return;const c=S.hr.pool[index];if(S.cash<c.fee)return;const pid=S.pid++;const p={id:pid,n:c.n,col:COLORS[(pid-1)%COLORS.length],trait:c.trait,s:{...c.s},mood:72,loy:62,t:"idle",mem:["You chose me for what I enjoy and do well"],interest:c.interest,lastCareDay:-99};ensureCareer(p);ensureRole(p);ensureDepartment(p);S.team.push(p);S.cash-=c.fee;biMoney("recruiting",c.fee,"Hire "+p.n);S.hr.pool.splice(index,1);
-logIt(p.n+" joined the team for $"+c.fee+". Specialty: "+SKILLS[c.focus]+". Interest: "+INTERESTS[p.interest]+".");
+function hireCandidate(id){if(S.ev)return;const before=coachSnap();const index=S.hr.pool.findIndex(x=>x.id===id);if(index<0)return;const c=S.hr.pool[index];if(S.cash<c.fee)return;const pid=S.pid++;const p={id:pid,n:c.n,col:COLORS[(pid-1)%COLORS.length],trait:c.trait,s:{...c.s},mood:72,loy:62,t:"idle",mem:["You chose me for what I enjoy and do well"],interest:c.interest,lastCareDay:-99};ensureCareer(p);ensureRole(p);ensureDepartment(p);S.team.push(p);S.cash-=c.fee;biMoney("recruiting",c.fee,"Hire "+p.n);S.hr.pool.splice(index,1);
+logIt(p.n+" joined the team for $"+c.fee+". Specialty: "+SKILLS[c.focus]+". Interest: "+INTERESTS[p.interest]+".");coachDecision("Hire "+p.n,before,"One-time fee "+biCurrency(c.fee)+" plus ongoing "+biCurrency(dailySalary(p))+" daily wage.",p.id,30);
 save();structural="";renderStructure();renderCandidates();refresh();}
 function fireEmployee(id){if(S.ev||S.team.length<=1)return;const p=person(id);if(!p)return;if(!confirm("Fire "+p.n+"? Their client deal will become unassigned, and the remaining team will be unsettled."))return;
-removePerson(p);S.rep=Math.max(0,S.rep-2);for(const other of S.team){Mo(other,-4);L(other,-1);other.career.stress=clamp(other.career.stress+4);other.career.satisfaction=clamp(other.career.satisfaction-3);}logIt("You fired "+p.n+". Team morale and reputation dropped.",true);
+const before=coachSnap(p.id);removePerson(p);S.rep=Math.max(0,S.rep-2);for(const other of S.team){Mo(other,-4);L(other,-1);other.career.stress=clamp(other.career.stress+4);other.career.satisfaction=clamp(other.career.satisfaction-3);}logIt("You fired "+p.n+". Team morale and reputation dropped.",true);coachDecision("Dismiss "+p.n,before,"Reduced payroll but unsettled remaining employees and lost two reputation points.",null,30);
 save();structural="";renderStructure();renderCandidates();refresh();}
 function motivate(id,kind){if(S.ev)return;const p=person(id);if(!p||S.day-p.lastCareDay<7)return;const cost=kind==="bonus"?12:kind==="coach"?8:0;if(S.cash<cost)return;S.cash-=cost;if(cost>0)biMoney("people",cost,(kind==="bonus"?"Bonus: ":"Coaching: ")+p.n);p.lastCareDay=S.day;let message="";
 if(kind==="praise"){Mo(p,12);L(p,6);p.career.recognizedAt=S.day;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="recognition"?13:4));p.career.stress=clamp(p.career.stress-4);Me(p,"You recognized my work");message="You recognized "+p.n+"’s contribution.";}
@@ -1242,11 +1244,12 @@ else if(kind==="bonus"){Mo(p,18);L(p,12);p.career.recognizedAt=S.day;p.career.sa
 else if(kind==="coach"){p.s[weakest(p)]+=.3*S.mod.learn;p.career.xp+=1.5;p.career.satisfaction=clamp(p.career.satisfaction+7);p.career.stress=clamp(p.career.stress-3);discoverTalent(p,1.5);Mo(p,9);L(p,8);Me(p,"You invested time in my growth");message="You coached "+p.n+" in their weakest skill.";}
 else return;
 logIt(message);save();refresh();}
-function careerAction(pid,action){const p=person(pid);if(!p||S.ev)return;const c=p.career;
+function careerAction(pid,action){const p=person(pid);if(!p||S.ev)return;const c=p.career;const before=coachSnap(pid);
 if(action==="checkin"){if(S.day-c.lastCheckin<9)return;c.lastCheckin=S.day;c.stress=clamp(c.stress-7);c.satisfaction=clamp(c.satisfaction+7);Mo(p,4);L(p,3);Me(p,"We talked about my goals");logIt("Career check-in with "+p.n+": "+GOALS[c.goal].toLowerCase()+" matters.");}
 else if(action==="plan"){if(S.cash<10||S.day-c.lastPlan<14)return;S.cash-=10;biMoney("development",10,"Career growth plan: "+p.n);c.lastPlan=S.day;c.xp+=3;c.satisfaction=clamp(c.satisfaction+7);c.stress=clamp(c.stress-2);p.s[c.revealed?c.talent:weakest(p)]+=.4*S.mod.learn;discoverTalent(p,2.5);Me(p,"You created a growth plan for me");logIt("Started a $10 development plan for "+p.n+".");}
 else if(action==="promote"){const minXp=c.rank===0?8:24;if(c.rank>=2||c.xp<minXp||Math.max(...KEYS.map(k=>p.s[k]))<1.85||S.cash<25||S.day-c.promotedAt<18)return;S.cash-=25;biMoney("development",25,"Promotion: "+p.n);c.rank++;c.promotedAt=S.day;c.stress=clamp(c.stress+4);c.satisfaction=clamp(c.satisfaction+18);p.loy=clamp(p.loy+13);p.mood=clamp(p.mood+10);Me(p,"You promoted me to "+rankName(p));logIt("Promoted "+p.n+" to "+rankName(p)+". Higher pay adds $0.75/day.");structural="";}
 else return;
+coachDecision("Career: "+action+" for "+p.n,before,"Updated experience, employee satisfaction and direct career costs; review performance later.",pid,30);
 save();if(!structural)renderStructure();refresh();}
 function teamActivity(){if(S.ev||S.day-S.hr.lastTeamDay<12)return;const cost=S.team.length*5;if(S.cash<cost)return;S.cash-=cost;biMoney("people",cost,"Team activity");S.hr.lastTeamDay=S.day;for(const p of S.team){Mo(p,10);L(p,4);p.career.stress=clamp(p.career.stress-7);p.career.satisfaction=clamp(p.career.satisfaction+3);Me(p,"You brought us together as a team");}logIt("The team enjoyed a shared activity. Morale improved.");save();refresh();}
 function renderCandidates(){
@@ -1319,7 +1322,7 @@ const c=p.career;const status=$("career-short-"+p.id),details=$("career-stats-"+
 if(status){status.textContent=c.recoveryDays>0?"Recovery: "+c.recoveryDays+" days · stress "+Math.floor(c.stress)+"%":"Stress "+Math.floor(c.stress)+"%"+(c.stress>=70||c.burnout>=35?" · Needs recovery":" · "+rankName(p));status.className=c.stress>=70||c.burnout>=35?"career-alert":"career-calm";}
 if(details)details.textContent="Satisfaction "+Math.floor(c.satisfaction)+"% · Stress "+Math.floor(c.stress)+"% · Burnout "+Math.floor(c.burnout)+"%";
 if(experience)experience.textContent="Experience "+c.xp.toFixed(1)+" · "+c.completions+" completed jobs";
-if(promo){const xpNeed=c.rank===0?8:24;promo.textContent=c.rank>=2?"Highest role reached":c.xp<xpNeed?"Promotion: "+(xpNeed-c.xp).toFixed(1)+" XP needed":Math.max(...KEYS.map(k=>p.s[k]))<1.85?"Promotion: strengthen a skill":"Promotion: eligible when affordable";}
+if(promo){const readiness=coachCareerStatus(p);promo.textContent=readiness.text+" · "+readiness.reason;}
 if(v)v.textContent="mood "+Math.floor(p.mood)+"% · loyalty "+Math.floor(p.loy)+"%";if(m)m.style.width=p.mood+"%";if(mem){const content=p.mem.map(s=>"<div>“"+esc(s)+"”</div>").join("");if(mem.innerHTML!==content)mem.innerHTML=content;}for(const k of KEYS){const label=$("skill-"+p.id+"-"+k),bar=$("skill-bar-"+p.id+"-"+k);if(label)label.textContent="Lv "+p.s[k].toFixed(1);if(bar)bar.style.width=((p.s[k]%1)*100)+"%";}}
 const logs=S.log.slice(0,14).join("|");if(logSignature!==logs){logSignature=logs;$("log").innerHTML=S.log.slice(0,14).map(x=>'<div class="log-entry">'+x+'</div>').join("");}
 showModal();}
@@ -1338,7 +1341,7 @@ case"family":return["Family comes first?",n+" needs a day off for a family situa
 case"poach":return["A rival offer","A rival company has made "+n+" an offer.",["Match the offer (-$25)","Let them go"]];
 case"praise":return["Client praise","A client has praised "+n+"’s work.",["Share the credit publicly","Take the credit","Thank them privately"]];
 default:return null;}}
-function choose(i,delegated=false){const ev=S.ev;if(!ev)return;const a=person(ev.a),b=person(ev.b);if(!a||!b){S.ev=null;save();refresh();return;}let result="";
+function choose(i,delegated=false){const ev=S.ev;if(!ev)return;const a=person(ev.a),b=person(ev.b);if(!a||!b){S.ev=null;save();refresh();return;}const before=coachSnap(a.id);let result="";
 switch(ev.k){
 case"raise":if(i===0){a.career.raise=+(a.career.raise+.25).toFixed(2);L(a,20);Mo(a,15);Me(a,"You increased my recurring salary");result="Approved a $0.25/day recurring raise for "+a.n+" (about $7.50 per 30 days).";}else if(i===1){L(a,-15);Mo(a,-15);Me(a,"You refused my raise");result="You refused "+a.n+"’s raise.";}else{L(a,-5);Me(a,"You said maybe later");result="You postponed "+a.n+"’s raise.";}break;
 case"leave":if(i===0){pay(30);L(a,25);Mo(a,10);Me(a,"You fought to keep me");result="You convinced "+a.n+" to stay.";}else if(i===1){removePerson(a);createDeal(a.n+"’s startup",40);result="You wished "+a.n+" luck. Their startup became a client.";}else{L(a,-30);Mo(a,-30);Me(a,"You blocked my dream");result="You blocked "+a.n+"’s dream.";}break;
@@ -1353,6 +1356,7 @@ if(ev.k==="praise"&&i===0){a.career.recognizedAt=S.day;a.career.satisfaction=cla
 if(ev.k==="family"&&i===0){a.career.stress=clamp(a.career.stress-12);a.career.satisfaction=clamp(a.career.satisfaction+8);}
 if(ev.k==="mistake"&&i===1){a.career.xp+=2;discoverTalent(a,1.5);a.career.satisfaction=clamp(a.career.satisfaction+5);}
 if(ev.k==="raise"&&i===0){a.career.satisfaction=clamp(a.career.satisfaction+10);}
+coachDecision((delegated?"Assistant: ":"CEO: ")+dilemmaInfo(ev)?.[0],before,result,a.id,30);
 if(delegated){S.ops.handled++;const assistant=person(S.ops.assistantId);logIt((assistant?assistant.n:"Assistant")+" handled a routine request: "+result,true);}else logIt(result,true);
 S.ev=null;S.nextEv=S.day+28+R(15);S.flow.lastInterruptAt=Date.now();
 if(!delegated){save();structural="";renderStructure();renderIdeas();refresh();schedule();}}

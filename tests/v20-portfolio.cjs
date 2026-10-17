@@ -9,7 +9,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,open:false,innerHTML:""
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgSubReports,orgDirectReports,orgChooseManager,orgChangePolicy,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
+const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exported+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -230,6 +230,52 @@ test("failed device storage halts every subsequent game day and cannot be bypass
   assert.equal(el("save-state").dataset.error,"true");
   assert.ok(store.has("boss20"),"older valid save should remain recoverable");
  }finally{sandbox.localStorage.setItem=old;}
+});
+
+
+test("appointed leadership position wins over functional Team lead while career grade stays unchanged",()=>{
+ const s=init(),anna=s.team[0],eva=s.team[1],lucia=s.team[2];
+ anna.department="commercial";anna.role.primary="lead";anna.career.rank=2;anna.career.path="leadership";s.org.departments.commercial.managerId=anna.id;
+ eva.department="delivery";eva.role.primary="lead";eva.career.rank=0;s.org.departments.delivery.managerId=eva.id;
+ assert.equal(G.orgPersonPosition(anna),"Commercial Department Manager");
+ assert.equal(G.orgPersonPosition(eva),"Delivery Department Manager");
+ assert.equal(anna.career.rank,2);assert.equal(eva.career.rank,0);
+ lucia.department="commercial";lucia.role.primary="lead";lucia.role.previousPrimary="mkt";
+ s.org.departments.commercial.subManagers.mkt=lucia.id;
+ assert.equal(G.orgPersonPosition(anna),"Commercial Director");
+ assert.equal(G.orgPersonPosition(lucia),"Marketing Manager");
+ const groups=G.teamReportingGroups(),ids=groups.flatMap(g=>g.people.map(p=>p.id));
+ assert.equal(new Set(ids).size,s.team.length);
+ G.renderStructure();
+ const people=el("people").innerHTML;
+ assert.ok(people.includes("Commercial Director · Career: Lead"),"Director title must show on Team");
+ assert.ok(people.includes("Delivery Department Manager · Career: Associate"),"Appointment must not invent promotion");
+ assert.ok(people.includes("Marketing Manager · Career: Associate"));
+ assert.equal(anna.career.rank,2);reconcile(s);
+});
+test("CEO strategy overdue status is a review prompt, not Day 561/90",()=>{
+ const s=init();s.day=561;s.exec.priorityDay=0;
+ G.renderStructure(); G.renderExecutiveWeekly();
+ G.executiveShow();
+ assert.ok(el("ceo-direction-time").textContent.includes("Review overdue"));
+ assert.equal(el("ceo-direction-time").textContent.includes("561 / 90"),false);
+ assert.ok(el("ceo-set-direction").textContent.includes("Renew direction"));
+ assert.ok(el("business-lines-summary").textContent.includes("0 launched"));
+ reconcile(s);
+});
+test("delegated budgets remain one shared departmental envelope even with subordinate managers",()=>{
+ const s=init(),anna=s.team[0],lucia=s.team[1];
+ anna.role.primary="lead";anna.department="commercial";s.org.departments.commercial.managerId=anna.id;
+ lucia.department="commercial";lucia.role.primary="lead";lucia.role.previousPrimary="mkt";s.org.departments.commercial.subManagers.mkt=lucia.id;
+ const plan=s.org.departments.commercial.plan;
+ plan.limits.coaching=8;plan.perAction=8;
+ assert.ok(G.orgChangePolicy("commercial","coaching",8,true));
+ assert.equal(plan.limits.coaching,8,"Managers should not each receive their own 8-dollar pool");
+ const controls=fs.readFileSync("index.html","utf8");
+ assert.ok(controls.includes("one shared budget per department"));
+ assert.ok(controls.includes("No maximum team size is set here"));
+ assert.ok(controls.includes("not independent subsidiaries"));
+ reconcile(s);
 });
 
 console.log("Boss v20 functional and persistence checks passed.");

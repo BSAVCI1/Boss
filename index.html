@@ -2410,12 +2410,15 @@ function unitAutonomousDay(){
   if(S.day-p.lastReview<30)continue;
   const delivered=Math.max(0,u.delivered-p.baselineDelivered),missed=Math.max(0,u.missed-p.baselineMissed);
   const quality=delivered?Math.round((u.qualityTotal-p.baselineQuality)/delivered):null;
-  const result=!delivered?"Insufficient evidence":quality>=p.qualityTarget&&missed===0?"Target met":"Below target";
   const revenue=Math.max(0,u.revenue-p.baselineRevenue);
   const costs=Math.max(0,u.directCost+u.sharedLaborCost+u.payrollCost+u.developmentCost-p.baselineCosts);
   const staffDays=Math.max(0,u.staffDays-p.baselineStaffDays),billableDays=Math.max(0,u.billableDays-p.baselineBillableDays);
   const utilization=staffDays?Math.round(100*billableDays/staffDays):null;
-  u.reviews.push({day:S.day,delivered,missed,quality,result,goal:p.qualityTarget,managerId:gm.id,headcount:u.staffIds.length,spent:p.spent,revenue,costs,operating:revenue-costs,utilization,revenueTarget:p.revenueTarget,utilizationTarget:p.utilizationTarget,focus:p.focus});
+  const qualityMet=delivered>0&&quality>=p.qualityTarget&&missed===0;
+  const revenueMet=p.revenueTarget===0||revenue>=p.revenueTarget;
+  const utilizationMet=utilization===null?null:utilization>=p.utilizationTarget;
+  const result=!delivered||utilizationMet===null?"Insufficient evidence":qualityMet&&revenueMet&&utilizationMet?"Target met":"Below target";
+  u.reviews.push({day:S.day,delivered,missed,quality,result,goal:p.qualityTarget,managerId:gm.id,headcount:u.staffIds.length,spent:p.spent,revenue,costs,operating:revenue-costs,utilization,revenueTarget:p.revenueTarget,utilizationTarget:p.utilizationTarget,qualityMet,revenueMet,utilizationMet,focus:p.focus});
   u.reviews=u.reviews.slice(-6);
   p.lastReview=S.day;p.baselineDelivered=u.delivered;p.baselineQuality=u.qualityTotal;p.baselineMissed=u.missed;p.baselineRevenue=u.revenue;p.baselineCosts=u.directCost+u.sharedLaborCost+u.payrollCost+u.developmentCost;p.baselineStaffDays=u.staffDays;p.baselineBillableDays=u.billableDays;
   const active=S.deals.filter(d=>d.unitKey===u.key).length;

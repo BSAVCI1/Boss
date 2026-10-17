@@ -1,5 +1,13 @@
 # Boss — simulation development roadmap
 
+## v20.2 P0 — Full-game Safari save recovery (release candidate)
+
+**Source:** Owner's original 14-person company repeatedly reloaded to Day 2642. This is whole-game persistence failure, not merely a form-value defect. iPhone's exact storage exception and quota cannot be remotely examined.
+
+**Implementation in [PR #21](https://github.com/BSAVCI1/Boss/pull/21):** Warn prominently with attempted game day, last local durable day and browser failure type; allow export of the current whole company to JSON. Verify localStorage writes; on rejection, switch to transactional on-device IndexedDB and pause until committed. Boot from the highest verified save revision, never replace older save generations. Protect recovery journal, historical agreements, executive decisions and cash reconciliation. Refuse Restart/Resume/Skip while saves remain unverified. This is an incremental offline safety release, not a change to the simulation's core economy.
+
+**Acceptance:** All inherited regressions + 730-day financial reconciliations; near-390px real Chromium testing of injected storage quota and IndexedDB recovery of a later day, including one business-line purchase with exactly one $120 investment. No production merge until tests pass. After release the owner must confirm the actual Safari game now advances beyond its Day 2642 checkpoint across refreshes. The old checkpoint's historical purchases cannot be reconstructed without existing accounting evidence. A future version may add in-game JSON import and richer save diagnostics.
+
 ## v20.1 follow-up — Editable player settings reliability (released 2026-10-17)
 
 **Scope:** [PR #20](https://github.com/BSAVCI1/Boss/pull/20) follows the already released [PR #19](https://github.com/BSAVCI1/Boss/pull/19). Numeric manager budgets/targets/spending limits persist on valid input without the Safari blur dependency. Assistant authority, experiment setup and reflections, speed, selected future service and pending CEO draft are saved immediately. A valid pending CEO draft is not automatically enacted. The recurring payroll cap accepts 0.01 increments; a global save indicator differentiates a durable localStorage write, invalid unfinished input, quota/storage failure and cross-tab conflict.

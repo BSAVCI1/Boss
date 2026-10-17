@@ -7,3 +7,4 @@
 - 2026-10-17 — Published Boss v4 through native GitHub Pages (main/root); removed redundant Actions deployment workflow and updated play instructions.
 - 2026-10-17 — Boss v5: skill/interest-based recruiting, hiring and firing, personal and team motivation, meaningful interest bonuses, and safe tl3→boss5 migration.
 - 2026-10-17 — Boss v6: paced client leads (including a 25-second real-time minimum), longer deadlines, fewer dilemmas, Focus mode, hire/appoint an office assistant, automatic task intake and routine HR delegation; saves migrate to boss6.
+- 2026-10-17 — Boss v7: customizable office-assistant delegation rules and spending caps; skill-, urgency-, or balanced project prioritization; completion/deadline forecasts; one-time risk alerts; optional coaching and experiment decisions; v6→boss7 save migration. Owner chose smarter employees then realistic projects as next priorities.

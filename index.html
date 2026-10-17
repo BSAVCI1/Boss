@@ -563,12 +563,16 @@ return '<div class="career-step"><b>'+esc(careerTitle(p,level))+'</b> · <span c
 
 /* Forward-only individual work ledger. Older saves retain achievements without invented attributions. */
 function ensurePerformance(p,day=S?.day??0){
-if(!p.perf||typeof p.perf!=="object")p.perf={since:day,days:0,roleDays:0,completed:0,missed:0,onTime:0,quality:0,contractValue:0,wages:0,direct:0,createdLeads:0,wins:0,internalOutputs:0};
-for(const k of ["days","roleDays","completed","missed","onTime","quality","contractValue","wages","direct","createdLeads","wins","internalOutputs"])if(!Number.isFinite(p.perf[k]))p.perf[k]=0;
+if(!p.perf||typeof p.perf!=="object")p.perf={since:day,days:0,roleDays:0,completed:0,missed:0,onTime:0,quality:0,contractValue:0,wages:0,direct:0,createdLeads:0,wins:0,internalOutputs:0,assigned:0,deliveryDays:0,assignedIds:[],baselineSkills:{...p.s}};
+for(const k of ["days","roleDays","completed","missed","onTime","quality","contractValue","wages","direct","createdLeads","wins","internalOutputs","assigned","deliveryDays"])if(!Number.isFinite(p.perf[k]))p.perf[k]=0;
 if(!Number.isFinite(p.perf.since))p.perf.since=day;
+if(!Array.isArray(p.perf.assignedIds))p.perf.assignedIds=[];
+if(!p.perf.baselineSkills||typeof p.perf.baselineSkills!=="object")p.perf.baselineSkills={...p.s};
 }
+function performanceAssign(d,p){if(!p||!d)return;ensurePerformance(p);const r=p.perf;if(r.assignedIds.includes(d.id))return;
+r.assignedIds.push(d.id);if(r.assignedIds.length>200)r.assignedIds.shift();r.assigned++;}
 function ensureImprovements(state){if(!state.improvements||typeof state.improvements!=="object")state.improvements={since:state.day,operations:0,product:0};}
-function performanceWork(p,task){ensurePerformance(p);const v=p.perf;v.days++;v.wages+=dailySalary(p);
+function performanceWork(p,task){ensurePerformance(p);const v=p.perf;v.days++;v.wages+=dailySalary(p);if(task.startsWith("d"))v.deliveryDays++;
 if(task==="streamline"||task==="improve"||task==="market"||task==="prospect"||task.startsWith("d")||task==="coachteam"||task==="assist")v.roleDays++;
 if(task==="improve"||task==="streamline"){p.career.practice.internalDays=(p.career.practice.internalDays||0)+1;
 if(p.career.practice.internalDays%6===0){v.internalOutputs++;if(task==="improve")S.improvements.product=Math.min(3,S.improvements.product+.1);
@@ -577,16 +581,21 @@ logIt(p.n+" delivered internal "+(task==="improve"?"product quality":"process ef
 }
 function performanceFinish(d,success,payout=0){const p=person(d.w);if(!p)return;ensurePerformance(p);
 const v=p.perf;if(success){v.completed++;if(d.dl>=0)v.onTime++;v.quality+=d.quality;v.contractValue+=payout;}else v.missed++;}
-function performanceScorecard(p){ensurePerformance(p);const v=p.perf,role=p.role.primary,all=S.team.filter(x=>x.role.primary===role&&x.career.rank===p.career.rank&&x.id!==p.id&&x.perf?.roleDays>=15);
-const activity=v.days<15?"Insufficient tracked history":v.roleDays<Math.max(5,v.days*.15)?"Limited role practice":"Role work recorded";
-const ownRate=v.roleDays/Math.max(1,v.days);
+function performanceScorecard(p){ensurePerformance(p);
+const v=p.perf,role=p.role.primary,all=S.team.filter(x=>x.role.primary===role&&x.career.rank===p.career.rank&&x.id!==p.id&&x.perf?.roleDays>=15);
+const activity=v.days<15?"Insufficient tracked history":v.roleDays<Math.max(5,v.days*.15)?"Limited role practice":"Role work recorded",ownRate=v.roleDays/Math.max(1,v.days);
 const peer=all.length?all.reduce((n,x)=>n+x.perf.roleDays/Math.max(1,x.perf.days),0)/all.length:null;
 const comparison=v.days<15||peer===null?"No comparable peer sample":ownRate>=peer+.1?"Above similar peers on role time":ownRate<=peer-.1?"Below similar peers on role time":"Comparable role activity";
-const result=role==="sales"||role==="mkt"?"Qualified outcomes: "+v.createdLeads+" attributed leads, "+v.wins+" won opportunities. Client choices and rival bids also affect wins.":
-role==="lead"?"Management outcomes: check coaching, delegation and department 30-day reviews.":'Assigned delivery outcomes: '+v.completed+" completed, "+v.missed+" missed, "+(v.completed?(v.quality/v.completed).toFixed(0)+"% average quality":"insufficient quality data")+".";
-const suggestion=v.days<15?"Allow more tracked workdays before judging outcomes.":v.roleDays<Math.max(5,v.days*.15)?"Review actual demand and assign relevant work (including internal improvement for Product/Operations).":p.career.stress>=65?"Protect recovery and workload before increasing output.":"Compare output and cost with your department goals; do not reward activity alone.";
-return '<div class="coach-mini"><b>'+esc(p.n)+' · '+esc(ROLE_NAMES[role])+' · '+esc(careerTitle(p))+'</b><div>'+esc(activity)+' · '+v.roleDays+'/'+v.days+' relevant/total days · '+esc(comparison)+'</div><div>'+esc(result)+'</div><div>Tracked salary cost '+biCurrency(v.wages)+' · direct experiment cost '+biCurrency(v.direct)+' · project value completed '+biCurrency(v.contractValue)+' (project-level credit, not individual profit) · internal outputs '+v.internalOutputs+'</div><div>Skill development '+Math.round(p.career.xp)+' XP lifetime · wellbeing: stress '+Math.round(p.career.stress)+'%, burnout '+Math.round(p.career.burnout)+'%</div><div><b>Coach:</b> '+esc(suggestion)+'</div></div>';
-}
+let outcomeComparison="Not enough comparable outcomes for ranking.";
+if(["prod","ops"].includes(role)&&v.completed>=2){
+const rivals=all.filter(x=>x.perf.completed>=2);if(rivals.length){const typical=rivals.reduce((n,x)=>n+x.perf.quality/x.perf.completed,0)/rivals.length;const own=v.quality/v.completed;outcomeComparison=own>=typical+5?"Above comparable peers on delivered quality":own<=typical-5?"Below comparable peers on delivered quality":"Quality broadly in line with comparable peers";}}
+else if(["sales","mkt"].includes(role)&&v.createdLeads>=3){
+const rivals=all.filter(x=>x.perf.createdLeads>=3);if(rivals.length){const typical=rivals.reduce((n,x)=>n+x.perf.wins/Math.max(1,x.perf.createdLeads),0)/rivals.length;const own=v.wins/v.createdLeads;outcomeComparison=own>=typical+.12?"Above comparable peers on lead-to-win ratio":own<=typical-.12?"Below comparable peers on lead-to-win ratio":"Conversions broadly in line with comparable peers";}}
+const result=role==="sales"||role==="mkt"?"Attributable pipeline: "+v.createdLeads+" generated leads, "+v.wins+" won opportunities. External bids can affect results.":
+role==="lead"?"Departmental goals, coaching and delegation tracked in the 30-day manager review.":"Projects assigned "+v.assigned+" · completed "+v.completed+" · missed "+v.missed+" · "+(v.completed?(v.quality/v.completed).toFixed(0)+"% average delivered quality":"quality sample pending")+".";
+const focus=careerRoleSkill(p),skillGain=p.s[focus]-(v.baselineSkills[focus]||0);
+const suggestion=v.days<15?"Allow more tracked workdays before judging outcomes.":v.roleDays<Math.max(5,v.days*.15)?"Check workload availability and assign productive, role-relevant activity.":p.career.stress>=65?"Protect recovery, then restore sustainable output.":"Review project completion, quality and payroll relative to realistic role targets.";
+return '<div class="coach-mini"><b>'+esc(p.n)+' · '+esc(ROLE_NAMES[role])+' · '+esc(careerTitle(p))+'</b><div>'+esc(activity)+' · '+v.roleDays+'/'+v.days+' role/total days · '+esc(comparison)+'</div><div>'+esc(result)+'</div><div>'+esc(outcomeComparison)+' · peer comparisons are restricted to same role and grade, and are neutral when samples are insufficient</div><div>Tracked salary '+biCurrency(v.wages)+' · direct research costs '+biCurrency(v.direct)+' · completed contract value '+biCurrency(v.contractValue)+' (project owner credit, not individual contribution profit) · internal improvements '+v.internalOutputs+'</div><div>Role skill change '+(skillGain>=0?"+":"")+skillGain.toFixed(2)+' since tracking began · lifetime XP '+Math.round(p.career.xp)+' · stress '+Math.round(p.career.stress)+'% / burnout '+Math.round(p.career.burnout)+'%</div><div><b>Coach:</b> '+esc(suggestion)+'</div></div>';}
 
 function coachRoles(){const data=S.bi.totals,people=S.team.length,work=data.staffDays||0;
 const commercial=S.org.departments.commercial.stats,delivery=S.org.departments.delivery.stats;
@@ -663,7 +672,7 @@ const open=S.deals.filter(d=>d.w===null&&(["sales","mkt"].includes(d.need)?"comm
 const work=S.team.filter(p=>p.department===dept&&p.id!==m.id&&p.id!==S.ops.assistantId&&p.role.auto&&p.career.recoveryDays===0&&!p.career.autoRest&&p.career.stress<72&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d")));
 if(!open.length||!work.length){logIt(DEPARTMENTS[dept].name+" manager found no suitable free worker and unassigned project.");return false;}
 const d=open[0],p=work.sort((a,b)=>b.s[d.need]-a.s[d.need])[0];
-const before=coachSnap(p.id);d.w=p.id;p.t="d"+d.id;p.role.autoTask=true;
+const before=coachSnap(p.id);d.w=p.id;p.t="d"+d.id;p.role.autoTask=true;performanceAssign(d,p);
 ensureManagement(m);m.management.delegation=clamp(m.management.delegation+.25);m.management.planning=clamp(m.management.planning+.08);
 coachDecision(DEPARTMENTS[dept].name+" manager assigned "+p.n,before,"Assigned "+p.n+" to "+d.cl+" without overriding manual orders.",p.id,7);
 logIt(m.n+" delegated "+p.n+" to "+d.cl+" within departmental authority.");structural="";save();renderStructure();refresh();return true;
@@ -1448,7 +1457,7 @@ biMoney("payroll",salary,"Daily payroll",actuallyPaid);
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
 labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
-function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;}save();renderStructure();refresh();}
+function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;performanceAssign(d,p);}save();renderStructure();refresh();}
 function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p));}
 function bestIdle(d,department=null){return S.team.filter(p=>(!department||p.department===department)&&p.id!==S.ops.assistantId&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
 function forecast(d){const assigned=person(d.w);const candidate=assigned||bestIdle(d);const speed=workerSpeed(candidate,d);const remaining=Math.max(0,d.work-d.prog);const eta=speed?Math.ceil(remaining/speed):null;const slack=eta===null?null:d.dl-eta;const risk=!assigned?"unassigned":slack<0?"critical":slack<=4?"watch":"ok";return{d,assigned,candidate,eta,slack,risk,fit:speed};}
@@ -1467,7 +1476,7 @@ const m=orgManager(dept);
 const lead=!activeAssistant&&m&&["coachteam","teach"].includes(m.t)&&m.career.recoveryDays===0?m:null;
 const boss=activeAssistant?assistant:lead;if(!boss)continue;
 const employee=bestIdle(d,lead?dept:null);if(!employee)continue;
-d.w=employee.id;employee.t="d"+d.id;employee.role.autoTask=true;S.ops.assigned++;
+d.w=employee.id;employee.t="d"+d.id;employee.role.autoTask=true;S.ops.assigned++;performanceAssign(d,employee);
 if(lead){ensureManagement(lead);lead.management.delegation=clamp(lead.management.delegation+.25);lead.management.planning=clamp(lead.management.planning+.08);}
 logIt(boss.n+" assigned "+employee.n+" to "+d.cl+" ("+(lead?DEPARTMENTS[dept].name+" department":"office assistant")+").");
 changed=true;

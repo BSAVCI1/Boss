@@ -1274,7 +1274,7 @@ logIt(p.n+" owns "+ROLE_NAMES[action]+" responsibilities.");}
 else return;coachDecision("Work role: "+p.n,before,"Changed to "+action+". Role-based work, development and staffing will respond.",id,7);save();structural="";renderStructure();renderSkillMap();refresh();}
 function readyForJob(p){return p.t==="idle"&&p.career.recoveryDays<=0&&p.career.stress<72&&!p.career.autoRest;}
 function qualifiedPipeline(){return S.pipeline.leads.filter(l=>l.stage!=="prospect").length;}
-function pipelineCapacity(){const eligible=S.team.filter(p=>p.id!==S.ops.assistantId&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&!p.career.autoRest).length;return Math.max(2,Math.min(6,1+Math.floor(eligible/2)));}
+function pipelineCapacity(){const eligible=S.team.filter(p=>p.id!==S.ops.assistantId&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&!p.career.autoRest).length;return Math.max(3,Math.min(6,2+Math.floor(eligible/2)));}
 function contractSpacing(){const ready=S.team.filter(p=>p.id!==S.ops.assistantId&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&!p.career.autoRest&&S.market.open.some(k=>SECTORS[k].skills.includes(p.role.primary))).length;return Math.max(3,Math.min(8,Math.ceil(11/Math.sqrt(Math.max(1,ready)))));}
 function addProspect(source){if(S.pipeline.leads.length>=16)return false;
 const sec=S.market.open.includes(S.market.focus)?S.market.focus:pick(S.market.open);

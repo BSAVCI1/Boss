@@ -281,6 +281,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 (function(){
 "use strict";
 const KEY="boss14";
+let labHistorySignature="";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
 const TRAITS=["Curious","Social","Diligent","Creative"];
@@ -363,9 +364,10 @@ if(key==="skill")val=labTalent();
 else if(key==="stress")val=labStress();
 else val=labMetricFromValues(key,values,days,sectorValue);
 return{value:val,values,days,sectorValue};}
+function labTarget(baseline,percent){return baseline+Math.abs(baseline)*percent/100;}
 function labGrade(exp,outcome){if(exp.baseline.value===null||outcome.value===null)return{kind:"unknown",title:"Inconclusive: insufficient comparable data"};
 if(Math.abs(exp.baseline.value)<.01)return{kind:"unknown",title:"Inconclusive: baseline is close to zero"};
-const expected=exp.baseline.value*(1+exp.forecast/100),actual=outcome.value;
+const expected=labTarget(exp.baseline.value,exp.forecast),actual=outcome.value;
 const margin=Math.abs(exp.baseline.value)*.1;
 let met=exp.forecast>0?actual>=expected:exp.forecast<0?actual<=expected:Math.abs(actual-expected)<=margin;
 return{kind:met?"met":"missed",title:met?"Forecast met or exceeded":"Result did not meet the forecast",expected};}
@@ -390,7 +392,7 @@ function labDay(){const exp=S.lab.active;if(!exp||S.day-exp.startDay<exp.duratio
 const out=labOutcome(exp,exp.duration),grade=labGrade(exp,out);
 exp.endedDay=S.day;exp.endCash=S.cash;exp.endReputation=S.rep;exp.endPolicies=labSnapshotPolicies();
 exp.result={primary:out.value,grade,values:out.values,elapsed:out.days,sectorRevenue:out.sectorValue,
-forecastValue:exp.baseline.value===null?null:exp.baseline.value*(1+exp.forecast/100)};
+forecastValue:exp.baseline.value===null?null:labTarget(exp.baseline.value,exp.forecast)};
 exp.policyChanged=Object.keys(exp.policyAfterStart).some(k=>exp.policyAfterStart[k]!==exp.endPolicies[k]);
 exp.status="complete";
 S.lab.history.unshift(exp);S.lab.history=S.lab.history.slice(0,12);S.lab.active=null;
@@ -403,7 +405,7 @@ if(m.unit==="rate")return x.toFixed(2)+"/day";return x.toFixed(2);}
 function labStat(label,value){return'<div><small>'+esc(label)+'</small><strong>'+esc(value)+'</strong></div>';}
 function labResultHTML(exp,isActive){const info=LAB_TOPICS[exp.topic],metric=info.metric,days=isActive?Math.max(0,S.day-exp.startDay):exp.result.elapsed;
 const outcome=isActive?labOutcome(exp,days):{value:exp.result.primary,values:exp.result.values,days:exp.result.elapsed};
-const forecastValue=exp.baseline.value===null?null:exp.baseline.value*(1+exp.forecast/100);
+const forecastValue=exp.baseline.value===null?null:labTarget(exp.baseline.value,exp.forecast);
 const grade=isActive?{kind:"unknown",title:"Experiment in progress"}:exp.result.grade;
 const before=exp.baseline.value,after=outcome.value,actualDelta=before!==null&&after!==null?after-before:null;
 const polarity=actualDelta!==null&&before!==0?(actualDelta/Math.abs(before)*100).toFixed(1)+"%":"No comparable baseline";
@@ -418,7 +420,7 @@ if(!$("lab-panel").open&&!force)return;
 $("lab-setup").hidden=!!exp;
 $("lab-active").innerHTML=exp?labResultHTML(exp,true):"";
 $("lab-count").textContent=String(lab.history.length);
-if(!exp){$("lab-topic").value=lab.topic;$("lab-duration").value=String(lab.duration);$("lab-forecast").value=String(lab.forecast);$("lab-sector-label").hidden=lab.topic!=="sector";$("lab-sector").hidden=lab.topic!=="sector";}
+if(!exp&&force){$("lab-topic").value=lab.topic;$("lab-duration").value=String(lab.duration);$("lab-forecast").value=String(lab.forecast);labPreview();}
 const historyMarkup=lab.history.map(e=>'<details class="lab-history-row"><summary>#'+e.id+' · '+esc(LAB_TOPICS[e.topic]?.title||"Experiment")+' · Day '+e.endedDay+' · '+esc(e.result.grade.title)+'</summary>'+labResultHTML(e,false)+'<label>What did you learn? (saved on this device)</label><textarea rows="2" maxlength="600" data-lab-reflection="'+e.id+'" placeholder="What worked? What surprised you? What would you change?">'+esc(e.reflection||"")+'</textarea></details>').join("");
 if(historyMarkup!==labHistorySignature){labHistorySignature=historyMarkup;$("lab-history").innerHTML=historyMarkup;}
 $("lab-finished").innerHTML=!exp&&lab.history.length?'<p class="filter-note">Latest result: '+esc(lab.history[0].result.grade.title)+'. Open Previous experiments to reflect or compare.</p>':"";
@@ -946,7 +948,7 @@ const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid
 biMoney("payroll",salary,"Daily payroll",actuallyPaid);
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
-save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
+labDay();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;}save();renderStructure();refresh();}
 function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p));}
 function bestIdle(d,department=null){return S.team.filter(p=>(!department||p.department===department)&&p.id!==S.ops.assistantId&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
@@ -1016,6 +1018,13 @@ fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature=""
 paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();navigate("today");schedule();});
 document.querySelector(".bottom-nav").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(b)navigate(b.dataset.view);});
 $("attention-list").addEventListener("click",e=>{const b=e.target.closest("button[data-go]");if(b)navigate(b.dataset.go,b.dataset.project?Number(b.dataset.project):undefined);});
+$("lab-today-open").addEventListener("click",()=>{navigate("growth");$("lab-panel").open=true;renderLab(true);});
+$("lab-panel").addEventListener("toggle",()=>{if($("lab-panel").open)renderLab(true);});
+$("lab-topic").addEventListener("change",()=>{S.lab.topic=$("lab-topic").value;labPreview();});
+$("lab-duration").addEventListener("change",()=>{S.lab.duration=Number($("lab-duration").value);});
+$("lab-forecast").addEventListener("change",()=>{S.lab.forecast=Number($("lab-forecast").value);});
+$("lab-start").addEventListener("click",labStart);
+$("lab-history").addEventListener("change",e=>{const target=e.target;if(target?.dataset?.labReflection){labSaveReflection(Number(target.dataset.labReflection),target.value);labHistorySignature="";}});
 $("bi-open-details").addEventListener("click",()=>{navigate("work");$("performance-panel").open=true;renderBI(true);});
 $("performance-panel").addEventListener("toggle",()=>{if($("performance-panel").open)renderBI(true);});
 $("bi-range").addEventListener("change",()=>{S.bi.range=$("bi-range").value;save();renderBI(true);});
@@ -1120,7 +1129,7 @@ const markup=notices.join("");if(markup!==attentionSignature){attentionSignature
 for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}
 }
 function refresh(){
-renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderBI();
+renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderBI();renderLab();
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);
@@ -1201,7 +1210,7 @@ a.x+=(a.tx-a.x)*.03;a.y+=(a.ty-a.y)*.03;if(Math.random()<.004){const e=p.mood<30
 ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(a.x,a.y,11,0,Math.PI*2);ctx.fill();ctx.fillStyle="#192435";ctx.beginPath();ctx.arc(a.x-3,a.y-2,1.1,0,Math.PI*2);ctx.arc(a.x+3,a.y-2,1.1,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#192435";ctx.lineWidth=1.1;ctx.beginPath();if(p.mood>50)ctx.arc(a.x,a.y+1,4,0,Math.PI);else if(p.mood>25){ctx.moveTo(a.x-4,a.y+5);ctx.lineTo(a.x+4,a.y+5);}else ctx.arc(a.x,a.y+8,4,Math.PI,2*Math.PI);ctx.stroke();ctx.textAlign="center";ctx.fillStyle=ink;ctx.font="12px system-ui";ctx.fillText(p.n,a.x,a.y+25);
 if(a.frames>0){ctx.font="19px system-ui";ctx.fillText(a.emoji,a.x,a.y-17);a.frames--;}
 });requestAnimationFrame(avatarDraw);}
-S=load();if(!S)fresh();if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;capabilityProgress();save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
+S=load();if(!S)fresh();if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;labPreview();capabilityProgress();save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
 })();
 </script>
 </body>

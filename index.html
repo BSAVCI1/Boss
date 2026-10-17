@@ -1937,34 +1937,45 @@ S.exec.history=S.exec.history.slice(0,40);return true;
 }
 function executiveProposal(dept){
 const manager=orgManager(dept);if(!manager)return null;
-const v=S.org.departments[dept].stats,people=orgReports(dept);
-const burden=dept==="commercial"?S.pipeline.leads.length:S.deals.filter(d=>["prod","ops"].includes(d.need)).length;
-const busy=people.filter(p=>p.t.startsWith("d")).length;
+const people=orgReports(dept),burden=dept==="commercial"?S.pipeline.leads.length:S.deals.filter(x=>["prod","ops"].includes(x.need)).length,plan=orgPlan(dept);
+if(orgDirectReports(dept).length>5){
+const candidates=DEPARTMENTS[dept].skills.flatMap(role=>orgSubManager(dept,role)?[]:people.filter(p=>orgWorkRole(p)===role&&p.role.primary!=="lead"&&(p.career.rank>=1||p.career.xp>=10)).map(p=>({p,role})));
+if(candidates.length){const chosen=candidates.sort((a,b)=>b.p.career.xp-a.p.career.xp)[0];
+return{type:"submanager",dept,role:chosen.role,personId:chosen.p.id,cost:0,benefit:"Appoint "+chosen.p.n+" as "+ROLE_NAMES[chosen.role]+" Manager to reduce the director's reporting burden",risk:"Manager leaves specialist delivery and adds $0.50/day payroll"};}}
 if(S.exec.priority==="newline"){
-if(dept==="delivery"){
-const key=S.exec.lines.some(x=>x.key==="operations")?"product":"operations";
-if(!S.exec.lines.some(x=>x.key))return{type:"line",dept,key,cost:120,benefit:"Launch "+SERVICE_LINES[key].name+" as a new client service with existing staff",risk:"$120 upfront; demand and delivery readiness are uncertain"};
-}
-return{type:"training",dept,cost:8,benefit:"Prepare team capability for a new business line",risk:"Uses budget and staff time; no guaranteed new customers"};}
+if(dept==="delivery"){const key=S.exec.lines.some(x=>x.key==="operations")?"product":"operations";
+if(!S.exec.lines.some(x=>x.key))return{type:"line",dept,key,cost:120,benefit:"Launch "+SERVICE_LINES[key].name+" with available staff",risk:"Upfront investment, uncertain demand and capacity"};}
+if(S.day-S.exec.since>21)return null;
+return{type:"training",dept,cost:8,benefit:"Prepare team capabilities for an additional service",risk:"Training time and uncertain customers"};}
 if(S.exec.priority==="people"){
-const retention=people.filter(p=>p.career.satisfaction<=52&&!p.career.autoRest);
-if(retention.length){const target=retention.sort((a,b)=>a.career.satisfaction-b.career.satisfaction)[0];
-return{type:"raise",dept,cost:0,personId:target.id,benefit:"Retention proposal for "+target.n+" · salary +$0.25/day",risk:"Recurring payroll rises; retention is not guaranteed"};}
-return{type:"training",dept,cost:8,benefit:"Develop successors and coaching",risk:"Learning does not guarantee a promotion"};}
-if(S.exec.priority==="rd")return{type:"training",dept,cost:8,benefit:"Improve role skills and research readiness",risk:"Results remain uncertain"};
-if(S.exec.priority==="profit")return{type:"optimize",dept,cost:0,benefit:"Reduce new prospecting or unnecessary spending while protecting delivery",risk:"Lower acquisition effort may reduce future demand"};
-if((burden>Math.max(4,people.length+2))&&S.cash>=120&&people.length<9)return{type:"hire",dept,cost:20,benefit:"Add one specialist to increase available capacity",risk:"Additional recurring payroll $1.50/day (before modifiers); demand may not justify it"};
+const retention=people.filter(x=>x.career.satisfaction<=52&&!x.career.autoRest&&x.role.primary!=="lead");
+if(retention.length){const target=[...retention].sort((a,b)=>a.career.satisfaction-b.career.satisfaction)[0];
+return{type:"raise",dept,cost:0,personId:target.id,benefit:"Retain "+target.n+" · increase recurring pay $0.25/day",risk:"Higher recurring payroll; retention remains uncertain"};}
+if(S.day-S.exec.since>21&&plan.limits.training<=plan.spent.training){
+if(plan.amendments<1)return{type:"budget",dept,cost:0,amount:80,benefit:"Give the department a single $80 training allowance for the current "+plan.days+"-day period",risk:"Approved authority may be used for uncertain future skill outcomes"};
+return null;}
+return{type:"training",dept,cost:8,benefit:"Develop successors and improve coaching",risk:"No guaranteed promotion"};}
+if(S.exec.priority==="rd"){
+if(S.day-S.exec.since>21&&plan.limits.training<=plan.spent.training){
+if(plan.amendments<1)return{type:"budget",dept,cost:0,amount:80,benefit:"Authorize one $80 R&D training allowance until Day "+(plan.since+plan.days),risk:"Learning outcomes and client demand are uncertain"};
+return null;}
+return{type:"training",dept,cost:8,benefit:"Improve role skills and research readiness",risk:"Results uncertain"};}
+if(S.exec.priority==="profit")return S.day-S.exec.since<22?{type:"optimize",dept,cost:0,benefit:"Improve available capacity and spending discipline",risk:"Reduced acquisition effort may affect demand"}:null;
+if(burden>Math.max(4,people.length+2)&&S.cash>=120&&people.length<9)return{type:"hire",dept,cost:20,benefit:"Add a specialist to relieve capacity constraints",risk:"Recurring payroll $1.50/day before modifiers"};
+if(S.day-S.exec.since>21)return null;
 return{type:"training",dept,cost:8,benefit:"Build a key colleague's skill and reduce workload strain",risk:"Training costs cash without guaranteed results"};
 }
 function executiveWeek(){
 const e=S.exec;if(S.day<e.nextMeeting)return;
 e.lastMeeting=S.day;e.nextMeeting=S.day+7;
+let proposed=0,delegated=0;
 for(const dept of DEPT_KEYS){
 if(!orgManager(dept)||e.proposals.some(p=>p.dept===dept))continue;
 const spec=executiveProposal(dept);if(!spec)continue;
-e.proposals.push({...spec,id:e.sequence++,day:S.day,managerId:orgManager(dept).id,priority:e.priority});
+if(executiveAutonomous(dept,spec)){delegated++;continue;}
+e.proposals.push({...spec,id:e.sequence++,day:S.day,managerId:orgManager(dept).id,priority:e.priority});proposed++;
 }
-logIt("Executive Assistant prepared the weekly leadership meeting for Day "+S.day+".");
+if(proposed||delegated)logIt("Executive meeting on Day "+S.day+": "+proposed+" CEO requests; "+delegated+" actions completed within delegated authority.");
 }
 function executiveDecision(id,action){
 const e=S.exec,p=e.proposals.find(x=>x.id===id);if(!p||S.ev||!["approve","decline"].includes(action))return false;
@@ -1995,6 +2006,13 @@ personNew.role.primary=p.dept==="commercial"?"sales":"ops";personNew.department=
 S.cash-=p.cost;biMoney("recruiting",p.cost,"CEO-approved department hire: "+personNew.n);
 S.team.push(personNew);structural="";
 message="Hired "+personNew.n+" for "+DEPARTMENTS[p.dept].name+"; $20 paid and recurring salary added.";
+}else if(p.type==="budget"){
+const plan=orgPlan(p.dept);if(!plan||plan.amendments>=1||!p.amount)return false;
+plan.limits.training+=p.amount;plan.amendments++;
+message="Approved "+biCurrency(p.amount)+" of department training authority through Day "+(plan.since+plan.days)+". No cash has been spent.";
+}else if(p.type==="submanager"){
+const worker=person(p.personId);if(!worker||!orgChooseSubManager(p.dept,p.role,p.personId))return false;
+message="Appointed "+worker.n+" as "+ROLE_NAMES[p.role]+" Manager. Additional recurring payroll $0.50/day.";
 }else if(p.type==="optimize"){
 S.pipeline.mode="balanced";message="Manager instructed to prioritize efficient use of existing people. No immediate cash impact.";
 }else return false;
@@ -2010,9 +2028,13 @@ const a=person(S.ops.assistantId);
 $("company-name").textContent="Business Services Group";
 const primary=SECTORS[S.market.focus]?.name||"Services",strategy=worldStrategy().name;
 $("company-identity").textContent="B2B client services · Serving "+primary+" and "+S.market.open.length+" industries · "+strategy+".";
+const expanded=new Set([...$("ceo-direct-reports").querySelectorAll("details[data-ceo-team]")].filter(x=>x.open).map(x=>x.dataset.ceoTeam));
 $("ceo-direct-reports").innerHTML=DEPT_KEYS.map(key=>{
-const m=orgManager(key),staff=orgReports(key);
-return '<div class="ceo-report"><b>'+DEPARTMENTS[key].name+'</b><div>'+(m?esc(m.n)+" · "+orgLeaderTitle(m)+" · "+staff.length+" reports":"Founder-led · "+staff.length+" colleagues")+'</div><details><summary>View team</summary>'+staff.map(p=>'<div class="small">'+esc(p.n)+' · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'</details></div>';}).join("");
+const chief=orgManager(key),staff=orgReports(key),direct=orgDirectReports(key);
+const managed=DEPARTMENTS[key].skills.map(role=>{const head=orgSubManager(key,role);
+return head?'<div class="small"><b>'+esc(ROLE_NAMES[role])+' Manager · '+esc(head.n)+' (#'+head.id+')</b> · '+orgSubReports(key,role).length+' reports'+orgSubReports(key,role).map(p=>'<div class="small">↳ '+esc(p.n)+' (#'+p.id+')</div>').join("")+'</div>':"";}).join("");
+const unmanaged=direct.filter(p=>DEPARTMENTS[key].skills.every(role=>orgSubManager(key,role)?.id!==p.id));
+return '<div class="ceo-report"><b>'+DEPARTMENTS[key].name+'</b><div>'+(chief?esc(chief.n)+" · "+orgLeaderTitle(chief)+" · "+direct.length+" direct / "+staff.length+" total":"Founder-led · "+staff.length+" colleagues")+'</div><details data-ceo-team="'+key+'" '+(expanded.has(key)?"open":"")+'><summary>View team</summary>'+managed+unmanaged.map(p=>'<div class="small">'+esc(p.n)+' (#'+p.id+') · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'</details></div>';}).join("");
 $("ceo-assistant").textContent=a? a.n+" · CEO coordination and manager follow-ups":"Unfilled · appointment optional";
 $("ceo-priority").value=ceoDraftPriority??S.exec.priority;
 $("ceo-direction-time").textContent="Day "+Math.max(0,S.day-S.exec.priorityDay)+" / 90";

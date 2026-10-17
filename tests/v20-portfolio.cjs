@@ -9,7 +9,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,open:false,innerHTML:""
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitBudgetAllowed,unitRequestDecision,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
+const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,delegateWork,assign,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exported+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -483,5 +483,136 @@ test("v21.2 replacing or losing a General Manager withdraws outdated hiring requ
  assert.equal(G.load().exec.unitRequests.find(r=>r.id===request.id).status,"withdrawn");
  reconcile(s);
 });
+
+
+test("v21.3 dedicated unit jobs are scheduled by the GM and cannot consume shared staff",()=>{
+ const s=init();fund(s,1100);s.day=200;s.deals=[];
+ assert.equal(G.executiveLaunch("marketing"),true);
+ assert.equal(G.unitActivate("marketing"),true);
+ const gm=s.team[0],specialist=s.team[1],corporate=s.team[2];
+ gm.career.rank=1;assert.equal(G.unitAppoint("marketing",gm.id),true);
+ assert.equal(G.unitTransfer("marketing",specialist.id),true);
+ specialist.role.auto=true;specialist.t="idle";specialist.career.stress=0;
+ corporate.role.auto=true;corporate.t="idle";
+ const job=G.createDeal("Unit-only marketing contract");
+ assert.equal(job.unitKey,"marketing");
+ assert.equal(G.unitAssignmentAllowed(job,corporate),false);
+ assert.equal(G.unitAssignmentAllowed(job,gm),false,"the GM is a leader, not unbounded delivery capacity");
+ assert.equal(G.unitAssignmentAllowed(job,specialist),true);
+ assert.equal(G.unitDelegateWork(),true,"GM should assign eligible dedicated specialist");
+ assert.equal(job.w,specialist.id);
+ G.assign(job.id,corporate.id);
+ assert.equal(job.w,specialist.id,"CEO manual click may not bypass unit ownership");
+ G.delegateWork();assert.equal(job.w,specialist.id,"shared dispatcher cannot steal unit contract");
+ assert.ok(s.exec.unitEvents.some(x=>x.type==="delivery"));
+ assert.equal(s.exec.units[0].staffIds.includes(corporate.id),false);
+ assert.equal(new Set(s.exec.units.flatMap(u=>u.staffIds)).size,s.exec.units[0].staffIds.length);
+ reconcile(s);
+});
+test("v21.3 shared projects never silently borrow dedicated unit payroll",()=>{
+ const s=init();fund(s,1100);s.day=150;s.deals=[];
+ const shared=G.createDeal("Corporate agreement");
+ assert.equal(shared.unitKey,undefined);
+ assert.equal(G.executiveLaunch("product"),true);
+ assert.equal(G.unitActivate("product"),true);
+ s.team[0].career.rank=1;
+ assert.equal(G.unitAppoint("product",s.team[0].id),true);
+ const dedicated=s.team[1];assert.equal(G.unitTransfer("product",dedicated.id),true);
+ assert.equal(G.unitAssignmentAllowed(shared,dedicated),false);
+ G.assign(shared.id,dedicated.id);assert.equal(shared.w,null);
+ G.assign(shared.id,s.team[2].id);assert.equal(shared.w,s.team[2].id);
+ reconcile(s);
+});
+test("v21.3 GM strategy, targets and migration preserve historical unit economics",()=>{
+ const s=init();fund(s,1100);s.day=150;s.deals=[];
+ assert.equal(G.executiveLaunch("product"),true);
+ assert.equal(G.unitActivate("product"),true);
+ const unit=s.exec.units[0],oldInvest=s.bi.totals.investments;
+ assert.equal(G.unitAuthorize("product","revenueTarget",210),true);
+ assert.equal(G.unitAuthorize("product","utilizationTarget",74),true);
+ assert.equal(G.unitSetFocus("product","quality"),true);
+ assert.equal(G.unitSetFocus("product","undocumented"),false);
+ assert.equal(G.unitAuthorize("product","utilizationTarget",101),false);
+ assert.equal(G.unitAuthorize("product","revenueTarget",-1),false);
+ assert.equal(unit.plan.focus,"quality");
+ const cash=s.cash,ledger=s.bi.totals.revenue;
+ assert.ok(G.save());
+ const roundtrip=G.load();assert.equal(roundtrip.exec.units[0].plan.focus,"quality");
+ assert.equal(roundtrip.exec.units[0].plan.revenueTarget,210);
+ assert.equal(roundtrip.exec.units[0].plan.utilizationTarget,74);
+ assert.equal(roundtrip.cash,cash);
+ assert.equal(roundtrip.bi.totals.revenue,ledger);
+ assert.equal(roundtrip.bi.totals.investments,oldInvest);
+ // Simulate v21.2 persisted unit without new optional telemetry.
+ const migrated=JSON.parse(JSON.stringify(roundtrip));const u=migrated.exec.units[0];
+ u.revenue=25;u.payrollCost=40;
+ delete u.staffDays;delete u.billableDays;delete u.plan.focus;
+ for(const key of ["revenueTarget","utilizationTarget","baselineRevenue","baselineCosts","baselineStaffDays","baselineBillableDays"])delete u.plan[key];
+ G.set(migrated);assert.ok(G.save());
+ const restored=G.load(),p=restored.exec.units[0].plan;
+ assert.equal(restored.exec.units[0].staffDays,0);
+ assert.equal(restored.exec.units[0].billableDays,0);
+ assert.equal(p.baselineRevenue,25,"historic revenue must not appear as first v21.3 period");
+ assert.equal(p.baselineCosts,40,"historic payroll must not appear as first v21.3 period");
+ assert.equal(p.focus,"balanced");
+ assert.equal(p.revenueTarget,0);
+ assert.equal(p.utilizationTarget,65);
+ assert.equal(restored.bi.totals.revenue,ledger);
+ reconcile(restored);
+});
+test("v21.3 GM actual delivery and 30-day staffing results reconcile with corporate ledger",()=>{
+ const s=init();fund(s,5000);s.day=260;s.deals=[];s.flow.focus=true;s.nextEv=99999;
+ assert.equal(G.executiveLaunch("product"),true);assert.equal(G.unitActivate("product"),true);
+ const gm=s.team[0],worker=s.team[1];gm.career.rank=1;
+ assert.equal(G.unitAppoint("product",gm.id),true);
+ assert.equal(G.unitTransfer("product",worker.id),true);
+ worker.role.auto=true;worker.t="idle";worker.career.stress=0;worker.s.prod=8;
+ const unit=s.exec.units[0];
+ assert.equal(G.unitAuthorize("product","revenueTarget",150),true);
+ assert.equal(G.unitAuthorize("product","utilizationTarget",35),true);
+ const contract=G.createDeal("Product division customer"),fee=G.feeFor(contract);
+ contract.work=1;contract.dl=40;contract.quality=87;
+ const startDay=s.day,initialRevenue=s.bi.totals.revenue;
+ for(let i=0;i<32;i++)G.tick();
+ assert.equal(s.day,startDay+32);
+ assert.equal(unit.delivered,1,"dedicated actual delivery should finish");
+ assert.equal(unit.revenue,fee);
+ assert.equal(s.bi.totals.revenue-initialRevenue,fee,"unit contract only earned once");
+ assert.ok(unit.staffDays>0&&unit.billableDays>0,"capacity measured from real employee-days");
+ assert.ok(unit.billableDays<=unit.staffDays);
+ const review=unit.reviews.at(-1);
+ assert.ok(review&&review.day>=startDay+30);
+ assert.equal(review.revenue,fee);
+ assert.ok(Number.isFinite(review.costs)&&review.costs>=0);
+ assert.equal(review.operating,review.revenue-review.costs);
+ assert.ok(review.utilization>=0&&review.utilization<=100);
+ assert.equal(review.revenueTarget,150);
+ assert.equal(review.utilizationTarget,35);
+ assert.equal(G.load().exec.units[0].reviews.at(-1).revenue,fee);
+ reconcile(s);
+});
+test("v21.3 unit-without-GM produces capacity gap, not phantom shared staffing",()=>{
+ const s=init();fund(s,500);s.day=100;s.deals=[];
+ assert.equal(G.executiveLaunch("product"),true);assert.equal(G.unitActivate("product"),true);
+ const job=G.createDeal("GM vacancy contract");
+ assert.equal(job.unitKey,"product");
+ assert.equal(G.unitDelegateWork(),false);G.delegateWork();
+ assert.equal(job.w,null,"corporate staff may not cover unit without intentional allocation");
+ reconcile(s);
+});
+
+test("v21.3 unit vacancy and market opportunity surface to CEO",()=>{
+ const s=init();fund(s,700);s.day=120;s.deals=[];
+ G.executiveLaunch("product");G.unitActivate("product");
+ G.createDeal("Unit capacity pressure");
+ s.world.activeEvent={type:"opportunity",until:s.day+20};
+ G.renderBriefing();
+ assert.ok(el("attention-list").innerHTML.includes("GM capacity exception"));
+ assert.ok(el("attention-list").innerHTML.includes("Optional market opportunity"));
+ el("ea-weekly-report").open=true;G.renderExecutiveWeekly();
+ assert.ok(el("ea-weekly-body").innerHTML.includes("needs a General Manager"));
+ reconcile(s);
+});
+console.log("Boss v21.3 dedicated-capacity regression checks passed.");
 
 console.log("Boss v20 functional and persistence checks passed.");

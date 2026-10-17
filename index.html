@@ -1824,6 +1824,7 @@ function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
 function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();unitAutonomousDay();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
+if(unitDelegateWork())dirty=true;
 if(delegateWork())dirty=true;
 if(autonomousWork())dirty=true;
 for(const p of [...S.team]){
@@ -1834,8 +1835,8 @@ if((p.t.startsWith("d")||p.t==="assist"||p.t==="exp")&&p.career.stress>=92&&p.ca
 p.career.recoveryDays=4;logIt(p.n+" took a four-day recovery pause after sustained workload.");}
 const recovering=p.career.recoveryDays>0;
 if(recovering){p.career.recoveryDays--;dm=1.5;}
-else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*(S.economy.invested.operations?1.06:1)*(1+S.improvements.operations)*(d.serviceLine&&S.exec.lines.some(x=>x.key===d.serviceLine)?1.05:1);d.prog+=e;d.laborCost=(d.laborCost||0)+dailySalary(p);
-d.quality=clamp(d.quality+S.improvements.product*.06+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1)-(p.career.stress>=75?.25:0)-(p.career.burnout>=45?.18:0)+.12*orgEffective("delivery"));
+else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const owned=unitOfPerson(p.id),unitMode=owned&&owned.key===d.unitKey?owned.plan?.focus:"balanced";const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*(S.economy.invested.operations?1.06:1)*(1+S.improvements.operations)*(d.serviceLine&&S.exec.lines.some(x=>x.key===d.serviceLine)?1.05:1);d.prog+=e*(unitMode==="speed"?1.10:unitMode==="quality"?.94:1);d.laborCost=(d.laborCost||0)+dailySalary(p);
+d.quality=clamp(d.quality+S.improvements.product*.06+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1)-(p.career.stress>=75?.25:0)-(p.career.burnout>=45?.18:0)+.12*orgEffective("delivery")+(unitMode==="quality"?.14:unitMode==="speed"?-.08:0));
 for(const [index,limit,name] of [[1,.34,"Plan approved"],[2,.73,"Build completed"]])if(d.milestone<index&&d.prog>=d.work*limit){d.milestone=index;logIt(d.cl+": "+name+" ("+Math.round(d.quality)+"% quality).");}
 p.s[d.need]+=.05*S.mod.learn*(aligned?1.12:1);dm=(e>=.9?.4:-.3)+(aligned?.15:0);}else{p.t="idle";dm=-.2;dirty=true;}}
 else if(p.t==="prospect"||p.t==="market"){p.s[p.t==="prospect"?"sales":"mkt"]+=.025*S.mod.learn;dm=.12;if(discoverFromWork(p))ideaDirty=true;}
@@ -1848,7 +1849,7 @@ else if(p.t==="exp"){const spent=Math.min(1,S.cash);S.cash-=spent;if(spent>0)biM
 else if(p.t==="rest"){dm=2;}
 else if(p.t==="assist"){p.s.ops+=.025*S.mod.learn;dm=.25;}
 const assignedDeadline=p.t.startsWith("d")?deal(Number(p.t.slice(1)))?.dl??99:99;
-const effectiveTask=recovering?"rest":p.t;performanceWork(p,effectiveTask);careerTrack(p,effectiveTask);talentAndCareerDay(p,effectiveTask,assignedDeadline);biTeamDay(p,effectiveTask);coachLabParticipation(p,effectiveTask);coachTrackRole(p,effectiveTask);
+const effectiveTask=recovering?"rest":p.t;performanceWork(p,effectiveTask);careerTrack(p,effectiveTask);talentAndCareerDay(p,effectiveTask,assignedDeadline);biTeamDay(p,effectiveTask);const assignedUnit=unitOfPerson(p.id);if(assignedUnit&&p.id!==assignedUnit.managerId&&effectiveTask.startsWith("d")&&deal(Number(effectiveTask.slice(1)))?.unitKey===assignedUnit.key)assignedUnit.billableDays++;coachLabParticipation(p,effectiveTask);coachTrackRole(p,effectiveTask);
 p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
 if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);orgTrackPerson(p,effectiveTask);if(!recovering)orgManagerDay(p);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
@@ -1862,22 +1863,39 @@ biMoney("payroll",salary,"Daily payroll",actuallyPaid);
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
 labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
-function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;performanceAssign(d,p);}save();renderStructure();refresh();}
+function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev||(d.w!==p.id&&!unitAssignmentAllowed(d,p)))return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;performanceAssign(d,p);}save();renderStructure();refresh();}
+function unitAssignmentAllowed(d,p){const owner=unitOfPerson(p.id);if(owner?.managerId===p.id)return false;return d.unitKey?owner?.key===d.unitKey:!owner;}
 function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;
  const u=d.unitKey?unitOfPerson(p.id):null;
  const unitFit=d.unitKey?(u?.key===d.unitKey?1.08:u?.key?.88:1):1;
  return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*unitFit);}
-function bestIdle(d,department=null){return S.team.filter(p=>(!department||p.department===department)&&p.id!==S.ops.assistantId&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&!(S.exec?.units||[]).some(u=>u.managerId===p.id)&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
+function bestIdle(d,department=null){return S.team.filter(p=>(!department||p.department===department)&&unitAssignmentAllowed(d,p)&&p.id!==S.ops.assistantId&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&!(S.exec?.units||[]).some(u=>u.managerId===p.id)&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
 function forecast(d){const assigned=person(d.w);const candidate=assigned||bestIdle(d);const speed=workerSpeed(candidate,d);const remaining=Math.max(0,d.work-d.prog);const eta=speed?Math.ceil(remaining/speed):null;const slack=eta===null?null:d.dl-eta;const risk=!assigned?"unassigned":slack<0?"critical":slack<=4?"watch":"ok";return{d,assigned,candidate,eta,slack,risk,fit:speed};}
 function rankedProjects(){const priority=S.ops.policy.priority;return S.deals.map(forecast).sort((a,b)=>{
 if(priority==="deadline")return a.d.dl-b.d.dl||b.fit-a.fit;
 if(priority==="skills")return b.fit-a.fit||a.d.dl-b.d.dl;
 const aRisk=a.slack===null?-8:a.slack,bRisk=b.slack===null?-8:b.slack;
 return aRisk-bRisk||a.d.dl-b.d.dl||b.fit-a.fit;});}
+function unitDelegateWork(){
+ let changed=false;
+ for(const u of S.exec.units){
+  const gm=person(u.managerId);
+  if(!gm||gm.career.recoveryDays>0||gm.career.autoRest)continue;
+  for(const d of S.deals.filter(d=>d.unitKey===u.key&&d.w===null).sort((a,b)=>a.dl-b.dl)){
+   const worker=bestIdle(d);
+   if(!worker)continue;
+   d.w=worker.id;worker.t="d"+d.id;worker.role.autoTask=true;
+   performanceAssign(d,worker);
+   unitRecord(u.key,"delivery",gm.n+" assigned "+worker.n+" to "+d.cl+" within the dedicated unit team.");
+   changed=true;
+  }
+ }
+ return changed;
+}
 function delegateWork(){if(!S.ops.policy.assign)return false;
 const assistant=person(S.ops.assistantId),activeAssistant=assistant&&assistant.t==="assist"&&assistant.career.recoveryDays===0;
 let changed=false;
-for(const f of rankedProjects()){const d=f.d;if(d.w!==null)continue;
+for(const f of rankedProjects()){const d=f.d;if(d.w!==null||d.unitKey)continue;
 const dept=["sales","mkt"].includes(d.need)?"commercial":"delivery";
 const manager=orgManager(dept),active=manager&&manager.career.recoveryDays===0&&!manager.career.autoRest;
 let worker=active?bestIdle(d,dept):null,boss=worker?manager:null;
@@ -1960,7 +1978,8 @@ $("business-units").addEventListener("input",e=>{
 });
 $("business-units").addEventListener("change",e=>{
  const field=e.target;if(!field?.matches?.("select[data-unit-field]"))return;
- unitAuthorize(field.dataset.unitKey,field.dataset.unitField,Number(field.value));
+ if(field.dataset.unitField==="focus")unitSetFocus(field.dataset.unitKey,field.value);
+ else unitAuthorize(field.dataset.unitKey,field.dataset.unitField,Number(field.value));
 });
 $("business-units").addEventListener("click",e=>{
  const button=e.target.closest("button[data-unit-request]");
@@ -2087,7 +2106,7 @@ const extension=!d.extended&&d.prog<d.work?'<button type="button" data-project="
 const review=!d.reviewed&&d.prog<d.work?'<button type="button" data-project="'+d.id+'" data-action="review">Quality review ($8)</button>':'';
 const known=S.market.customers[d.cl],customerInfo=d.returning?' · Returning client':known&&known.orders?' · Existing customer':' · New customer';
 const worker=person(d.w),owner=worker?worker.n:"Unassigned",late=d.dl<=5;
-return '<details class="card project-card" data-project-id="'+d.id+'" '+(projectExpanded.has(d.id)?'open':'')+'><summary><div class="project-summary-top"><div><b>'+esc(d.cl)+'</b><div class="small">'+esc(SECTORS[d.sector].name)+' · '+esc(d.serviceOffer||SKILLS[d.need])+' · '+phase+'</div></div><div class="summary-right"><b id="deal-fee-'+d.id+'">$'+feeFor(d)+'</b><div class="small '+(late?'risk-watch':'')+'" id="dl-'+d.id+'">'+d.dl+' days left</div></div></div><div class="progress"><i id="deal-bar-'+d.id+'" style="width:'+clamp(d.prog/d.work*100)+'%"></i></div><div class="summary-bottom"><span>'+esc(owner)+'</span><span id="prog-'+d.id+'">'+Math.floor(clamp(d.prog/d.work*100))+'%</span><span>Details ▾</span></div></summary><div class="project-expanded"><div class="meta">Stage '+tier+customerInfo+'</div><div class="meta"><span id="quality-'+d.id+'">Quality '+quality+'%</span> · <span id="phase-'+d.id+'">'+phase+'</span> · Plan → Build → Review</div>'+negotiation+(extension||review?'<div class="contract-actions">'+extension+review+'</div>':'')+'<div class="small">Assign a teammate</div><div class="buttons">'+S.team.map(p=>'<button type="button" data-deal="'+d.id+'" data-person="'+p.id+'" '+(d.w===p.id?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+esc(p.n)+' (<span id="bid-'+d.id+'-'+p.id+'">'+p.s[d.need].toFixed(1)+'</span>)</button>').join("")+'</div></div></details>';
+return '<details class="card project-card" data-project-id="'+d.id+'" '+(projectExpanded.has(d.id)?'open':'')+'><summary><div class="project-summary-top"><div><b>'+esc(d.cl)+'</b><div class="small">'+esc(SECTORS[d.sector].name)+' · '+esc(d.serviceOffer||SKILLS[d.need])+' · '+phase+'</div></div><div class="summary-right"><b id="deal-fee-'+d.id+'">$'+feeFor(d)+'</b><div class="small '+(late?'risk-watch':'')+'" id="dl-'+d.id+'">'+d.dl+' days left</div></div></div><div class="progress"><i id="deal-bar-'+d.id+'" style="width:'+clamp(d.prog/d.work*100)+'%"></i></div><div class="summary-bottom"><span>'+esc(owner)+'</span><span id="prog-'+d.id+'">'+Math.floor(clamp(d.prog/d.work*100))+'%</span><span>Details ▾</span></div></summary><div class="project-expanded"><div class="meta">Stage '+tier+customerInfo+'</div><div class="meta"><span id="quality-'+d.id+'">Quality '+quality+'%</span> · <span id="phase-'+d.id+'">'+phase+'</span> · Plan → Build → Review</div>'+negotiation+(extension||review?'<div class="contract-actions">'+extension+review+'</div>':'')+'<div class="small">Assign a teammate</div><div class="buttons">'+S.team.filter(p=>d.w===p.id||unitAssignmentAllowed(d,p)).map(p=>'<button type="button" data-deal="'+d.id+'" data-person="'+p.id+'" '+(d.w===p.id?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+esc(p.n)+' (<span id="bid-'+d.id+'-'+p.id+'">'+p.s[d.need].toFixed(1)+'</span>)</button>').join("")+'</div></div></details>';
 }).join(""):'<div class="card empty">No active projects. Sales and Marketing are building the next opportunity.</div>';
 $("people").innerHTML=teamReportingGroups().map(group=>{
 const body=group.people.map(p=>{
@@ -2194,6 +2213,7 @@ e.units=e.units.filter(u=>{
  if(!u||!SERVICE_LINES[u.key]||unitKeys.has(u.key)||!e.lines.some(x=>x.key===u.key))return false;
  unitKeys.add(u.key);if(!Number.isFinite(u.since))u.since=state.day;
  if(!Array.isArray(u.staffIds))u.staffIds=[];
+ for(const key of ["staffDays","billableDays"])if(!Number.isFinite(u[key])||u[key]<0)u[key]=0;
  if(!state.team.some(p=>p.id===u.managerId&&p.id!==state.ops.assistantId))u.managerId=null;
  u.staffIds=u.staffIds.filter(id=>{if(!Number.isInteger(id)||unitOwners.has(id)||id===state.ops.assistantId||!state.team.some(p=>p.id===id))return false;unitOwners.add(id);return true;});
  if(u.managerId&&!u.staffIds.includes(u.managerId)){if(unitOwners.has(u.managerId))u.managerId=null;else{unitOwners.add(u.managerId);u.staffIds.push(u.managerId);}}
@@ -2203,6 +2223,13 @@ e.units=e.units.filter(u=>{
  for(const [key,def] of Object.entries({since:state.day,days:90,coachingLimit:0,perAction:0,spent:0,lastCoached:-99,qualityTarget:80,lastReview:state.day,baselineDelivered:u.delivered,baselineQuality:u.qualityTotal,baselineMissed:u.missed})){
   if(!Number.isFinite(p[key])||p[key]<0&&key!=="lastCoached")p[key]=def;
  }
+ if(!["balanced","quality","speed"].includes(p.focus))p.focus="balanced";
+ if(!Number.isFinite(p.revenueTarget)||p.revenueTarget<0)p.revenueTarget=0;
+ if(!Number.isFinite(p.utilizationTarget)||p.utilizationTarget<0||p.utilizationTarget>100)p.utilizationTarget=65;
+ if(!Number.isFinite(p.baselineRevenue))p.baselineRevenue=u.revenue;
+ if(!Number.isFinite(p.baselineCosts))p.baselineCosts=u.directCost+u.sharedLaborCost+u.payrollCost+u.developmentCost;
+ if(!Number.isFinite(p.baselineBillableDays))p.baselineBillableDays=u.billableDays;
+ if(!Number.isFinite(p.baselineStaffDays))p.baselineStaffDays=u.staffDays;
  if(![90,180].includes(p.days))p.days=90;
  p.qualityTarget=Math.max(65,Math.min(100,p.qualityTarget));
  if(!Array.isArray(u.reviews))u.reviews=[];
@@ -2299,7 +2326,7 @@ function unitCommit(action){
 function unitActivate(key){
  if(!SERVICE_LINES[key]||!S.exec.lines.some(x=>x.key===key)||S.exec.units.some(u=>u.key===key))return false;
  return unitCommit(()=>{
-  S.exec.units.push({key,since:S.day,managerId:null,staffIds:[],revenue:0,directCost:0,sharedLaborCost:0,payrollCost:0,developmentCost:0,delivered:0,missed:0,qualityTotal:0,plan:{since:S.day,days:90,coachingLimit:0,perAction:0,spent:0,lastCoached:-99,qualityTarget:80,lastReview:S.day,baselineDelivered:0,baselineQuality:0,baselineMissed:0},reviews:[]});
+  S.exec.units.push({key,since:S.day,managerId:null,staffIds:[],revenue:0,directCost:0,sharedLaborCost:0,payrollCost:0,developmentCost:0,staffDays:0,billableDays:0,delivered:0,missed:0,qualityTotal:0,plan:{since:S.day,days:90,coachingLimit:0,perAction:0,spent:0,lastCoached:-99,qualityTarget:80,focus:"balanced",revenueTarget:0,utilizationTarget:65,lastReview:S.day,baselineDelivered:0,baselineQuality:0,baselineMissed:0,baselineRevenue:0,baselineCosts:0,baselineStaffDays:0,baselineBillableDays:0},reviews:[]});
   unitRecord(key,"activated","Created a managed operating unit from an existing paid service portfolio. No purchase charged.");
   logIt(SERVICE_LINES[key].name+" now has an operating unit (no additional investment).");
   return true;
@@ -2341,14 +2368,20 @@ function unitBudgetAllowed(u,amount){
 function unitAuthorize(key,field,value){
  const u=S.exec.units.find(x=>x.key===key),p=u?.plan;
  if(!p||!Number.isFinite(value)||value<0||value>1000000)return false;
- if(!["coachingLimit","perAction","qualityTarget","days"].includes(field))return false;
+ if(!["coachingLimit","perAction","qualityTarget","days","revenueTarget","utilizationTarget"].includes(field))return false;
  if(field==="days"&&![90,180].includes(value))return false;
  if(field==="qualityTarget"&&(value<65||value>100))return false;
+ if(field==="utilizationTarget"&&value>100)return false;
  return unitCommit(()=>{
   p[field]=Math.floor(value);
   unitRecord(key,"authority","CEO set "+field+" to "+value+"; spend remains zero until a manager acts.");
   return true;
  });
+}
+function unitSetFocus(key,focus){
+ if(!["balanced","quality","speed"].includes(focus))return false;
+ const u=S.exec.units.find(x=>x.key===key);if(!u)return false;
+ return unitCommit(()=>{u.plan.focus=focus;unitRecord(key,"strategy","CEO set "+SERVICE_LINES[key].name+" delivery priority to "+focus+".");return true;});
 }
 function unitRenewAuthority(key){
  const u=S.exec.units.find(x=>x.key===key);
@@ -2377,13 +2410,20 @@ function unitAutonomousDay(){
   if(S.day-p.lastReview<30)continue;
   const delivered=Math.max(0,u.delivered-p.baselineDelivered),missed=Math.max(0,u.missed-p.baselineMissed);
   const quality=delivered?Math.round((u.qualityTotal-p.baselineQuality)/delivered):null;
-  const result=!delivered?"Insufficient evidence":quality>=p.qualityTarget&&missed===0?"Target met":"Below target";
-  u.reviews.push({day:S.day,delivered,missed,quality,result,goal:p.qualityTarget,managerId:gm.id,headcount:u.staffIds.length,spent:p.spent});
+  const revenue=Math.max(0,u.revenue-p.baselineRevenue);
+  const costs=Math.max(0,u.directCost+u.sharedLaborCost+u.payrollCost+u.developmentCost-p.baselineCosts);
+  const staffDays=Math.max(0,u.staffDays-p.baselineStaffDays),billableDays=Math.max(0,u.billableDays-p.baselineBillableDays);
+  const utilization=staffDays?Math.round(100*billableDays/staffDays):null;
+  const qualityMet=delivered>0&&quality>=p.qualityTarget&&missed===0;
+  const revenueMet=p.revenueTarget===0||revenue>=p.revenueTarget;
+  const utilizationMet=utilization===null?null:utilization>=p.utilizationTarget;
+  const result=!delivered||utilizationMet===null?"Insufficient evidence":qualityMet&&revenueMet&&utilizationMet?"Target met":"Below target";
+  u.reviews.push({day:S.day,delivered,missed,quality,result,goal:p.qualityTarget,managerId:gm.id,headcount:u.staffIds.length,spent:p.spent,revenue,costs,operating:revenue-costs,utilization,revenueTarget:p.revenueTarget,utilizationTarget:p.utilizationTarget,qualityMet,revenueMet,utilizationMet,focus:p.focus});
   u.reviews=u.reviews.slice(-6);
-  p.lastReview=S.day;p.baselineDelivered=u.delivered;p.baselineQuality=u.qualityTotal;p.baselineMissed=u.missed;
+  p.lastReview=S.day;p.baselineDelivered=u.delivered;p.baselineQuality=u.qualityTotal;p.baselineMissed=u.missed;p.baselineRevenue=u.revenue;p.baselineCosts=u.directCost+u.sharedLaborCost+u.payrollCost+u.developmentCost;p.baselineStaffDays=u.staffDays;p.baselineBillableDays=u.billableDays;
   const active=S.deals.filter(d=>d.unitKey===u.key).length;
   if(active>=Math.max(1,u.staffIds.length-1)&&u.staffIds.length<5&&!S.exec.unitRequests.some(r=>r.key===u.key&&r.status==="open")){
-   const request={id:S.exec.unitRequestSeq++,key:u.key,managerId:gm.id,day:S.day,status:"open",kind:"hire",cost:20,payroll:1.5*S.mod.cost,reason:"Demand: "+active+" active unit projects with "+u.staffIds.length+" dedicated employees."};
+   const request={id:S.exec.unitRequestSeq++,key:u.key,managerId:gm.id,day:S.day,status:"open",kind:"hire",cost:20,payroll:1.5*S.mod.cost,role:SERVICE_LINES[u.key].need,reason:"Capacity: "+active+" active unit projects / "+Math.max(0,u.staffIds.length-1)+" specialists. Recruit "+SERVICE_LINES[u.key].need+" expertise; payroll continues after approval."};
    S.exec.unitRequests.push(request);unitRecord(u.key,"proposal",gm.n+" requested one specialist hire. CEO approval required.");
   }
   unitRecord(u.key,"review",gm.n+" 30-day review: "+result+(quality===null?" · no deliveries":" · delivered quality "+quality+"% / goal "+p.qualityTarget+"%")+".");
@@ -2397,7 +2437,7 @@ function unitRequestDecision(id,action){
   req.status=action==="approve"?"approved":"declined";req.decidedAt=S.day;
   if(action==="approve"){
    const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);
-   p.role.primary=SERVICE_LINES[u.key].need;
+   p.role.primary=req.role||SERVICE_LINES[u.key].need;p.s[p.role.primary]=Math.max(2,p.s[p.role.primary]);
    p.department=["sales","mkt"].includes(p.role.primary)?"commercial":"delivery";
    S.team.push(p);u.staffIds.push(p.id);
    S.cash-=req.cost;biMoney("recruiting",req.cost,SERVICE_LINES[u.key].name+" CEO-approved unit hire: "+p.n);
@@ -2410,7 +2450,7 @@ function unitRequestDecision(id,action){
 }
 function unitPayrollDay(){
  if(!S.exec?.units)return;
- for(const u of S.exec.units)for(const id of u.staffIds){const p=person(id);if(p)u.payrollCost+=dailySalary(p);}
+ for(const u of S.exec.units)for(const id of u.staffIds){const p=person(id);if(p){u.payrollCost+=dailySalary(p);if(id!==u.managerId)u.staffDays++;}}
 }
 function renderBusinessUnits(){
  const target=$("business-units");if(!target)return;
@@ -2428,17 +2468,18 @@ function renderBusinessUnits(){
   const result=u.revenue-u.directCost-u.sharedLaborCost-u.payrollCost-u.developmentCost;
   const p=u.plan||{},requests=S.exec.unitRequests.filter(q=>q.key===u.key&&q.status==="open"),last=u.reviews.at(-1);
   const authority='<details class="aux-details"><summary>CEO authority &amp; GM scorecard</summary><p class="small">Dedicated operating-unit authority; Commercial and Delivery budgets are not shared with this unit. Default delegation is $0; recruiting requires CEO approval.</p>'+
+  '<div class="filter-grid"><div><label for="unit-focus-'+l.key+'">Unit delivery strategy</label><select data-unit-field="focus" data-unit-key="'+l.key+'" id="unit-focus-'+l.key+'"><option value="balanced" '+(p.focus==="balanced"?"selected":"")+'>Balanced</option><option value="quality" '+(p.focus==="quality"?"selected":"")+'>Quality: slower, better</option><option value="speed" '+(p.focus==="speed"?"selected":"")+'>Speed: faster, quality risk</option></select></div><div><label for="unit-revenue-'+l.key+'">30-day revenue objective ($; 0 = monitor)</label><input type="number" min="0" max="1000000" inputmode="decimal" data-unit-field="revenueTarget" data-unit-key="'+l.key+'" id="unit-revenue-'+l.key+'" value="'+p.revenueTarget+'"></div><div><label for="unit-util-'+l.key+'">Billable capacity target (%)</label><input type="number" min="0" max="100" inputmode="numeric" data-unit-field="utilizationTarget" data-unit-key="'+l.key+'" id="unit-util-'+l.key+'" value="'+p.utilizationTarget+'"></div></div>'+
   '<div class="filter-grid"><div><label for="unit-coaching-'+l.key+'">Coaching budget ($)</label><input type="number" min="0" max="1000000" inputmode="numeric" data-unit-field="coachingLimit" data-unit-key="'+l.key+'" id="unit-coaching-'+l.key+'" value="'+p.coachingLimit+'"></div>'+
   '<div><label for="unit-peraction-'+l.key+'">Maximum spend per action ($)</label><input type="number" min="0" max="1000000" inputmode="numeric" data-unit-field="perAction" data-unit-key="'+l.key+'" id="unit-peraction-'+l.key+'" value="'+p.perAction+'"></div>'+
   '<div><label for="unit-quality-'+l.key+'">Delivery quality objective (%)</label><input type="number" min="65" max="100" inputmode="numeric" data-unit-field="qualityTarget" data-unit-key="'+l.key+'" id="unit-quality-'+l.key+'" value="'+p.qualityTarget+'"></div>'+
   '<div><label for="unit-days-'+l.key+'">Authority term</label><select data-unit-field="days" data-unit-key="'+l.key+'" id="unit-days-'+l.key+'"><option value="90" '+(p.days===90?"selected":"")+'>90 days</option><option value="180" '+(p.days===180?"selected":"")+'>180 days</option></select></div></div>'+
   '<p class="small">Coaching budget used '+biCurrency(p.spent)+' / '+biCurrency(p.coachingLimit)+' · Remaining '+biCurrency(Math.max(0,p.coachingLimit-p.spent))+' · '+(S.day>=p.since+p.days?"EXPIRED":"Expires Day "+(p.since+p.days))+'. Eligible weekly GM coaching costs $4; no authority means no spending.</p>'+
   '<button type="button" data-unit-action="renew" data-unit-key="'+l.key+'">Renew GM authority (no fee)</button>'+
-  '<p class="small"><b>Last 30-day review:</b> '+(last?"Day "+last.day+' · '+esc(last.result)+(last.quality===null?" · insufficient delivery data":" · quality "+last.quality+"% / objective "+last.goal+"%")+' · '+last.delivered+' delivered, '+last.missed+' missed':"Not yet recorded")+'</p></details>';
+  '<p class="small"><b>Last 30-day review:</b> '+(last?"Day "+last.day+' · '+esc(last.result)+(last.quality===null?" · insufficient delivery data":" · quality "+last.quality+"% / objective "+last.goal+"%")+' · '+last.delivered+' delivered, '+last.missed+' missed'+(Number.isFinite(last.revenue)?' · Revenue '+biCurrency(last.revenue)+' / '+biCurrency(last.revenueTarget)+' · Operating '+biCurrency(last.operating)+' · Billable '+(last.utilization===null?'no capacity':last.utilization+'%')+' / '+last.utilizationTarget+'%':' · v21.2 review; capacity not tracked then'):"Not yet recorded")+'</p></details>';
   const proposals=requests.map(q=>'<div class="exec-proposal"><b>General Manager staffing proposal</b><p>'+esc(q.reason)+' Cost '+biCurrency(q.cost)+' now + estimated '+biCurrency(q.payroll)+'/day payroll. No employee has been hired yet.</p><div class="buttons"><button type="button" data-unit-request="'+q.id+'" data-unit-response="approve" '+(S.cash<q.cost||u.staffIds.length>=5?"disabled":"")+'>Approve hiring</button><button type="button" data-unit-request="'+q.id+'" data-unit-response="decline">Decline</button></div></div>').join("");
 
   return'<details class="unit-panel" data-unit-open="'+l.key+'" '+(open.has(l.key)?'open':'')+'><summary>'+esc(SERVICE_LINES[l.key].name)+' · operating unit · '+(gm?esc(gm.n)+" (GM)":"vacant GM")+'</summary>'+
-   '<div class="unit-metrics"><span>'+staff.length+' dedicated staff</span><span>'+u.delivered+' delivered</span><span>'+biCurrency(u.revenue)+' earned</span><span>'+biCurrency(result)+' operating result</span></div>'+
+   '<div class="unit-metrics"><span>'+staff.length+' people incl. GM</span><span>'+S.deals.filter(d=>d.unitKey===u.key).length+' active contracts</span><span>'+u.delivered+' delivered</span><span>'+biCurrency(u.revenue)+' earned</span><span>'+biCurrency(result)+' operating result</span></div>'+
    '<p class="small">From Day '+u.since+' only. Direct costs '+biCurrency(u.directCost)+'; shared contract labor '+biCurrency(u.sharedLaborCost)+'; dedicated payroll '+biCurrency(u.payrollCost)+'; unit development and recruiting '+biCurrency(u.developmentCost)+'. These are attributed slices of existing company income and costs, never additional revenue. Corporate overhead stays central.</p>'+
    '<p class="small">'+(gm?"GM: "+esc(gm.n)+" (#"+gm.id+") · +"+biCurrency(.5*S.mod.cost)+"/day management pay.":"CEO must appoint a General Manager for autonomous unit leadership.")+' Team: '+(staff.map(p=>esc(p.n)+" (#"+p.id+")").join(", ")||"none")+'.</p>'+
    '<div class="filter-grid"><div><label for="unit-gm-'+l.key+'">General Manager</label><select id="unit-gm-'+l.key+'"><option value="">Choose qualified employee</option>'+candidates.map(p=>'<option value="'+p.id+'">'+esc(p.n)+' (#'+p.id+')</option>').join("")+'</select><button type="button" data-unit-action="manager" data-unit-key="'+l.key+'" '+(!candidates.length?"disabled":"")+'>Appoint GM</button></div>'+
@@ -2550,7 +2591,7 @@ function updateExecutiveWeekly(){
 }
 function renderExecutiveWeekly(){
  const panel=$("ea-weekly-report");if(!panel||!panel.open)return;
- const live=executiveWeeklySnapshot(),since=S.exec.weeklyReports[0]?.day,a=person(S.ops.assistantId);
+ const live=executiveWeeklySnapshot(),since=S.exec.weeklyReports[0]?.day,a=person(S.ops.assistantId),units=S.exec.units.map(u=>({u,gm:person(u.managerId),last:u.reviews.at(-1),active:S.deals.filter(d=>d.unitKey===u.key).length}));
  const risks=[],priorities=[];
  if(live.proposals){risks.push(live.proposals+" CEO approvals pending");priorities.push("Decide on "+live.proposals+" management proposals");}
  if(live.risks){risks.push(live.risks+" client deadlines at risk");priorities.push("Resolve "+live.risks+" threatened delivery deadlines");}
@@ -2559,6 +2600,12 @@ function renderExecutiveWeekly(){
  if(payroll>0&&S.cash<payroll*7){risks.push("Cash covers fewer than seven payroll days");priorities.push("Protect the coming week's payroll");}
  for(const d of live.dept)if(d.staff>5&&!DEPARTMENTS[d.key].skills.some(role=>orgSubManager(d.key,role)))risks.push(DEPARTMENTS[d.key].name+" has a wide reporting span");
  for(const line of live.services)if(line.days>=30&&!line.delivered)risks.push(SERVICE_LINES[line.key].name+" has no attributed delivery since launch");
+ for(const x of units){
+  if(x.active&&!x.gm){risks.push(SERVICE_LINES[x.u.key].name+" needs a General Manager");priorities.push("Appoint a GM to "+SERVICE_LINES[x.u.key].name);}
+  else if(x.active&&!x.u.staffIds.some(id=>id!==x.u.managerId)){risks.push(SERVICE_LINES[x.u.key].name+" has contracts but no dedicated specialists");priorities.push("Resolve staffing for "+SERVICE_LINES[x.u.key].name);}
+  if(x.last?.result==="Below target")risks.push(SERVICE_LINES[x.u.key].name+" did not meet its previous quality objective");
+  if(x.last&&Number.isFinite(x.last.revenue)&&x.last.revenueTarget>0&&x.last.revenue<x.last.revenueTarget)risks.push(SERVICE_LINES[x.u.key].name+" revenue "+biCurrency(x.last.revenue)+" below target "+biCurrency(x.last.revenueTarget));
+ }
  if(!risks.length)risks.push("No important cross-department escalation identified");
  if(live.pipeline)priorities.push("Convert "+live.pipeline+" existing leads");
  else priorities.push("Build a qualified customer pipeline");
@@ -2572,6 +2619,7 @@ function renderExecutiveWeekly(){
  '<p class="small"><b>Last '+live.periodDays+' tracked days:</b> revenue '+biCurrency(live.revenue)+' · operating costs '+biCurrency(live.costs)+' · operating '+(live.operatingProfit>=0?'profit ':'loss ')+biCurrency(Math.abs(live.operatingProfit))+'. Cash received '+biCurrency(live.cashIn)+' · cash paid '+biCurrency(live.cashOut)+' · net cash movement '+biCurrency(live.cashChange)+' · balance '+biCurrency(S.cash)+'. Investments affect cash, not operating profit.</p>'+
  '<p class="small"><b>Sales &amp; delivery:</b> '+live.wins+' wins · '+live.pipeline+' open leads · '+live.delivered+' delivered · '+live.missed+' missed · '+live.active+' active jobs.</p>'+
  '<b>Direct-report briefing</b><b>Department leaders, reviews &amp; budgets</b>'+dept+
+ (units.length?'<b>General Managers · unit outcomes</b>'+units.map(x=>'<p class="small">'+esc(SERVICE_LINES[x.u.key].name)+' · '+esc(x.gm?.n||"Vacant GM")+' · '+x.active+' live contracts · '+(x.last?'Last Day '+x.last.day+' review '+esc(x.last.result)+(Number.isFinite(x.last.revenue)?' · Revenue '+biCurrency(x.last.revenue)+' · Billable '+(x.last.utilization===null?'no capacity':x.last.utilization+'%'):''):'Awaiting 30-day evidence')+'</p>').join(""):'')+
  '<b>Managers acted autonomously (last seven days)</b>'+actions(recent(true))+
  '<b>Earlier CEO decisions (last seven days)</b>'+actions(recent(false))+
  '<b>Exceptions &amp; CEO approvals</b><ul>'+risks.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>'+pending+
@@ -2738,14 +2786,18 @@ function renderBriefing(){
 const urgent=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"||f.risk==="watch");
 const stressed=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35);
 const atRiskMoney=S.cash<S.team.reduce((sum,p)=>sum+dailySalary(p),0)*7;
-const actionable=urgent.length+stressed.length+(atRiskMoney?1:0);
+const unitRequests=(S.exec?.unitRequests||[]).filter(x=>x.status==="open"),unitShortages=(S.exec?.units||[]).filter(u=>S.deals.some(d=>d.unitKey===u.key&&!d.w));
+const actionable=urgent.length+stressed.length+(atRiskMoney?1:0)+unitRequests.length+unitShortages.length;
 $("brief-headline").textContent=actionable?actionable+" area"+(actionable===1?"":"s")+" to review":"Your company is on track";
-$("brief-summary").textContent=actionable?"Your office assistant has identified issues worth reviewing. Routine work continues without intervention.":"Projects and development are moving forward. You're free to focus on strategy.";
+$("brief-summary").textContent=actionable?"Your Executive Assistant has highlighted decisions requiring CEO attention. Routine work continues without intervention.":"Projects and development are moving forward. You're free to focus on strategy.";
 $("brief-projects").textContent=S.deals.length+" active project"+(S.deals.length===1?"":"s");
 $("brief-pipeline").textContent=S.pipeline.leads.length+" pipeline leads";
 $("brief-team").textContent=S.team.length+" employees";
 $("log-recent").textContent=S.log.length+" updates";
 const notices=[];
+if(unitRequests.length)notices.push('<div class="card"><h3>CEO decision · GM staffing</h3><p>'+unitRequests.length+' specialist recruitment proposal(s) require CEO approval before any expense or new payroll.</p><button type="button" data-go="growth">Review GM proposals →</button></div>');
+if(S.world.activeEvent)notices.push('<div class="card"><h3>Optional market opportunity</h3><p>A market offer is available until Day '+S.world.activeEvent.until+'. The CEO can act or pass in Growth.</p><button type="button" data-go="growth">Review opportunity →</button></div>');
+if(unitShortages.length)notices.push('<div class="card"><h3>GM capacity exception</h3><p>'+unitShortages.length+' operating unit(s) have unassigned work. Review GM appointments and dedicated staff.</p><button type="button" data-go="growth">Review unit capacity →</button></div>');
 for(const f of urgent.slice(0,2)){
 const label=f.risk==="critical"?"Deadline risk":f.risk==="unassigned"?"Needs an owner":"Limited schedule buffer";
 const info='<span id="alert-days-'+f.d.id+'"></span> remaining';
@@ -2753,9 +2805,9 @@ notices.push('<div class="card"><h3>'+label+'</h3><p>'+esc(f.d.cl)+' — '+info+
 }
 if(stressed.length)notices.push('<div class="card"><h3>Team wellbeing</h3><p>'+stressed.length+' employee'+(stressed.length===1?"":"s")+' under high stress. Review workload and recovery.</p><button type="button" data-go="team">Review team →</button></div>');
 if(atRiskMoney)notices.push('<div class="card"><h3>Cash runway</h3><p>Available cash covers fewer than seven days of payroll. Check delivery and new contracts.</p><button type="button" data-go="work">Review work →</button></div>');
-if(S.world.activeEvent)notices.push('<div class="card"><h3>Optional market opportunity</h3><p>A market brief is ready until Day '+S.world.activeEvent.until+'. Choose whether to act or pass in Growth. No interruption is required.</p><button type="button" data-go="growth">Review market →</button></div>');
+
 if(!notices.length)notices.push('<div class="card"><h3>No urgent decisions</h3><p>Employees are handling routine activities. Check Work or Growth when you want to make strategic decisions.</p></div>');
-const markup=notices.slice(0,2).join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
+const markup=notices.slice(0,3).join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
 for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}
 }
 function refresh(){

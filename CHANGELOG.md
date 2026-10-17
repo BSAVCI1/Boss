@@ -1,5 +1,8 @@
 # Changelog
 
+- 2026-10-17 — **Boss v20.2 whole-game save recovery (PR #21, release candidate):** Diagnoses entire-game Safari progress reverting to Day 2642. Adds visible saved-day/revision/error feedback, downloadable in-memory JSON backup, transactional IndexedDB fallback when localStorage writes fail, newest-valid-revision recovery on refresh, fail-closed simulation while persistence is unverified, and protection for historical saves and once-only paid business launches. Added real 390px Chromium quota→IndexedDB→reload and verified-purchase recovery assertions. Production deployment requires green CI and Pages verification; private Safari storage must still be validated on-device.
+
+
 - 2026-10-16 — Boss v4: initial self-contained leader simulation, with three-person starting team, client deals, dilemmas, animated office, idea combinations, and local save.
 - 2026-10-16 — Fixed time resuming automatically after a dilemma decision.
 - 2026-10-17 — Fixed Restart to refresh deal and team cards even when identifiers match the previous game.

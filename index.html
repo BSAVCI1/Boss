@@ -126,6 +126,18 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .bi-legend{display:flex;flex-wrap:wrap;gap:8px 12px;font-size:11px;color:var(--muted);margin:1px 0 12px}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:0}
 .bi-metric,.bi-grid>div{transition:background .18s,border-color .18s}
+.org-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.org-dept{border:1px solid var(--line);border-radius:11px;padding:11px;background:var(--panel)}
+.org-dept h3{font-size:15px;margin:0 0 6px}.org-dept .small{font-size:12px;line-height:1.5}
+.org-report{border-top:1px solid var(--line);padding:6px 0;font-size:12px}
+.org-manager{font-weight:700;font-size:12px;color:var(--accent);margin:8px 0}
+.org-metric{font-size:12px;color:var(--muted);padding:3px 0}
+.org-settings-row{border-bottom:1px solid var(--line);padding:11px 0}
+.org-settings-row label{display:block;font-size:12px;margin:7px 0 4px;color:var(--muted)}
+.org-settings-row select{width:100%;min-height:44px}
+.org-dept-select{margin-top:8px;width:100%;min-height:44px}
+.org-action{display:block;margin:5px 0}
+@media(max-width:440px){.org-grid{grid-template-columns:1fr}}
 .bi-metric.bi-critical,.bi-grid>div.bi-critical,.bi-section-state.bi-critical{background:rgba(220,60,70,.09);border-color:rgba(208,62,75,.30)}
 .bi-metric.bi-watch,.bi-grid>div.bi-watch,.bi-section-state.bi-watch{background:rgba(214,145,40,.10);border-color:rgba(195,139,44,.30)}
 .bi-metric.bi-good,.bi-grid>div.bi-good,.bi-section-state.bi-good{background:rgba(37,149,98,.07);border-color:rgba(37,149,98,.20)}
@@ -187,6 +199,11 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </section>
 <section id="view-team" class="app-view" data-page="team" aria-label="People and delegation" hidden>
 <div class="view-intro"><h2>Team</h2><p>Employees, roles and culture</p></div>
+<section aria-labelledby="organization-title"><h2 id="organization-title">Organization &amp; management</h2><div class="card org-overview">
+<div class="lead"><b>Reporting lines</b><span id="org-status" class="small">Flat founder-led structure</span></div>
+<p class="filter-note">Choose who reports to whom. A specialist team lead manages only their department, not everyone in the company. Managers coach, coordinate client work and own targets within an approved budget.</p>
+<div id="org-chart"></div><details id="org-settings" class="aux-details"><summary>Department budgets, authority &amp; targets</summary><div id="org-controls"></div><p class="filter-note">Managers need Senior rank or 10 experience points. They give up individual delivery time and receive an additional $0.75/day. The office assistant keeps company-wide coordination.</p></details>
+</div></section>
 <section aria-labelledby="team-title"><h2 id="team-title">Your team</h2><p class="small" id="team-wellbeing">Career progress, stress and wellbeing</p><div id="people"></div></section>
 
 <section aria-labelledby="hiring-title"><h2 id="hiring-title">Recruitment &amp; team culture</h2><div class="card"><details class="aux-details"><summary>Search and hire employees</summary><div class="filter-grid"><div><label for="hire-skill">Specialty to find</label><select id="hire-skill"><option value="">Any skill</option><option value="sales">Sales</option><option value="mkt">Marketing</option><option value="prod">Product</option><option value="ops">Operations</option></select></div><div><label for="hire-interest">Personal interest</label><select id="hire-interest"><option value="">Any interest</option><option value="customers">Customer relationships</option><option value="creative">Creative projects</option><option value="technology">Technology</option><option value="learning">Learning and growth</option><option value="people">Helping colleagues</option><option value="systems">Better processes</option></select></div></div><p class="filter-note">Search is free; hiring has a one-time fee. Each teammate adds $1.50 per day in salary costs, before cost breakthroughs.</p><div class="buttons"><button type="button" id="search-talent">Search candidates</button></div><div class="candidate-list" id="candidates"></div></details><div class="team-culture"><b>Office assistant · Delegation desk</b><p class="filter-note" id="assistant-status">No assistant assigned.</p><div class="buttons"><button type="button" id="hire-assistant">Hire office assistant ($20)</button></div>
@@ -222,7 +239,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <script>
 (function(){
 "use strict";
-const KEY="boss12";
+const KEY="boss13";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
 const TRAITS=["Curious","Social","Diligent","Creative"];
@@ -263,13 +280,13 @@ const projectExpanded=new Set(),employeeExpanded=new Set(),careerExpanded=new Se
 let activeView="today";const viewScroll={today:0,work:0,team:0,growth:0};let attentionSignature="";
 let canvas=$("office"),ctx=canvas.getContext("2d");
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* Storage may be unavailable; play continues in memory. */}}
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 if(!INTERESTS[p.interest])p.interest=INTEREST_KEYS[(p.id-1)%INTEREST_KEYS.length];
 if(!Number.isFinite(p.lastCareDay))p.lastCareDay=-99;
 ensureCareer(p);
-ensureRole(p);
+ensureRole(p);ensureDepartment(p);
 }
 for(const k of ["reward","speed","cost","learn","deals","rep","morale"]){if(typeof s.mod[k]!=="number")return null;}
 if(!s.hr||!Array.isArray(s.hr.pool))s.hr={pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99};
@@ -321,7 +338,7 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
-ensureBI(s);
+ensureOrganization(s);ensureBI(s);
 return s;}catch(e){return null;}}
 const BI_FIELDS=["revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
 function biZero(){return Object.fromEntries(BI_FIELDS.map(k=>[k,0]));}
@@ -641,7 +658,7 @@ function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},bi:null};ensureBI(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];S.team.push(p);}createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null};ensureBI(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -727,7 +744,7 @@ if(old){old.t="idle";S.ops.assistantId=null;}
 if(!old||old.id!==pid){release(p);p.t="assist";S.ops.assistantId=p.id;logIt(p.n+" became your office assistant.");}
 else logIt(p.n+" returned to ordinary team duties.");
 save();structural="";renderStructure();refresh();}
-function hireOfficeAssistant(){if(S.ev||S.ops.assistantId||S.cash<20)return;const p=createPerson();p.s.ops=Math.max(2.3,p.s.ops);p.interest="systems";p.trait="Social";p.mood=75;p.loy=70;p.t="assist";S.cash-=20;biMoney("recruiting",20,"Hire office assistant: "+p.n);ensureCareer(p);ensureRole(p);S.team.push(p);S.ops.assistantId=p.id;logIt("You hired "+p.n+" as office assistant for $20.");save();structural="";renderStructure();refresh();}
+function hireOfficeAssistant(){if(S.ev||S.ops.assistantId||S.cash<20)return;const p=createPerson();p.s.ops=Math.max(2.3,p.s.ops);p.interest="systems";p.trait="Social";p.mood=75;p.loy=70;p.t="assist";S.cash-=20;biMoney("recruiting",20,"Hire office assistant: "+p.n);ensureCareer(p);ensureRole(p);ensureDepartment(p);S.team.push(p);S.ops.assistantId=p.id;logIt("You hired "+p.n+" as office assistant for $20.");save();structural="";renderStructure();refresh();}
 function toggleFocus(){if(S.ev)return;S.flow.focus=!S.flow.focus;if(!S.flow.focus){S.flow.nextLead=Math.max(S.flow.nextLead,S.day+5);S.flow.lastLeadAt=Date.now();S.nextEv=Math.max(S.nextEv,S.day+12);}logIt(S.flow.focus?"You closed intake to focus on existing work.":"You reopened client inquiries and staff matters.");save();refresh();}
 function order(pid,t){const p=person(pid);if(!p||S.ev)return;p.role.auto=false;p.role.autoTask=false;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===pid)S.ops.assistantId=null;release(p);p.t=t;save();renderStructure();refresh();}
 function updateButtons(){$("speed-select").value=String(spd);$("pause").classList.toggle("selected",paused);$("pause").setAttribute("aria-pressed",String(paused));$("pause").textContent=paused?"Resume":"Pause";}
@@ -789,7 +806,7 @@ return '<details class="card employee-card" data-employee-id="'+p.id+'" '+(emplo
 function searchCandidates(){if(S.ev)return;S.hr.skill=$("hire-skill").value;S.hr.interest=$("hire-interest").value;S.hr.pool=[];
 for(let i=0;i<4;i++){const id=++S.hr.searchNumber,focus=S.hr.skill||pick(KEYS),interest=S.hr.interest||pick(INTEREST_KEYS),skills=Object.fromEntries(KEYS.map(k=>[k,+(1+Math.random()*.85).toFixed(2)]));skills[focus]=+(2+Math.random()*1.4).toFixed(2);S.hr.pool.push({id:id,n:candidateName(),trait:pick(TRAITS),interest:interest,focus:focus,s:skills,fee:Math.floor(20+skills[focus]*12+Math.max(0,S.team.length-3)*3)});}
 save();renderCandidates();refresh();}
-function hireCandidate(id){if(S.ev)return;const index=S.hr.pool.findIndex(x=>x.id===id);if(index<0)return;const c=S.hr.pool[index];if(S.cash<c.fee)return;const pid=S.pid++;const p={id:pid,n:c.n,col:COLORS[(pid-1)%COLORS.length],trait:c.trait,s:{...c.s},mood:72,loy:62,t:"idle",mem:["You chose me for what I enjoy and do well"],interest:c.interest,lastCareDay:-99};ensureCareer(p);ensureRole(p);S.team.push(p);S.cash-=c.fee;biMoney("recruiting",c.fee,"Hire "+p.n);S.hr.pool.splice(index,1);
+function hireCandidate(id){if(S.ev)return;const index=S.hr.pool.findIndex(x=>x.id===id);if(index<0)return;const c=S.hr.pool[index];if(S.cash<c.fee)return;const pid=S.pid++;const p={id:pid,n:c.n,col:COLORS[(pid-1)%COLORS.length],trait:c.trait,s:{...c.s},mood:72,loy:62,t:"idle",mem:["You chose me for what I enjoy and do well"],interest:c.interest,lastCareDay:-99};ensureCareer(p);ensureRole(p);ensureDepartment(p);S.team.push(p);S.cash-=c.fee;biMoney("recruiting",c.fee,"Hire "+p.n);S.hr.pool.splice(index,1);
 logIt(p.n+" joined the team for $"+c.fee+". Specialty: "+SKILLS[c.focus]+". Interest: "+INTERESTS[p.interest]+".");
 save();structural="";renderStructure();renderCandidates();refresh();}
 function fireEmployee(id){if(S.ev||S.team.length<=1)return;const p=person(id);if(!p)return;if(!confirm("Fire "+p.n+"? Their client deal will become unassigned, and the remaining team will be unsettled."))return;

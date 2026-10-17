@@ -56,7 +56,7 @@
 <script>
 (function(){
 "use strict";
-const KEY="boss8";
+const KEY="boss9";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
 const TRAITS=["Curious","Social","Diligent","Creative"];
@@ -95,11 +95,12 @@ const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"
 let S,spd=1,paused=false,selected=[],ideaMessage="",avatars=new Map(),clock,structural="",lastIdeas="",logSignature="",sectorSignature="",customerSignature="";
 let canvas=$("office"),ctx=canvas.getContext("2d");
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* Storage may be unavailable; play continues in memory. */}}
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 if(!INTERESTS[p.interest])p.interest=INTEREST_KEYS[(p.id-1)%INTEREST_KEYS.length];
 if(!Number.isFinite(p.lastCareDay))p.lastCareDay=-99;
+ensureCareer(p);
 }
 for(const k of ["reward","speed","cost","learn","deals","rep","morale"]){if(typeof s.mod[k]!=="number")return null;}
 if(!s.hr||!Array.isArray(s.hr.pool))s.hr={pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99};
@@ -143,7 +144,67 @@ if(typeof d.reviewed!=="boolean")d.reviewed=false;}
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
 return s;}catch(e){return null;}}
 function logIt(s,highlight=false){S.log.unshift(highlight?'<span class="warning">'+esc(s)+'</span>':esc(s));S.log=S.log.slice(0,80);}
-function createPerson(){const id=S.pid++;const base=NAMES[(id-1)%NAMES.length];return{id:id,n:base+(id>20?" "+(Math.floor((id-1)/20)+1):""),col:COLORS[(id-1)%COLORS.length],trait:pick(TRAITS),s:Object.fromEntries(KEYS.map(k=>[k,+(1+Math.random()*.6).toFixed(2)])),mood:70,loy:60,t:"idle",mem:[],interest:pick(INTEREST_KEYS),lastCareDay:-99};}
+const GOALS={
+growth:"Learn and grow",recognition:"Be recognized",impact:"Serve clients",balance:"Healthy balance",security:"Stable career",creativity:"Creative freedom"
+};
+const GOAL_KEYS=Object.keys(GOALS);
+function defaultGoal(p){const pref={customers:"impact",creative:"creativity",technology:"growth",learning:"growth",people:"recognition",systems:"security"};return pref[p.interest]||GOAL_KEYS[(p.id-1)%GOAL_KEYS.length];}
+function ensureCareer(p){if(!p.career||typeof p.career!=="object")p.career={};
+const c=p.career;if(!GOALS[c.goal])c.goal=defaultGoal(p);
+if(!Number.isFinite(c.stress))c.stress=18+(p.id*7)%14;
+if(!Number.isFinite(c.burnout))c.burnout=0;
+if(!Number.isFinite(c.satisfaction))c.satisfaction=64;
+if(!Number.isFinite(c.xp))c.xp=0;
+if(!Number.isFinite(c.rank))c.rank=0;c.rank=clamp(Math.round(c.rank),0,2);
+if(!KEYS.includes(c.talent))c.talent=KEYS[(p.id*7+2)%KEYS.length];
+c.revealed=!!c.revealed;
+if(!Number.isFinite(c.observed))c.observed=0;
+if(!Number.isFinite(c.lastCheckin))c.lastCheckin=-99;
+if(!Number.isFinite(c.lastPlan))c.lastPlan=-99;
+if(!Number.isFinite(c.promotedAt))c.promotedAt=-99;
+if(!Number.isFinite(c.recognizedAt))c.recognizedAt=-99;
+if(!Number.isFinite(c.completions))c.completions=0;
+}
+function talentHint(p){const k=p.career.talent;return({sales:"connects naturally with people",mkt:"notices stories and customer patterns",prod:"enjoys making new things",ops:"spots ways to improve routines"})[k];}
+function rankName(p){return ["Associate","Senior","Lead"][p.career.rank];}
+function dailySalary(p){return (1.5+p.career.rank*.75)*S.mod.cost;}
+function stressFactor(p){const c=p.career;return Math.max(.56,1-(c.stress>=55?(c.stress-55)*.006:0)-c.burnout*.0025);}
+function goalFactor(p,d){const c=p.career;let factor=.95+c.satisfaction/1200;
+if(c.goal==="creativity"&&d&&["creative","technology"].includes(d.sector))factor+=.07;
+if(c.goal==="impact"&&d&&LIKED_SKILLS[d.need].includes(p.interest))factor+=.06;
+return factor;}
+function discoverTalent(p,amount){const c=p.career;if(c.revealed)return false;c.observed+=amount;
+if(c.observed<6)return false;c.revealed=true;p.s[c.talent]+=.65;const message=p.n+" discovered a talent for "+SKILLS[c.talent]+"!";logIt(message);Me(p,"My hidden talent was discovered");return true;}
+function goalProgress(p,task){const c=p.career;
+if(c.goal==="growth"&&(task==="study"||task==="teach"))c.satisfaction=clamp(c.satisfaction+.48);
+else if(c.goal==="creativity"&&task==="exp")c.satisfaction=clamp(c.satisfaction+.45);
+else if(c.goal==="balance"&&(task==="rest"||task==="idle"))c.satisfaction=clamp(c.satisfaction+.28);
+else if(c.goal==="security"&&S.cash>=S.team.length*9)c.satisfaction=clamp(c.satisfaction+.12);
+else if(c.goal==="impact"&&task.startsWith("d"))c.satisfaction=clamp(c.satisfaction+.18);
+else if(c.goal==="recognition"&&S.day-c.recognizedAt<9)c.satisfaction=clamp(c.satisfaction+.18);
+else if(S.day%3===0)c.satisfaction=clamp(c.satisfaction-.22);
+if(c.stress>=72)c.satisfaction=clamp(c.satisfaction-.33);
+if(c.satisfaction<25&&S.day%7===0){p.mood=clamp(p.mood-2);p.loy=clamp(p.loy-1);}
+}
+function talentAndCareerDay(p,task,deadline){const c=p.career;
+let shift=task.startsWith("d")?2.25+(deadline<=5?1.15:0):
+task==="exp"?.75:task==="assist"?.55:task==="rest"?-9:
+task==="study"?-1.4:task==="teach"?-.9:-3;
+if(c.goal==="balance"&&task.startsWith("d"))shift+=.35;
+c.stress=clamp(c.stress+shift);
+if(c.stress>=80)c.burnout=clamp(c.burnout+1.7,0,100);
+else if(c.stress<=47)c.burnout=clamp(c.burnout-1.4,0,100);
+else c.burnout=clamp(c.burnout-.22,0,100);
+if(task.startsWith("d"))c.xp+=.34;
+else if(task==="study"||task==="teach"||task==="exp")c.xp+=.22;
+if(task==="study")discoverTalent(p,.55);
+else if(task==="teach")discoverTalent(p,.42);
+else if(task==="exp")discoverTalent(p,.8);
+else if(task.startsWith("d")&&task.slice(1)&&p.career.talent===deal(Number(task.slice(1)))?.need)discoverTalent(p,.45);
+goalProgress(p,task);
+if(c.stress>=80){p.mood=clamp(p.mood-.45);p.loy=clamp(p.loy-.065);}
+}
+function createPerson(){const id=S.pid++;const base=NAMES[(id-1)%NAMES.length];return{id:id,n:base+(id>20?" "+(Math.floor((id-1)/20)+1):""),col:COLORS[(id-1)%COLORS.length],trait:pick(TRAITS),s:Object.fromEntries(KEYS.map(k=>[k,+(1+Math.random()*.6).toFixed(2)])),mood:70,loy:60,t:"idle",mem:[],interest:pick(INTEREST_KEYS),lastCareDay:-99,career:null};}
 function sectorOfClient(client){for(const k of SECTOR_KEYS)if(SECTORS[k].clients.includes(client))return k;return null;}
 function dealTier(){return Math.min(5,1+Math.floor(S.market.completed/5));}
 function feeFor(d){const focusBonus=d.sector===S.market.focus?1.12:1;return Math.floor(d.base*S.mod.reward*(1+S.rep/200)*focusBonus*(SECTORS[d.sector].premium||1));}
@@ -188,7 +249,7 @@ function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99}};for(let i=0;i<3;i++)S.team.push(createPerson());createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99}};for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);S.team.push(p);}createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant"})[p.t]||"idle";}
@@ -257,7 +318,7 @@ if(old){old.t="idle";S.ops.assistantId=null;}
 if(!old||old.id!==pid){release(p);p.t="assist";S.ops.assistantId=p.id;logIt(p.n+" became your office assistant.");}
 else logIt(p.n+" returned to ordinary team duties.");
 save();structural="";renderStructure();refresh();}
-function hireOfficeAssistant(){if(S.ev||S.ops.assistantId||S.cash<20)return;const p=createPerson();p.s.ops=Math.max(2.3,p.s.ops);p.interest="systems";p.trait="Social";p.mood=75;p.loy=70;p.t="assist";S.cash-=20;S.team.push(p);S.ops.assistantId=p.id;logIt("You hired "+p.n+" as office assistant for $20.");save();structural="";renderStructure();refresh();}
+function hireOfficeAssistant(){if(S.ev||S.ops.assistantId||S.cash<20)return;const p=createPerson();p.s.ops=Math.max(2.3,p.s.ops);p.interest="systems";p.trait="Social";p.mood=75;p.loy=70;p.t="assist";S.cash-=20;ensureCareer(p);S.team.push(p);S.ops.assistantId=p.id;logIt("You hired "+p.n+" as office assistant for $20.");save();structural="";renderStructure();refresh();}
 function toggleFocus(){if(S.ev)return;S.flow.focus=!S.flow.focus;if(!S.flow.focus){S.flow.nextLead=Math.max(S.flow.nextLead,S.day+5);S.flow.lastLeadAt=Date.now();S.nextEv=Math.max(S.nextEv,S.day+12);}logIt(S.flow.focus?"You closed intake to focus on existing work.":"You reopened client inquiries and staff matters.");save();refresh();}
 function order(pid,t){const p=person(pid);if(!p||S.ev)return;if(S.ops.assistantId===pid)S.ops.assistantId=null;release(p);p.t=t;save();renderStructure();refresh();}
 function updateButtons(){for(const b of document.querySelectorAll("[data-speed]")){const yes=Number(b.dataset.speed)===spd&&!paused;b.classList.toggle("selected",yes);b.setAttribute("aria-pressed",String(yes));}$("pause").classList.toggle("selected",paused);$("pause").textContent=paused?"Resume":"Pause";}
@@ -290,7 +351,7 @@ function candidateName(){let name=NAMES[(S.pid+S.hr.searchNumber-1)%NAMES.length
 function searchCandidates(){if(S.ev)return;S.hr.skill=$("hire-skill").value;S.hr.interest=$("hire-interest").value;S.hr.pool=[];
 for(let i=0;i<4;i++){const id=++S.hr.searchNumber,focus=S.hr.skill||pick(KEYS),interest=S.hr.interest||pick(INTEREST_KEYS),skills=Object.fromEntries(KEYS.map(k=>[k,+(1+Math.random()*.85).toFixed(2)]));skills[focus]=+(2+Math.random()*1.4).toFixed(2);S.hr.pool.push({id:id,n:candidateName(),trait:pick(TRAITS),interest:interest,focus:focus,s:skills,fee:Math.floor(20+skills[focus]*12+Math.max(0,S.team.length-3)*3)});}
 save();renderCandidates();refresh();}
-function hireCandidate(id){if(S.ev)return;const index=S.hr.pool.findIndex(x=>x.id===id);if(index<0)return;const c=S.hr.pool[index];if(S.cash<c.fee)return;const pid=S.pid++;const p={id:pid,n:c.n,col:COLORS[(pid-1)%COLORS.length],trait:c.trait,s:{...c.s},mood:72,loy:62,t:"idle",mem:["You chose me for what I enjoy and do well"],interest:c.interest,lastCareDay:-99};S.team.push(p);S.cash-=c.fee;S.hr.pool.splice(index,1);
+function hireCandidate(id){if(S.ev)return;const index=S.hr.pool.findIndex(x=>x.id===id);if(index<0)return;const c=S.hr.pool[index];if(S.cash<c.fee)return;const pid=S.pid++;const p={id:pid,n:c.n,col:COLORS[(pid-1)%COLORS.length],trait:c.trait,s:{...c.s},mood:72,loy:62,t:"idle",mem:["You chose me for what I enjoy and do well"],interest:c.interest,lastCareDay:-99};ensureCareer(p);S.team.push(p);S.cash-=c.fee;S.hr.pool.splice(index,1);
 logIt(p.n+" joined the team for $"+c.fee+". Specialty: "+SKILLS[c.focus]+". Interest: "+INTERESTS[p.interest]+".");
 save();structural="";renderStructure();renderCandidates();refresh();}
 function fireEmployee(id){if(S.ev||S.team.length<=1)return;const p=person(id);if(!p)return;if(!confirm("Fire "+p.n+"? Their client deal will become unassigned, and the remaining team will be unsettled."))return;

@@ -417,7 +417,7 @@ if(topic==="sector"&&!S.market.open.includes(sector))return false;
 const old=labSnapshotPolicies(),baseline=labBaseline(topic,topic==="sector"?sector:S.market.focus);
 const exp={id:S.lab.nextId++,topic,sector:topic==="sector"?sector:S.market.focus,startDay:S.day,duration,forecast,note:String($("lab-hypothesis").value||"").trim().slice(0,250),
 baseline,startTotals:{...S.bi.totals},startSectorRevenue:labSectorRevenue(topic==="sector"?sector:S.market.focus),
-startCash:S.cash,startReputation:S.rep,startPolicies:old,intervention:LAB_TOPICS[topic].intervention,status:"active",reflection:""};
+startCash:S.cash,startReputation:S.rep,startPolicies:old,participation:{delivery:0,sales:0,learning:0,recovery:0,managing:0,manual:0},intervention:LAB_TOPICS[topic].intervention,status:"active",reflection:""};
 if(topic==="demand"){S.pipeline.mode="growth";S.pipeline.target=6;}
 if(topic==="delivery"){S.ops.policy.priority="deadline";S.ops.policy.assign=true;S.pipeline.target=2;}
 if(topic==="learning")S.pipeline.mode="innovation";
@@ -462,12 +462,13 @@ $("lab-count").textContent=String(lab.history.length);
 if(!exp&&force){$("lab-topic").value=lab.topic;$("lab-duration").value=String(lab.duration);$("lab-forecast").value=String(lab.forecast);labPreview();}
 const historyMarkup=lab.history.map(e=>'<details class="lab-history-row"><summary>#'+e.id+' · '+esc(LAB_TOPICS[e.topic]?.title||"Experiment")+' · Day '+e.endedDay+' · '+esc(e.result.grade.title)+'</summary>'+labResultHTML(e,false)+'<label>What did you learn? (saved on this device)</label><textarea rows="2" maxlength="600" data-lab-reflection="'+e.id+'" placeholder="What worked? What surprised you? What would you change?">'+esc(e.reflection||"")+'</textarea></details>').join("");
 if(historyMarkup!==labHistorySignature){labHistorySignature=historyMarkup;$("lab-history").innerHTML=historyMarkup;}
+$("coach-lab-controls").innerHTML=!exp&&lab.history.length&&!lab.history[0].restored?'<button type="button" data-lab-restore="'+lab.history[0].id+'">Restore pre-experiment policies</button>':"";
 $("lab-finished").innerHTML=!exp&&lab.history.length?'<p class="filter-note">Latest result: '+esc(lab.history[0].result.grade.title)+'. Open Previous experiments to reflect or compare.</p>':"";
 }
 function labPreview(){const topic=$("lab-topic").value;const t=LAB_TOPICS[topic];if(!t)return;
 $("lab-sector").innerHTML=S.market.open.map(s=>'<option value="'+s+'">'+esc(SECTORS[s].name)+'</option>').join("");
 $("lab-sector-label").hidden=topic!=="sector";$("lab-sector").hidden=topic!=="sector";
-$("lab-preview").textContent=t.description+" Main measure: "+LAB_METRICS[t.metric].name+". Changes remain until you adjust them. Only one experiment runs at a time.";
+$("lab-preview").textContent=t.description+" Main measure: "+LAB_METRICS[t.metric].name+". Changes remain until you adjust them. Only one experiment runs at a time.";coachExperimentPreview();
 }
 
 function ensureCoach(s){if(!s.coach||typeof s.coach!=="object")s.coach={mode:"guided",nextId:1,journal:[],ruleVersion:1};
@@ -640,7 +641,7 @@ if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
 ensureOrganization(s);ensureBI(s);ensureLab(s);ensureCoach(s);
-for(const d of s.deals)if(!Number.isFinite(d.agreedFee))d.agreedFee=d.biBooked&&Number.isFinite(d.bookVal)?d.bookVal:estimatedFee(d);
+for(const d of s.deals)if(!Number.isFinite(d.agreedFee))d.agreedFee=d.biBooked&&Number.isFinite(d.bookVal)?d.bookVal:estimatedFee(d,s);
 return s;}catch(e){return null;}}
 const BI_FIELDS=["revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
 function biZero(){return Object.fromEntries(BI_FIELDS.map(k=>[k,0]));}
@@ -1011,7 +1012,7 @@ $("skills-map").innerHTML=rows+'<div class="filter-note">Roles: '+S.team.map(p=>
 function createPerson(){const id=S.pid++;const base=NAMES[(id-1)%NAMES.length];return{id:id,n:base+(id>20?" "+(Math.floor((id-1)/20)+1):""),col:COLORS[(id-1)%COLORS.length],trait:pick(TRAITS),s:Object.fromEntries(KEYS.map(k=>[k,+(1+Math.random()*.6).toFixed(2)])),mood:70,loy:60,t:"idle",mem:[],interest:pick(INTEREST_KEYS),lastCareDay:-99,career:null};}
 function sectorOfClient(client){for(const k of SECTOR_KEYS)if(SECTORS[k].clients.includes(client))return k;return null;}
 function dealTier(){return Math.min(5,1+Math.floor(S.market.completed/5));}
-function estimatedFee(d){const focusBonus=d.sector===S.market.focus?1.12:1;return Math.floor(d.base*S.mod.reward*(1+S.rep/200)*focusBonus*(SECTORS[d.sector].premium||1));}
+function estimatedFee(d,game=S){const focusBonus=d.sector===game.market.focus?1.12:1;return Math.floor(d.base*game.mod.reward*(1+game.rep/200)*focusBonus*(SECTORS[d.sector].premium||1));}
 function feeFor(d){return Number.isFinite(d.agreedFee)?d.agreedFee:estimatedFee(d);}
 function lockDealFee(d){d.agreedFee=estimatedFee(d);if(d.biBooked)biReprice(d);}
 function createDeal(client,extra=0){const tier=dealTier();let sector=client?sectorOfClient(client):null;if(!sector||!S.market.open.includes(sector))sector=S.market.focus;
@@ -1089,7 +1090,7 @@ else if(p.t==="exp"){const spent=Math.min(1,S.cash);S.cash-=spent;if(spent>0)biM
 else if(p.t==="rest"){dm=2;}
 else if(p.t==="assist"){p.s.ops+=.025*S.mod.learn;dm=.25;}
 const assignedDeadline=p.t.startsWith("d")?deal(Number(p.t.slice(1)))?.dl??99:99;
-talentAndCareerDay(p,recovering?"rest":p.t,assignedDeadline);biTeamDay(p);
+talentAndCareerDay(p,recovering?"rest":p.t,assignedDeadline);biTeamDay(p);coachLabParticipation(p);
 p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
 if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);orgTrackPerson(p);if(!recovering)orgManagerDay(p);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
@@ -1101,7 +1102,7 @@ const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid
 biMoney("payroll",salary,"Daily payroll",actuallyPaid);
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
-labDay();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
+labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;}save();renderStructure();refresh();}
 function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p));}
 function bestIdle(d,department=null){return S.team.filter(p=>(!department||p.department===department)&&p.id!==S.ops.assistantId&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
@@ -1176,6 +1177,11 @@ $("lab-panel").addEventListener("toggle",()=>{if($("lab-panel").open)renderLab(t
 $("lab-topic").addEventListener("change",()=>{S.lab.topic=$("lab-topic").value;labPreview();});
 $("lab-duration").addEventListener("change",()=>{S.lab.duration=Number($("lab-duration").value);});
 $("lab-forecast").addEventListener("change",()=>{S.lab.forecast=Number($("lab-forecast").value);});
+$("coach-mode").addEventListener("change",()=>{S.coach.mode=$("coach-mode").value;save();coachRender();});
+$("coach-priorities").addEventListener("click",e=>{const b=e.target.closest("button[data-coach-go]");if(b)navigate(b.dataset.coachGo);});
+$("coach-pay-wages").addEventListener("click",coachSettlePayroll);
+$("coach-manager-review").addEventListener("click",e=>{const b=e.target.closest("button[data-coach-allocate]");if(b)coachManagerAllocate(b.dataset.coachAllocate);});
+$("coach-lab-controls").addEventListener("click",e=>{const b=e.target.closest("button[data-lab-restore]");if(b)coachLabRestore(Number(b.dataset.labRestore));});
 $("lab-start").addEventListener("click",labStart);
 $("lab-history").addEventListener("change",e=>{const target=e.target;if(target?.dataset?.labReflection){labSaveReflection(Number(target.dataset.labReflection),target.value);labHistorySignature="";}});
 $("bi-open-details").addEventListener("click",()=>{navigate("work");$("performance-panel").open=true;renderBI(true);});
@@ -1282,7 +1288,7 @@ const markup=notices.join("");if(markup!==attentionSignature){attentionSignature
 for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}
 }
 function refresh(){
-renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderBI();renderLab();
+renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderBI();renderLab();coachRender();
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);

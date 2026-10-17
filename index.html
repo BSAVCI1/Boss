@@ -2002,10 +2002,12 @@ $("business-units").addEventListener("click",e=>{
  else if(action==="transfer")unitTransfer(key,Number($("unit-employee-"+key)?.value)||null);
  else if(action==="release")unitRelease(key,Number($("unit-release-"+key)?.value)||null);
  else if(action==="renew")unitRenewAuthority(key);
+ else if(action==="apply-draft"){const ok=unitApplyDraft(key);const status=$("unit-settings-status-"+key);if(status)status.textContent=ok?"Budget and objectives saved.":"Invalid numbers; no settings changed.";}
+ else if(action==="preset"){const tier=$("unit-preset-"+key)?.value;const ok=unitApplyPreset(key,tier);const status=$("unit-settings-status-"+key);if(status)status.textContent=ok?"Preset approved; no upfront spending.":"Select a preset or choose Custom.";}
 });
 $("business-units").addEventListener("input",e=>{
- const field=e.target;if(!field?.matches?.("input[data-unit-field]")||String(field.value||"").trim()===""||field.validity?.valid===false)return;
- unitAuthorize(field.dataset.unitKey,field.dataset.unitField,Number(field.value));
+ const field=e.target;if(!field?.matches?.("input[data-unit-field]"))return;
+ unitRecordInput(field); // Player drafts never trigger save/DOM repaint on each character.
 });
 $("business-units").addEventListener("change",e=>{
  const field=e.target;if(!field?.matches?.("select[data-unit-field]"))return;
@@ -2419,7 +2421,7 @@ function unitApplyDraft(key){
  const u=S.exec.units.find(x=>x.key===key);if(!u)return false;const d=unitDraft(key),next={};
  for(const field of UNIT_EDIT_FIELDS){
   const raw=d[field]!==undefined?d[field]:String(u.plan[field]);
-  if(!/^\\d+$/.test(String(raw).trim()))return false;
+  if(!/^\d+$/.test(String(raw).trim()))return false;
   const v=Number(raw);if(!Number.isSafeInteger(v)||v<0||v>1000000||(field==="qualityTarget"&&(v<65||v>100))||(field==="utilizationTarget"&&v>100)||(field==="staffingTarget"&&(v<1||v>25)))return false;
   next[field]=v;
  }

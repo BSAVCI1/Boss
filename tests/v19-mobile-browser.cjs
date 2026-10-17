@@ -151,6 +151,42 @@ document.addEventListener("DOMContentLoaded",async()=>{
    result.checks.unitActivationReloaded=!!recovered&&recovered.exec.units.filter(u=>u.key==="technology").length===1&&
     recovered.bi.totals.investments===120&&recovered.exec.lines.filter(x=>x.key==="technology").length===1&&
     byId("business-units")?.textContent.includes("operating unit");
+
+   if(sessionStorage.getItem("boss-qa-v212")!=="1"){
+    document.querySelector('.bottom-nav button[data-view="growth"]').click();
+    const details=document.querySelector('#business-units details[data-unit-open="technology"]');
+    if(!details)throw Error("v21.2 unit controls missing");
+    details.open=true;
+    const readUnit=()=>new Promise(resolve=>{
+      const r=indexedDB.open("BossSafeProgress",1);
+      r.onsuccess=()=>{const q=r.result.transaction("game","readonly").objectStore("game").get("boss20");q.onsuccess=()=>resolve(JSON.parse(q.result?.payload||"null")?.exec?.units?.find(u=>u.key==="technology"));q.onerror=()=>resolve(null)};
+      r.onerror=()=>resolve(null);
+    });
+    let ok=true;
+    for(const [id,key,value] of [["unit-coaching-technology","coachingLimit",12],["unit-peraction-technology","perAction",4],["unit-quality-technology","qualityTarget",88]]){
+      const input=byId(id);if(!input){ok=false;break;}
+      input.focus();input.value=String(value);input.dispatchEvent(new Event("input",{bubbles:true}));
+      let saved=false;
+      for(let i=0;i<90;i++){
+       const unit=await readUnit();if(unit?.plan?.[key]===value){saved=true;break;}
+       await new Promise(r=>setTimeout(r,100));
+      }
+      if(!saved){ok=false;break;}
+    }
+    result.checks.unitAuthoritySaved=ok;
+    sessionStorage.setItem("boss-qa-v212-result",JSON.stringify(result));
+    sessionStorage.setItem("boss-qa-v212","1");
+    location.reload();return;
+   }
+   const v212prev=JSON.parse(sessionStorage.getItem("boss-qa-v212-result"));
+   result.checks={...v212prev.checks,...result.checks};
+   result.errors=result.errors.concat(v212prev.errors||[]);
+   const restoredUnit=recovered?.exec?.units.find(u=>u.key==="technology");
+   result.checks.unitAuthorityReloaded=restoredUnit?.plan?.coachingLimit===12&&
+    restoredUnit.plan.perAction===4&&restoredUnit.plan.qualityTarget===88&&
+    restoredUnit.plan.spent===0&&recovered.bi.totals.investments===120&&
+    byId("unit-coaching-technology")?.value==="12"&&byId("unit-quality-technology")?.value==="88";
+
  }catch(e){result.errors.push(String(e.stack||e));}
  document.title="BOSS_QA:"+btoa(unescape(encodeURIComponent(JSON.stringify(result))));
 });
@@ -225,6 +261,8 @@ async function runBrowser(){
   assert.equal(outcome.checks.unitButtonVisible,true,"Existing paid service must offer free unit conversion");
   assert.equal(outcome.checks.unitActivationCommitted,true,"Conversion must commit to fallback storage before confirmation");
   assert.equal(outcome.checks.unitActivationReloaded,true,"After reload exactly one unit remains and no $120 fee was repeated");
+   assert.equal(outcome.checks.unitAuthoritySaved,true,"GM budget limits must confirm in extended storage");
+   assert.equal(outcome.checks.unitAuthorityReloaded,true,"GM budget and quality goal must survive mobile reload without a new purchase");
   assert.deepEqual(outcome.errors,[]);
   await send("Emulation.setDeviceMetricsOverride",{width:414,height:896,deviceScaleFactor:1,mobile:true});
   await sleep(150);

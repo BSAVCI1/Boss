@@ -74,15 +74,28 @@ async function runBrowser(){
    });
   }
   await send("Page.enable");await send("Runtime.enable");
-  await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:true});
-  await send("Page.navigate",{url:"file://"+file});
-  let title="";
-  for(let i=0;i<75;i++){
-   try{const result=await send("Runtime.evaluate",{expression:"document.title",returnByValue:true});title=result.result?.value||"";if(title.startsWith("BOSS_QA:"))break;}catch{}
+  // Chrome can delay applying a mobile metric override on a newly created tab.
+  // Retry a clean navigation only if the *measured* CSS viewport is incorrect;
+  // every acceptance assertion remains mandatory after a true 390px render.
+  let outcome=null;
+  for(let attempt=0;attempt<3;attempt++){
+   await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:true});
    await sleep(150);
+   await send("Page.navigate",{url:"file://"+file+"?qa="+attempt});
+   let title="";
+   for(let i=0;i<75;i++){
+    try{
+     const result=await send("Runtime.evaluate",{expression:"JSON.stringify({title:document.title,query:location.search})",returnByValue:true});
+     const page=JSON.parse(result.result?.value||"{}");
+     if(page.query==="?qa="+attempt&&page.title?.startsWith("BOSS_QA:")){title=page.title;break;}
+    }catch{}
+    await sleep(150);
+   }
+   assert.ok(title.startsWith("BOSS_QA:"),"UI smoke script did not finish");
+   outcome=JSON.parse(Buffer.from(title.slice(8),"base64").toString("utf8"));
+   if(outcome.width>=385&&outcome.width<=395)break;
+   console.warn("Chrome emulation not settled: viewport "+outcome.width+"; retrying full page at 390px");
   }
-  assert.ok(title.startsWith("BOSS_QA:"),"UI smoke script did not finish");
-  const outcome=JSON.parse(Buffer.from(title.slice(8),"base64").toString("utf8"));
   console.log("Mobile browser verification:",JSON.stringify(outcome));
   assert.ok(outcome.width>=385&&outcome.width<=395,"Unexpected viewport, no mobile acceptance: "+outcome.width);
   assert.equal(outcome.views.length,4,"All four tabs must navigate");

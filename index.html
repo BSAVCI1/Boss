@@ -1321,8 +1321,18 @@ return true;
 }
 function orgSpend(dept,cat,amount){if(!orgFunds(dept,cat,amount))return false;orgPlan(dept).spent[cat]+=amount;return true;}
 function orgBudgetPeriod(){for(const dept of DEPT_KEYS){const p=orgPlan(dept);if(!p)continue;
-if(S.day>=p.since+p.days){p.since=S.day;p.spent={coaching:0,training:0,team:0,hiring:0};p.hires=0;p.payrollAdded=0;p.amendments=0;logIt(DEPARTMENTS[dept].name+" delegation budget renewed for "+p.days+" days.");}
+if(S.day===p.since+p.days)logIt(DEPARTMENTS[dept].name+" delegation authorization expired; spending pauses until the CEO renews it.");
 }}
+function orgRenewPlan(dept){
+if(!DEPARTMENTS[dept]||S.ev)return false;
+const p=orgPlan(dept);if(!p)return false;
+const before=coachSnap();
+p.since=S.day;p.spent={coaching:0,training:0,team:0,hiring:0};p.hires=0;p.payrollAdded=0;p.amendments=0;
+p.lastTraining=-99;p.lastTeam=-99;
+coachDecision(DEPARTMENTS[dept].name+" delegation renewal",before,"CEO renewed an explicit "+p.days+"-day authority under existing limits; no money spent on authorization.",null,30);
+logIt("CEO renewed "+DEPARTMENTS[dept].name+" budgets until Day "+(p.since+p.days)+".");
+orgControlsSignature="";save();renderOrganization();refresh();return true;
+}
 function orgManager(key){const id=S.org.departments[key]?.managerId;const p=person(id);return p&&p.department===key&&p.role.primary==="lead"&&p.id!==S.ops.assistantId?p:null;}
 function orgReports(key){const mgr=orgManager(key);return S.team.filter(p=>p.department===key&&p.id!==mgr?.id&&p.id!==S.ops.assistantId);}
 function orgPeriod(){for(const key of DEPT_KEYS){const d=S.org.departments[key];if(S.day-d.periodStart>=30){
@@ -1382,7 +1392,7 @@ if(!DEPARTMENTS[dept]||S.ev)return false;
 const d=S.org.departments[dept],p=d.plan,old=coachSnap();
 if(!Number.isFinite(value)||value<0||value>10000000)return false;
 if(["coaching","training","team","hiring"].includes(type))p.limits[type]=Math.floor(value);
-else if(type==="days"&&[90,180].includes(value)){p.days=value;p.since=S.day;p.spent={coaching:0,training:0,team:0,hiring:0};p.hires=0;p.payrollAdded=0;p.amendments=0;}
+else if(type==="days"&&[90,180].includes(value))p.days=value;
 else if(type==="perAction")p.perAction=Math.floor(value);
 else if(type==="hireSlots")p.hireSlots=Math.floor(value);
 else if(type==="payrollLimit")p.payrollLimit=value;
@@ -1456,7 +1466,7 @@ const manager=orgSubManager(key,role),people=qualified.filter(x=>x.id!==director
 return '<label>'+esc(ROLE_NAMES[role])+' team manager (optional)</label><select data-org-subrole="'+role+'" data-org-dept="'+key+'"><option value="">Director manages directly</option>'+people.map(x=>'<option value="'+x.id+'" '+(manager?.id===x.id?'selected':'')+'>'+esc(x.n)+' · #'+x.id+'</option>').join("")+'</select>';
 }).join("");
 return '<div class="org-settings-row"><b>'+DEPARTMENTS[key].name+'</b><label>Department head</label><select data-org-manager="'+key+'"><option value="">Founder manages directly</option>'+opts+'</select>'+roles+
-'<p class="small">Delegated budget until Day '+(p.since+p.days)+' · Unused authority does not spend cash.</p><label>Budget period</label><select data-org-policy="days" data-org-dept="'+key+'"><option value="90" '+(p.days===90?'selected':'')+'>90 days</option><option value="180" '+(p.days===180?'selected':'')+'>180 days</option></select>'+
+'<p class="small">Delegated budget until Day '+(p.since+p.days)+' · '+(S.day>=p.since+p.days?'EXPIRED — CEO renewal required':'Unused authority does not spend cash')+'.</p><button type="button" data-org-renew="'+key+'">Renew '+p.days+'-day authority</button>'<label>Budget period</label><select data-org-policy="days" data-org-dept="'+key+'"><option value="90" '+(p.days===90?'selected':'')+'>90 days</option><option value="180" '+(p.days===180?'selected':'')+'>180 days</option></select>'+
 number("coaching","Coaching budget ($)",p.limits.coaching)+number("training","Training budget ($)",p.limits.training)+number("team","Team-building budget ($)",p.limits.team)+number("hiring","Recruiting budget ($)",p.limits.hiring)+
 number("perAction","Maximum delegated cost per decision ($)",p.perAction)+number("hireSlots","Maximum delegated hires this period",p.hireSlots)+number("payrollLimit","Maximum new recurring payroll ($/day)",p.payrollLimit)+
 '<p class="small">Spent: coaching '+biCurrency(p.spent.coaching)+' / '+biCurrency(p.limits.coaching)+'; training '+biCurrency(p.spent.training)+' / '+biCurrency(p.limits.training)+'; team '+biCurrency(p.spent.team)+' / '+biCurrency(p.limits.team)+'; recruiting '+biCurrency(p.spent.hiring)+' / '+biCurrency(p.limits.hiring)+'. Hires '+p.hires+'/'+p.hireSlots+' · additional payroll '+biCurrency(p.payrollAdded)+' / '+biCurrency(p.payrollLimit)+'/day.</p>'+
@@ -1767,6 +1777,7 @@ $("team-activity").addEventListener("click",teamActivity);
 $("skills-panel").addEventListener("toggle",()=>{if($("skills-panel").open)renderSkillMap();});
 $("skills-map").addEventListener("click",e=>{const b=e.target.closest("button[data-skill-hire]");if(!b)return;S.hr.skill=b.dataset.skillHire;S.hr.pool=[];const panel=$("recruitment-panel");if(panel)panel.open=true;renderCandidates();save();});
 $("org-settings").addEventListener("toggle",()=>{orgControlsSignature="";if($("org-settings").open)renderOrganization();});
+$("org-controls").addEventListener("click",e=>{const b=e.target.closest("button[data-org-renew]");if(b)orgRenewPlan(b.dataset.orgRenew);});
 $("org-controls").addEventListener("change",e=>{const el=e.target;if(el.dataset.orgManager!==undefined)orgChooseManager(el.dataset.orgManager,Number(el.value)||null);
 else if(el.dataset.orgSubrole)orgChooseSubManager(el.dataset.orgDept,el.dataset.orgSubrole,Number(el.value)||null);else if(el.dataset.orgPolicy)orgChangePolicy(el.dataset.orgDept,el.dataset.orgPolicy,Number(el.value));});
 $("economy-terms").addEventListener("change",()=>economyChangePolicy("terms",$("economy-terms").value));

@@ -64,6 +64,13 @@
 - Historical safeguards: prior game history is **not** reconstructed; existing cash, people, deals and decisions remain intact. Save key migrates to `boss12`; daily records limited to the most recent 366 game days, with lifetime rollups.
 - Acceptance: reconcile opening cash + tracked receipts - tracked payments to live game cash; validate full/partial salary handling, saved-game migration, no new external dependencies, and side-by-side gameplay-economic parity with v11.
 
+## Delivered: v12.1 — KPI Section Accordion & Health Signals
+- Four independently collapsible Finance / Sales / Delivery / People reports replace fixed always-expanded sections.
+- Compact section headers expose meaningful risk status and short reasons; red, amber, green and neutral are accompanied by descriptive text.
+- Heuristic business thresholds are explained per KPI, with sample-size gates to avoid false warnings for an empty or newly imported ledger. Selectable period and all financial formulas remain unchanged.
+- Today KPI highlights reflect operating loss and profit margin. Save key `boss12`, offline deployment, and existing organization/learning roadmap remain unchanged.
+- Regression: independence of accordions, threshold extremes, insufficient-data readiness, 150-day simulation, persistence, single-file source.
+
 ## Next: v13 — Organization & Leadership
 - **Formal structure:** permanent departments with explicit manager/team-lead assignments, direct reports, authority and span of control. A Team Lead must manage a chosen department or project team, not the entire company by default.
 - **Accountable targets:** sales, marketing, delivery and operations managers own measurable quarterly objectives and departmental budgets, not only skill labels.

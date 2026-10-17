@@ -1313,6 +1313,8 @@ if(!Number.isFinite(p.amendments)||p.amendments<0)p.amendments=0;
 }}
 function orgLeaderTitle(p){
 if(!p)return"Department Manager";
+const isDepartmentHead=S.org?.departments[p.department]?.managerId===p.id;
+if(!isDepartmentHead)return DEPARTMENTS[p.department]?.skills.some(role=>orgSubManager(p.department,role)?.id===p.id)?"Team Manager":"Department Manager";
 return p.career?.rank>=4&&p.career.path==="leadership"||DEPARTMENTS[p.department]?.skills.some(role=>orgSubManager(p.department,role))?"Director":"Department Manager";
 }
 function orgWorkRole(p){return ["sales","mkt","prod","ops"].includes(p?.role?.previousPrimary)?p.role.previousPrimary:p?.role?.primary;}

@@ -571,6 +571,35 @@ function orgManagerBoost(p){return p&&p.role.primary!=="lead"?1+.07*orgEffective
 function orgTrackPerson(p){const d=S.org.departments[p.department];if(!d||p.id===S.ops.assistantId)return;d.stats.staffDays++;if(p.t.startsWith("d"))d.stats.billableDays++;if(orgManager(p.department)?.id===p.id)d.stats.managerDays++;}
 function orgTrackLead(stage){const x=S.org.departments.commercial.stats;if(stage==="lead")x.leads++;if(stage==="qualified")x.qualified++;if(stage==="won")x.wins++;}
 function orgTrackDelivery(d){const m=S.org.departments.delivery.stats;m.delivered++;if(d.dl>=0)m.onTime++;m.qualityTotal+=d.quality;}
+
+function orgChooseManager(dept,id){if(S.ev||!DEPARTMENTS[dept])return;const d=S.org.departments[dept];
+if(!id){const prior=orgManager(dept);d.managerId=null;if(prior){if(!prior.t.startsWith("d"))prior.t="idle";prior.role.autoTask=false;logIt(prior.n+" stepped down as "+DEPARTMENTS[dept].name+" manager.");}}
+else{const p=person(id);if(!p||p.department!==dept||p.id===S.ops.assistantId||!(p.career.rank>=1||p.career.xp>=10))return;
+for(const key of DEPT_KEYS)if(S.org.departments[key].managerId===id)S.org.departments[key].managerId=null;
+const former=orgManager(dept);if(former&&former.id!==id){if(!former.t.startsWith("d"))former.t="idle";former.role.autoTask=false;}
+for(const d of S.deals)if(d.w===p.id)d.w=null;
+p.t="idle";p.role.primary="lead";p.role.auto=true;p.role.autoTask=false;
+d.managerId=id;logIt(p.n+" now manages "+DEPARTMENTS[dept].name+". Salary rises by $0.75/day; direct delivery time is reduced.");}
+structural="";save();renderStructure();renderOrganization();refresh();}
+function orgChangeDepartment(pid,dept){if(S.ev||!DEPARTMENTS[dept])return;const p=person(pid);if(!p||p.id===S.ops.assistantId||p.department===dept)return;
+for(const key of DEPT_KEYS)if(S.org.departments[key].managerId===pid)S.org.departments[key].managerId=null;
+p.department=dept;if(!p.t.startsWith("d")){p.t="idle";p.role.autoTask=false;}
+logIt(p.n+" moved to "+DEPARTMENTS[dept].name+" department.");structural="";save();renderStructure();renderOrganization();refresh();}
+function orgChangePolicy(dept,type,value){if(!DEPARTMENTS[dept])return;const d=S.org.departments[dept];
+if(type==="budget"&&[0,8,16,30].includes(value))d.budget=value;
+else if(type==="leads"&&dept==="commercial"&&[3,5,8].includes(value))d.target.leads=value;
+else if(type==="onTime"&&dept==="delivery"&&[70,85,95].includes(value))d.target.onTime=value;
+else return;save();renderOrganization();refresh();}
+function orgManagerDay(p){const dept=p.department,d=S.org.departments[dept];if(!d||orgManager(dept)?.id!==p.id)return;
+if(p.t!=="coachteam"&&p.t!=="teach")return;
+if(S.day%7!==0||d.spent+4>d.budget||S.cash<4)return;
+const candidates=orgReports(dept).filter(x=>x.career.recoveryDays===0);
+if(!candidates.length)return;
+const target=candidates.sort((a,b)=>b.career.stress-a.career.stress)[0];
+S.cash-=4;biMoney("development",4,DEPARTMENTS[dept].name+" coaching: "+target.n);d.spent+=4;d.stats.coached++;
+target.career.stress=clamp(target.career.stress-4);target.career.satisfaction=clamp(target.career.satisfaction+3);
+const weak=DEPARTMENTS[dept].skills.reduce((a,b)=>target.s[a]<target.s[b]?a:b);target.s[weak]+=.14*S.mod.learn;
+logIt(p.n+" coached "+target.n+" in "+DEPARTMENTS[dept].name+" ($4 from department budget).");}
 function roleAction(id,action){if(S.ev)return;const p=person(id);if(!p)return;const r=p.role;
 if(action==="resume"){if(p.id===S.ops.assistantId)return;r.auto=true;if(!p.t.startsWith("d")){p.t="idle";r.autoTask=false;}logIt(p.n+" returned to the team work plan.");}
 else if(action==="manual"){r.auto=false;r.autoTask=false;logIt("Manual task control enabled for "+p.n+".");}

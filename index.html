@@ -1553,7 +1553,8 @@ function ladderEvaluation(level){
  const tenure=p?(from?Math.max(0,S.day-from.since):(p.perf?.days||0)):0;
  const competency=p?managerCompetence(p):0;
  const reasons=[];
- if(count<rule.required)reasons.push("Need "+rule.required+" "+(level==="lead"?"company employees":level==="director"?"managers":"Team Leads")+"; currently "+count);
+ const needed=level==="lead"?5+3*current.filter(n=>n.level==="lead").length:rule.required;
+ if(count<needed)reasons.push("Need "+needed+" "+(level==="lead"?"company employees to form another three-person team":level==="director"?"managers":"Team Leads")+"; currently "+count);
  if(!p)reasons.push("No internal successor ready");
  else{
   if(tenure<rule.days)reasons.push("Experience "+tenure+"/"+rule.days+" days");
@@ -1561,12 +1562,12 @@ function ladderEvaluation(level){
   if(p.career.rank<1&&p.career.xp<10)reasons.push("Develop career experience or XP");
   if(S.deals.some(d=>d.w===p.id))reasons.push("Finish the assigned contract first");
  }
- return{level,role:rule.name,count,need:rule.required,candidateId:p?.id||null,
+ return{level,role:rule.name,count,need:level==="lead"?5+3*current.filter(n=>n.level==="lead").length:rule.required,candidateId:p?.id||null,
  candidateName:p?.n||null,reasons,ready:!!p&&!reasons.length,
  incremental:rule.bonus-(from?LADDER[from.level].bonus:0)};
 }
 function ladderNext(){
- for(const level of LADDER_STAGES){const c=ladderEvaluation(level);if(c?.ready)return c;}
+ for(const level of [...LADDER_STAGES].reverse()){const c=ladderEvaluation(level);if(c?.ready)return c;}
  for(const level of LADDER_STAGES){
   if(!S.org.progression.appointments.some(n=>n.level===level))return ladderEvaluation(level);
  }
@@ -1611,7 +1612,7 @@ function ladderSetAuthority(amount){
 }
 function ladderDay(){
  const g=S.org.progression;if(S.day%7||g.lastChecked===S.day)return;g.lastChecked=S.day;
- const next=ladderNext();
+ ladderReassign();const next=ladderNext();
  if(next?.ready&&ladderPayroll()+next.incremental*S.mod.cost<=g.authorityDaily)ladderPromote(next.level,next.candidateId,false);
  ladderCoachSuccessors();
 }
@@ -2252,6 +2253,11 @@ function teamReportingGroups(){
  };
  add("ceo","CEO · direct reports",[
  ...DEPT_KEYS.map(key=>orgManager(key)),...(S.exec?.units||[]).map(u=>person(u.managerId)),person(S.ops.assistantId)]);
+ for(const n of S.org.progression.appointments.filter(x=>x.level==="director"||x.level==="senior"))add("ladder-executive-"+n.id,"CEO · "+LADDER[n.level].name,[person(n.id)]);
+ for(const n of S.org.progression.appointments.filter(x=>x.level==="lead")){
+  const leader=person(n.id),reporters=S.team.filter(p=>S.org.progression.reportTo[p.id]===n.id&&!ladderNode(p.id));
+  add("ladder-"+n.id,(ROLE_NAMES[orgWorkRole(leader)]||"Corporate")+" · Team Lead "+(leader?.n||"Vacant"),[leader,...reporters]);
+ }
  for(const u of S.exec?.units||[])add("unit-"+u.key,SERVICE_LINES[u.key].name+" → "+(person(u.managerId)?.n||"Vacant GM"),u.staffIds.map(id=>person(id)));
  for(const dept of DEPT_KEYS){
   const chief=orgManager(dept),label=DEPARTMENTS[dept].name;
@@ -3027,7 +3033,8 @@ function renderLadder(){
  const reasons=(next?.reasons||[]).map(x=>'<li>'+esc(x)+'</li>').join("");
  const candid=next?.candidateId?' Strongest candidate: <b>'+esc(next.candidateName)+'</b> (#'+next.candidateId+').':' No eligible candidate yet.';
  const needBudget=next?.ready&&salary+next.incremental*S.mod.cost>g.authorityDaily;
- const step=next?.ready?'<button type="button" data-ladder-action="approve" data-level="'+next.level+'" data-person="'+next.candidateId+'">Approve '+esc(next.role)+(needBudget?' · CEO payroll exception':' now')+'</button>':
+ const cashReady=next?.ready&&S.cash>=(S.team.reduce((v,x)=>v+dailySalary(x),0)+next.incremental*S.mod.cost)*14;
+ const step=next?.ready?'<button type="button" data-ladder-action="approve" data-level="'+next.level+'" data-person="'+next.candidateId+'" '+(!cashReady?'disabled title="Requires 14 days payroll in cash"':'')+'>Approve '+esc(next.role)+(needBudget?' · CEO payroll exception':' now')+'</button>'+(!cashReady?'<p class="small">Funding gate: build enough cash to cover 14 days of payroll before this new appointment.</p>':''):
   '<p class="small">Milestone is locked until its documented requirements are met.</p>';
  const roster=g.appointments.map(n=>{
   const personN=person(n.id),reports=ladderCorporate().filter(x=>g.reportTo[x.id]===n.id);

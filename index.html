@@ -533,6 +533,53 @@ if(stressed.length)issues.push({level:"amber",title:stressed.length+" employee(s
 const promo=S.team.filter(p=>coachCareerStatus(p).ready);
 if(promo.length)issues.push({level:"green",title:promo.length+" employee(s) ready for promotion",why:"Development could support retention and productivity, but increases salary.",do:"Review employee Career & wellbeing before approving.",view:"team"});
 return issues.length?issues.slice(0,5):[{level:"green",title:"No immediate management risks detected",why:"The company is operating within the basic guardrails.",do:"Review one opportunity to improve efficiency or test a hypothesis.",view:"growth"}];}
+
+function coachRender(){const items=coachRiskItems(),mode=S.coach.mode;
+$("coach-mode").value=mode;$("coach-status").textContent=mode==="sandbox"?"Minimal coaching":items.length+" priority observations";
+const html=mode==="sandbox"?'<div class="coach-mini">Sandbox mode: interventions stay optional. Risk alerts remain in Today, and you can open other coaching panels on demand.</div>':items.map((x,i)=>'<div class="coach-row coach-'+(x.level==="red"?"red":x.level==="amber"?"amber":"green")+'"><h3>'+(i+1)+'. '+esc(x.title)+'</h3>'+(mode==="guided"?'<p><b>Why:</b> '+esc(x.why)+'</p><p><b>Try:</b> '+esc(x.do)+'</p>':'<p>What action would you choose? Open the affected area, then compare results.</p>')+'<button type="button" data-coach-go="'+x.view+'">Review '+x.view+' →</button></div>').join("");
+if($("coach-priorities").innerHTML!==html)$("coach-priorities").innerHTML=html;
+$("coach-forecast").innerHTML=coachCashForecast();
+const hasDebt=(S.bi.unpaidPayroll||0)>.01;
+$("coach-pay-wages").disabled=!hasDebt||S.cash<.01;
+$("coach-pay-wages").textContent=hasDebt?"Settle wages: up to "+biCurrency(Math.min(S.cash,S.bi.unpaidPayroll)):"No unpaid wages";
+$("coach-decisions").innerHTML=S.coach.journal.slice(0,8).map(j=>{
+const cash=coachAmount(j.before.cash,j.after.cash),pay=coachAmount(j.before.payroll,j.after.payroll);
+const status=j.follow?'Follow-up ready (Day '+j.reviewDay+')':'Review in '+Math.max(0,j.reviewDay-S.day)+' days';
+const follow=j.follow?'<p><b>After:</b> company cash '+coachAmount(j.after.cash,j.follow.cash)+'; revenue/profit '+coachAmount(j.after.profit,j.follow.profit)+'; payroll '+coachAmount(j.after.payroll,j.follow.payroll)+'. These are observations, not proof that this decision caused them.</p>':'';
+return '<div class="coach-decision"><strong>'+esc(j.title)+'</strong><p>Day '+j.day+' · Immediate cash '+cash+' · Daily payroll '+pay+'</p><p>'+esc(j.detail)+'</p><p>'+status+'</p>'+follow+'</div>';
+}).join("")||'<p class="coach-mini">No significant decisions recorded since this version started. Their immediate effects and follow-ups will appear here.</p>';
+const finance=$("coach-kpi-guide");if(finance&&$("performance-panel").open)finance.innerHTML='<div class="coach-help"><b>What to do when a KPI needs attention</b>Loss or low margin: compare revenue per completed contract with wages and research costs. Unpaid payroll: finish client work, reduce optional spending, then settle wages. Low cash runway: examine realistic completion dates before hiring. Cash flow is not the same as operating profit.</div>';
+const role=$("coach-role-performance");if(role&&$("performance-panel").open)role.innerHTML=coachRoles();
+const manager=$("coach-manager-review");if(manager)manager.innerHTML='<details class="aux-details"><summary>Manager competency &amp; performance explanations</summary>'+coachManagerProfiles()+'<p class="coach-mini">Manager permissions: allocate eligible autonomous workers within the department, coach within budget, recommend hiring and promotions; the CEO authorizes irreversible staffing decisions.</p>'+DEPT_KEYS.map(k=>orgManager(k)?'<button type="button" data-coach-allocate="'+k+'">Delegate '+DEPARTMENTS[k].name+' work</button>':'').join("")+'</details>';
+const sector=$("coach-sector-analysis");if(sector&&sector.parentNode?.open)sector.innerHTML=coachSectorReport();
+}
+function coachManagerAllocate(dept){const m=orgManager(dept);if(!m||S.ev)return false;
+const open=S.deals.filter(d=>d.w===null&&(["sales","mkt"].includes(d.need)?"commercial":"delivery")===dept).sort((a,b)=>a.dl-b.dl);
+const work=S.team.filter(p=>p.department===dept&&p.id!==m.id&&p.id!==S.ops.assistantId&&p.role.auto&&p.career.recoveryDays===0&&!p.career.autoRest&&p.career.stress<72&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d")));
+if(!open.length||!work.length){logIt(DEPARTMENTS[dept].name+" manager found no suitable free worker and unassigned project.");return false;}
+const d=open[0],p=work.sort((a,b)=>b.s[d.need]-a.s[d.need])[0];
+const before=coachSnap(p.id);d.w=p.id;p.t="d"+d.id;p.role.autoTask=true;
+coachDecision(DEPARTMENTS[dept].name+" manager assigned "+p.n,before,"Assigned "+p.n+" to "+d.cl+" without overriding manual orders.",p.id,7);
+logIt(m.n+" delegated "+p.n+" to "+d.cl+" within departmental authority.");structural="";save();renderStructure();refresh();return true;
+}
+function coachExperimentPreview(){const topic=$("lab-topic").value,info=LAB_TOPICS[topic];if(!info)return;
+const eligible=S.team.filter(p=>p.role.auto&&p.id!==S.ops.assistantId&&!p.t.startsWith("d")&&p.career.recoveryDays===0);
+const manual=S.team.filter(p=>!p.role.auto),delivery=S.team.filter(p=>p.t.startsWith("d"));
+const note=topic==="learning"?"Autonomous idle workers can study or experiment; assigned deliveries and manual instructions continue.":topic==="wellbeing"?"Focus pauses new contracts, but existing deadlines still progress and may create workload.":topic==="demand"?"Autonomous Sales and Marketing employees can prospect; future wins require available delivery capacity.":topic==="delivery"?"The assistant prioritizes deadlines; the reduced pipeline target may lower future demand.":topic==="sector"?"Future customer sourcing favors the focused sector. Existing contract fees remain locked.":"No policy is changed automatically. Your manual decisions determine what workers do.";
+$("coach-lab-impact").innerHTML='<div class="coach-row"><b>Predicted operational effect</b><p>'+esc(note)+'</p><p>Eligible autonomous staff: '+eligible.length+' · Existing deliveries: '+delivery.length+' · Manual-control employees: '+manual.length+'. These are current snapshots, not guaranteed future staffing.</p></div>';
+}
+function coachLabParticipation(p){const exp=S.lab.active;if(!exp||S.day<=exp.startDay)return;
+if(!exp.participation)exp.participation={delivery:0,sales:0,learning:0,recovery:0,managing:0,manual:0};
+const key=p.t.startsWith("d")?"delivery":["prospect","market"].includes(p.t)?"sales":["study","teach","exp"].includes(p.t)?"learning":["rest"].includes(p.t)?"recovery":["assist","coachteam"].includes(p.t)?"managing":null;
+if(key)exp.participation[key]++;if(!p.role.auto)exp.participation.manual++;
+}
+function coachLabRestore(id){const last=S.lab.history.find(e=>e.id===id);if(!last||last.restored||S.lab.active)return false;
+const now=labSnapshotPolicies();if(Object.keys(last.endPolicies).some(k=>now[k]!==last.endPolicies[k])){logIt("Experiment policies changed since completion. Restore stopped to protect newer decisions.");return false;}
+const before=coachSnap();const b=last.startPolicies;
+S.pipeline.mode=b.mode;S.pipeline.target=b.target;S.ops.policy.assign=b.assign;S.ops.policy.priority=b.priority;S.flow.focus=b.focus;
+if(S.market.open.includes(b.sector))S.market.focus=b.sector;
+last.restored=true;coachDecision("Restore settings after experiment #"+id,before,"Returned the controllable policies to their pre-experiment settings.");save();renderAssistantPolicy();renderSectorChoices();refresh();return true;
+}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* Storage may be unavailable; play continues in memory. */}}
 function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;

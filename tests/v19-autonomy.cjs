@@ -149,4 +149,47 @@ s.day=7;G.executiveWeek();const proposal=s.exec.proposals[0];assert.equal(propos
 assert.ok(G.executiveDecision(proposal.id,"decline"));s.day=14;G.executiveWeek();
 assert.equal(s.exec.proposals.length,0);accounting(s);
 });
+test("v19 save refresh preserves appointed Sales and Marketing managers and reporting spans",()=>{
+fresh();const state=G.get(),director=state.team[0],sales=state.team[1],marketing=state.team[2];
+director.department="commercial";director.role.primary="lead";director.career.rank=4;state.org.departments.commercial.managerId=director.id;director.t="coachteam";
+sales.department="commercial";sales.role.primary="sales";sales.career.rank=1;sales.career.xp=Math.max(10,sales.career.xp);
+marketing.department="commercial";marketing.role.primary="mkt";marketing.career.rank=1;marketing.career.xp=Math.max(10,marketing.career.xp);
+assert.ok(G.orgChooseSubManager("commercial","sales",sales.id));
+assert.ok(G.orgChooseSubManager("commercial","mkt",marketing.id));
+const earlier=state.org.departments.commercial.subManagers;
+assert.equal(earlier.sales,sales.id);assert.equal(earlier.mkt,marketing.id);
+G.save();const saved=store.get("boss19");
+assert.ok(saved&&saved.includes('"subManagers"'));
+const restored=G.load();assert.ok(restored);
+assert.equal(restored.org.departments.commercial.subManagers.sales,sales.id);
+assert.equal(restored.org.departments.commercial.subManagers.mkt,marketing.id);
+G.set(restored);
+assert.equal(G.orgSubManager("commercial","sales").id,sales.id);
+assert.equal(G.orgSubManager("commercial","mkt").id,marketing.id);
+assert.equal(G.orgDirectReports("commercial").length,2);
+assert.equal(G.orgLeaderTitle(G.orgSubManager("commercial","sales")),"Department Manager");
+accounting(restored);
+});
+test("periodic refresh cannot destroy an actively edited department budget control",()=>{
+fresh();const panel=el("org-settings"),controls=el("org-controls");
+panel.open=true;
+G.renderOrganization();
+const before=controls.innerHTML;
+const focused={closest:sel=>sel==="#org-controls"?controls:null,matches:sel=>sel==="input[data-org-policy]"};
+sandbox.document.activeElement=focused;
+G.get().org.departments.commercial.plan.limits.coaching=987;
+G.renderOrganization();
+assert.equal(controls.innerHTML,before,"Active numeric field must not be replaced during game-day updates");
+sandbox.document.activeElement=null;
+G.renderOrganization();
+assert.notEqual(controls.innerHTML,before,"Controls should update after editing ends");
+assert.ok(controls.innerHTML.includes('value="987"'));
+});
+test("CEO shortcut targets the visible executive meeting and no Office Assistant label remains",()=>{
+assert.ok(html.includes('panel.scrollIntoView({behavior:"smooth",block:"start"})'));
+assert.ok(html.includes('assist:"Executive Assistant"'));
+assert.ok(!html.includes('assist:"Office assistant"'));
+assert.ok(!html.includes('>Promote · $"+careerPromotionPrice(p)+"'));
+});
+
 console.log("Boss v19 organizational autonomy regressions passed.");

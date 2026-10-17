@@ -1,12 +1,12 @@
 # Boss — simulation development roadmap
 
-## v20.2 P0 — Full-game Safari save recovery (release candidate)
+## v20.2 P0 — Full-game Safari save recovery (released 2026-10-17)
 
 **Source:** Owner's original 14-person company repeatedly reloaded to Day 2642. This is whole-game persistence failure, not merely a form-value defect. iPhone's exact storage exception and quota cannot be remotely examined.
 
 **Implementation in [PR #21](https://github.com/BSAVCI1/Boss/pull/21):** Warn prominently with attempted game day, last local durable day and browser failure type; allow export of the current whole company to JSON. Verify localStorage writes; on rejection, switch to transactional on-device IndexedDB and pause until committed. Boot from the highest verified save revision, never replace older save generations. Protect recovery journal, historical agreements, executive decisions and cash reconciliation. Refuse Restart/Resume/Skip while saves remain unverified. This is an incremental offline safety release, not a change to the simulation's core economy.
 
-**Acceptance:** All inherited regressions + 730-day financial reconciliations; near-390px real Chromium testing of injected storage quota and IndexedDB recovery of a later day, including one business-line purchase with exactly one $120 investment. No production merge until tests pass. After release the owner must confirm the actual Safari game now advances beyond its Day 2642 checkpoint across refreshes. The old checkpoint's historical purchases cannot be reconstructed without existing accounting evidence. A future version may add in-game JSON import and richer save diagnostics.
+**Acceptance:** All inherited regressions + 730-day financial reconciliations; near-390px real Chromium testing of injected storage quota and IndexedDB recovery of a later day, including one business-line purchase with exactly one $120 investment. [PR #21](https://github.com/BSAVCI1/Boss/pull/21) merged as `6f227439f0639a960e6ccd2481ad890c9ed27509` following [passing branch QA](https://github.com/BSAVCI1/Boss/actions/runs/39060395542); [production regressions](https://github.com/BSAVCI1/Boss/actions/runs/39060489413) and [Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39060489423) passed. The owner must still confirm the actual Safari game advances beyond its Day 2642 checkpoint across refreshes. The old checkpoint's historical purchases cannot be reconstructed without existing accounting evidence. A future version may add in-game JSON import and richer save diagnostics.
 
 ## v20.1 follow-up — Editable player settings reliability (released 2026-10-17)
 

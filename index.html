@@ -1965,6 +1965,12 @@ profit:{name:"Strengthen profitability",explain:"Protect cash, eliminate avoidab
 people:{name:"Develop leaders",explain:"Build managers, coaching and internal successors before increasing headcount."}
 };
 const SERVICE_LINES={marketing:{name:"Marketing studio",need:"mkt"},product:{name:"Product development",need:"prod"},operations:{name:"Operations consulting",need:"ops"},technology:{name:"Technology advisory",need:"prod"}};
+const SERVICE_OFFERS={
+ marketing:[["Campaign setup",1.10,1,76],["Brand growth program",1.45,1.25,85],["Premium growth partnership",1.8,1.5,90]],
+ product:[["Website build",1.15,1.1,76],["Ecommerce development",1.5,1.4,85],["Enterprise application",2,1.85,90]],
+ operations:[["Process audit",1.12,1.05,76],["Workflow redesign",1.42,1.28,85],["Operational transformation",1.8,1.55,90]],
+ technology:[["Automation assessment",1.2,1.1,77],["Workflow automation",1.6,1.35,85],["AI integration",2.05,1.75,91]]
+};
 let ceoDraftPriority=null;
 function draftExecutiveDirection(priority){
 if(!CEO_PRIORITIES[priority])return false;

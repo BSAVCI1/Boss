@@ -406,7 +406,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <script>
 (function(){
 "use strict";
-const KEY="boss18";
+const KEY="boss19";
 let labHistorySignature="";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
@@ -995,7 +995,7 @@ const brief=w.activeEvent,labels={tender:"A major customer is accepting bids",re
 $("world-event").innerHTML=brief?'<div class="coach-row coach-amber"><b>'+labels[brief.type]+'</b><div class="coach-mini">Decision window: through Day '+brief.until+'. '+esc(worldOfferTerms(brief).description)+'</div>'+(worldOfferEligibility(brief).allowed?'':'<div class="risk-watch small">Unavailable: '+esc(worldOfferEligibility(brief).reason)+'</div>')+'<div class="buttons"><button type="button" data-world-event="act" '+(worldOfferEligibility(brief).allowed?'':'disabled')+'>Take opportunity</button><button type="button" data-world-event="pass">Pass</button></div></div>':'<p class="small">No action required. Next optional market brief around Day '+w.nextEvent+'.</p>';
 }
 
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss17")||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17")||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 ensurePerformance(p,s.day);

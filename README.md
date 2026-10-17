@@ -1,5 +1,13 @@
 # Boss
 
+## Boss v21.2 — GM accountability (release candidate, PR #25)
+
+Operating units now support CEO-controlled General Manager authority: a unit-specific coaching budget, per-action cap, quality objective, and 90/180-day expiry. Existing and migrated units default to $0 authorized spend. Eligible weekly coaching costs $4 and uses real company cash and the same corporate financial ledger; renewing budgets does not bypass the seven-day cooldown.
+
+In Growth → Operating units, the CEO can review each GM's tracked 30-day delivery/quality results. Managers may propose recruiting only when unit workload supports it, but the CEO must explicitly approve the actual $20 recruiting expense and new recurring payroll. Repeated approvals do not create a duplicate employee. Unit financial views contain attributed costs, not new corporate income.
+
+Existing contracts, employee IDs, prior paid service lines, historical company accounting and Safari fallback storage are preserved. General Managers do not yet control independent company bank accounts, broad hiring authority or acquisitions. v21.3–v21.4 will expand strategic delegation and presentation.
+
 ## Boss v21.1 — Operating Units Foundation (released 2026-10-17 · PR #24)
 
 Building on the verified v20.3 CEO interface, the CEO can organize an **already purchased** service portfolio into an operating unit **without another $120 charge**, appoint an eligible General Manager and transfer available employees by unique ID. Staff members belong to only one unit, and dedicated unit teams no longer appear in shared department spans; incompatible department-manager or Executive Assistant appointments are blocked. Existing signed deals stay untouched when transferring. A new deal can be attributed to the operating unit, and its **forward-only** delivered revenue, direct cost, shared delivery work and allocated daily staff payroll are shown as a unit operating view. There is still only **one legal company and one cash/ledger system**; units are not independent subsidiaries or bank accounts.

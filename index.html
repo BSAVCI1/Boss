@@ -192,7 +192,7 @@ function discover(who){const unused=Object.keys(IDEAS).filter(k=>!S.seeds.includ
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
 function tick(){if(paused||S.ev)return;S.day+=1;let dirty=false,ideaDirty=false;
-if(!S.flow.focus&&S.day>=S.flow.nextLead&&Date.now()-S.flow.lastLeadAt>=25000){S.flow.lastLeadAt=Date.now();const cap=Math.max(2,Math.min(4,2+Math.floor(S.team.length/3)));if(S.deals.length<cap){createDeal();dirty=true;}S.flow.nextLead=S.day+Math.max(7,Math.round((12+R(9))/S.mod.deals));}
+if(!S.flow.focus&&S.day>=S.flow.nextLead&&(Date.now()-S.flow.lastLeadAt>=25000||S.deals.length===0)){S.flow.lastLeadAt=Date.now();const cap=Math.max(2,Math.min(4,2+Math.floor(S.team.length/3)));if(S.deals.length<cap){createDeal();dirty=true;}S.flow.nextLead=S.day+Math.max(7,Math.round((12+R(9))/S.mod.deals));}
 if(delegateWork())dirty=true;
 for(const p of [...S.team]){const mf=.6+p.mood/250,lb=p.loy>70?1.1:1;let dm=-.2;
 if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1);d.prog+=e;
@@ -313,7 +313,7 @@ renderSectorChoices();
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);
 $("focus-hint").textContent=S.flow.focus?"No new deals or dilemmas; existing deadlines still count.":"New leads at least 25 real seconds apart; dilemmas at least 45 seconds apart.";
-const waitDays=Math.max(0,S.flow.nextLead-S.day),waitSeconds=Math.max(0,Math.ceil((25000-(Date.now()-S.flow.lastLeadAt))/1000));
+const waitDays=Math.max(0,S.flow.nextLead-S.day),waitSeconds=S.deals.length===0?0:Math.max(0,Math.ceil((25000-(Date.now()-S.flow.lastLeadAt))/1000));
 $("intake-status").textContent=S.flow.focus?"Intake paused — complete existing projects.":"Next potential client: "+(waitDays?waitDays+" game days":waitSeconds?waitSeconds+" real seconds":"ready when capacity allows")+" · "+S.deals.length+" active projects.";
 const ap=person(S.ops.assistantId);
 $("assistant-status").textContent=ap?ap.n+" manages intake. Assignments: "+S.ops.assigned+" · Routine decisions: "+S.ops.handled+".":"No assistant assigned. Policies can be set now; automation starts when you appoint one.";

@@ -151,7 +151,7 @@ if(typeof d.negotiated!=="boolean")d.negotiated=d.prog>0;
 if(typeof d.extended!=="boolean")d.extended=false;
 if(typeof d.returning!=="boolean")d.returning=false;
 if(typeof d.reviewed!=="boolean")d.reviewed=false;}
-if(!s.pipeline||typeof s.pipeline!=="object")s.pipeline={leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:s.day+12,closed:0};
+if(!s.pipeline||typeof s.pipeline!=="object")s.pipeline={leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:s.day+12,closed:0,lastWon:s.day-10};
 if(!Array.isArray(s.pipeline.leads))s.pipeline.leads=[];
 s.pipeline.leads=s.pipeline.leads.filter(x=>x&&SECTORS[x.sector]&&["prospect","qualified","proposal","negotiation"].includes(x.stage)).slice(0,16);
 if(!Number.isFinite(s.pipeline.seq))s.pipeline.seq=1;
@@ -160,7 +160,7 @@ if(![2,4,6].includes(s.pipeline.target))s.pipeline.target=4;
 s.pipeline.auto=s.pipeline.auto!==false;
 if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
-if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;
+if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
 return s;}catch(e){return null;}}
 function logIt(s,highlight=false){S.log.unshift(highlight?'<span class="warning">'+esc(s)+'</span>':esc(s));S.log=S.log.slice(0,80);}
@@ -263,10 +263,10 @@ const phases={prospect:["qualified",2.6],qualified:["proposal",4],proposal:["neg
 if(phases[l.stage]&&l.progress>=phases[l.stage][1]){l.stage=phases[l.stage][0];l.progress=0;}}
 let converted=false;
 for(const lead of [...leads].filter(l=>l.stage==="negotiation")){
-const cap=pipelineCapacity();if(S.flow.focus||S.deals.length>=cap||converted)continue;
+const cap=pipelineCapacity();if(S.flow.focus||S.deals.length>=cap||converted||S.day-S.pipeline.lastWon<8)continue;
 if(lead.age<6)continue;
 if(Math.random()<.84||S.market.customers[lead.client]?.loyalty>72){
-const d=createDeal(lead.client);d.sector=lead.sector;d.sourceLead=lead.id;S.pipeline.closed++;logIt("Sales won "+lead.client+" ("+SECTORS[lead.sector].name+"). Project booked from pipeline.");converted=true;}
+const d=createDeal(lead.client);d.sector=lead.sector;d.sourceLead=lead.id;S.pipeline.closed++;S.pipeline.lastWon=S.day;logIt("Sales won "+lead.client+" ("+SECTORS[lead.sector].name+"). Project booked from pipeline.");converted=true;}
 else logIt("Proposal to "+lead.client+" was declined. Sales will pursue other opportunities.");
 S.pipeline.leads=S.pipeline.leads.filter(x=>x.id!==lead.id);
 }
@@ -350,7 +350,7 @@ function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99}};for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];S.team.push(p);}createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99}};for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];S.team.push(p);}createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -378,8 +378,8 @@ for(const [index,limit,name] of [[1,.34,"Plan approved"],[2,.73,"Build completed
 p.s[d.need]+=.05*S.mod.learn*(aligned?1.12:1);dm=(e>=.9?.4:-.3)+(aligned?.15:0);}else{p.t="idle";dm=-.2;dirty=true;}}
 else if(p.t==="prospect"||p.t==="market"){p.s[p.t==="prospect"?"sales":"mkt"]+=.025*S.mod.learn;dm=.12;if(discoverFromWork(p))ideaDirty=true;}
 else if(p.t==="coachteam"){mentorDay(p);p.s.ops+=.012*S.mod.learn;dm=.25;if(discoverFromWork(p))ideaDirty=true;}
-else if(p.t==="study"){p.s[weakest(p)]+=.14*S.mod.learn*mf*(p.interest==="learning"?1.2:1);dm=.3;}
-else if(p.t==="teach"&&S.team.length>1){const k=strongest(p),others=S.team.filter(x=>x.id!==p.id).sort((a,b)=>a.s[k]-b.s[k]);const target=others[0];if(target.s[k]<p.s[k]){target.s[k]+=.12*S.mod.learn*mf*(p.trait==="Social"?1.5:1)*(p.interest==="people"?1.2:1);p.s[k]+=.01;}dm=.3;}
+else if(p.t==="study"){p.s[weakest(p)]+=.14*S.mod.learn*mf*(p.interest==="learning"?1.2:1);dm=.3;if(discoverFromWork(p))ideaDirty=true;}
+else if(p.t==="teach"&&S.team.length>1){const k=strongest(p),others=S.team.filter(x=>x.id!==p.id).sort((a,b)=>a.s[k]-b.s[k]);const target=others[0];if(target.s[k]<p.s[k]){target.s[k]+=.12*S.mod.learn*mf*(p.trait==="Social"?1.5:1)*(p.interest==="people"?1.2:1);p.s[k]+=.01;}dm=.3;if(discoverFromWork(p))ideaDirty=true;}
 else if(p.t==="exp"){S.cash=Math.max(0,S.cash-1);const avg=KEYS.reduce((s,k)=>s+p.s[k],0)/4;const chance=(.04+.01*avg)*mf*(p.trait==="Curious"?1.5:1)*(p.trait==="Creative"?1.3:1)*(p.interest==="creative"?1.2:1);if(Math.random()<chance){ideaDirty=discover(p.n,[p.role.primary==="sales"?"ref":p.role.primary==="mkt"?"story":p.role.primary==="prod"?"int":"check"])||ideaDirty;}dm=.3;}
 else if(p.t==="rest"){dm=2;}
 else if(p.t==="assist"){p.s.ops+=.025*S.mod.learn;dm=.25;}

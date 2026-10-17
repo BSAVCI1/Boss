@@ -93,7 +93,7 @@ test("CEO layer survives 730 days without automatic hidden hiring or invented li
 fresh();const s=G.get();const count=s.team.length;
 s.nextEv=999999;s.flow.focus=true;
 for(let n=0;n<730;n++){if(s.ev)s.ev=null;G.tick();}
-assert.equal(s.day,730);assert.equal(s.team.length,count);assert.equal(s.exec.lines.length,0);
+assert.equal(s.day,730);assert.ok(s.team.length<=count,"CEO layer must never silently hire; employees may still voluntarily leave");assert.equal(s.exec.lines.length,0);
 assert.equal(s.exec.history.length,0);assert.ok(Number.isFinite(s.cash));accounting(s);
 G.save();assert.equal(JSON.parse(store.get("boss18")).day,730);
 });

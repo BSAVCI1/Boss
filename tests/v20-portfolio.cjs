@@ -58,6 +58,18 @@ test("verified investment receipts recover missing lines without imaginary spend
  restored.exec.lines=[];restored.bi.recent=restored.bi.recent.filter(x=>x.info!=="New business line: Product development");
  G.set(restored);G.save();const noReceipt=G.load();assert.equal(noReceipt.exec.lines.length,0,"recovery cannot invent a purchase without evidence");
 });
+test("v19 receipt recovers a lost purchased line during v20 import without refunding",()=>{
+ const s=init();fund(s,900);s.day=2852;
+ assert.ok(G.executiveLaunch("marketing"));
+ const cash=s.cash,totalInvestment=s.bi.totals.investments;
+ s.exec.lines=[];
+ store.set("boss19",JSON.stringify(s));
+ store.delete("boss20");store.delete("boss20_service_line_journal");
+ const old=store.get("boss19"),migrated=G.load();
+ assert.equal(migrated.exec.lines.length,1);assert.equal(migrated.exec.lines[0].key,"marketing");
+ assert.equal(migrated.cash,cash);assert.equal(migrated.bi.totals.investments,totalInvestment);
+ assert.equal(store.get("boss19"),old);reconcile(migrated);
+});
 test("reporting-line groups contain each colleague once and retain optional hierarchy",()=>{
  const s=init(),director=s.team[0],manager=s.team[1],worker=s.team[2];
  director.department="commercial";director.role.primary="lead";director.career.rank=4;s.org.departments.commercial.managerId=director.id;

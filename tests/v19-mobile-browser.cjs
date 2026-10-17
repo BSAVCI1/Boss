@@ -92,6 +92,6 @@ async function runBrowser(){
   assert.equal(outcome.checks.noVisibleUndefined,true);
   assert.deepEqual(outcome.errors,[]);
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
- }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");fs.rmSync(profile,{recursive:true,force:true})}
+ }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }
 runBrowser().catch(err=>{console.error(err);process.exitCode=1});

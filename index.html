@@ -92,7 +92,7 @@ const R=n=>Math.floor(Math.random()*n);
 const pick=a=>a[R(a.length)];
 const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let S,spd=1,paused=false,selected=[],ideaMessage="",avatars=new Map(),clock,structural="",lastIdeas="",logSignature="";
+let S,spd=1,paused=false,selected=[],ideaMessage="",avatars=new Map(),clock,structural="",lastIdeas="",logSignature="",sectorSignature="",customerSignature="";
 let canvas=$("office"),ctx=canvas.getContext("2d");
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* Storage may be unavailable; play continues in memory. */}}
 function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
@@ -164,11 +164,14 @@ else{const sec=SECTORS[key];if(S.rep<sec.rep||S.cash<sec.cost)return;S.cash-=sec
 save();renderSectorChoices();structural="";renderStructure();refresh();}
 function renderSectorChoices(){$("sector-focus-name").textContent="Focus: "+SECTORS[S.market.focus].name;
 $("sector-level").textContent="Stage "+dealTier()+" · "+S.market.completed+" completed projects";
+const signature=S.market.focus+"|"+S.market.open.join(",")+"|"+SECTOR_KEYS.map(k=>S.market.open.includes(k)?"open":S.rep>=SECTORS[k].rep&&S.cash>=SECTORS[k].cost?"ready":"locked").join(",");
+if(signature===sectorSignature)return;sectorSignature=signature;
 $("sector-options").innerHTML=SECTOR_KEYS.map(key=>{const sector=SECTORS[key],open=S.market.open.includes(key),focused=S.market.focus===key,eligible=S.rep>=sector.rep&&S.cash>=sector.cost;
 const detail=(open?(focused?"Current focus":"Switch focus — free"):"Expand $"+sector.cost+" · Rep "+sector.rep)+(sector.premium>1?" · "+Math.round((sector.premium-1)*100)+"% sector premium":"");
 return '<button type="button" data-sector="'+key+'" '+((!open&&!eligible)||focused?'disabled':'')+' class="'+(focused?'selected':'')+'"><b>'+sector.name+'</b><small>'+detail+'</small></button>';}).join("");
 $("sector-status").textContent="Focused projects earn 12% more and progress about 12% faster. New sector investments are permanent. Growth unlocks by reputation.";}
-function renderCustomerPortfolio(){const customers=Object.entries(S.market.customers).sort((a,b)=>b[1].orders-a[1].orders||b[1].loyalty-a[1].loyalty);
+function renderCustomerPortfolio(){const sig=JSON.stringify(S.market.customers);if(sig===customerSignature)return;customerSignature=sig;
+const customers=Object.entries(S.market.customers).sort((a,b)=>b[1].orders-a[1].orders||b[1].loyalty-a[1].loyalty);
 $("customer-summary").textContent=customers.length+" clients · "+S.market.completed+" completed";
 $("customer-portfolio").innerHTML=customers.length?customers.slice(0,6).map(([name,c])=>'<div class="queue-item"><div class="lead"><b>'+esc(name)+'</b><span class="small">'+c.orders+' completed contract'+(c.orders===1?'':'s')+'</span></div><div class="small">'+(SECTORS[c.sector]?.name||"General")+' · Trust '+Math.round(c.loyalty)+' / 100 · Last quality '+Math.round(c.quality||0)+'%</div></div>').join(""):'<div class="empty">Finish a contract to begin building loyal customers.</div>';}
 function negotiateDeal(id,action){if(S.ev)return;const d=deal(id);if(!d||d.negotiated||d.prog>=d.work*.2)return;

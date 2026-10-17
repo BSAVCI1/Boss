@@ -1822,7 +1822,7 @@ function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
-function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();worldDay();let dirty=false,ideaDirty=false;
+function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();unitAutonomousDay();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
 if(delegateWork())dirty=true;
 if(autonomousWork())dirty=true;
@@ -2174,6 +2174,8 @@ if(!Number.isFinite(e.sequence))e.sequence=1;
 if(!Array.isArray(e.weeklyReports))e.weeklyReports=[];
 if(!Array.isArray(e.units))e.units=[];
 if(!Array.isArray(e.unitEvents))e.unitEvents=[];
+if(!Array.isArray(e.unitRequests))e.unitRequests=[];
+if(!Number.isFinite(e.unitRequestSeq))e.unitRequestSeq=1;
 const unitOwners=new Set(),unitKeys=new Set();
 e.units=e.units.filter(u=>{
  if(!u||!SERVICE_LINES[u.key]||unitKeys.has(u.key)||!e.lines.some(x=>x.key===u.key))return false;
@@ -2182,10 +2184,21 @@ e.units=e.units.filter(u=>{
  if(!state.team.some(p=>p.id===u.managerId&&p.id!==state.ops.assistantId))u.managerId=null;
  u.staffIds=u.staffIds.filter(id=>{if(!Number.isInteger(id)||unitOwners.has(id)||id===state.ops.assistantId||!state.team.some(p=>p.id===id))return false;unitOwners.add(id);return true;});
  if(u.managerId&&!u.staffIds.includes(u.managerId)){if(unitOwners.has(u.managerId))u.managerId=null;else{unitOwners.add(u.managerId);u.staffIds.push(u.managerId);}}
- for(const k of ["revenue","directCost","sharedLaborCost","payrollCost","delivered","missed","qualityTotal"])if(!Number.isFinite(u[k])||u[k]<0)u[k]=0;
+ for(const k of ["revenue","directCost","sharedLaborCost","payrollCost","delivered","missed","qualityTotal","developmentCost"])if(!Number.isFinite(u[k])||u[k]<0)u[k]=0;
+ if(!u.plan||typeof u.plan!=="object")u.plan={};
+ const p=u.plan;
+ for(const [key,def] of Object.entries({since:state.day,days:90,coachingLimit:0,perAction:0,spent:0,lastCoached:-99,qualityTarget:80,lastReview:state.day,baselineDelivered:u.delivered,baselineQuality:u.qualityTotal,baselineMissed:u.missed})){
+  if(!Number.isFinite(p[key])||p[key]<0&&key!=="lastCoached")p[key]=def;
+ }
+ if(![90,180].includes(p.days))p.days=90;
+ p.qualityTarget=Math.max(65,Math.min(100,p.qualityTarget));
+ if(!Array.isArray(u.reviews))u.reviews=[];
+ u.reviews=u.reviews.filter(x=>x&&Number.isFinite(x.day)).slice(-6);
  return true;
 });
 e.unitEvents=e.unitEvents.filter(x=>x&&x.key&&Number.isFinite(x.day)).slice(-80);
+e.unitRequests=e.unitRequests.filter(x=>x&&SERVICE_LINES[x.key]&&e.units.some(u=>u.key===x.key)&&Number.isFinite(x.id)&&["open","approved","declined"].includes(x.status)).slice(-45);
+e.unitRequestSeq=Math.max(e.unitRequestSeq,1,...e.unitRequests.map(x=>x.id+1));
 e.weeklyReports=e.weeklyReports.filter(x=>x&&Number.isFinite(x.day)).slice(0,12);
 e.proposals=e.proposals.filter(p=>p&&p.type&&p.id).slice(-12);
 e.history=e.history.slice(-40);
@@ -2273,7 +2286,7 @@ function unitCommit(action){
 function unitActivate(key){
  if(!SERVICE_LINES[key]||!S.exec.lines.some(x=>x.key===key)||S.exec.units.some(u=>u.key===key))return false;
  return unitCommit(()=>{
-  S.exec.units.push({key,since:S.day,managerId:null,staffIds:[],revenue:0,directCost:0,sharedLaborCost:0,payrollCost:0,delivered:0,missed:0,qualityTotal:0});
+  S.exec.units.push({key,since:S.day,managerId:null,staffIds:[],revenue:0,directCost:0,sharedLaborCost:0,payrollCost:0,developmentCost:0,delivered:0,missed:0,qualityTotal:0,plan:{since:S.day,days:90,coachingLimit:0,perAction:0,spent:0,lastCoached:-99,qualityTarget:80,lastReview:S.day,baselineDelivered:0,baselineQuality:0,baselineMissed:0},reviews:[]});
   unitRecord(key,"activated","Created a managed operating unit from an existing paid service portfolio. No purchase charged.");
   logIt(SERVICE_LINES[key].name+" now has an operating unit (no additional investment).");
   return true;
@@ -2304,6 +2317,81 @@ function unitRelease(key,id){
  return unitCommit(()=>{
   u.staffIds=u.staffIds.filter(x=>x!==id);unitRecord(key,"transfer",p.n+" (#"+id+") returned to shared company services.");
   logIt(p.n+" returned from "+SERVICE_LINES[key].name+" to shared services.");return true;
+ });
+}
+function unitBudgetAllowed(u,amount){
+ const p=u?.plan;
+ return !!person(u?.managerId)&&p&&S.day<p.since+p.days&&amount>0&&
+ Number.isFinite(amount)&&amount<=p.perAction&&p.spent+amount<=p.coachingLimit&&S.cash>=amount;
+}
+function unitAuthorize(key,field,value){
+ const u=S.exec.units.find(x=>x.key===key),p=u?.plan;
+ if(!p||!Number.isFinite(value)||value<0||value>1000000)return false;
+ if(!["coachingLimit","perAction","qualityTarget","days"].includes(field))return false;
+ if(field==="days"&&![90,180].includes(value))return false;
+ if(field==="qualityTarget"&&(value<65||value>100))return false;
+ return unitCommit(()=>{
+  p[field]=Math.floor(value);
+  unitRecord(key,"authority","CEO set "+field+" to "+value+"; spend remains zero until a manager acts.");
+  return true;
+ });
+}
+function unitRenewAuthority(key){
+ const u=S.exec.units.find(x=>x.key===key);
+ if(!u)return false;
+ return unitCommit(()=>{
+  u.plan.since=S.day;u.plan.spent=0;u.plan.lastCoached=-99;
+  unitRecord(key,"renewal","CEO renewed "+u.plan.days+"-day GM authority without spending cash.");
+  return true;
+ });
+}
+function unitAutonomousDay(){
+ for(const u of S.exec.units){
+  const p=u.plan,gm=person(u.managerId);
+  if(!gm||!p)continue;
+  const staff=u.staffIds.filter(id=>id!==gm.id).map(id=>person(id)).filter(Boolean);
+  if(staff.length&&S.day-p.lastCoached>=7&&unitBudgetAllowed(u,4)){
+   const target=staff.sort((a,b)=>b.career.stress-a.career.stress||a.s[SERVICE_LINES[u.key].need]-b.s[SERVICE_LINES[u.key].need])[0];
+   S.cash-=4;biMoney("development",4,SERVICE_LINES[u.key].name+" GM coaching: "+target.n);
+   p.spent+=4;p.lastCoached=S.day;u.developmentCost+=4;
+   target.career.stress=clamp(target.career.stress-4);
+   target.career.satisfaction=clamp(target.career.satisfaction+3);
+   target.s[SERVICE_LINES[u.key].need]+=.12*S.mod.learn;
+   unitRecord(u.key,"delegated",gm.n+" coached "+target.n+" under CEO-authorized budget ($4).");
+   logIt(gm.n+" coached "+target.n+" within "+SERVICE_LINES[u.key].name+" unit authority.");
+  }
+  if(S.day-p.lastReview<30)continue;
+  const delivered=Math.max(0,u.delivered-p.baselineDelivered),missed=Math.max(0,u.missed-p.baselineMissed);
+  const quality=delivered?Math.round((u.qualityTotal-p.baselineQuality)/delivered):null;
+  const result=!delivered?"Insufficient evidence":quality>=p.qualityTarget&&missed===0?"Target met":"Below target";
+  u.reviews.push({day:S.day,delivered,missed,quality,result,goal:p.qualityTarget,managerId:gm.id,headcount:u.staffIds.length,spent:p.spent});
+  u.reviews=u.reviews.slice(-6);
+  p.lastReview=S.day;p.baselineDelivered=u.delivered;p.baselineQuality=u.qualityTotal;p.baselineMissed=u.missed;
+  const active=S.deals.filter(d=>d.unitKey===u.key).length;
+  if(active>=Math.max(1,u.staffIds.length-1)&&u.staffIds.length<5&&!S.exec.unitRequests.some(r=>r.key===u.key&&r.status==="open")){
+   const request={id:S.exec.unitRequestSeq++,key:u.key,managerId:gm.id,day:S.day,status:"open",kind:"hire",cost:20,payroll:1.5*S.mod.cost,reason:"Demand: "+active+" active unit projects with "+u.staffIds.length+" dedicated employees."};
+   S.exec.unitRequests.push(request);unitRecord(u.key,"proposal",gm.n+" requested one specialist hire. CEO approval required.");
+  }
+  unitRecord(u.key,"review",gm.n+" 30-day review: "+result+(quality===null?" · no deliveries":" · delivered quality "+quality+"% / goal "+p.qualityTarget+"%")+".");
+ }
+}
+function unitRequestDecision(id,action){
+ const req=S.exec.unitRequests.find(r=>r.id===id&&r.status==="open"),u=S.exec.units.find(x=>x.key===req?.key);
+ if(!req||!u||!["approve","decline"].includes(action))return false;
+ if(action==="approve"&&(S.cash<req.cost||u.staffIds.length>=5||!person(u.managerId)))return false;
+ return unitCommit(()=>{
+  req.status=action==="approve"?"approved":"declined";req.decidedAt=S.day;
+  if(action==="approve"){
+   const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);
+   p.role.primary=SERVICE_LINES[u.key].need;
+   p.department=["sales","mkt"].includes(p.role.primary)?"commercial":"delivery";
+   S.team.push(p);u.staffIds.push(p.id);
+   S.cash-=req.cost;biMoney("recruiting",req.cost,SERVICE_LINES[u.key].name+" CEO-approved unit hire: "+p.n);
+   u.developmentCost+=req.cost;
+   unitRecord(u.key,"CEO hire","CEO approved "+p.n+" (#"+p.id+") for "+biCurrency(req.cost)+" and ongoing payroll "+biCurrency(dailySalary(p))+"/day.");
+   logIt(p.n+" hired into "+SERVICE_LINES[u.key].name+" after CEO approval.");
+  }else unitRecord(u.key,"CEO decision","CEO declined specialist hire proposed by "+(person(req.managerId)?.n||"General Manager")+".");
+  return true;
  });
 }
 function unitPayrollDay(){

@@ -494,15 +494,20 @@ return '<article class="card"><div class="lead"><b>'+esc(c.n)+'</b><span class="
 }).join("");
 $("candidates").innerHTML=S.hr.pool.length?'<div class="filter-note">Candidates matching your search:</div>'+list:'<div class="empty">Select skills or interests and tap Search candidates to meet talent.</div>';
 }
-function renderIdeaButtons(){for(const b of $("ideas").querySelectorAll("button")){const ok=selected.includes(b.dataset.idea);b.classList.toggle("selected",ok);b.setAttribute("aria-pressed",String(ok));}$("combine").disabled=selected.length!==2;}
-function renderIdeas(){const keys=S.seeds.filter(k=>IDEAS[k]);$("ideas").innerHTML=keys.length?'<div class="buttons">'+keys.map(k=>'<button type="button" data-idea="'+k+'">'+IDEAS[k]+'</button>').join("")+'</div>':'<div class="empty">No ideas yet. Put someone on Experiment.</div>';$("built").innerHTML=S.built.map(x=>'<div>✓ <strong>'+esc(x[0])+'</strong> — '+esc(x[1])+'</div>').join("");$("idea-message").textContent=ideaMessage||(12-S.seeds.length)+" basic ideas still to discover.";renderIdeaButtons();}
+function renderIdeas(){const all=S.seeds.filter(k=>IDEAS[k]);
+$("idea-summary").textContent=all.length+"/"+Object.keys(IDEAS).length+" discoveries · "+S.built.length+"/"+RECIPES.length+" capabilities";
+$("ideas").innerHTML=RECIPES.map(r=>{const done=S.built.some(b=>b[0]===r[2]),have=Number(S.seeds.includes(r[0]))+Number(S.seeds.includes(r[1]));
+return '<div class="knowledge-row"><div class="lead"><b>'+esc(r[2])+'</b><span class="small">'+(done?'✓ Active':have+'/2 discoveries')+'</span></div><div class="small">'+esc(IDEAS[r[0]])+' '+(S.seeds.includes(r[0])?'✓':'○')+' · '+esc(IDEAS[r[1]])+' '+(S.seeds.includes(r[1])?'✓':'○')+' · '+esc(r[3])+'</div><div class="progress"><i style="width:'+(done?100:have*45)+'%"></i></div></div>';}).join("");
+$("built").innerHTML=all.length?'<div class="filter-note">Discovered: '+all.map(k=>esc(IDEAS[k])).join(" · ")+'</div>':'<div class="empty">Employees will discover capabilities through work, research and experimentation.</div>';
+$("idea-message").textContent=ideaMessage||"Connected discoveries automatically unlock improvements; no matching required.";}
 function refresh(){
-renderSectorChoices();renderCustomerPortfolio();
+renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();
+$("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);
-$("focus-hint").textContent=S.flow.focus?"No new deals or dilemmas; existing deadlines still count.":"New leads at least 25 real seconds apart; dilemmas at least 45 seconds apart.";
+$("focus-hint").textContent=S.flow.focus?"No new project starts or dilemmas; existing deadlines still count.":"New leads at least 25 real seconds apart; dilemmas at least 45 seconds apart.";
 const waitDays=Math.max(0,S.flow.nextLead-S.day),waitSeconds=S.deals.length===0?0:Math.max(0,Math.ceil((25000-(Date.now()-S.flow.lastLeadAt))/1000));
-$("intake-status").textContent=S.flow.focus?"Intake paused — complete existing projects.":"Next potential client: "+(waitDays?waitDays+" game days":waitSeconds?waitSeconds+" real seconds":"ready when capacity allows")+" · "+S.deals.length+" active projects.";
+$("intake-status").textContent=S.flow.focus?"Intake paused — pipeline can still mature.":"Projects: "+S.deals.length+" active · Leads: "+S.pipeline.leads.length+" · Closed: "+S.pipeline.closed+".";
 const ap=person(S.ops.assistantId);
 $("assistant-status").textContent=ap?ap.n+" manages intake. Assignments: "+S.ops.assigned+" · Routine decisions: "+S.ops.handled+".":"No assistant assigned. Policies can be set now; automation starts when you appoint one.";
 $("hire-assistant").disabled=!!S.ev||!!ap||S.cash<20;
@@ -577,7 +582,7 @@ a.x+=(a.tx-a.x)*.03;a.y+=(a.ty-a.y)*.03;if(Math.random()<.004){const e=p.mood<30
 ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(a.x,a.y,11,0,Math.PI*2);ctx.fill();ctx.fillStyle="#192435";ctx.beginPath();ctx.arc(a.x-3,a.y-2,1.1,0,Math.PI*2);ctx.arc(a.x+3,a.y-2,1.1,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#192435";ctx.lineWidth=1.1;ctx.beginPath();if(p.mood>50)ctx.arc(a.x,a.y+1,4,0,Math.PI);else if(p.mood>25){ctx.moveTo(a.x-4,a.y+5);ctx.lineTo(a.x+4,a.y+5);}else ctx.arc(a.x,a.y+8,4,Math.PI,2*Math.PI);ctx.stroke();ctx.textAlign="center";ctx.fillStyle=ink;ctx.font="12px system-ui";ctx.fillText(p.n,a.x,a.y+25);
 if(a.frames>0){ctx.font="19px system-ui";ctx.fillText(a.emoji,a.x,a.y-17);a.frames--;}
 });requestAnimationFrame(avatarDraw);}
-S=load();if(!S)fresh();if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
+S=load();if(!S)fresh();if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;capabilityProgress();save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
 })();
 </script>
 </body>

@@ -1,56 +1,42 @@
 # Boss — simulation development roadmap
 
-**Product guardrails:** one self-contained `index.html`; free, ad-free, offline and private; no account, tracking, fonts, libraries or network activity. On-device saves only. Mobile-first. The player remains the boss. Never add a mandatory ending.
+**Approved order (2026-10-17):** 1. Smarter Office Assistant (v7, delivered). 2. Smarter Employees (v8, next). 3. Realistic Projects & Customers (v9, after v8). Other features below are backlog and do not displace this order.
 
-## Current: v5 — People and recruiting (delivered)
-- Search a fresh pool of four candidates by specialty (Sales, Marketing, Product or Operations) and/or personal interest.
-- See every candidate’s traits, skill levels and recruitment fee; hire within cash constraints. Existing team starts with three; there is no artificial team-size cap.
-- Interests affect deal speed, skill growth, teaching or experimentation when aligned.
-- Fire staff with confirmation; assigned client deals become available and dismissal lowers reputation and coworkers’ morale. The last person cannot be fired.
-- Motivate individuals with recognition, a bonus or coaching, and run a team activity. Cash costs, cooldowns, memories, moods and loyalty matter.
-- Migrate existing v4 browser progress from `tl3` into the new versioned save key `boss5`.
+**Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss6`, `boss5`, and `tl3`.
 
-## Current: v6 — Sustainable pacing and office assistant (delivered)
-- Validated the original pressure: 30% new-deal probability whenever below the cap; repeated dilemmas every 8–15 game days; project work often needs more time than that.
-- Client inquiry cadence is now 12–20 game days (adjusted for applicable breakthroughs), with at least 25 real seconds between inquiries, and deadline windows are longer; current saves receive a one-time deadline grace period.
-- Only a manageable number of open projects are offered at once. **Focus mode** blocks new inquiries and dilemmas until the player resumes intake. Existing deadlines and salaries still progress.
-- At least 45 real seconds between new dilemma interruptions, on top of a 28–42-day game-time gap.
-- Hire an assistant for $20 or appoint any existing employee. Assistants assign new or unassigned projects to idle, well-suited staff, without replacing direct orders, and can resolve routine recognition and paid family leave requests.
-- Assistants remain actual employees with salary, mood, loyalty and learning; firing or giving another order removes assistant status. All past Boss v5/v4 progress migrates to `boss6`.
+## Delivered: v7 — Smarter Office Assistant
+- A collapsible Delegation Desk. Owner can set automatic task assignment on/off, and choose project order: **balanced urgency and skills**, **earliest deadline**, or **best skill fit**.
+- Configure separately whether the assistant shares praise, approves family leave ($5), coaches mistakes (free), or supports experiments ($10). Per-decision automatic-spending cap: $0, $5, $10, or $20. Each routine choice checks actual cash.
+- Raises, resignations, rival poaching, and interpersonal conflicts never resolve automatically. Dilemmas about the assistant also escalate.
+- Project priority dashboard, even before hiring an assistant: assigned person, current progress, remaining days, estimated completion time, risk/watch labels, and schedule buffer.
+- Optional assistant deadline-risk warnings in the company log, deduplicated by project and risk state.
+- Retain manual assignment authority, Focus mode, slower client intake, hiring/firing, idea combinations and speed controls. Migrates old progress to `boss7`.
+- **QA:** syntax/static offline checks; initial state; configurable rules; capped budgets; high-stakes escalations; protected manual orders; risk-alert deduplication; saved-game migration; restart.
 
-## Next: v6.1 — Make HR decisions deeper (small scope; approval required)
-- Employee profiles with strengths, preferred tasks, past decisions and promotion readiness.
-- Satisfaction and burnout indicators driven by workload, idle time, purpose and recognition.
-- Candidate comparisons: expected productivity, hiring fee and salary impact, with a balanced scoring explanation.
-- Resignation interviews, coaching paths and visible consequences of dismissals.
-- Acceptance criteria: clear trade-offs, stable save migration, no free-repeat morale exploit, reliable controls at 380px.
+## Next: v8 — Smarter Employees (selected priority 2)
+- **Individual goals** such as skill mastery, pay, client ownership, mentoring, creative freedom or work-life balance. Goals should matter to daily behavior, not be merely labels.
+- **Stress/burnout:** accumulated workload and deadlines change morale, productivity, retention, mistakes and recovery; recognition and reasonable breaks help but cannot instantly erase chronic burnout.
+- **Ambitions:** advancement requests and growth plans with transparent trade-offs; promotions and role changes should connect to demonstrated strengths.
+- **Hidden talents:** discoverable through experiments, mentoring, role rotation and observations. Avoid random undisclosed skill changes with no clues.
+- **Changing behavior:** consequences of praise, layoffs, coaching and employer decisions accumulate over time, with simple explainable rule-based logic; no external AI dependency.
+- **Acceptance:** sensible pacing, understandable staff profiles and explanations, performance under long-running simulation, mobile readability, no regressions, migrated saves.
 
-## v7 — Departments, managers and office growth
-- Departments for Sales, Marketing, Product and Operations, including manager assignments and reporting lines.
-- Boss can issue team-level orders through managers rather than directing everyone individually.
-- Managers learn leadership skills and have their own values, strengths and failure modes.
-- Workspace/office upgrades use in-game cash and have both upkeep and productivity trade-offs.
-- Acceptance criteria: original individual controls still accessible; no mandatory hierarchy; simulation works at large team sizes.
+## Then: v9 — Realistic Projects & Customers (selected priority 3)
+- **Negotiation:** scope, fee, deadline and trade-offs in contracts; fair decision paths, no unavoidable spam.
+- **Milestones:** defined phases with progress, review and occasional meaningful client checkpoints.
+- **Quality vs. speed:** rushed work increases rework and unhappy customers, while strong teams can deliver consistently.
+- **Delay handling:** renegotiate deadlines, allocate effort, or communicate with clients; the assistant can flag risks but should not approve contract concessions without authorization.
+- **Customer retention:** satisfaction and repeated business react to delivery quality, treatment and reputation.
+- **Acceptance:** projects can be finished without interruption overload, with usable planning, understandable economics, and a clear difference between milestones and emergencies.
 
-## v8 — Responsive competitors
-- Named rivals with distinct strategies (discounting, copying ideas, recruiting away talent, improving quality).
-- Rival actions respond to player decisions, reputation, client success, and market segment.
-- Fair warning and multiple choices when threatened; never lock players into unwinnable states.
+## Backlog (not selected for the next two releases)
+- Departments/managers and office expansions
+- Reactive rival companies
+- Richer team relationships, trust and politics
+- Living markets, financial dashboards, new client industries and seasons
 
-## v9 — Relationships and culture
-- Trust, friendship, rivalry and mentoring ties between team members.
-- Cooperation and disputes affect tasks and dilemmas; managerial choices change relationship memory.
-- Privacy: all relationship simulation stays inside the offline save file.
-
-## v10 — Living company economy
-- More client industries, complex jobs, seasons, market swings, customer retention and negotiations.
-- Richer moral dilemmas, multi-stage experiments and discovery recipes.
-- Optional statistics panel tracking efficiency, cash flow, retention, burnout and team development.
-
-## Later: optional conversational AI — separate decision required
-- Default game remains **fully offline** with rule-based personalities and memories.
-- An online AI mode would require network requests and an external service, conflicting with the present one-file offline-only contract. Do **not** implement it without explicit approval and a privacy/cost/design decision.
-- Before any AI implementation, propose an opt-in architecture with clear data boundaries and an offline fallback.
+## Optional later: conversational AI
+- Offline rule-based personalities are the default. Online conversational AI would require network access, cost/privacy decisions and explicit owner approval; do not implement in the offline build without that approval.
 
 ## Delivery discipline
-Read the latest GitHub `main/index.html`, preserve every feature, work on an isolated branch, test game logic and mobile layout, deploy to GitHub Pages, append GitHub + Notion changelog lines, and verify the live URL.
+Read the latest GitHub `main/index.html`; preserve the complete game; implement on an isolated branch; run syntax, behavior, save and mobile checks; publish through GitHub Pages; update README, CHANGELOG and the Boss Notion page; verify the live URL before claiming completion.

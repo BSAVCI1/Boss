@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
 fs.writeFileSync(file,html.replace("</body>","<script>"+instrumentation+"</script></body>"));
-const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--force-device-scale-factor=1","--window-size=390,844","--virtual-time-budget=3000","--dump-dom","file://"+file];
+const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--force-device-scale-factor=1.28","--window-size=390,844","--virtual-time-budget=3000","--dump-dom","file://"+file];
 const r=cp.spawnSync(browser,args,{encoding:"utf8",timeout:30000,maxBuffer:10*1024*1024});
 if(r.error)throw r.error;
 assert.equal(r.status,0,"Chromium failed: "+(r.stderr||"").slice(-1300));

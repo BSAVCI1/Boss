@@ -469,6 +469,70 @@ $("lab-sector").innerHTML=S.market.open.map(s=>'<option value="'+s+'">'+esc(SECT
 $("lab-sector-label").hidden=topic!=="sector";$("lab-sector").hidden=topic!=="sector";
 $("lab-preview").textContent=t.description+" Main measure: "+LAB_METRICS[t.metric].name+". Changes remain until you adjust them. Only one experiment runs at a time.";
 }
+
+function ensureCoach(s){if(!s.coach||typeof s.coach!=="object")s.coach={mode:"guided",nextId:1,journal:[],ruleVersion:1};
+const c=s.coach;if(!["guided","challenge","sandbox"].includes(c.mode))c.mode="guided";
+if(!Array.isArray(c.journal))c.journal=[];c.journal=c.journal.slice(0,40);
+if(!Number.isInteger(c.nextId)||c.nextId<1)c.nextId=1;
+if(!s.bi||!Number.isFinite(s.bi.unpaidPayroll))return;}
+function coachSnap(pid=null){const p=pid?person(pid):null;return{day:S.day,cash:S.cash,reputation:S.rep,completed:S.market.completed,wins:S.pipeline.closed,leadCount:S.bi.totals.leads,profit:S.bi.totals.revenue-S.bi.totals.costs,payroll:S.team.reduce((n,x)=>n+dailySalary(x),0),wages:S.bi.unpaidPayroll||0,team:S.team.length,employee:p?{id:p.id,mood:p.mood,loyalty:p.loy,satisfaction:p.career.satisfaction,stress:p.career.stress,xp:p.career.xp,rank:p.career.rank}:null};}
+function coachDecision(label,before,detail,pid=null,follow=30){const after=coachSnap(pid),c=S.coach;
+const item={id:c.nextId++,title:label,day:S.day,before,after,detail:String(detail||""),reviewDay:S.day+follow,follow:null};
+c.journal.unshift(item);if(c.journal.length>35)c.journal.length=35;
+return item;}
+function coachFollowups(){for(const j of S.coach.journal)if(!j.follow&&S.day>=j.reviewDay){
+j.follow=coachSnap(j.after.employee?.id||null);j.status="Reviewed";
+}}
+function coachAmount(a,b){const diff=b-a;return(diff>=0?"+":"")+biCurrency(diff);}
+function coachSettlePayroll(){if(S.ev)return;const owed=Math.max(0,S.bi.unpaidPayroll||0);const paid=Math.min(owed,Math.max(0,S.cash));
+if(paid<.01)return;
+const pre=coachSnap();S.cash-=paid;S.bi.unpaidPayroll=Math.max(0,owed-paid);
+biAdd("cashOut",paid);biEvent("arrears",paid,"Settle previously accrued payroll",paid);
+if(owed-paid<.01){for(const p of S.team)p.career.satisfaction=clamp(p.career.satisfaction+3);}
+coachDecision("Pay outstanding wages",pre,"Paid "+biCurrency(paid)+" of "+biCurrency(owed)+" owed. This is a cash payment, not a second expense.");
+logIt("Settled "+biCurrency(paid)+" of previously unpaid payroll without a second P&L charge.");
+save();refresh();}
+function coachCareerStatus(p){const c=p.career,minXp=c.rank===0?8:24,skill=Math.max(...KEYS.map(k=>p.s[k])),gap=Math.max(0,minXp-c.xp);
+if(c.rank>=2)return{ready:false,text:"Lead career rank reached",reason:"Lead is the highest current rank"};
+const cooldown=Math.max(0,18-(S.day-c.promotedAt));
+const ready=c.xp>=minXp&&skill>=1.85&&cooldown===0&&S.cash>=25;
+const description=rankName(p)+" → "+(c.rank===0?"Senior":"Lead")+" · "+c.xp.toFixed(1)+"/"+minXp+" XP · best skill "+skill.toFixed(2)+"/1.85 · cooldown "+cooldown+"d";
+return{ready,text:description,reason:ready?"Eligible: promotion costs $25 and adds $0.75/day":gap>0?"Need "+gap.toFixed(1)+" XP":skill<1.85?"Need stronger specialist skill":cooldown?"Cooldown "+cooldown+" days":"Need $25 cash"};}
+function coachRoles(){const data=S.bi.totals,people=S.team.length,work=data.staffDays||0;
+const commercial=S.org.departments.commercial.stats,delivery=S.org.departments.delivery.stats;
+return '<div class="coach-grid"><div><small>Client delivery utilization</small><strong>'+biPercent(data.billableDays,work)+'</strong></div><div><small>Commercial staff time</small><strong>'+biPercent(data.salesDays+data.marketingDays,work)+'</strong></div><div><small>Development time</small><strong>'+biPercent(data.developmentDays,work)+'</strong></div><div><small>Recovery time</small><strong>'+biPercent(data.restDays,work)+'</strong></div></div>'+
+'<p class="coach-mini">Billable utilization alone is not a performance grade. Salespeople prospect, marketers create demand, managers mentor, and specialists deliver projects. Review outputs alongside time spent.</p>'+
+'<div class="coach-mini">Current 30-day department outcomes: Commercial '+commercial.leads+' leads / '+S.org.departments.commercial.target.leads+' target, '+commercial.wins+' wins; Delivery '+delivery.delivered+' completions, '+(delivery.delivered?biPercent(delivery.onTime,delivery.delivered):"insufficient data")+' on time.</div>';
+}
+function coachManagerProfiles(){return DEPT_KEYS.map(k=>{
+const d=S.org.departments[k],m=orgManager(k),reports=orgReports(k),stat=d.stats;const experience=m?m.career.xp:0;
+const leadership=m?Math.round((m.s.ops+m.s.sales+m.s.mkt+m.s.prod)/4*20+Math.min(30,experience)*.75):0;
+const score=k==="commercial"?(stat.leads>=d.target.leads?"Target reached":stat.leads===0?"No measured leads":"Below lead target"):(stat.delivered>=3?(stat.onTime/stat.delivered*100>=d.target.onTime?"Target reached":"Below on-time target"):"Not enough deliveries");
+return'<div class="coach-manager-profile"><b>'+DEPARTMENTS[k].name+': '+esc(m?.n||"Founder-led")+'</b><div class="coach-mini">'+(m?"Leadership readiness score "+leadership.toFixed(0)+" (skills and experience proxy; not a separate skill).":"Appoint an experienced employee to delegate coaching and team assignments.")+'</div><div class="coach-mini">Direct reports: '+reports.length+' · Performance: '+score+' · Coaching budget '+biCurrency(d.spent)+'/'+biCurrency(d.budget)+' · Coaching sessions '+stat.coached+'</div><div class="coach-mini">'+(m?"May coordinate assigned-department tasks and coach within the approved budget. Must escalate hiring, firing, cross-department transfers and promotions to the CEO.":"You currently own department decisions.")+'</div>'+(d.reviews?.length?'<div class="coach-mini">Last review: '+esc(d.reviews[d.reviews.length-1].result)+' · '+esc(d.reviews[d.reviews.length-1].reading)+'</div>':'')+'</div>';}).join("");}
+function coachSectorReport(){const all=S.market.open;return '<p class="coach-help">Sector focus directs new prospecting, adds about 12% to the fee when a project is agreed, and increases delivery speed for matching active work. <b>Existing agreed fees no longer change when focus changes.</b> Expansion costs cash up front; the game does not guarantee demand or investment payback.</p>'+
+SECTOR_KEYS.map(k=>{const sc=SECTORS[k],wins=S.market.sectorWins[k]||0,tracked=S.bi.sectorTotals[k]||{};
+const skills=sc.skills.map(x=>SKILLS[x]).join(", ");
+const best=S.team.filter(p=>p.role.primary!=="lead").reduce((sum,p)=>sum+Math.max(...sc.skills.map(x=>p.s[x])),0)/Math.max(1,S.team.length);
+return '<div class="coach-row"><b>'+esc(sc.name)+'</b> · '+(all.includes(k)?"Unlocked":biCurrency(sc.cost)+" entry · "+sc.rep+" reputation")+' · '+Math.round((sc.premium-1)*100)+'% sector premium<div class="coach-mini">Important skills: '+esc(skills)+' · Team affinity proxy '+best.toFixed(1)+'/3 · Previous wins '+wins+' · Earned since reporting began '+biCurrency(tracked.revenue||0)+'</div><div class="coach-mini">'+(k===S.market.focus?"Current specialization":"Not currently focused")+' · Compare fee upside with salaries, backlog, and available cash before expanding.</div></div>';}).join("");}
+function coachCashForecast(){const salary=S.team.reduce((x,p)=>x+dailySalary(p),0);const debt=S.bi.unpaidPayroll||0;const sorted=S.deals.map(d=>{const worker=person(d.w);const speed=worker?Math.max(.2,worker.s[d.need]/d.diff):0;return{d,days:speed?Math.ceil(Math.max(0,d.work-d.prog)/speed):Infinity};});
+const projected=sorted.filter(x=>x.days<=14).reduce((n,x)=>n+feeFor(x.d),0);
+return'<div class="coach-grid">'+[7,14,30].map(days=>'<div><small>Payroll over '+days+' days</small><strong>'+biCurrency(salary*days)+'</strong></div>').join("")+'<div><small>Outstanding wages</small><strong>'+biCurrency(debt)+'</strong></div><div><small>Current cash</small><strong>'+biCurrency(S.cash)+'</strong></div><div><small>Estimated receipts ≤14d</small><strong>'+biCurrency(projected)+'</strong></div></div><p class="coach-mini">Receipts are estimates, not confirmed cash: assignments, quality, deadlines and customer outcomes may change. Cash runway before future receipts: '+(salary?(S.cash/salary).toFixed(1):"—")+' days.</p>';
+}
+function coachRiskItems(){const issues=[],daily=S.team.reduce((a,p)=>a+dailySalary(p),0);
+const debt=S.bi.unpaidPayroll||0;
+if(debt>.01)issues.push({level:"red",title:"Unpaid wages "+biCurrency(debt),why:"Past salary expenses exceeded cash available; wages remain owed.",do:"Use Settle available unpaid wages when cash is available; this will not duplicate payroll costs.",view:"today"});
+if(daily&&S.cash/daily<7)issues.push({level:"red",title:"Cash covers fewer than seven payroll days",why:"Wages are paid each game day; completed projects generate receipts.",do:"Finish the nearest profitable project and delay optional investments.",view:"work"});
+const noWorker=S.deals.filter(d=>d.w===null);
+if(noWorker.length)issues.push({level:"amber",title:noWorker.length+" unassigned client project(s)",why:"Projects with no employee cannot progress and may miss deadlines.",do:"Assign a suitable specialist or enable eligible assistant delegation.",view:"work"});
+const atRisk=S.deals.filter(d=>d.dl<=5);
+if(atRisk.length)issues.push({level:"red",title:atRisk.length+" project deadline(s) near",why:"Missed projects damage reputation and customer loyalty.",do:"Prioritize the earliest deadline and review workload.",view:"work"});
+const need=S.pipeline.leads.length<S.pipeline.target;
+if(need)issues.push({level:"amber",title:"Pipeline below your coverage target",why:"Future customer work may not replenish delivery demand.",do:"Allocate Sales or Marketing staff to prospecting.",view:"work"});
+const stressed=S.team.filter(p=>p.career.stress>70||p.career.burnout>35);
+if(stressed.length)issues.push({level:"amber",title:stressed.length+" employee(s) under strain",why:"Stress and burnout reduce sustainable productivity.",do:"Use a rest period, reduce workload or schedule coaching.",view:"team"});
+const promo=S.team.filter(p=>coachCareerStatus(p).ready);
+if(promo.length)issues.push({level:"green",title:promo.length+" employee(s) ready for promotion",why:"Development could support retention and productivity, but increases salary.",do:"Review employee Career & wellbeing before approving.",view:"team"});
+return issues.length?issues.slice(0,5):[{level:"green",title:"No immediate management risks detected",why:"The company is operating within the basic guardrails.",do:"Review one opportunity to improve efficiency or test a hypothesis.",view:"growth"}];}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* Storage may be unavailable; play continues in memory. */}}
 function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;

@@ -497,6 +497,7 @@ test("v21.3 dedicated unit jobs are scheduled by the GM and cannot consume share
  const job=G.createDeal("Unit-only marketing contract");
  assert.equal(job.unitKey,"marketing");
  assert.equal(G.unitAssignmentAllowed(job,corporate),false);
+ assert.equal(G.unitAssignmentAllowed(job,gm),false,"the GM is a leader, not unbounded delivery capacity");
  assert.equal(G.unitAssignmentAllowed(job,specialist),true);
  assert.equal(G.unitDelegateWork(),true,"GM should assign eligible dedicated specialist");
  assert.equal(job.w,specialist.id);

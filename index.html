@@ -130,19 +130,58 @@ if(!s.market.open.includes(s.market.focus))s.market.focus=s.market.open[0];
 if(!Number.isFinite(s.market.completed))s.market.completed=0;
 if(!s.market.customers||typeof s.market.customers!=="object")s.market.customers={};
 if(!s.market.sectorWins||typeof s.market.sectorWins!=="object")s.market.sectorWins={};
-for(const d of s.deals){if(!SECTORS[d.sector])d.sector=sectorOfClient(d.cl)||s.market.focus;
+for(const d of s.deals){const legacy=!Number.isFinite(d.tier);if(legacy){const done=clamp(d.prog/Math.max(1,d.work),0,1);d.work=Math.max(5,Math.ceil(d.work*.7));d.prog=d.work*done;d.base=Math.max(82,Math.ceil(d.base*1.6));d.dl+=8;}
+if(!SECTORS[d.sector])d.sector=sectorOfClient(d.cl)||s.market.focus;
 if(!Number.isFinite(d.quality))d.quality=75;
 if(!Number.isFinite(d.milestone))d.milestone=0;
 if(!Number.isFinite(d.change))d.change=0;
 if(!Number.isFinite(d.tier))d.tier=1;
 if(typeof d.negotiated!=="boolean")d.negotiated=d.prog>0;
 if(typeof d.extended!=="boolean")d.extended=false;
-if(typeof d.returning!=="boolean")d.returning=false;}
+if(typeof d.returning!=="boolean")d.returning=false;
+if(typeof d.reviewed!=="boolean")d.reviewed=false;}
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
 return s;}catch(e){return null;}}
 function logIt(s,highlight=false){S.log.unshift(highlight?'<span class="warning">'+esc(s)+'</span>':esc(s));S.log=S.log.slice(0,80);}
 function createPerson(){const id=S.pid++;const base=NAMES[(id-1)%NAMES.length];return{id:id,n:base+(id>20?" "+(Math.floor((id-1)/20)+1):""),col:COLORS[(id-1)%COLORS.length],trait:pick(TRAITS),s:Object.fromEntries(KEYS.map(k=>[k,+(1+Math.random()*.6).toFixed(2)])),mood:70,loy:60,t:"idle",mem:[],interest:pick(INTEREST_KEYS),lastCareDay:-99};}
-function createDeal(client,extra=0){const diff=Math.min(12,Math.round((1+Math.random()*(1+S.rep/20+S.day/50))*10)/10);const work=8+Math.floor(diff*4);const d={id:S.did++,cl:client||pick(CLIENTS),need:pick(KEYS),diff:diff,work:work,prog:0,base:20+diff*12+extra,dl:Math.floor(work*2.4+12),w:null};S.deals.push(d);return d;}
+function sectorOfClient(client){for(const k of SECTOR_KEYS)if(SECTORS[k].clients.includes(client))return k;return null;}
+function dealTier(){return Math.min(5,1+Math.floor(S.market.completed/5));}
+function feeFor(d){const focusBonus=d.sector===S.market.focus?1.12:1;return Math.floor(d.base*S.mod.reward*(1+S.rep/200)*focusBonus);}
+function createDeal(client,extra=0){const tier=dealTier();let sector=client?sectorOfClient(client):null;if(!sector||!S.market.open.includes(sector))sector=S.market.focus;
+let customer=client||"";let returning=false;
+if(!customer&&Object.keys(S.market.customers).length&&Math.random()<.38){
+const pool=Object.entries(S.market.customers).filter(([name,c])=>S.market.open.includes(c.sector)&&c.loyalty>=55);
+if(pool.length){customer=pick(pool)[0];sector=S.market.customers[customer].sector;returning=true;}}
+if(!customer){sector=Math.random()<.62?S.market.focus:pick(S.market.open);customer=pick(SECTORS[sector].clients);}
+const diff=+(1+(tier-1)*.32+Math.random()*.4).toFixed(2);
+const work=6+Math.round(diff*2.2)+(tier-1);
+const base=82+Math.floor(diff*19)+(tier-1)*17+extra+(returning?12:0);
+const d={id:S.did++,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning};
+S.deals.push(d);return d;}
+function sectorAction(key){if(S.ev||!SECTORS[key])return;
+if(S.market.open.includes(key)){if(S.market.focus===key)return;S.market.focus=key;logIt("Your company now specializes in "+SECTORS[key].name+".");}
+else{const sec=SECTORS[key];if(S.rep<sec.rep||S.cash<sec.cost)return;S.cash-=sec.cost;S.market.open.push(key);S.market.focus=key;logIt("Expanded into "+sec.name+" for $"+sec.cost+". New clients can now request work.");}
+save();renderSectorChoices();structural="";renderStructure();refresh();}
+function renderSectorChoices(){$("sector-focus-name").textContent="Focus: "+SECTORS[S.market.focus].name;
+$("sector-level").textContent="Stage "+dealTier()+" · "+S.market.completed+" completed projects";
+$("sector-options").innerHTML=SECTOR_KEYS.map(key=>{const sector=SECTORS[key],open=S.market.open.includes(key),focused=S.market.focus===key,eligible=S.rep>=sector.rep&&S.cash>=sector.cost;
+const detail=open?(focused?"Current focus":"Switch focus — free"):"Expand $"+sector.cost+" · Rep "+sector.rep;
+return '<button type="button" data-sector="'+key+'" '+((!open&&!eligible)||focused?'disabled':'')+' class="'+(focused?'selected':'')+'"><b>'+sector.name+'</b><small>'+detail+'</small></button>';}).join("");
+$("sector-status").textContent="Focused projects earn 12% more and progress about 12% faster. New sector investments are permanent. Growth unlocks by reputation.";}
+function negotiateDeal(id,action){if(S.ev)return;const d=deal(id);if(!d||d.negotiated||d.prog>=d.work*.2)return;
+if(action==="premium"){d.base=Math.round(d.base*1.25);d.work=Math.ceil(d.work*1.14);d.dl+=4;d.change=1;logIt("Negotiated premium scope with "+d.cl+": higher fee, a little more work.");}
+else if(action==="fast"){d.base=Math.round(d.base*.92);d.work=Math.max(4,Math.ceil(d.work*.82));d.quality=clamp(d.quality-7);d.change=2;logIt("Agreed a quick, lean delivery with "+d.cl+": less scope, slightly lower fee.");}
+else if(action==="care"){d.base=Math.round(d.base*.95);d.dl+=7;d.quality=clamp(d.quality+8);d.change=3;logIt("Agreed a quality-first arrangement with "+d.cl+".");}
+else return;
+d.negotiated=true;save();structural="";renderStructure();refresh();}
+function projectAction(id,action){if(S.ev)return;const d=deal(id);if(!d)return;
+if(action==="extend"&&!d.extended&&d.dl<=Math.ceil(d.work*1.1)){d.extended=true;d.dl+=8;d.base=Math.floor(d.base*.90);S.rep=Math.max(0,S.rep-1);logIt("Renegotiated 8 more days with "+d.cl+" in return for a 10% fee reduction.");}
+else if(action==="review"&&!d.reviewed&&d.prog>=d.work*.5&&d.prog<d.work&&S.cash>=8){d.reviewed=true;S.cash-=8;d.quality=clamp(d.quality+12);logIt("A quality review improved "+d.cl+"'s project for $8.");}
+else return;save();structural="";renderStructure();refresh();}
+function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:d.sector,loyalty:48,orders:0,quality:0};prev.sector=d.sector;
+if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
+else prev.loyalty=clamp(prev.loyalty-22);
+S.market.customers[d.cl]=prev;}
 function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99}};for(let i=0;i<3;i++)S.team.push(createPerson());createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
@@ -156,7 +195,10 @@ function tick(){if(paused||S.ev)return;S.day+=1;let dirty=false,ideaDirty=false;
 if(!S.flow.focus&&S.day>=S.flow.nextLead&&Date.now()-S.flow.lastLeadAt>=25000){S.flow.lastLeadAt=Date.now();const cap=Math.max(2,Math.min(4,2+Math.floor(S.team.length/3)));if(S.deals.length<cap){createDeal();dirty=true;}S.flow.nextLead=S.day+Math.max(7,Math.round((12+R(9))/S.mod.deals));}
 if(delegateWork())dirty=true;
 for(const p of [...S.team]){const mf=.6+p.mood/250,lb=p.loy>70?1.1:1;let dm=-.2;
-if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1);d.prog+=e;p.s[d.need]+=.05*S.mod.learn*(aligned?1.12:1);dm=(e>=.9?.4:-.3)+(aligned?.15:0);}else{p.t="idle";dm=-.2;dirty=true;}}
+if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1);d.prog+=e;
+d.quality=clamp(d.quality+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1));
+for(const [index,limit,name] of [[1,.34,"Plan approved"],[2,.73,"Build completed"]])if(d.milestone<index&&d.prog>=d.work*limit){d.milestone=index;logIt(d.cl+": "+name+" ("+Math.round(d.quality)+"% quality).");}
+p.s[d.need]+=.05*S.mod.learn*(aligned?1.12:1);dm=(e>=.9?.4:-.3)+(aligned?.15:0);}else{p.t="idle";dm=-.2;dirty=true;}}
 else if(p.t==="study"){p.s[weakest(p)]+=.14*S.mod.learn*mf*(p.interest==="learning"?1.2:1);dm=.3;}
 else if(p.t==="teach"&&S.team.length>1){const k=strongest(p),others=S.team.filter(x=>x.id!==p.id).sort((a,b)=>a.s[k]-b.s[k]);const target=others[0];if(target.s[k]<p.s[k]){target.s[k]+=.12*S.mod.learn*mf*(p.trait==="Social"?1.5:1)*(p.interest==="people"?1.2:1);p.s[k]+=.01;}dm=.3;}
 else if(p.t==="exp"){S.cash=Math.max(0,S.cash-1);const avg=KEYS.reduce((s,k)=>s+p.s[k],0)/4;const chance=(.04+.01*avg)*mf*(p.trait==="Curious"?1.5:1)*(p.trait==="Creative"?1.3:1)*(p.interest==="creative"?1.2:1);if(Math.random()<chance){ideaDirty=discover(p.n)||ideaDirty;}dm=.3;}
@@ -166,14 +208,14 @@ p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
 if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
 }
-for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){const payout=Math.floor(d.base*S.mod.reward*(1+S.rep/200));S.cash+=payout;S.rep+=(2+d.diff*.5)*S.mod.rep;logIt(d.cl+" paid $"+payout+" for the finished job.");const p=person(d.w);if(p){release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
-else if(d.dl<=0){S.rep=Math.max(0,S.rep-3);logIt("Missed the deadline for "+d.cl+". Reputation dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
+for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){const payout=feeFor(d);S.cash+=payout;S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" paid $"+payout+" for the finished "+SECTORS[d.sector].name+" project. Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
+else if(d.dl<=0){S.rep=Math.max(0,S.rep-3);recordCustomer(d,false);logIt("Missed the deadline for "+d.cl+". Reputation and customer loyalty dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
 assistantDeadlineAlerts();
 const salary=S.team.length*1.5*S.mod.cost;if(S.cash<salary){S.cash=0;for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford salaries. Team morale dropped.",true);}else S.cash-=salary;
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
 save();if(dirty)renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;}save();renderStructure();refresh();}
-function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched);}
+function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1));}
 function bestIdle(d){return S.team.filter(p=>p.id!==S.ops.assistantId&&p.t==="idle").sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
 function forecast(d){const assigned=person(d.w);const candidate=assigned||bestIdle(d);const speed=workerSpeed(candidate,d);const remaining=Math.max(0,d.work-d.prog);const eta=speed?Math.ceil(remaining/speed):null;const slack=eta===null?null:d.dl-eta;const risk=!assigned?"unassigned":slack<0?"critical":slack<=4?"watch":"ok";return{d,assigned,candidate,eta,slack,risk,fit:speed};}
 function rankedProjects(){const priority=S.ops.policy.priority;return S.deals.map(forecast).sort((a,b)=>{
@@ -215,6 +257,8 @@ function order(pid,t){const p=person(pid);if(!p||S.ev)return;if(S.ops.assistantI
 function updateButtons(){for(const b of document.querySelectorAll("[data-speed]")){const yes=Number(b.dataset.speed)===spd&&!paused;b.classList.toggle("selected",yes);b.setAttribute("aria-pressed",String(yes));}$("pause").classList.toggle("selected",paused);$("pause").textContent=paused?"Resume":"Pause";}
 function paintControls(){updateButtons();}
 $("controls").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.speed){spd=Number(b.dataset.speed);paused=false;paintControls();schedule();}else if(b.id==="pause"){paused=!paused;paintControls();schedule();}else if(b.id==="restart"){if(confirm("Restart the company from zero?")){fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();schedule();}}});
+$("sector-options").addEventListener("click",e=>{const b=e.target.closest("button[data-sector]");if(b)sectorAction(b.dataset.sector);});
+$("deals").addEventListener("click",e=>{const b=e.target.closest("button[data-contract]");if(b)negotiateDeal(Number(b.dataset.contract),b.dataset.option);const act=e.target.closest("button[data-project]");if(act)projectAction(Number(act.dataset.project),act.dataset.action);});
 $("focus-toggle").addEventListener("click",toggleFocus);
 $("hire-assistant").addEventListener("click",hireOfficeAssistant);
 for(const id of ["policy-assign","policy-priority","policy-budget","policy-praise","policy-family","policy-mistake","policy-idea","policy-alerts"])$(id).addEventListener("change",updateAssistantPolicy);
@@ -259,6 +303,7 @@ $("candidates").innerHTML=S.hr.pool.length?'<div class="filter-note">Candidates 
 function renderIdeaButtons(){for(const b of $("ideas").querySelectorAll("button")){const ok=selected.includes(b.dataset.idea);b.classList.toggle("selected",ok);b.setAttribute("aria-pressed",String(ok));}$("combine").disabled=selected.length!==2;}
 function renderIdeas(){const keys=S.seeds.filter(k=>IDEAS[k]);$("ideas").innerHTML=keys.length?'<div class="buttons">'+keys.map(k=>'<button type="button" data-idea="'+k+'">'+IDEAS[k]+'</button>').join("")+'</div>':'<div class="empty">No ideas yet. Put someone on Experiment.</div>';$("built").innerHTML=S.built.map(x=>'<div>✓ <strong>'+esc(x[0])+'</strong> — '+esc(x[1])+'</div>').join("");$("idea-message").textContent=ideaMessage||(12-S.seeds.length)+" basic ideas still to discover.";renderIdeaButtons();}
 function refresh(){
+renderSectorChoices();
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);
 $("focus-hint").textContent=S.flow.focus?"No new deals or dilemmas; existing deadlines still count.":"New leads at least 25 real seconds apart; dilemmas at least 45 seconds apart.";

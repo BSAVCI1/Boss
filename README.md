@@ -1,6 +1,6 @@
 # Boss
 
-## Boss v21.2 — GM accountability (release candidate, PR #25)
+## Boss v21.2 — GM accountability (released 2026-10-17 · PR #25)
 
 Operating units now support CEO-controlled General Manager authority: a unit-specific coaching budget, per-action cap, quality objective, and 90/180-day expiry. Existing and migrated units default to $0 authorized spend. Eligible weekly coaching costs $4 and uses real company cash and the same corporate financial ledger; renewing budgets does not bypass the seven-day cooldown.
 
@@ -8,15 +8,17 @@ In Growth → Operating units, the CEO can review each GM's tracked 30-day deliv
 
 Existing contracts, employee IDs, prior paid service lines, historical company accounting and Safari fallback storage are preserved. General Managers do not yet control independent company bank accounts, broad hiring authority or acquisitions. v21.3–v21.4 will expand strategic delegation and presentation.
 
+**Release evidence:** [PR #25](https://github.com/BSAVCI1/Boss/pull/25) merged at `25e09e0febf22227b44dad1c350f374a88302ed1`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39066315475), [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39066315191) and [live isolated-browser smoke](https://agent.tinyfish.ai/runs/bf1a3d19-6c28-4844-848c-2a98b2106c72) passed. Automated 390px fallback-save/reload and 414px layout passed. These checks did not inspect the player's private iPhone Safari save.
+
 ## Boss v21.1 — Operating Units Foundation (released 2026-10-17 · PR #24)
 
 Building on the verified v20.3 CEO interface, the CEO can organize an **already purchased** service portfolio into an operating unit **without another $120 charge**, appoint an eligible General Manager and transfer available employees by unique ID. Staff members belong to only one unit, and dedicated unit teams no longer appear in shared department spans; incompatible department-manager or Executive Assistant appointments are blocked. Existing signed deals stay untouched when transferring. A new deal can be attributed to the operating unit, and its **forward-only** delivered revenue, direct cost, shared delivery work and allocated daily staff payroll are shown as a unit operating view. There is still only **one legal company and one cash/ledger system**; units are not independent subsidiaries or bank accounts.
 
-**Release evidence:** [PR #24](https://github.com/BSAVCI1/Boss/pull/24) merged as `b59a76e7cab474ec553deffaccb9a00089922177`. [Production regression](https://github.com/BSAVCI1/Boss/actions/runs/39065136825) and [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39065136237) passed. The owner’s original Safari game was not inspected during this automated release. Unit-specific GM delegation remains for v21.2.
+**Release evidence:** [PR #24](https://github.com/BSAVCI1/Boss/pull/24) merged as `b59a76e7cab474ec553deffaccb9a00089922177`. [Production regression](https://github.com/BSAVCI1/Boss/actions/runs/39065136825) and [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39065136237) passed. The owner’s original Safari game was not inspected during this automated release. Unit-specific GM delegation is now delivered in the separate v21.2 release above.
 
 **State safety:** Upgrade the existing `boss20` state additively; keep old `boss19`, localStorage and IndexedDB data. No auto-conversion, invented past results, duplicated payroll or second investment. Changes are confirmed only after a durable save; an unwritable browser rolls them back in place. Active-contract assignees cannot transfer until the contract is completed. Real-browser checks cover the 390px UI and quota-failure reload; full financial and 730-day checks are release gates.
 
-**Not yet v21.2–v21.4:** Unit GMs do not have separate hiring envelopes, autonomous staffing budgets, fully independent sales pipelines, or monthly reviews. Those are future steps, followed by v22 rented/purchased offices, v23 investment/acquisition/valuation, and v24 factories. Development and QA: [PR #24](https://github.com/BSAVCI1/Boss/pull/24). Do not treat this release candidate as deployed until checks, merge and GitHub Pages verification pass.
+**Beyond v21.2:** Independent legal subsidiaries, unit-owned cash accounts, autonomous structural hiring without CEO approval, fully independent sales pipelines and quarterly unit capital strategy remain future work. Monthly unit quality reviews and capped GM coaching are now in v21.2. Then v22 rented/purchased offices, v23 investments/acquisitions/valuation, and v24 factories.
 
 ## Boss v20.3 — CEO clarity & organizational audit (released 2026-10-17, PR #23)
 

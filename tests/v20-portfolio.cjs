@@ -778,4 +778,45 @@ test("v21.4b gate checklist describes financial and people requirements without 
  reconcile(s);
 });
 
+
+test("v21.4b a five-person company cannot duplicate a Team Lead without three further hires",()=>{
+ const s=init();s.day=56;s.deals=[];fund(s,1000);
+ for(let i=0;i<2;i++){const p=G.createPerson();G.ensureCareer(p);G.ensureRole(p);G.ensureDepartment(p);G.ensurePerformance(p,0);s.team.push(p);}
+ for(const p of s.team){p.perf.days=28;p.career.rank=1;p.career.xp=20;}
+ assert.equal(G.ladderEvaluation("lead").need,5);
+ const candidate=G.ladderEvaluation("lead");
+ assert.equal(candidate.ready,true);assert.equal(G.ladderPromote("lead",candidate.candidateId,true),true);
+ const next=G.ladderEvaluation("lead");
+ assert.equal(next.need,8);assert.equal(next.ready,false);
+ assert.ok(next.reasons.some(x=>x.includes("8 company employees")));
+ reconcile(s);
+});
+test("v21.4b Manager stage requires three experienced Team Leads and an actual role upgrade",()=>{
+ const s=init();s.deals=[];s.day=189;fund(s,2500);
+ for(let i=0;i<8;i++){const p=G.createPerson();G.ensureCareer(p);G.ensureRole(p);G.ensureDepartment(p);G.ensurePerformance(p,0);s.team.push(p);}
+ for(const p of s.team){p.perf.days=120;p.career.rank=2;p.career.xp=40;}
+ const leaders=s.team.slice(0,3);
+ for(const p of leaders)s.org.progression.appointments.push({id:p.id,level:"lead",since:100,successorId:null});
+ const promoted=G.ladderEvaluation("manager");assert.equal(promoted.ready,true);assert.equal(promoted.count,3);
+ const before=s.cash,expense=s.bi.totals.cashOut;
+ assert.equal(G.ladderPromote("manager",promoted.candidateId,true),true);
+ assert.equal(s.org.progression.appointments.filter(p=>p.level==="manager").length,1);
+ assert.equal(s.cash,before);assert.equal(s.bi.totals.cashOut,expense);
+ assert.equal(G.ladderPayroll(),1.75*s.mod.cost);
+ const owners=Object.keys(s.org.progression.reportTo);
+ assert.equal(new Set(owners).size,owners.length,"no worker has two primary leaders");
+ reconcile(s);
+});
+test("v21.4b a weekly review may autonomously promote only inside the CEO payroll ceiling",()=>{
+ const s=init();s.deals=[];s.day=84;fund(s,1200);
+ for(let i=0;i<2;i++){const p=G.createPerson();G.ensureCareer(p);G.ensureRole(p);G.ensureDepartment(p);G.ensurePerformance(p,0);s.team.push(p);}
+ for(const p of s.team){p.perf.days=45;p.career.rank=1;p.career.xp=30;}
+ G.ladderDay();assert.equal(s.org.progression.appointments.length,0);
+ assert.equal(G.ladderSetAuthority(.5),true);
+ s.org.progression.lastChecked=-1;G.ladderDay();
+ assert.equal(s.org.progression.appointments.length,1);
+ assert.equal(s.org.progression.events.at(-1).action,"within payroll authority");
+ reconcile(s);
+});
+
 console.log("Boss v20 functional and persistence checks passed.");

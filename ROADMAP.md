@@ -1,8 +1,8 @@
 # Boss — simulation development roadmap
 
-**Owner-updated progress (2026-10-17):** v7 Smart Office Assistant, v8 Projects & Customers and sector expansion, v9 Smarter Employees, v10 Company Operating System (continuous pipeline, persistent roles, autonomous work and capability/skill maps), v11 Mobile UI Simplification, v12 Business Intelligence and v13 Organization & Leadership and v14 Entrepreneurship & Leadership Lab delivered. Owner-approved next priority: v15 Advanced Business Economy.
+**Owner-updated progress (2026-10-17):** v7 Smart Office Assistant, v8 Projects & Customers and sector expansion, v9 Smarter Employees, v10 Company Operating System (continuous pipeline, persistent roles, autonomous work and capability/skill maps), v11 Mobile UI Simplification, v12 Business Intelligence and v13 Organization & Leadership, v14 Entrepreneurship & Leadership Lab and v14.1 Management Coach & Decision Intelligence delivered. Next priority: v15 Advanced Business Economy.
 
-**Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss13`, `boss12`, `boss10`, `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
+**Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss14`, `boss13`, `boss12`, `boss10`, `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
 
 ## Delivered: v7 — Smarter Office Assistant
 - A collapsible Delegation Desk. Owner can set automatic task assignment on/off, and choose project order: **balanced urgency and skills**, **earliest deadline**, or **best skill fit**.
@@ -88,6 +88,18 @@
 - No automatic forced notifications, account, hidden market modifiers or new expenses. Policies are explicitly disclosed and persist unless the user changes them; no surprise reversal.
 - Save key `boss14` with automatic migration from `boss13` and earlier. Preserve existing management organization, business intelligence, KPI health signals and self-contained offline game.
 - QA: time progression, scorecard under low-sample/high-sample conditions, financial ledger outcomes, local-save persistence, manual control and no-experiment economic parity.
+
+## Delivered: v14.1 — Management Coach & Decision Intelligence
+- Three highest management priorities on Today with concise causes, suggestions and navigation; Guided / Challenge / Sandbox explanations; no compulsory action prompts.
+- Repair salary raise as a recurring $0.25/day expense, add transparent upfront decision previews and prohibit unaffordable one-time decisions. Settle historical unpaid payroll from cash without expensing wages twice; show weekly/monthly salary obligations and uncertain anticipated client receipts.
+- Role-specific staff activity tracking (delivery, sales/marketing, learning, management, rest). Existing overall billable utilization remains a company-wide figure, not a personal grade for commercial or management roles. Per-worker tracking starts on first v14.1 day.
+- Fix agreed contract price stability: market focus and reputation changes never retroactively alter existing client fees; renegotiations explicitly update agreed value. Market strategy guide compares entry cost, prerequisites, premiums, skill coverage, reported sector revenue and investment risks.
+- Model manager planning/delegation/coaching/communication competencies that evolve with experience, with departmental-only assignments, budgets, direct reports, clear decision rights and 30-day performance results. Manual employee instructions protected.
+- Make career progression criteria visible on every employee panel; retain deliberate promotions and show both immediate and recurring costs.
+- Experiments preview likely participating staff and operational tradeoffs; report actual participation in project, commercial, training and management time. Offer guarded restoration of original policies after completion, preserving later manual choices.
+- Decision journal captures immediate cash/payroll/people consequences, 7/30-day follow-ups and caution about other simultaneous causes. Preserved as private on-device history.
+- Save key `boss141` imports `boss14` and prior versions without reconstructing unmeasured historical transactions, competencies, work or outcomes. Preserves compact mobile accordions and standalone offline index.html.
+- Validation criteria: syntax, UI boot, 400+ simulated days and financial reconciliation; payroll arrears accounting; recurring raise and affordability; legacy save migration; signed-price lock and renegotiation; manager skill and authority; promotion readiness; experiment participation and policy restore; decision history and mobile navigation.
 
 ## Next: v15 — Advanced Business Economy
 - Distinguish invoicing, collection and accounts receivable from earnings; customer payment terms, overdue amounts and working-capital cycles.

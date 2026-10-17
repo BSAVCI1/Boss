@@ -37,10 +37,11 @@ document.addEventListener("DOMContentLoaded",()=>{
   result.checks.serviceBoard=!!document.querySelector('#business-lines')&&document.querySelector('#business-lines').textContent.includes('General business services');
   if(sessionStorage.getItem("boss-qa-reload")!=="1"){
    const field=(dept,name)=>document.querySelector('#org-controls input[data-org-dept="'+dept+'"][data-org-policy="'+name+'"]');
-   const coaching=field("commercial","coaching"),hiring=field("delivery","hiring");
-   if(!coaching||!hiring)throw Error("Missing player-editable department budgets");
+   const coaching=field("commercial","coaching"),hiring=field("delivery","hiring"),payroll=field("delivery","payrollLimit");
+   if(!coaching||!hiring||!payroll)throw Error("Missing player-editable department budgets");
    coaching.focus();coaching.value="137";coaching.dispatchEvent(new Event("input",{bubbles:true}));
    hiring.focus();hiring.value="68";hiring.dispatchEvent(new Event("input",{bubbles:true}));
+   payroll.focus();payroll.value="2.75";payroll.dispatchEvent(new Event("input",{bubbles:true}));
    const assistant=byId("policy-budget");assistant.focus();assistant.value="19";assistant.dispatchEvent(new Event("input",{bubbles:true}));
    byId("lab-topic").value="sector";byId("lab-topic").dispatchEvent(new Event("change",{bubbles:true}));
    byId("lab-duration").value="45";byId("lab-duration").dispatchEvent(new Event("change",{bubbles:true}));
@@ -48,11 +49,13 @@ document.addEventListener("DOMContentLoaded",()=>{
    byId("lab-sector").value="retail";byId("lab-sector").dispatchEvent(new Event("change",{bubbles:true}));
    byId("lab-hypothesis").value="Quality improves with targeted work";byId("lab-hypothesis").dispatchEvent(new Event("input",{bubbles:true}));
    byId("ceo-priority").value="people";byId("ceo-priority").dispatchEvent(new Event("change",{bubbles:true}));
+   byId("speed-select").value="3";byId("speed-select").dispatchEvent(new Event("change",{bubbles:true}));
+   byId("service-line-select").value="technology";byId("service-line-select").dispatchEvent(new Event("change",{bubbles:true}));
    const snap=JSON.parse(localStorage.getItem("boss20"));
    result.checks.immediateSettingsSaved=snap.org.departments.commercial.plan.limits.coaching===137&&
-    snap.org.departments.delivery.plan.limits.hiring===68&&snap.ops.policy.budget===19&&snap.lab.topic==="sector"&&
+    snap.org.departments.delivery.plan.limits.hiring===68&&snap.org.departments.delivery.plan.payrollLimit===2.75&&snap.ops.policy.budget===19&&snap.lab.topic==="sector"&&
     snap.lab.sector==="retail"&&snap.lab.duration===45&&snap.lab.forecast===50&&
-    snap.lab.hypothesis==="Quality improves with targeted work"&&snap.ui.pendingCEO==="people"&&snap.exec.priority==="grow";
+    snap.lab.hypothesis==="Quality improves with targeted work"&&snap.ui.pendingCEO==="people"&&snap.ui.speed===3&&snap.ui.selectedService==="technology"&&snap.exec.priority==="grow";
    result.checks.visibleSaveStatus=byId("save-state")?.textContent.includes("Saved on this device");
    result.errors=(window.__mobileErrors||[]);
    sessionStorage.setItem("boss-qa-pre-refresh",JSON.stringify(result));
@@ -64,11 +67,12 @@ document.addEventListener("DOMContentLoaded",()=>{
   result.checks.visibleSaveStatus=first.checks.visibleSaveStatus;
   const loaded=JSON.parse(localStorage.getItem("boss20"));
   result.checks.reloadSettingsPersisted=loaded.org.departments.commercial.plan.limits.coaching===137&&
-   loaded.org.departments.delivery.plan.limits.hiring===68&&loaded.ops.policy.budget===19&&
+   loaded.org.departments.delivery.plan.limits.hiring===68&&loaded.org.departments.delivery.plan.payrollLimit===2.75&&loaded.ops.policy.budget===19&&
    loaded.lab.topic==="sector"&&loaded.lab.sector==="retail"&&loaded.lab.duration===45&&loaded.lab.forecast===50&&
-   loaded.lab.hypothesis==="Quality improves with targeted work"&&loaded.ui.pendingCEO==="people"&&loaded.exec.priority==="grow"&&
+   loaded.lab.hypothesis==="Quality improves with targeted work"&&loaded.ui.pendingCEO==="people"&&loaded.ui.speed===3&&loaded.ui.selectedService==="technology"&&loaded.exec.priority==="grow"&&
    document.querySelector('#org-controls input[data-org-dept="commercial"][data-org-policy="coaching"]')?.value==="137"&&
-   byId("policy-budget")?.value==="19"&&byId("ceo-priority")?.value==="people";
+   byId("policy-budget")?.value==="19"&&byId("ceo-priority")?.value==="people"&&
+   byId("speed-select")?.value==="3"&&byId("service-line-select")?.value==="technology";
   result.errors=(window.__mobileErrors||[]).concat(first.errors||[]);
  }catch(e){result.errors.push(String(e.stack||e));}
  document.title="BOSS_QA:"+btoa(unescape(encodeURIComponent(JSON.stringify(result))));

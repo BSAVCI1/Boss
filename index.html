@@ -2524,7 +2524,7 @@ function unitAutonomousDay(){
   u.reviews=u.reviews.slice(-6);
   p.lastReview=S.day;p.baselineDelivered=u.delivered;p.baselineQuality=u.qualityTotal;p.baselineMissed=u.missed;p.baselineRevenue=u.revenue;p.baselineCosts=u.directCost+u.sharedLaborCost+u.payrollCost+u.developmentCost;p.baselineStaffDays=u.staffDays;p.baselineBillableDays=u.billableDays;
   const active=S.deals.filter(d=>d.unitKey===u.key).length;
-  if(active>=Math.max(1,u.staffIds.length-1)&&u.staffIds.length<5&&!S.exec.unitRequests.some(r=>r.key===u.key&&r.status==="open")){
+  if(active>=Math.max(1,u.staffIds.length-1)&&u.staffIds.length<Math.min(25,p.staffingTarget||5)&&!S.exec.unitRequests.some(r=>r.key===u.key&&r.status==="open")){
    const request={id:S.exec.unitRequestSeq++,key:u.key,managerId:gm.id,day:S.day,status:"open",kind:"hire",cost:20,payroll:1.5*S.mod.cost,role:SERVICE_LINES[u.key].need,reason:"Capacity: "+active+" active unit projects / "+Math.max(0,u.staffIds.length-1)+" specialists. Recruit "+SERVICE_LINES[u.key].need+" expertise; payroll continues after approval."};
    S.exec.unitRequests.push(request);unitRecord(u.key,"proposal",gm.n+" requested one specialist hire. CEO approval required.");
   }
@@ -2534,7 +2534,7 @@ function unitAutonomousDay(){
 function unitRequestDecision(id,action){
  const req=S.exec.unitRequests.find(r=>r.id===id&&r.status==="open"),u=S.exec.units.find(x=>x.key===req?.key);
  if(!req||!u||req.managerId!==u.managerId||!["approve","decline"].includes(action))return false;
- if(action==="approve"&&(S.cash<req.cost||u.staffIds.length>=5||!person(u.managerId)))return false;
+ if(action==="approve"&&(S.cash<req.cost||u.staffIds.length>=Math.min(25,u.plan.staffingTarget||5)||!person(u.managerId)))return false;
  return unitCommit(()=>{
   req.status=action==="approve"?"approved":"declined";req.decidedAt=S.day;
   if(action==="approve"){
@@ -2572,7 +2572,7 @@ if(editableInteractionPending())return;
   const transfers=S.team.filter(p=>unitStaffEligible(p,l.key)&&!u.staffIds.includes(p.id)&&!S.deals.some(d=>d.w===p.id));
   const releasing=staff.filter(p=>p.id!==u.managerId&&!S.deals.some(d=>d.w===p.id));
   const result=u.revenue-u.directCost-u.sharedLaborCost-u.payrollCost-u.developmentCost;
-  const p=u.plan||{},requests=S.exec.unitRequests.filter(q=>q.key===u.key&&q.status==="open"),last=u.reviews.at(-1);
+  const p=u.plan||{},requests=S.exec.unitRequests.filter(q=>q.key===u.key&&q.status==="open"),last=u.reviews.at(-1),career=unitCareerReadiness(u);
   const authority='<details class="aux-details"><summary>CEO authority &amp; GM scorecard</summary><p class="small">Dedicated operating-unit authority; Commercial and Delivery budgets are not shared with this unit. Default delegation is $0; recruiting requires CEO approval.</p>'+
   '<p class="small">Choose a 90-day manager authority preset. Budgets are spending limits, not charges. Hiring requires CEO approval. Existing authority stays unchanged until you apply a template.</p>'+
   '<div><label for="unit-preset-'+l.key+'">Manager budget template</label><select id="unit-preset-'+l.key+'"><option value="fresh" '+(p.preset==="fresh"?"selected":"")+'>Fresh manager · $24 coaching + $24 training</option><option value="manager" '+(p.preset==="manager"?"selected":"")+'>Manager · +25%</option><option value="senior" '+(p.preset==="senior"?"selected":"")+'>Senior manager · +25%</option><option value="custom" '+(!["fresh","manager","senior"].includes(p.preset)?"selected":"")+'>Custom · keep manual figures</option></select><button type="button" data-unit-action="preset" data-unit-key="'+l.key+'">Apply preset</button></div>'+
@@ -2589,7 +2589,7 @@ if(editableInteractionPending())return;
   '<button type="button" data-unit-action="apply-draft" data-unit-key="'+l.key+'">Apply custom settings</button><p role="status" class="small" id="unit-settings-status-'+l.key+'">Type freely; figures save only when you press Apply custom settings.</p>'+
   '<button type="button" data-unit-action="renew" data-unit-key="'+l.key+'">Renew GM authority (no fee)</button>'+
   '<p class="small"><b>Last 30-day review:</b> '+(last?"Day "+last.day+' · '+esc(last.result)+(last.quality===null?" · insufficient delivery data":" · quality "+last.quality+"% / objective "+last.goal+"%")+' · '+last.delivered+' delivered, '+last.missed+' missed'+(Number.isFinite(last.revenue)?' · Revenue '+biCurrency(last.revenue)+' / '+biCurrency(last.revenueTarget)+' · Operating '+biCurrency(last.operating)+' · Billable '+(last.utilization===null?'no capacity':last.utilization+'%')+' / '+last.utilizationTarget+'%':' · v21.2 review; capacity not tracked then'):"Not yet recorded")+'</p></details>';
-  const proposals=requests.map(q=>'<div class="exec-proposal"><b>General Manager staffing proposal</b><p>'+esc(q.reason)+' Cost '+biCurrency(q.cost)+' now + estimated '+biCurrency(q.payroll)+'/day payroll. No employee has been hired yet.</p><div class="buttons"><button type="button" data-unit-request="'+q.id+'" data-unit-response="approve" '+(S.cash<q.cost||u.staffIds.length>=5?"disabled":"")+'>Approve hiring</button><button type="button" data-unit-request="'+q.id+'" data-unit-response="decline">Decline</button></div></div>').join("");
+  const proposals=requests.map(q=>'<div class="exec-proposal"><b>General Manager staffing proposal</b><p>'+esc(q.reason)+' Cost '+biCurrency(q.cost)+' now + estimated '+biCurrency(q.payroll)+'/day payroll. No employee has been hired yet.</p><div class="buttons"><button type="button" data-unit-request="'+q.id+'" data-unit-response="approve" '+(S.cash<q.cost||u.staffIds.length>=Math.min(25,p.staffingTarget||5)?"disabled":"")+'>Approve hiring</button><button type="button" data-unit-request="'+q.id+'" data-unit-response="decline">Decline</button></div></div>').join("");
 
   return'<details class="unit-panel" data-unit-open="'+l.key+'" '+(open.has(l.key)?'open':'')+'><summary>'+esc(SERVICE_LINES[l.key].name)+' · operating unit · '+(gm?esc(gm.n)+" (GM)":"vacant GM")+'</summary>'+
    '<div class="unit-metrics"><span>'+staff.length+' people incl. GM</span><span>'+S.deals.filter(d=>d.unitKey===u.key).length+' active contracts</span><span>'+u.delivered+' delivered</span><span>'+biCurrency(u.revenue)+' earned</span><span>'+biCurrency(result)+' operating result</span></div>'+
@@ -2598,7 +2598,11 @@ if(editableInteractionPending())return;
    '<div class="filter-grid"><div><label for="unit-gm-'+l.key+'">General Manager</label><select id="unit-gm-'+l.key+'"><option value="">Choose qualified employee</option>'+candidates.map(p=>'<option value="'+p.id+'">'+esc(p.n)+' (#'+p.id+')</option>').join("")+'</select><button type="button" data-unit-action="manager" data-unit-key="'+l.key+'" '+(!candidates.length?"disabled":"")+'>Appoint GM</button></div>'+
    '<div><label for="unit-employee-'+l.key+'">Dedicated employee</label><select id="unit-employee-'+l.key+'"><option value="">Choose available teammate</option>'+transfers.map(p=>'<option value="'+p.id+'">'+esc(p.n)+' (#'+p.id+')</option>').join("")+'</select><button type="button" data-unit-action="transfer" data-unit-key="'+l.key+'" '+(!transfers.length?"disabled":"")+'>Transfer to unit</button></div></div>'+
    (releasing.length?'<label for="unit-release-'+l.key+'">Return employee to shared services</label><select id="unit-release-'+l.key+'">'+releasing.map(p=>'<option value="'+p.id+'">'+esc(p.n)+' (#'+p.id+')</option>').join("")+'</select><button type="button" data-unit-action="release" data-unit-key="'+l.key+'">Return to shared team</button>':"")+
-   '<p class="small">Active customer contracts finish before transfers. Each employee has one primary unit; departmental spending authority remains shared.</p>'+authority+proposals+'</details>';
+   '<p class="small">Active customer contracts finish before transfers. Each employee has one primary unit; departmental spending authority remains shared.</p>'+
+   '<details class="aux-details"><summary>Manager career &amp; succession plan</summary><p class="small">Successor: '+(career.successor?esc(career.successor.n)+" (#"+career.successor.id+")":"Awaiting an eligible team member")+' · Trained sessions '+career.sessions+' / 3 · '+career.reviews+' successful 30-day reviews · '+career.people+' direct specialists.</p>'+
+   '<p class="small">'+esc(career.next)+'.'+(career.successorReady?" Successor development threshold reached; promotion requires CEO approval and a real reporting structure.":" Training uses approved budget only.")+'</p>'+
+   '<p class="small">Career path: Specialist → Team Lead (3 specialists) → Manager (up to five leads) → Senior Manager (three or more managers) → Director. Growth requires evidence and a trained replacement, not headcount alone.</p></details>'+
+   authority+proposals+'</details>';
  }).join("");
  target.innerHTML='<h3>Operating units</h3><p class="small">Build an independent management structure from a service you already purchased; no second launch fee. Managers and dedicated employees affect future work, while all cash and signed contract history remain consolidated.</p>'+choices;
  for(const [id,value] of selectedChoices){const el=$(id);if(el&&!id.startsWith("unit-preset-")&&[...el.options].some(option=>option.value===value))el.value=value;}

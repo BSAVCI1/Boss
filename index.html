@@ -2298,6 +2298,7 @@ const unmanaged=direct.filter(p=>DEPARTMENTS[key].skills.every(role=>orgSubManag
 return '<div class="ceo-report"><b>'+DEPARTMENTS[key].name+'</b><div>'+(chief?esc(chief.n)+" · "+orgLeaderTitle(chief)+" · "+direct.length+" direct / "+staff.length+" total":"Founder-led · "+staff.length+" colleagues")+'</div><details data-ceo-team="'+key+'" '+(expanded.has(key)?"open":"")+'><summary>View team</summary>'+managed+unmanaged.map(p=>'<div class="small">'+esc(p.n)+' (#'+p.id+') · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'</details></div>';}).join("");
 $("ceo-assistant").textContent=a? a.n+" · CEO coordination and manager follow-ups":"Unfilled · appointment optional";
 $("ceo-priority").value=ceoDraftPriority??S.exec.priority;
+ if(ceoDraftPriority&&ceoDraftPriority!==S.exec.priority)$("ceo-direction-confirm").textContent="Pending: "+CEO_PRIORITIES[ceoDraftPriority].name+". Tap Set CEO direction to confirm.";
 $("ceo-direction-time").textContent="Day "+Math.max(0,S.day-S.exec.priorityDay)+" / 90";
 $("ceo-direction-note").textContent=ceoDraftPriority&&ceoDraftPriority!==S.exec.priority?"Proposed change: "+CEO_PRIORITIES[ceoDraftPriority].explain:CEO_PRIORITIES[S.exec.priority].explain;
 $("ceo-set-direction").disabled=!!S.ev;

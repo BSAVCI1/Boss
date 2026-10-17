@@ -1,5 +1,13 @@
 # Boss — simulation development roadmap
 
+## v20.1 follow-up — Editable player settings reliability (released 2026-10-17)
+
+**Scope:** [PR #20](https://github.com/BSAVCI1/Boss/pull/20) follows the already released [PR #19](https://github.com/BSAVCI1/Boss/pull/19). Numeric manager budgets/targets/spending limits persist on valid input without the Safari blur dependency. Assistant authority, experiment setup and reflections, speed, selected future service and pending CEO draft are saved immediately. A valid pending CEO draft is not automatically enacted. The recurring payroll cap accepts 0.01 increments; a global save indicator differentiates a durable localStorage write, invalid unfinished input, quota/storage failure and cross-tab conflict.
+
+**Acceptance evidence:** Existing v20 save/purchase/recovery/730-day economy tests retained; added all departmental policy value reload tests, invalid and failed input checks, and real Chromium 390px input-to-refresh checks. [Production CI](https://github.com/BSAVCI1/Boss/actions/runs/39058299668) and [Pages](https://github.com/BSAVCI1/Boss/actions/runs/39058299044) succeeded. Live endpoint served the updated page. No change to accounting contracts or legacy migration.
+
+**Open validation:** The actual player's Day 2700+ Safari storage, old purchases with missing financial receipts, Safari eviction/private-browsing storage policy and true simultaneous-tab write races cannot be proven from isolated GitHub CI. Never clear Safari data for testing. Future v20.2: optional non-destructive, user-triggered save diagnostics / export-import and per-line durable receipt verification; improve iPhone-specific test coverage.
+
 **Owner-updated progress (2026-10-17):** v7 Smart Office Assistant, v8 Projects & Customers and sector expansion, v9 Smarter Employees, v10 Company Operating System (continuous pipeline, persistent roles, autonomous work and capability/skill maps), v11 Mobile UI Simplification, v12 Business Intelligence and v13 Organization & Leadership, v14 Entrepreneurship & Leadership Lab and v14.1 Management Coach & Decision Intelligence delivered. v15 Advanced Business Economy delivered, including a role-focused career and hiring map. Future expansions remain in the owner-selected backlog.
 
 **Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss14`, `boss13`, `boss12`, `boss10`, `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.

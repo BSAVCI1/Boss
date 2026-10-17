@@ -808,6 +808,15 @@ function restoreRecordedLines(state){
  if(!state.exec||!Array.isArray(state.exec.lines))return;
  const seen=new Set(state.exec.lines.map(x=>x.key));
  const receipts=state.bi?.recent||[];
+ // Recover a previously purchased v19 business line only from an independent
+ // financial receipt already present in the current save; do not charge twice.
+ for(const receipt of receipts){
+  if(receipt.kind!=="investment")continue;
+  const key=Object.keys(SERVICE_LINES).find(k=>receipt.info==="New business line: "+SERVICE_LINES[k].name);
+  if(!key||seen.has(key)||!Number.isFinite(receipt.day))continue;
+  state.exec.lines.push({key,since:receipt.day,spent:receipt.amount||120,delivered:0,missed:0,revenue:0,recovered:true});
+  seen.add(key);
+ }
  for(const entry of launchJournal()){
   if(seen.has(entry.key))continue;
   // Never reconstruct an investment from an unverified journal alone.
@@ -1665,7 +1674,10 @@ function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4)+(d.worldStrategy==="relationships"?3:0)-(Number.isFinite(d.serviceQualityTarget)&&d.quality<d.serviceQualityTarget?8:0));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){ceoDraftPriority=null;persistedRevision=0;saveConflict=false;S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){
+ ceoDraftPriority=null;saveConflict=false;
+ try{persistedRevision=Number(JSON.parse(localStorage.getItem(KEY)||"null")?._saveRevision)||0;}catch{persistedRevision=0;}
+ S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}

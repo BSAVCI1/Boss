@@ -131,6 +131,26 @@ document.addEventListener("DOMContentLoaded",async()=>{
    result.checks.indexedLineNoDoubleCharge=!!recovered&&recovered.exec.lines.filter(x=>x.key==="technology").length===1&&
     recovered.bi.totals.investments===120&&recovered.exec.lines.find(x=>x.key==="technology").spent===120&&
     byId("business-lines")?.textContent.includes("Technology advisory");
+   if(sessionStorage.getItem("boss-qa-v21")!=="1"){
+    const activate=document.querySelector('#business-units button[data-unit-action="activate"][data-unit-key="technology"]');
+    result.checks.unitButtonVisible=!!activate;
+    if(activate)activate.click();
+    let committed=false;
+    for(let i=0;i<90;i++){
+     if(document.querySelector('#business-units details[data-unit-open="technology"]')&&byId("save-state")?.textContent.startsWith("Saved Day ")&&byId("save-state")?.textContent.includes("extended device storage")){committed=true;break;}
+     await new Promise(r=>setTimeout(r,100));
+    }
+    result.checks.unitActivationCommitted=committed;
+    sessionStorage.setItem("boss-qa-v21-result",JSON.stringify(result));
+    sessionStorage.setItem("boss-qa-v21","1");
+    location.reload();return;
+   }
+   const prevV21=JSON.parse(sessionStorage.getItem("boss-qa-v21-result"));
+   result.checks={...prevV21.checks,...result.checks};
+   result.errors=result.errors.concat(prevV21.errors||[]);
+   result.checks.unitActivationReloaded=!!recovered&&recovered.exec.units.filter(u=>u.key==="technology").length===1&&
+    recovered.bi.totals.investments===120&&recovered.exec.lines.filter(x=>x.key==="technology").length===1&&
+    byId("business-units")?.textContent.includes("operating unit");
  }catch(e){result.errors.push(String(e.stack||e));}
  document.title="BOSS_QA:"+btoa(unescape(encodeURIComponent(JSON.stringify(result))));
 });
@@ -202,6 +222,9 @@ async function runBrowser(){
   assert.equal(outcome.checks.indexedFallbackReload,true,"After reload Boss must use newer IndexedDB day, not stale local day");
   assert.equal(outcome.checks.indexedLineCommitted,true,"Business purchase in IndexedDB mode must commit before confirmation");
   assert.equal(outcome.checks.indexedLineNoDoubleCharge,true,"Paid line must survive reload with one $120 investment and no duplicates");
+  assert.equal(outcome.checks.unitButtonVisible,true,"Existing paid service must offer free unit conversion");
+  assert.equal(outcome.checks.unitActivationCommitted,true,"Conversion must commit to fallback storage before confirmation");
+  assert.equal(outcome.checks.unitActivationReloaded,true,"After reload exactly one unit remains and no $120 fee was repeated");
   assert.deepEqual(outcome.errors,[]);
   await send("Emulation.setDeviceMetricsOverride",{width:414,height:896,deviceScaleFactor:1,mobile:true});
   await sleep(150);

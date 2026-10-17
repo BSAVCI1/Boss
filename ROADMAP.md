@@ -1,6 +1,6 @@
 # Boss — simulation development roadmap
 
-## v21.2 — General Manager autonomy with CEO authorization (release candidate)
+## Released v21.2 — General Manager autonomy with CEO authorization
 
 [PR #25](https://github.com/BSAVCI1/Boss/pull/25) builds on v21.1, leaving historical staff, contracts, purchased lines, financial ledgers and Safari saves intact.
 
@@ -9,7 +9,7 @@
 - Thirty-day scorecards track unit delivery, missed jobs, quality and spending from real attributed history, identifying insufficient evidence.
 - Managers suggest new staff only when real unit backlog justifies it. A CEO approval incurs exactly one $20 recruiting cost plus recurring payroll. Declines and duplicate taps do not hire.
 - Save protections remain forward-only, including transactional IndexedDB fallback; unit costs remain analytical slices of one corporate ledger.
-- Merge gate: 730-day legacy financial tests, default-zero/migration regressions, coaching limits/expiry/renewal, hiring no-double-charge and real 390px mobile IndexedDB save/reload plus 414px responsive layout.
+- **Release verified:** [PR #25](https://github.com/BSAVCI1/Boss/pull/25) merged at `25e09e0febf22227b44dad1c350f374a88302ed1`. [Production regression](https://github.com/BSAVCI1/Boss/actions/runs/39066315475), [Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39066315191) and [live smoke](https://agent.tinyfish.ai/runs/bf1a3d19-6c28-4844-848c-2a98b2106c72) succeeded. The 730-day financial suite, default-zero migration, coaching/hiring no-double-charge, 390px extended-store reload and 414px layout passed. The player's personal Safari save has not been inspected.
 - v21.3–v21.4 will add broader GM strategy, dedicated capacity allocation, quarterly CEO portfolio meetings and better visual organization. v22 offices, v23 investments/acquisitions, v24 factories remain future work.
 
 ## Released increment — v21.1 Independent Operating Units

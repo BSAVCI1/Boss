@@ -106,7 +106,7 @@ test("growth supports department manager appointments to address span of control
  assert.ok(G.orgDirectReports("commercial").length<7);balanced(s);
 });
 test("referrals can be accepted with full 12-lead pipeline",()=>{
- const s=fresh();fund(s,40);s.pipeline.leads=Array.from({length:12},(_,i)=>({id:i+10}));
+ const s=fresh();fund(s,40);s.pipeline.leads=Array.from({length:12},(_,i)=>({id:i+10,client:"Client "+i,sector:"hospitality",stage:"prospect",progress:0,age:0,source:"test",created:0,preference:"quality"}));
  s.world.activeEvent={id:1,type:"referrals",opened:1,until:100};
  assert.equal(G.worldOfferEligibility(s.world.activeEvent).allowed,true);
  const before=s.cash;
@@ -114,7 +114,7 @@ test("referrals can be accepted with full 12-lead pipeline",()=>{
  assert.equal(s.pipeline.leads.length,12);balanced(s);
 });
 test("market research can be accepted with full pipeline, but tender cannot",()=>{
- const s=fresh();fund(s,90);s.pipeline.leads=Array.from({length:12},(_,i)=>({id:i+10}));
+ const s=fresh();fund(s,90);s.pipeline.leads=Array.from({length:12},(_,i)=>({id:i+10,client:"Client "+i,sector:"hospitality",stage:"prospect",progress:0,age:0,source:"test",created:0,preference:"quality"}));
  s.world.activeEvent={id:5,type:"slowdown",opened:5,until:100};
  assert.equal(G.worldOfferEligibility(s.world.activeEvent).allowed,true);
  assert.ok(G.worldEventChoice("act"));assert.equal(s.world.activeEvent,null);

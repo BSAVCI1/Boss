@@ -565,7 +565,7 @@ if(!state.team.some(p=>p.id===d.managerId&&p.department===key&&p.role.primary===
 function orgManager(key){const id=S.org.departments[key]?.managerId;const p=person(id);return p&&p.department===key&&p.role.primary==="lead"&&p.id!==S.ops.assistantId?p:null;}
 function orgReports(key){const mgr=orgManager(key);return S.team.filter(p=>p.department===key&&p.id!==mgr?.id&&p.id!==S.ops.assistantId);}
 function orgPeriod(){for(const key of DEPT_KEYS){const d=S.org.departments[key];if(S.day-d.periodStart>=30){d.periodStart=S.day;d.spent=0;d.stats=orgEmptyStats();logIt(DEPARTMENTS[key].name+" department began a new 30-day review period.");}}}
-function orgEffective(key){const m=orgManager(key);if(!m||m.career.recoveryDays>0||m.career.autoRest||m.t.startsWith("d"))return 0;const count=orgReports(key).length;if(!count)return 0;
+function orgEffective(key){const m=orgManager(key);if(!m||m.career.recoveryDays>0||m.career.autoRest||!["coachteam","teach"].includes(m.t))return 0;const count=orgReports(key).length;if(!count)return 0;
 return Math.max(.3,Math.min(1,6/Math.max(2,count+1)))*stressFactor(m);}
 function orgManagerBoost(p){return p&&p.role.primary!=="lead"?1+.07*orgEffective(p.department):1;}
 function orgTrackPerson(p){const d=S.org.departments[p.department];if(!d||p.id===S.ops.assistantId)return;d.stats.staffDays++;if(p.t.startsWith("d"))d.stats.billableDays++;if(orgManager(p.department)?.id===p.id)d.stats.managerDays++;}
@@ -789,17 +789,27 @@ if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=450
 save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;}save();renderStructure();refresh();}
 function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p));}
-function bestIdle(d){return S.team.filter(p=>p.id!==S.ops.assistantId&&p.role.primary!=="lead"&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
+function bestIdle(d,department=null){return S.team.filter(p=>(!department||p.department===department)&&p.id!==S.ops.assistantId&&p.role.primary!=="lead"&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
 function forecast(d){const assigned=person(d.w);const candidate=assigned||bestIdle(d);const speed=workerSpeed(candidate,d);const remaining=Math.max(0,d.work-d.prog);const eta=speed?Math.ceil(remaining/speed):null;const slack=eta===null?null:d.dl-eta;const risk=!assigned?"unassigned":slack<0?"critical":slack<=4?"watch":"ok";return{d,assigned,candidate,eta,slack,risk,fit:speed};}
 function rankedProjects(){const priority=S.ops.policy.priority;return S.deals.map(forecast).sort((a,b)=>{
 if(priority==="deadline")return a.d.dl-b.d.dl||b.fit-a.fit;
 if(priority==="skills")return b.fit-a.fit||a.d.dl-b.d.dl;
 const aRisk=a.slack===null?-8:a.slack,bRisk=b.slack===null?-8:b.slack;
 return aRisk-bRisk||a.d.dl-b.d.dl||b.fit-a.fit;});}
-function delegateWork(){const assistant=person(S.ops.assistantId);
-const a=assistant&&assistant.career.recoveryDays===0?assistant:S.team.find(p=>p.role.primary==="lead"&&p.career.recoveryDays===0&&(p.t==="coachteam"||p.t==="teach"));
-if(!a||!S.ops.policy.assign)return false;let changed=false;
-for(const f of rankedProjects()){const d=f.d;if(d.w!==null)continue;const p=bestIdle(d);if(!p)break;d.w=p.id;p.t="d"+d.id;p.role.autoTask=true;S.ops.assigned++;logIt(a.n+" assigned "+p.n+" to "+d.cl+" ("+S.ops.policy.priority+" priority).");changed=true;}return changed;}
+function delegateWork(){if(!S.ops.policy.assign)return false;
+const assistant=person(S.ops.assistantId);
+const activeAssistant=assistant&&assistant.t==="assist"&&assistant.career.recoveryDays===0;
+let changed=false;
+for(const f of rankedProjects()){const d=f.d;if(d.w!==null)continue;
+const dept=["sales","mkt"].includes(d.need)?"commercial":"delivery";
+const m=orgManager(dept);
+const lead=!activeAssistant&&m&&["coachteam","teach"].includes(m.t)&&m.career.recoveryDays===0?m:null;
+const boss=activeAssistant?assistant:lead;if(!boss)continue;
+const employee=bestIdle(d,lead?dept:null);if(!employee)continue;
+d.w=employee.id;employee.t="d"+d.id;employee.role.autoTask=true;S.ops.assigned++;
+logIt(boss.n+" assigned "+employee.n+" to "+d.cl+" ("+(lead?DEPARTMENTS[dept].name+" department":"office assistant")+").");
+changed=true;
+}return changed;}
 function assistantDecision(ev){const a=person(S.ops.assistantId),policy=S.ops.policy;if(!a||a.t!=="assist"||a.career.recoveryDays>0||ev.a===a.id)return null;
 const cost={praise:0,family:5,mistake:0,idea:10}[ev.k];if(cost===undefined||!policy[ev.k]||cost>policy.budget||S.cash<cost)return null;
 return ev.k==="mistake"?1:0;}

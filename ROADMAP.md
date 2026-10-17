@@ -1,8 +1,8 @@
 # Boss — simulation development roadmap
 
-**Owner-updated progress (2026-10-17):** v7 Smart Office Assistant, v8 Projects & Customers and sector expansion, v9 Smarter Employees, v10 Company Operating System (continuous pipeline, persistent roles, autonomous work and capability/skill maps), v11 Mobile UI Simplification, v12 Business Intelligence and v13 Organization & Leadership delivered. Owner-approved next priorities: v14 Entrepreneurship Lab, then v15 Advanced Business Economy.
+**Owner-updated progress (2026-10-17):** v7 Smart Office Assistant, v8 Projects & Customers and sector expansion, v9 Smarter Employees, v10 Company Operating System (continuous pipeline, persistent roles, autonomous work and capability/skill maps), v11 Mobile UI Simplification, v12 Business Intelligence and v13 Organization & Leadership and v14 Entrepreneurship & Leadership Lab delivered. Owner-approved next priority: v15 Advanced Business Economy.
 
-**Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss12`, `boss10`, `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
+**Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss13`, `boss12`, `boss10`, `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
 
 ## Delivered: v7 — Smarter Office Assistant
 - A collapsible Delegation Desk. Owner can set automatic task assignment on/off, and choose project order: **balanced urgency and skills**, **earliest deadline**, or **best skill fit**.
@@ -80,14 +80,16 @@
 - **Lifecycle rules:** manager departure or replacement restores the former specialist role and base pay; unappointed leads can still deliver. Safe unassignment on firing, cross-team transfer, assistant appointment or specialist-role change; preserve existing business and financial history and no network dependencies.
 - **Validated:** scoped authority, budgets, salary impact, migration, 27 functional checks and unchanged baseline economy during a 360-day flat-organization comparison with v12.1.
 
-## Next: v14 — Entrepreneurship & Leadership Lab
-- **Hypothesis and forecast:** player chooses a learning question (pricing, recruiting, marketing mix, industry focus, management structure), specifies an expected outcome, then runs a time-bounded experiment.
-- **Scorecard:** compare baseline to subsequent profit, leads, conversion, delivery, workload and customer results. Show both positive and negative consequences, not just prizes.
-- **Reflection:** display original hypothesis, measurable outcome, possible confounders and alternative choices; do not claim simulation outcomes prove real-world business causation.
-- **Experiment notebook:** retain on-device history and insights; explain underlying game rules without hidden manipulation.
-- **Acceptance:** finance/people metrics auditable from v12 ledger; no compulsory popups; replayable learning with balanced tradeoffs.
+## Delivered: v14 — Entrepreneurship & Leadership Lab
+- Six optional experiment scenarios: demand-generation strategy, client delivery reliability, employee skills, wellbeing, market specialization and custom leadership decisions.
+- Choose a forecast change (including negative and zero projections), 15/30/45-day horizon, and optional written hypothesis; the game applies an explicit policy intervention unless the player selects custom.
+- Preserve an auditable baseline using recent Finance/Sales/Delivery/People ledger events, or initial team averages for skill/stress outcomes. Simulated results track actual revenue, profit, costs, lead wins, deliveries, cash, delivery timeliness and utilization.
+- Publish the realized-vs-forecast scorecard in an offline notebook, including confidence caveats, insufficient historical sample alerts, policy-change confounders and user reflection. Keep at most 12 historical experiments.
+- No automatic forced notifications, account, hidden market modifiers or new expenses. Policies are explicitly disclosed and persist unless the user changes them; no surprise reversal.
+- Save key `boss14` with automatic migration from `boss13` and earlier. Preserve existing management organization, business intelligence, KPI health signals and self-contained offline game.
+- QA: time progression, scorecard under low-sample/high-sample conditions, financial ledger outcomes, local-save persistence, manual control and no-experiment economic parity.
 
-## Later: v15 — Advanced Business Economy
+## Next: v15 — Advanced Business Economy
 - Distinguish invoicing, collection and accounts receivable from earnings; customer payment terms, overdue amounts and working-capital cycles.
 - Evaluate pricing, discounting, expansion financing and investment ROI; distinguish cash, profit, committed liabilities and capital assets.
 - Add fair competition, market demand variability and strategic choices; make future uncertainty visible.

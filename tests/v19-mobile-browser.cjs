@@ -30,6 +30,11 @@ document.addEventListener("DOMContentLoaded",()=>{
   result.checks.customBudgets=!!document.querySelector('[data-org-policy="training"]')&&!!document.querySelector('[data-org-policy="hiring"]');
   result.checks.optionalManagers=!!document.querySelector('[data-org-subrole="sales"]')&&!!document.querySelector('[data-org-subrole="ops"]');
   result.checks.noVisibleUndefined=!document.body.innerText.includes("undefined");
+  const promotionButtons=[...document.querySelectorAll('button[data-career="promote"]')];
+  result.checks.promotionPriceRendered=promotionButtons.length>0&&promotionButtons.every(button=>{
+   const text=button.textContent.trim(),prefix="Promote · $";
+   return text.startsWith(prefix)&&Number.isFinite(Number(text.slice(prefix.length)))&&text.slice(prefix.length).length>0;
+  });
   result.errors=(window.__mobileErrors||[]);
  }catch(e){result.errors.push(String(e.stack||e));}
  document.title="BOSS_QA:"+btoa(unescape(encodeURIComponent(JSON.stringify(result))));
@@ -90,6 +95,7 @@ async function runBrowser(){
   assert.equal(outcome.checks.customBudgets,true);
   assert.equal(outcome.checks.optionalManagers,true);
   assert.equal(outcome.checks.noVisibleUndefined,true);
+  assert.equal(outcome.checks.promotionPriceRendered,true,"Real Chrome employee promotion buttons must show numeric dollar prices, not source code");
   assert.deepEqual(outcome.errors,[]);
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}

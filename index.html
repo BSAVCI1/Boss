@@ -163,7 +163,7 @@ if(!Number.isFinite(c.lastCheckin))c.lastCheckin=-99;
 if(!Number.isFinite(c.lastPlan))c.lastPlan=-99;
 if(!Number.isFinite(c.promotedAt))c.promotedAt=-99;
 if(!Number.isFinite(c.recognizedAt))c.recognizedAt=-99;
-if(!Number.isFinite(c.completions))c.completions=0;if(typeof c.autoRest!=="boolean")c.autoRest=false;
+if(!Number.isFinite(c.completions))c.completions=0;if(typeof c.autoRest!=="boolean")c.autoRest=false;if(!Number.isFinite(c.recoveryDays))c.recoveryDays=0;
 }
 function talentHint(p){const k=p.career.talent;return({sales:"connects naturally with people",mkt:"notices stories and customer patterns",prod:"enjoys making new things",ops:"spots ways to improve routines"})[k];}
 function rankName(p){return ["Associate","Senior","Lead"][p.career.rank];}
@@ -253,7 +253,7 @@ S.market.customers[d.cl]=prev;}
 function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99}};for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);S.team.push(p);}createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
-function taskText(p){if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant"})[p.t]||"idle";}
+function taskText(p){if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant"})[p.t]||"idle";}
 function release(p){if(!p)return;for(const d of S.deals)if(d.w===p.id)d.w=null;p.t="idle";}
 function removePerson(p){if(S.team.length<=1)return false;if(S.ops.assistantId===p.id)S.ops.assistantId=null;release(p);S.team=S.team.filter(x=>x.id!==p.id);avatars.delete(p.id);return true;}
 function discover(who){const unused=Object.keys(IDEAS).filter(k=>!S.seeds.includes(k));if(!unused.length){if(!S.log[0].includes("All basic ideas"))logIt("All basic ideas are found.");return false;}const key=pick(unused);S.seeds.push(key);logIt(who+" discovered a new idea: "+IDEAS[key]+".");return true;}
@@ -266,7 +266,11 @@ for(const p of [...S.team]){
 if(p.career.autoRest&&p.career.stress<=34&&p.career.burnout<=12){p.career.autoRest=false;p.t="idle";logIt(p.n+" returned after a recovery break.");dirty=true;}
 else if(p.t==="idle"&&p.career.stress>=72){p.t="rest";p.career.autoRest=true;logIt(p.n+" chose a recovery break after sustained work.");dirty=true;}
 const mf=.6+p.mood/250,lb=p.loy>70?1.1:1;let dm=-.2;
-if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1);d.prog+=e;
+if(p.t.startsWith("d")&&p.career.stress>=92&&p.career.burnout>=18&&p.career.recoveryDays<=0){
+p.career.recoveryDays=4;logIt(p.n+" took a four-day recovery pause after sustained workload.");}
+const recovering=p.career.recoveryDays>0;
+if(recovering){p.career.recoveryDays--;dm=1.5;}
+else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1);d.prog+=e;
 d.quality=clamp(d.quality+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1)-(p.career.stress>=75?.25:0)-(p.career.burnout>=45?.18:0));
 for(const [index,limit,name] of [[1,.34,"Plan approved"],[2,.73,"Build completed"]])if(d.milestone<index&&d.prog>=d.work*limit){d.milestone=index;logIt(d.cl+": "+name+" ("+Math.round(d.quality)+"% quality).");}
 p.s[d.need]+=.05*S.mod.learn*(aligned?1.12:1);dm=(e>=.9?.4:-.3)+(aligned?.15:0);}else{p.t="idle";dm=-.2;dirty=true;}}
@@ -276,7 +280,7 @@ else if(p.t==="exp"){S.cash=Math.max(0,S.cash-1);const avg=KEYS.reduce((s,k)=>s+
 else if(p.t==="rest"){dm=2;}
 else if(p.t==="assist"){p.s.ops+=.025*S.mod.learn;dm=.25;}
 const assignedDeadline=p.t.startsWith("d")?deal(Number(p.t.slice(1)))?.dl??99:99;
-talentAndCareerDay(p,p.t,assignedDeadline);
+talentAndCareerDay(p,recovering?"rest":p.t,assignedDeadline);
 p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
 if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
@@ -287,7 +291,7 @@ assistantDeadlineAlerts();
 const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);if(S.cash<salary){S.cash=0;for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford salaries. Team morale dropped.",true);}else S.cash-=salary;
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
 save();if(dirty||!structural||S.deals.some(d=>(!d.negotiated&&d.prog>=d.work*.2)))renderStructure();if(ideaDirty)renderIdeas();refresh();}
-function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;p.career.autoRest=false;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;}save();renderStructure();refresh();}
+function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;}save();renderStructure();refresh();}
 function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1));}
 function bestIdle(d){return S.team.filter(p=>p.id!==S.ops.assistantId&&p.t==="idle"&&p.career.stress<72).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
 function forecast(d){const assigned=person(d.w);const candidate=assigned||bestIdle(d);const speed=workerSpeed(candidate,d);const remaining=Math.max(0,d.work-d.prog);const eta=speed?Math.ceil(remaining/speed):null;const slack=eta===null?null:d.dl-eta;const risk=!assigned?"unassigned":slack<0?"critical":slack<=4?"watch":"ok";return{d,assigned,candidate,eta,slack,risk,fit:speed};}
@@ -326,7 +330,7 @@ else logIt(p.n+" returned to ordinary team duties.");
 save();structural="";renderStructure();refresh();}
 function hireOfficeAssistant(){if(S.ev||S.ops.assistantId||S.cash<20)return;const p=createPerson();p.s.ops=Math.max(2.3,p.s.ops);p.interest="systems";p.trait="Social";p.mood=75;p.loy=70;p.t="assist";S.cash-=20;ensureCareer(p);S.team.push(p);S.ops.assistantId=p.id;logIt("You hired "+p.n+" as office assistant for $20.");save();structural="";renderStructure();refresh();}
 function toggleFocus(){if(S.ev)return;S.flow.focus=!S.flow.focus;if(!S.flow.focus){S.flow.nextLead=Math.max(S.flow.nextLead,S.day+5);S.flow.lastLeadAt=Date.now();S.nextEv=Math.max(S.nextEv,S.day+12);}logIt(S.flow.focus?"You closed intake to focus on existing work.":"You reopened client inquiries and staff matters.");save();refresh();}
-function order(pid,t){const p=person(pid);if(!p||S.ev)return;p.career.autoRest=false;if(S.ops.assistantId===pid)S.ops.assistantId=null;release(p);p.t=t;save();renderStructure();refresh();}
+function order(pid,t){const p=person(pid);if(!p||S.ev)return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===pid)S.ops.assistantId=null;release(p);p.t=t;save();renderStructure();refresh();}
 function updateButtons(){for(const b of document.querySelectorAll("[data-speed]")){const yes=Number(b.dataset.speed)===spd&&!paused;b.classList.toggle("selected",yes);b.setAttribute("aria-pressed",String(yes));}$("pause").classList.toggle("selected",paused);$("pause").textContent=paused?"Resume":"Pause";}
 function paintControls(){updateButtons();}
 $("controls").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.speed){spd=Number(b.dataset.speed);paused=false;paintControls();schedule();}else if(b.id==="pause"){paused=!paused;paintControls();schedule();}else if(b.id==="restart"){if(confirm("Restart the company from zero?")){fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();schedule();}}});
@@ -415,7 +419,7 @@ b.disabled=!!S.ev||!due||!eligible||S.cash<fee;
 b.title=!due?"Available after cooldown":!eligible?"Requires experience and skill readiness":S.cash<fee?"Insufficient funds":"Career development for "+p.n;}
 for(const p of S.team){const v=$("person-v-"+p.id),m=$("mood-bar-"+p.id),mem=$("mem-"+p.id);
 const c=p.career;const status=$("career-short-"+p.id),details=$("career-stats-"+p.id),experience=$("career-experience-"+p.id),promo=$("career-promotion-"+p.id);
-if(status){status.textContent="Stress "+Math.floor(c.stress)+"%"+(c.stress>=70||c.burnout>=35?" · Needs recovery":" · "+rankName(p));status.className=c.stress>=70||c.burnout>=35?"career-alert":"career-calm";}
+if(status){status.textContent=c.recoveryDays>0?"Recovery: "+c.recoveryDays+" days · stress "+Math.floor(c.stress)+"%":"Stress "+Math.floor(c.stress)+"%"+(c.stress>=70||c.burnout>=35?" · Needs recovery":" · "+rankName(p));status.className=c.stress>=70||c.burnout>=35?"career-alert":"career-calm";}
 if(details)details.textContent="Satisfaction "+Math.floor(c.satisfaction)+"% · Stress "+Math.floor(c.stress)+"% · Burnout "+Math.floor(c.burnout)+"%";
 if(experience)experience.textContent="Experience "+c.xp.toFixed(1)+" · "+c.completions+" completed jobs";
 if(promo){const xpNeed=c.rank===0?8:24;promo.textContent=c.rank>=2?"Highest role reached":c.xp<xpNeed?"Promotion: "+(xpNeed-c.xp).toFixed(1)+" XP needed":Math.max(...KEYS.map(k=>p.s[k]))<1.85?"Promotion: strengthen a skill":"Promotion: eligible when affordable";}

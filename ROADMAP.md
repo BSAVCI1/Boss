@@ -136,6 +136,17 @@
 - Save key `boss16` reads `boss151` and older histories without fabricating pre-v16 rivals, bids or events. One local HTML file, no trackers/APIs or external dependencies.
 - Acceptance: preserve v15 accounting/career tests; add competition, business strategy, market event, contract lock, migration, 365+ day open-market and 730-day Focus-mode financial reconciliation; verify live Pages navigation and mobile.
 
+## Next fix batch — Boss v16.1 (PLANNED; not yet implemented)
+Tracking: [GitHub issue #3](https://github.com/BSAVCI1/Boss/issues/3). This corrective release addresses observed gameplay and UX defects before further feature expansion.
+
+1. **P0 — Keep details open while time advances.** Fix `Productivity by employee` closing because Management Coach recreates its HTML on every refresh; fix individual employee `Career & wellbeing` / `See the complete career roadmap` collapsing when team cards re-render. Retain open-state across task changes, auto-assignment, save reload and scrolling, especially on 390px mobile.
+2. **P1 — Explain true productivity and balance contracts.** Replace the inflexible companywide eight-game-day win bottleneck and 12-lead negotiation saturation with capacity/market-aware contract flow. Review Sales/Marketing staffing cost versus opportunities, without making deals or revenue magically grow. Separate role-appropriate KPIs and normalize denominator for Delivery-qualified available staff, preserving useful Sales, Marketing, coaching and recovery categories. Rework manager targets so backlog versus new-lead generation versus actual wins are distinguishable. No automatic hiring/firing.
+3. **P1 — Meaningful career evidence for non-delivery work.** Investigate a reported 1114 days in grade / 305 XP / Product skill 21.61 but **0/45 qualifying role days**. Preserve forward-only history, but allow verifiable product QA, process development, mentoring and actual sales/marketing output as appropriate evidence when client project demand is missing. No XP-only promotion or fabricated history. Clearly explain how each person earns their next qualifying workday.
+4. **P2 — Graduated idea investment and risk.** Today approving an employee's idea always costs $10; define meaningful small, medium and major proposal tiers with varying cash, employee time, risk and potential benefit; preview costs and possible outcomes, enforce affordability and budgets, and record immediate and delayed results. Keep research, existing discoveries, capability recipes, Experiment Lab and historical ideas intact.
+5. **P2 — Role-fair employee scorecards.** Show completed vs assigned work, quality, deadlines, contribution (only when attributable), payroll and direct costs, development, mentoring, workload and wellbeing. Compare employees against *comparable* roles/grades and team objectives with neutral status for small samples; avoid misleading companywide utilization as individual grade. Show constructive development recommendations and manager accountability.
+
+**Release gate:** Dedicated branch, additive migration from `boss16` and prior saves, 365/730-day simulations, financial reconciliation, role-sensitive evaluation, proposal pricing/budget tests, live 390px accordion persistence and navigation checks, successful Pages deployment and synchronized documentation. **No v16.1 code is deployed yet.**
+
 ## Backlog (await owner selection)
 - Office expansions and richer multi-level organizations (first department managers delivered v13)
 - Reactive rival companies

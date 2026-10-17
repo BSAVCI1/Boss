@@ -2265,7 +2265,12 @@ e.units=e.units.filter(u=>{
  if(!Number.isFinite(p.baselineStaffDays))p.baselineStaffDays=u.staffDays;
  if(![90,180].includes(p.days))p.days=90;
  p.qualityTarget=Math.max(65,Math.min(100,p.qualityTarget));
- if(!Array.isArray(u.reviews))u.reviews=[];
+ for(const [key,def] of Object.entries({trainingLimit:0,trainingSpent:0,teamLimit:0,teamSpent:0,staffingTarget:5,lastTraining:-99,lastTeam:-99})){
+   if(!Number.isFinite(p[key])||(p[key]<0&&key!=="lastTraining"&&key!=="lastTeam"))p[key]=def;
+  }
+  if(!["fresh","manager","senior","custom","unassigned"].includes(p.preset))p.preset="custom";
+  if(!Number.isInteger(p.successorId)||!u.staffIds.includes(p.successorId)||p.successorId===u.managerId)p.successorId=null;
+  if(!Array.isArray(u.reviews))u.reviews=[];
  u.reviews=u.reviews.filter(x=>x&&Number.isFinite(x.day)).slice(-6);
  return true;
 });
@@ -2359,7 +2364,7 @@ function unitCommit(action){
 function unitActivate(key){
  if(!SERVICE_LINES[key]||!S.exec.lines.some(x=>x.key===key)||S.exec.units.some(u=>u.key===key))return false;
  return unitCommit(()=>{
-  S.exec.units.push({key,since:S.day,managerId:null,staffIds:[],revenue:0,directCost:0,sharedLaborCost:0,payrollCost:0,developmentCost:0,staffDays:0,billableDays:0,delivered:0,missed:0,qualityTotal:0,plan:{since:S.day,days:90,coachingLimit:0,perAction:0,spent:0,lastCoached:-99,qualityTarget:80,focus:"balanced",revenueTarget:0,utilizationTarget:65,lastReview:S.day,baselineDelivered:0,baselineQuality:0,baselineMissed:0,baselineRevenue:0,baselineCosts:0,baselineStaffDays:0,baselineBillableDays:0},reviews:[]});
+  S.exec.units.push({key,since:S.day,managerId:null,staffIds:[],revenue:0,directCost:0,sharedLaborCost:0,payrollCost:0,developmentCost:0,staffDays:0,billableDays:0,delivered:0,missed:0,qualityTotal:0,plan:{since:S.day,days:90,coachingLimit:0,perAction:0,spent:0,lastCoached:-99,qualityTarget:80,focus:"balanced",revenueTarget:0,utilizationTarget:65,lastReview:S.day,baselineDelivered:0,baselineQuality:0,baselineMissed:0,baselineRevenue:0,baselineCosts:0,baselineStaffDays:0,baselineBillableDays:0,trainingLimit:0,trainingSpent:0,teamLimit:0,teamSpent:0,staffingTarget:5,preset:"unassigned",lastTraining:-99,lastTeam:-99,successorId:null},reviews:[]});
   unitRecord(key,"activated","Created a managed operating unit from an existing paid service portfolio. No purchase charged.");
   logIt(SERVICE_LINES[key].name+" now has an operating unit (no additional investment).");
   return true;
@@ -2372,6 +2377,7 @@ function unitAppoint(key,id){
   if(u.managerId)u.staffIds=u.staffIds.filter(pid=>pid!==u.managerId);
   for(const req of S.exec.unitRequests||[])if(req.key===key&&req.status==="open"){req.status="withdrawn";req.decidedAt=S.day;}
   u.managerId=id;if(!u.staffIds.includes(id))u.staffIds.unshift(id);
+  if(u.plan.preset==="unassigned"){Object.assign(u.plan,unitPresetValues("fresh"));u.plan.preset="fresh";u.plan.since=S.day;unitRecord(key,"authority","New GM assigned fresh-manager 90-day authority caps; no upfront spending.");}
   unitRecord(key,"manager",p.n+" (#"+id+") appointed General Manager; additional payroll "+biCurrency(.5*S.mod.cost)+"/day.");
   logIt(p.n+" became General Manager of "+SERVICE_LINES[key].name+".");
   return true;
@@ -2392,6 +2398,33 @@ function unitRelease(key,id){
   u.staffIds=u.staffIds.filter(x=>x!==id);unitRecord(key,"transfer",p.n+" (#"+id+") returned to shared company services.");
   logIt(p.n+" returned from "+SERVICE_LINES[key].name+" to shared services.");return true;
  });
+}
+const GM_PRESETS={
+ fresh:{coachingLimit:24,trainingLimit:24,teamLimit:12,perAction:8,staffingTarget:5},
+ manager:{coachingLimit:30,trainingLimit:30,teamLimit:15,perAction:10,staffingTarget:5},
+ senior:{coachingLimit:38,trainingLimit:38,teamLimit:19,perAction:13,staffingTarget:5}
+};
+const GM_PRESET_LABELS={fresh:"Fresh manager",manager:"Manager (+25%)",senior:"Senior manager (+25%)",custom:"Custom"};
+const UNIT_EDIT_FIELDS=["revenueTarget","utilizationTarget","coachingLimit","trainingLimit","teamLimit","perAction","qualityTarget","staffingTarget"];
+const unitEditDrafts=new Map();
+function unitDraft(key){if(!unitEditDrafts.has(key))unitEditDrafts.set(key,{});return unitEditDrafts.get(key);}
+function unitRecordInput(field){if(!field?.dataset?.unitKey||!field?.dataset?.unitField)return;unitDraft(field.dataset.unitKey)[field.dataset.unitField]=field.value;}
+function unitPresetValues(tier){return GM_PRESETS[tier]?{...GM_PRESETS[tier]}:null;}
+function unitApplyPreset(key,tier){
+ const u=S.exec.units.find(x=>x.key===key),preset=unitPresetValues(tier);if(!u||!preset)return false;
+ return unitCommit(()=>{Object.assign(u.plan,preset);u.plan.preset=tier;unitEditDrafts.delete(key);
+  unitRecord(key,"authority","CEO approved "+GM_PRESET_LABELS[tier]+" budget caps; zero upfront spending, no automatic hiring.");return true;});
+}
+function unitApplyDraft(key){
+ const u=S.exec.units.find(x=>x.key===key);if(!u)return false;const d=unitDraft(key),next={};
+ for(const field of UNIT_EDIT_FIELDS){
+  const raw=d[field]!==undefined?d[field]:String(u.plan[field]);
+  if(!/^\\d+$/.test(String(raw).trim()))return false;
+  const v=Number(raw);if(!Number.isSafeInteger(v)||v<0||v>1000000||(field==="qualityTarget"&&(v<65||v>100))||(field==="utilizationTarget"&&v>100)||(field==="staffingTarget"&&(v<1||v>25)))return false;
+  next[field]=v;
+ }
+ return unitCommit(()=>{Object.assign(u.plan,next);u.plan.preset="custom";unitEditDrafts.delete(key);
+  unitRecord(key,"authority","CEO applied custom GM settings as one verified save; no immediate spending.");return true;});
 }
 function unitBudgetAllowed(u,amount){
  const p=u?.plan;
@@ -2420,7 +2453,7 @@ function unitRenewAuthority(key){
  const u=S.exec.units.find(x=>x.key===key);
  if(!u)return false;
  return unitCommit(()=>{
-  u.plan.since=S.day;u.plan.spent=0; // Keep lastCoached: CEO renewal must not bypass the seven-day coaching cooldown.
+  u.plan.since=S.day;u.plan.spent=0;u.plan.trainingSpent=0;u.plan.teamSpent=0; // Keep lastCoached: CEO renewal must not bypass the seven-day coaching cooldown.
   unitRecord(key,"renewal","CEO renewed "+u.plan.days+"-day GM authority without spending cash.");
   return true;
  });

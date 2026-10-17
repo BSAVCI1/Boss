@@ -348,9 +348,11 @@ test("v21 failed browser save cannot register a unit or debit a purchase",()=>{
  sandbox.localStorage.setItem=(key,value)=>{if(key==="boss20")throw Error("simulated full browser");return write(key,value)};
  try{assert.equal(G.unitActivate("marketing"),false);}
  finally{sandbox.localStorage.setItem=write;}
- assert.equal(s.exec.units.length,0);
+ // Failed persistence restores the active game snapshot; the test fixture's
+ // earlier object reference is no longer the active runtime state.
  assert.equal(G.get().exec.units.length,0);
  assert.equal(G.get().cash,cash);assert.equal(store.get("boss20"),old);
+ assert.equal(G.load().exec.units.length,0,"Reload must not invent the failed conversion");
 });
 
 console.log("Boss v20 functional and persistence checks passed.");

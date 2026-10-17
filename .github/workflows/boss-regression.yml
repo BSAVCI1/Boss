@@ -1,7 +1,7 @@
 name: Boss offline regression checks
 on:
   push:
-    branches: [main, boss-v15-advanced-economy]
+    branches: [main, boss-v15-advanced-economy, boss-v15-1-career-pathways]
   pull_request:
     branches: [main]
 jobs:

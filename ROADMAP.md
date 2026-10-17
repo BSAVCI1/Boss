@@ -203,6 +203,21 @@
 - **Branch QA:** seven full regression suites passed on `boss-v19-org-autonomy`, including 730-day reconciliations and migration from legacy saves to forward-only `boss19`. PR #11 merged in main (`8fa6f7051f4f988442c88431a62c869deb5a8b1b`); production [regression checks](https://github.com/BSAVCI1/Boss/actions/runs/39046003370) and [Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39046002839) succeeded. Real Chrome mobile device emulation at 390px verified four tabs, no horizontal overflow, supported management fields and no JavaScript errors. Long-running personal-save interactive playtesting remains an optional next validation.
 - **Deferred separately:** 2026 company-value simulation, tenure anniversaries and any forward-only reputation pricing recalibration; do not silently change economy or signed fees in this patch.
 
+## Boss v19.1 — Mobile leadership correction (tested; publish after merge)
+- Correct Today → Review leadership meeting to scroll to the actual executive inbox.
+- Preserve active numeric budget entry during manager/department simulation refresh and verify edit commits.
+- Fix promotion price interpolation, Executive Assistant legacy task label and subordinate manager-versus-director titles.
+- Document pipeline policy and separate qualified-pipeline target (2/4/6), maximum 16 open leads, and variable 3–6 concurrent delivery capacity.
+- Regression addition: preserve Sales and Marketing managers across the `boss19` save/reload cycle; test focused numeric input behavior; verify all seven suites and 390px Chrome smoke before release.
+
+## Proposed next batch — service portfolio, staffing demand and multi-business architecture (NOT IMPLEMENTED)
+- Make service offerings distinct from customer industries and from basic skill tags; introduce independently priced, tiered deliverables with demand, difficulty, specialist availability, quality, contribution margins and repeat contracts. Investment alone must not invent revenue.
+- Make team managers propose role-specific headcount and coaching against an approved business-line delivery plan. Recruitment should consider Sales vs Marketing and Product vs Operations capacity instead of defaulting new hires to Sales/Operations; clarify all budget/headcount/recurring-payroll blockers in UI.
+- Model optional multiple business units only after distinct services and economics exist; proposed structure: CEO / Business-unit leader / Commercial and Delivery / Team managers, with shared-service choices, per-unit leadership, budget, contract attribution and consolidated-but-not-duplicated financials.
+- Investigate reported hierarchy change after browser refresh using user-owned saved state and multi-tab-write safeguards. Current automated same-tab save/reload test preserves manager appointments; do not claim the user's particular iPhone state was verified.
+- Distinguish aspirational 90-day strategy from actually expired, renewed or achieved strategy reviews, with meaningful leadership outcomes, to avoid showing Day 379/90 without explanation.
+- Separate Executive Assistant CEO briefing/exceptions/cross-department coordination from old routine office HR and project-assigning automation; scale realistic costs and authority by company stage.
+
 ## Backlog (await owner selection)
 - Office expansions and richer multi-level organizations (first department managers delivered v13)
 - Reactive rival companies

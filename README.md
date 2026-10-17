@@ -4,6 +4,9 @@ Boss is a free, ad-free, offline-capable, mobile-first, endless leader simulatio
 
 **Play:** https://bsavci1.github.io/Boss/.
 
+## Boss v19.1 — Mobile and leadership corrections
+The Today action **Review leadership meeting** now scrolls to the executive inbox instead of reopening Today at the current position. Team delegation amount fields stay mounted while actively being edited, so simulation updates do not steal focus. Employee promotions show evaluated dollar amounts, team-manager titles cannot be mistaken for directors, and an appointed Executive Assistant no longer appears as an Office Assistant in the employee task label. Work includes concise explanation of pipeline mode, target and independent capacity limits. **No economic parameters or save schema changed**; existing `boss19` saves remain compatible. Save/reload QA covers manager hierarchy; test real iOS Safari after publishing.
+
 ## How to play
 **Today — CEO office:** See what the company sells, its current chapter and next challenge, your direct-report structure, the optional Executive Assistant and the executive inbox. Select a **90-day company direction** and tap **Set CEO direction** to confirm it. The selection stays pending rather than changing policy silently during simulation ticks. Directors prepare weekly, costed recommendations; you approve or decline the major decisions at executive meetings. Outcomes, including recurring wage impacts, are recorded in the decision history.
 

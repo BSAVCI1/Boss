@@ -107,6 +107,7 @@ if(![0,5,10,20].includes(policy.budget))policy.budget=10;
 if(!s.ops.alerted||typeof s.ops.alerted!=="object"||Array.isArray(s.ops.alerted))s.ops.alerted={};
 if(!s.team.some(p=>p.id===s.ops.assistantId))s.ops.assistantId=null;
 if(!Number.isFinite(s.ops.handled))s.ops.handled=0;
+if(!Number.isFinite(s.ops.assigned))s.ops.assigned=0;
 if(s.ops.assistantId){const assistant=s.team.find(p=>p.id===s.ops.assistantId);if(assistant){for(const d of s.deals)if(d.w===assistant.id)d.w=null;assistant.t="assist";}}
 if(!s.flow){s.flow={nextLead:s.day+12,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()};s.nextEv=Math.max(s.nextEv,s.day+28);for(const d of s.deals)d.dl+=Math.floor(d.work*.6);}
 if(!Number.isFinite(s.flow.nextLead))s.flow.nextLead=s.day+12;
@@ -118,7 +119,7 @@ return s;}catch(e){return null;}}
 function logIt(s,highlight=false){S.log.unshift(highlight?'<span class="warning">'+esc(s)+'</span>':esc(s));S.log=S.log.slice(0,80);}
 function createPerson(){const id=S.pid++;const base=NAMES[(id-1)%NAMES.length];return{id:id,n:base+(id>20?" "+(Math.floor((id-1)/20)+1):""),col:COLORS[(id-1)%COLORS.length],trait:pick(TRAITS),s:Object.fromEntries(KEYS.map(k=>[k,+(1+Math.random()*.6).toFixed(2)])),mood:70,loy:60,t:"idle",mem:[],interest:pick(INTEREST_KEYS),lastCareDay:-99};}
 function createDeal(client,extra=0){const diff=Math.min(12,Math.round((1+Math.random()*(1+S.rep/20+S.day/50))*10)/10);const work=8+Math.floor(diff*4);const d={id:S.did++,cl:client||pick(CLIENTS),need:pick(KEYS),diff:diff,work:work,prog:0,base:20+diff*12+extra,dl:Math.floor(work*2.4+12),w:null};S.deals.push(d);return d;}
-function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99}};for(let i=0;i<3;i++)S.team.push(createPerson());createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99}};for(let i=0;i<3;i++)S.team.push(createPerson());createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant"})[p.t]||"idle";}
@@ -143,14 +144,42 @@ if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not 
 }
 for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){const payout=Math.floor(d.base*S.mod.reward*(1+S.rep/200));S.cash+=payout;S.rep+=(2+d.diff*.5)*S.mod.rep;logIt(d.cl+" paid $"+payout+" for the finished job.");const p=person(d.w);if(p){release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
 else if(d.dl<=0){S.rep=Math.max(0,S.rep-3);logIt("Missed the deadline for "+d.cl+". Reputation dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
+assistantDeadlineAlerts();
 const salary=S.team.length*1.5*S.mod.cost;if(S.cash<salary){S.cash=0;for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford salaries. Team morale dropped.",true);}else S.cash-=salary;
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
 save();if(dirty)renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;}save();renderStructure();refresh();}
-function delegateWork(){const a=person(S.ops.assistantId);if(!a||a.t!=="assist")return false;let changed=false;
-for(const d of S.deals){if(d.w!==null)continue;const free=S.team.filter(p=>p.id!==a.id&&p.t==="idle");if(!free.length)break;
-free.sort((x,y)=>(y.s[d.need]+(LIKED_SKILLS[d.need].includes(y.interest)?.2:0))-(x.s[d.need]+(LIKED_SKILLS[d.need].includes(x.interest)?.2:0)));
-const p=free[0];d.w=p.id;p.t="d"+d.id;logIt(a.n+" assigned "+p.n+" to "+d.cl+".");changed=true;}return changed;}
+function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched);}
+function bestIdle(d){return S.team.filter(p=>p.id!==S.ops.assistantId&&p.t==="idle").sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
+function forecast(d){const assigned=person(d.w);const candidate=assigned||bestIdle(d);const speed=workerSpeed(candidate,d);const remaining=Math.max(0,d.work-d.prog);const eta=speed?Math.ceil(remaining/speed):null;const slack=eta===null?null:d.dl-eta;const risk=!assigned?"unassigned":slack<0?"critical":slack<=4?"watch":"ok";return{d,assigned,candidate,eta,slack,risk,fit:speed};}
+function rankedProjects(){const priority=S.ops.policy.priority;return S.deals.map(forecast).sort((a,b)=>{
+if(priority==="deadline")return a.d.dl-b.d.dl||b.fit-a.fit;
+if(priority==="skills")return b.fit-a.fit||a.d.dl-b.d.dl;
+const aRisk=a.slack===null?-8:a.slack,bRisk=b.slack===null?-8:b.slack;
+return aRisk-bRisk||a.d.dl-b.d.dl||b.fit-a.fit;});}
+function delegateWork(){const a=person(S.ops.assistantId);if(!a||a.t!=="assist"||!S.ops.policy.assign)return false;let changed=false;
+for(const f of rankedProjects()){const d=f.d;if(d.w!==null)continue;const p=bestIdle(d);if(!p)break;d.w=p.id;p.t="d"+d.id;S.ops.assigned++;logIt(a.n+" assigned "+p.n+" to "+d.cl+" ("+S.ops.policy.priority+" priority).");changed=true;}return changed;}
+function assistantDecision(ev){const a=person(S.ops.assistantId),policy=S.ops.policy;if(!a||a.t!=="assist"||ev.a===a.id)return null;
+const cost={praise:0,family:5,mistake:0,idea:10}[ev.k];if(cost===undefined||!policy[ev.k]||cost>policy.budget||S.cash<cost)return null;
+return ev.k==="mistake"?1:0;}
+function assistantDeadlineAlerts(){const a=person(S.ops.assistantId);if(!a||a.t!=="assist"||!S.ops.policy.alerts)return;
+const live=new Set(S.deals.map(d=>String(d.id)));for(const k of Object.keys(S.ops.alerted))if(!live.has(k))delete S.ops.alerted[k];
+for(const f of S.deals.map(forecast)){const key=String(f.d.id),level=f.risk;
+if((level==="critical"||level==="watch"||level==="unassigned")&&S.ops.alerted[key]!==level){
+const summary=level==="critical"?"projected to miss its deadline":level==="watch"?"has limited schedule buffer":"needs an available teammate";
+logIt(a.n+" flagged "+f.d.cl+": "+summary+".",level==="critical");}
+S.ops.alerted[key]=level;}}
+function renderAssistantPolicy(){const p=S.ops.policy;$("policy-assign").checked=p.assign;$("policy-priority").value=p.priority;$("policy-praise").checked=p.praise;$("policy-family").checked=p.family;$("policy-mistake").checked=p.mistake;$("policy-idea").checked=p.idea;$("policy-alerts").checked=p.alerts;$("policy-budget").value=String(p.budget);}
+function updateAssistantPolicy(){const p=S.ops.policy;p.assign=$("policy-assign").checked;p.priority=$("policy-priority").value;p.praise=$("policy-praise").checked;p.family=$("policy-family").checked;p.mistake=$("policy-mistake").checked;p.idea=$("policy-idea").checked;p.alerts=$("policy-alerts").checked;p.budget=Number($("policy-budget").value);logIt("Office assistant delegation rules updated.");save();refresh();}
+function renderAssistantQueue(){const projects=rankedProjects(),a=person(S.ops.assistantId);
+$("assistant-queue-summary").textContent=projects.length+" live · "+projects.filter(f=>f.risk==="critical").length+" critical · "+projects.filter(f=>f.risk==="watch").length+" watch";
+$("assistant-priorities").innerHTML=projects.map((f,i)=>{const d=f.d;
+const flag=f.risk==="critical"?"At risk":f.risk==="watch"?"Watch":f.risk==="unassigned"?"Unassigned":"On track";
+const color=f.risk==="critical"||f.risk==="watch"||f.risk==="unassigned"?"risk-watch":"risk-ok";
+const eta=f.eta===null?"unknown":f.eta+" days";
+const personLine=f.assigned?"Assigned: "+esc(f.assigned.n):f.candidate?"Available: "+esc(f.candidate.n)+" (not assigned)":"No idle teammate available";
+return '<div class="queue-item"><div class="lead"><b>'+(i+1)+'. '+esc(d.cl)+'</b><span class="small '+color+'">'+flag+'</span></div><div class="small">'+esc(SKILLS[d.need])+' · '+Math.max(0,d.dl)+' days left · ETA '+eta+' · '+Math.floor(clamp(d.prog/d.work*100))+'% done</div><div class="risk-note">'+personLine+(f.slack===null?'':' · Forecast buffer '+f.slack+' days')+'</div></div>';}).join("")||'<div class="empty">No active client work. Develop the team or experiment until new inquiries arrive.</div>';
+}
 function appointAssistant(pid){if(S.ev)return;const p=person(pid);if(!p)return;const old=person(S.ops.assistantId);
 if(old){old.t="idle";S.ops.assistantId=null;}
 if(!old||old.id!==pid){release(p);p.t="assist";S.ops.assistantId=p.id;logIt(p.n+" became your office assistant.");}
@@ -161,9 +190,10 @@ function toggleFocus(){if(S.ev)return;S.flow.focus=!S.flow.focus;if(!S.flow.focu
 function order(pid,t){const p=person(pid);if(!p||S.ev)return;if(S.ops.assistantId===pid)S.ops.assistantId=null;release(p);p.t=t;save();renderStructure();refresh();}
 function updateButtons(){for(const b of document.querySelectorAll("[data-speed]")){const yes=Number(b.dataset.speed)===spd&&!paused;b.classList.toggle("selected",yes);b.setAttribute("aria-pressed",String(yes));}$("pause").classList.toggle("selected",paused);$("pause").textContent=paused?"Resume":"Pause";}
 function paintControls(){updateButtons();}
-$("controls").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.speed){spd=Number(b.dataset.speed);paused=false;paintControls();schedule();}else if(b.id==="pause"){paused=!paused;paintControls();schedule();}else if(b.id==="restart"){if(confirm("Restart the company from zero?")){fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";paused=false;spd=1;save();renderStructure();renderCandidates();renderIdeas();refresh();paintControls();schedule();}}});
+$("controls").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.speed){spd=Number(b.dataset.speed);paused=false;paintControls();schedule();}else if(b.id==="pause"){paused=!paused;paintControls();schedule();}else if(b.id==="restart"){if(confirm("Restart the company from zero?")){fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();schedule();}}});
 $("focus-toggle").addEventListener("click",toggleFocus);
 $("hire-assistant").addEventListener("click",hireOfficeAssistant);
+for(const id of ["policy-assign","policy-priority","policy-budget","policy-praise","policy-family","policy-mistake","policy-idea","policy-alerts"])$(id).addEventListener("change",updateAssistantPolicy);
 $("deals").addEventListener("click",e=>{const b=e.target.closest("button[data-deal]");if(b)assign(Number(b.dataset.deal),Number(b.dataset.person));});
 $("people").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.order)order(Number(b.dataset.person),b.dataset.order);else if(b.dataset.care)motivate(Number(b.dataset.person),b.dataset.care);else if(b.dataset.fire)fireEmployee(Number(b.dataset.fire));else if(b.dataset.assistant)appointAssistant(Number(b.dataset.assistant));});
 $("hire-skill").addEventListener("change",()=>{S.hr.skill=$("hire-skill").value;S.hr.pool=[];save();renderCandidates();});
@@ -211,9 +241,10 @@ $("focus-hint").textContent=S.flow.focus?"No new deals or dilemmas; existing dea
 const waitDays=Math.max(0,S.flow.nextLead-S.day),waitSeconds=Math.max(0,Math.ceil((25000-(Date.now()-S.flow.lastLeadAt))/1000));
 $("intake-status").textContent=S.flow.focus?"Intake paused — complete existing projects.":"Next potential client: "+(waitDays?waitDays+" game days":waitSeconds?waitSeconds+" real seconds":"ready when capacity allows")+" · "+S.deals.length+" active projects.";
 const ap=person(S.ops.assistantId);
-$("assistant-status").textContent=ap?ap.n+" is organizing work. Routine matters handled: "+S.ops.handled+".":"No assistant assigned. Hire one or appoint a teammate.";
+$("assistant-status").textContent=ap?ap.n+" manages intake. Assignments: "+S.ops.assigned+" · Routine decisions: "+S.ops.handled+".":"No assistant assigned. Policies can be set now; automation starts when you appoint one.";
 $("hire-assistant").disabled=!!S.ev||!!ap||S.cash<20;
 $("hire-assistant").title=ap?"Only one assistant at a time.":S.cash<20?"Not enough cash.":"Hire an assistant.";
+renderAssistantQueue();
 $("cash").textContent="$"+Math.floor(S.cash);$("rep").textContent=String(Math.floor(S.rep));$("day").textContent="Day "+S.day;$("teamcount").textContent=S.team.length;
 for(const d of S.deals){const bar=$("deal-bar-"+d.id),dl=$("dl-"+d.id),prog=$("prog-"+d.id);if(bar)bar.style.width=clamp(d.prog/d.work*100)+"%";if(dl)dl.textContent=d.dl;if(prog)prog.textContent=Math.floor(clamp(d.prog/d.work*100))+"%";for(const p of S.team){const b=$("bid-"+d.id+"-"+p.id);if(b)b.textContent=p.s[d.need].toFixed(1);}}
 for(const b of $("people").querySelectorAll("button[data-care]")){const p=person(Number(b.dataset.person));const cost=b.dataset.care==="bonus"?12:b.dataset.care==="coach"?8:0;const remaining=p?Math.max(0,7-(S.day-p.lastCareDay)):0;b.disabled=!!S.ev||!p||remaining>0||S.cash<cost;b.title=remaining>0?"Available in "+remaining+" days":S.cash<cost?"Not enough cash":"Motivate "+(p?p.n:"");}
@@ -222,7 +253,7 @@ const teamCost=S.team.length*5,teamRemaining=Math.max(0,12-(S.day-S.hr.lastTeamD
 for(const p of S.team){const v=$("person-v-"+p.id),m=$("mood-bar-"+p.id),mem=$("mem-"+p.id);if(v)v.textContent="mood "+Math.floor(p.mood)+"% · loyalty "+Math.floor(p.loy)+"%";if(m)m.style.width=p.mood+"%";if(mem){const content=p.mem.map(s=>"<div>“"+esc(s)+"”</div>").join("");if(mem.innerHTML!==content)mem.innerHTML=content;}for(const k of KEYS){const label=$("skill-"+p.id+"-"+k),bar=$("skill-bar-"+p.id+"-"+k);if(label)label.textContent="Lv "+p.s[k].toFixed(1);if(bar)bar.style.width=((p.s[k]%1)*100)+"%";}}
 const logs=S.log.slice(0,14).join("|");if(logSignature!==logs){logSignature=logs;$("log").innerHTML=S.log.slice(0,14).map(x=>'<div class="log-entry">'+x+'</div>').join("");}
 showModal();}
-function startDilemma(){const possible=["raise","mistake","idea","family","praise"];if(S.team.length>1)possible.push("leave","fight","poach");const a=pick(S.team),b=pick(S.team.filter(x=>x.id!==a.id).length?S.team.filter(x=>x.id!==a.id):[a]);S.ev={k:pick(possible),a:a.id,b:b.id};if(S.ops.assistantId&&S.ev.a!==S.ops.assistantId&&(S.ev.k==="praise"||(S.ev.k==="family"&&S.cash>=5)))choose(0,true);}
+function startDilemma(){const possible=["raise","mistake","idea","family","praise"];if(S.team.length>1)possible.push("leave","fight","poach");const a=pick(S.team),b=pick(S.team.filter(x=>x.id!==a.id).length?S.team.filter(x=>x.id!==a.id):[a]);S.ev={k:pick(possible),a:a.id,b:b.id};const delegatedChoice=assistantDecision(S.ev);if(delegatedChoice!==null)choose(delegatedChoice,true);}
 function L(p,v){if(p)p.loy=clamp(p.loy+v);}
 function Mo(p,v){if(p)p.mood=clamp(p.mood+v);}
 function Me(p,s){if(p){p.mem.unshift(s);p.mem=p.mem.slice(0,3);}}
@@ -264,7 +295,7 @@ a.x+=(a.tx-a.x)*.03;a.y+=(a.ty-a.y)*.03;if(Math.random()<.004){const e=p.mood<30
 ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(a.x,a.y,11,0,Math.PI*2);ctx.fill();ctx.fillStyle="#192435";ctx.beginPath();ctx.arc(a.x-3,a.y-2,1.1,0,Math.PI*2);ctx.arc(a.x+3,a.y-2,1.1,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#192435";ctx.lineWidth=1.1;ctx.beginPath();if(p.mood>50)ctx.arc(a.x,a.y+1,4,0,Math.PI);else if(p.mood>25){ctx.moveTo(a.x-4,a.y+5);ctx.lineTo(a.x+4,a.y+5);}else ctx.arc(a.x,a.y+8,4,Math.PI,2*Math.PI);ctx.stroke();ctx.textAlign="center";ctx.fillStyle=ink;ctx.font="12px system-ui";ctx.fillText(p.n,a.x,a.y+25);
 if(a.frames>0){ctx.font="19px system-ui";ctx.fillText(a.emoji,a.x,a.y-17);a.frames--;}
 });requestAnimationFrame(avatarDraw);}
-S=load();if(!S)fresh();if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;save();renderStructure();renderCandidates();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
+S=load();if(!S)fresh();if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
 })();
 </script>
 </body>

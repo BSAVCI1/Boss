@@ -793,7 +793,12 @@ try{
  S._saveRevision=Math.max(persistedRevision,Number(S._saveRevision)||0)+1;
  localStorage.setItem(KEY,JSON.stringify(S));persistedRevision=S._saveRevision;
  return true;
-}catch(e){return false;}
+}catch(e){
+ paused=true;
+ const warning=$("save-warning");
+ if(warning){warning.hidden=false;warning.textContent="Boss could not save progress in this browser. The simulation is paused. Check browser storage; do not clear site data.";}
+ return false;
+}
 }
 function launchJournal(){
  try{const x=JSON.parse(localStorage.getItem(LAUNCH_JOURNAL_KEY)||"[]");return Array.isArray(x)?x.filter(t=>t&&SERVICE_LINES[t.key]&&Number.isFinite(t.since)):[];}catch{return [];}
@@ -1805,7 +1810,7 @@ const priority=ceoDraftPriority??$("ceo-priority").value;
 if(!ceoDirection(priority))$("ceo-direction-confirm").textContent=S.ev?"Resolve the current CEO decision before changing direction.":"Direction unchanged. Choose a different strategy or wait for the next review.";
 });
 $("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
-$("launch-service-line").addEventListener("click",()=>{if(executiveLaunch($("service-line-select").value)){save();refresh();}});
+$("launch-service-line").addEventListener("click",()=>{if(executiveLaunch($("service-line-select").value))refresh();});
 $("service-line-select").addEventListener("change",()=>executiveShow());
 $("game-primary").addEventListener("click",()=>{const b=$("game-primary"),view=b.dataset.go||"work";
 navigate(view,b.dataset.project?Number(b.dataset.project):undefined);
@@ -2047,11 +2052,15 @@ function executiveLaunch(key){
 if(!SERVICE_LINES[key]||S.exec.lines.some(x=>x.key===key)||S.cash<120||S.ev)return false;
 if(saveConflict)return false;
 const old=localStorage.getItem(KEY);if(old){try{const r=JSON.parse(old);if((Number(r._saveRevision)||0)>persistedRevision){save();return false;}}catch{}}
-const before=coachSnap();S.cash-=120;biMoney("investment",120,"New business line: "+SERVICE_LINES[key].name);
+// Do not report a purchase until the primary save is durable.
+const checkpoint=JSON.stringify(S),before=coachSnap();
+S.cash-=120;biMoney("investment",120,"New business line: "+SERVICE_LINES[key].name);
 const launch={key,since:S.day,spent:120,delivered:0,missed:0,revenue:0};
-S.exec.lines.push(launch);recordLineLaunch(launch);
+S.exec.lines.push(launch);
 coachDecision("Launched "+SERVICE_LINES[key].name,before,"$120 launch investment. Matching future contracts receive a small delivery-readiness benefit; income is measured only on new line-attributed deals, no guaranteed demand.",null,30);
-logIt("Launched "+SERVICE_LINES[key].name+"; the team can now build its first trackable service-line results.");save();return true;
+logIt("Launched "+SERVICE_LINES[key].name+"; the team can now build its first trackable service-line results.");
+if(!save()){S=JSON.parse(checkpoint);return false;}
+recordLineLaunch(launch);return true;
 }
 function executiveAutonomous(dept,spec){
 const director=orgManager(dept),plan=orgPlan(dept);

@@ -242,8 +242,12 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .ceo-direction select{width:100%;margin:7px 0}.ceo-direction button{width:100%}
 #business-lines .service-line{border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0}
 #upgrades-complete[hidden]{display:none}
-.save-state{font-size:11px;color:var(--muted);padding:0 12px 3px;text-align:right}
-.save-state[data-error="true"]{font-weight:600;color:var(--red,var(--danger,#c64c46))}
+.save-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 5px;padding:0 4px}
+.save-state{font-size:11px;color:var(--muted);padding:0 3px}
+.save-state[data-error="true"]{font-weight:700;color:var(--red,var(--danger,#c64c46))}
+.save-export{font-size:11px;min-height:28px;padding:4px 7px;white-space:nowrap}
+.save-error{font-size:12px;color:var(--ink);border:1px solid var(--line);padding:8px 10px;margin:6px 0;background:var(--accentWash)}
+.save-error[hidden]{display:none}
 @media(max-width:390px){.ceo-office-grid{grid-template-columns:1fr}.ceo-report button{max-width:100%}}
 </style>
 </head>
@@ -251,7 +255,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <main id="game-root">
 <header class="app-header"><h1>Boss</h1><div class="compact-controls" id="controls">
 <label for="speed-select">Speed</label><select id="speed-select" aria-label="Simulation speed"><option value="1">1×</option><option value="3">3×</option><option value="8">8×</option></select><button type="button" id="pause" aria-pressed="false">Pause</button></div></header>
-<div id="save-state" class="save-state" aria-live="off">Game progress is saved on this device</div>
+<div class="save-toolbar"><span id="save-state" class="save-state" aria-live="polite">Checking saved game…</span><button id="export-save" type="button" class="save-export">Export game backup</button></div><div id="save-warning" class="save-error" role="alert" hidden></div>
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
@@ -266,7 +270,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="game-actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
 <div class="game-scene"><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div></div><div class="game-story" id="game-story" aria-live="polite"></div>
 <details class="aux-details" id="game-journey"><summary>My company journey</summary><div id="game-journey-map"></div></details>
-</div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div><p id="save-warning" class="risk-watch" role="alert" hidden></p>
+</div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div>
 <details class="aux-details game-advanced" id="ceo-records"><summary>Coach &amp; company records</summary>
 <section class="card bi-headline" aria-labelledby="bi-headline-title"><div class="lead"><b id="bi-headline-title">Business performance</b><span class="small" id="bi-period-note">Tracked since Day 0</span></div>
 <div class="bi-grid">
@@ -411,7 +415,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 "use strict";
 const KEY="boss20";
 const LEGACY_KEY="boss19";
-let persistedRevision=0,saveConflict=false;
+let persistedRevision=0,saveConflict=false,saveErrorReason="";
 const LAUNCH_JOURNAL_KEY="boss20_service_line_journal";
 let labHistorySignature="";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
@@ -786,35 +790,55 @@ function saveState(message,error=false){
  const status=$("save-state");
  if(status){status.textContent=message;status.dataset.error=error?"true":"false";}
 }
+function saveError(name,note){
+ saveErrorReason=name||"StorageError";paused=true;
+ const reason=(name==="QuotaExceededError"?"Browser storage appears full":name==="SyntaxError"?"Save data could not be serialized":name==="RevisionConflict"?"Another tab has newer progress":"The browser rejected the save");
+ const warning=$("save-warning");
+ if(warning){warning.hidden=false;warning.textContent=reason+". "+note+" Stop playing until the save is confirmed. Use Export game backup before refreshing. Do not restart or clear website data.";}
+ saveState("NOT SAVED · Day "+S.day+" · "+saveErrorReason,true);
+}
+function exportGameBackup(){
+ // Preserve in-memory progress even when the browser cannot persist a new save.
+ let data;
+ try{data=JSON.stringify({format:"Boss v20 game backup",exportDay:S.day,createdAt:new Date().toISOString(),state:S});}
+ catch(e){saveState("Backup could not be prepared: "+String(e?.name||"unknown"),true);return false;}
+ try{
+  const blob=new Blob([data],{type:"application/json"}),link=document.createElement("a"),url=URL.createObjectURL(blob);
+  link.href=url;link.download="Boss-Day-"+S.day+"-backup.json";link.style.display="none";
+  document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  if(!saveErrorReason)saveState("Backup file prepared · Day "+S.day);
+  return true;
+ }catch(e){saveState("Backup preparation failed · "+String(e?.name||"unknown"),true);return false;}
+}
 function save(){
+ let payload=null;
  try{
   const current=localStorage.getItem(KEY);
   if(current){
    let existing=null;try{existing=JSON.parse(current);}catch{}
    const remoteRev=Number(existing?._saveRevision)||0;
    if(remoteRev>persistedRevision){
-    saveConflict=true;paused=true;
-    const message="Another Boss tab saved newer progress. This tab has paused to protect your company. Reload this tab to continue from the latest save.";
-    const warning=$("save-warning");
-    if(warning){warning.hidden=false;warning.textContent=message;}
-    saveState("Not saved — newer company progress exists in another tab",true);
+    saveConflict=true;
+    saveError("RevisionConflict","Latest saved Day "+(existing?.day??"unknown")+" (revision "+remoteRev+"), this tab's last revision "+persistedRevision+".");
     return false;
    }
   }
-  if(saveConflict){saveState("Not saved — reload to continue from the newer company",true);return false;}
-  S._saveRevision=Math.max(persistedRevision,Number(S._saveRevision)||0)+1;
-  const payload=JSON.stringify(S);
+  if(saveConflict){saveError("RevisionConflict","This tab must reload the newer saved company before continuing.");return false;}
+  const nextRevision=Math.max(persistedRevision,Number(S._saveRevision)||0)+1;
+  S._saveRevision=nextRevision;
+  payload=JSON.stringify(S);
   localStorage.setItem(KEY,payload);
-  if(localStorage.getItem(KEY)!==payload)throw new Error("Save readback mismatch");
-  persistedRevision=S._saveRevision;
+  if(localStorage.getItem(KEY)!==payload)throw new Error("Save verification failed");
+  persistedRevision=nextRevision;saveErrorReason="";
+  const warning=$("save-warning");if(warning)warning.hidden=true;
   const field=document.activeElement,unfinished=field?.matches?.('input[data-org-policy],#policy-budget,#policy-total')&&(!String(field.value||"").trim()||field.validity?.valid===false);
-  if(!unfinished)saveState("Saved on this device");
+  if(!unfinished)saveState("Saved Day "+S.day+" · revision "+nextRevision+" · "+Math.ceil(payload.length/1024)+" KB");
   return true;
  }catch(e){
-  paused=true;
-  const warning=$("save-warning");
-  if(warning){warning.hidden=false;warning.textContent="Boss could not save progress in this browser. The simulation is paused. Check browser storage; do not clear site data.";}
-  saveState("Not saved — browser storage failed; do not refresh",true);
+  let savedDay="unknown";
+  try{savedDay=JSON.parse(localStorage.getItem(KEY)||"null")?.day??"none";}catch{}
+  saveError(String(e?.name||"StorageError"),"Current Day "+S.day+", last stored Day "+savedDay+", new save approximately "+(payload?Math.ceil(payload.length/1024)+" KB":"unknown size")+".");
   return false;
  }
 }
@@ -1827,6 +1851,7 @@ if(typeof window!=="undefined"&&typeof window.scrollTo==="function"){const targe
 }
 $("speed-select").addEventListener("change",()=>{spd=[1,3,8].includes(Number($("speed-select").value))?Number($("speed-select").value):1;S.ui.speed=spd;save();paused=false;paintControls();schedule();});
 $("pause").addEventListener("click",()=>{paused=!paused;paintControls();schedule();});
+$("export-save").addEventListener("click",exportGameBackup);
 $("restart").addEventListener("click",()=>{if(!confirm("Restart the company from zero?"))return;
 fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";sectorSignature="";customerSignature="";projectExpanded.clear();employeeExpanded.clear();careerExpanded.clear();roadmapExpanded.clear();attentionSignature="";orgControlsSignature="";for(const name of ["today","work","team","growth"])viewScroll[name]=0;
 paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();navigate("today");schedule();});
@@ -2502,7 +2527,12 @@ a.x+=(a.tx-a.x)*.03;a.y+=(a.ty-a.y)*.03;if(Math.random()<.004){const e=p.mood<30
 ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(a.x,a.y,11,0,Math.PI*2);ctx.fill();ctx.fillStyle="#192435";ctx.beginPath();ctx.arc(a.x-3,a.y-2,1.1,0,Math.PI*2);ctx.arc(a.x+3,a.y-2,1.1,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#192435";ctx.lineWidth=1.1;ctx.beginPath();if(p.mood>50)ctx.arc(a.x,a.y+1,4,0,Math.PI);else if(p.mood>25){ctx.moveTo(a.x-4,a.y+5);ctx.lineTo(a.x+4,a.y+5);}else ctx.arc(a.x,a.y+8,4,Math.PI,2*Math.PI);ctx.stroke();ctx.textAlign="center";ctx.fillStyle=ink;ctx.font="12px system-ui";ctx.fillText(p.n,a.x,a.y+25);
 if(a.frames>0){ctx.font="19px system-ui";ctx.fillText(a.emoji,a.x,a.y-17);a.frames--;}
 });requestAnimationFrame(avatarDraw);}
-S=load();if(!S)fresh();else if(S.ui?.pendingCEO&&CEO_PRIORITIES[S.ui.pendingCEO])ceoDraftPriority=S.ui.pendingCEO;
+let existingSave=false,sourceStorageError=false;
+try{existingSave=Boolean(localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17"));}catch(e){sourceStorageError=true;}
+S=load();
+const loadFailed=!S&&(existingSave||sourceStorageError);
+if(!S)fresh();else if(S.ui?.pendingCEO&&CEO_PRIORITIES[S.ui.pendingCEO])ceoDraftPriority=S.ui.pendingCEO;
+if(loadFailed){saveConflict=true;paused=true;saveError("UnreadableSave","An earlier game was found but could not be loaded. Its browser keys have NOT been overwritten.");}
 spd=[1,3,8].includes(S.ui?.speed)?S.ui.speed:1;
 if(S.ui?.selectedService&&SERVICE_LINES[S.ui.selectedService])$("service-line-select").value=S.ui.selectedService;
 window.addEventListener("storage",event=>{if(event.key===KEY&&event.newValue){let rev=0;try{rev=Number(JSON.parse(event.newValue)._saveRevision)||0;}catch{}if(rev>persistedRevision){saveConflict=true;paused=true;saveState("Not saved — a newer company is open in another tab",true);const warning=$("save-warning");if(warning){warning.hidden=false;warning.textContent="Another Boss tab saved this company. Reload this tab to protect the latest progress.";}}}});if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;labPreview();capabilityProgress();save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();

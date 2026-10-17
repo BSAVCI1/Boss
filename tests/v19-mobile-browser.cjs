@@ -181,6 +181,32 @@ document.addEventListener("DOMContentLoaded",async()=>{
    const v212prev=JSON.parse(sessionStorage.getItem("boss-qa-v212-result"));
    result.checks={...v212prev.checks,...result.checks};
    result.errors=result.errors.concat(v212prev.errors||[]);
+   // v21.3.1: exercise a real native SELECT during multiple live game updates.
+   document.querySelector('.bottom-nav button[data-view="growth"]').click();
+   const unitDetails=document.querySelector('#business-units details[data-unit-open="technology"]');
+   if(unitDetails)unitDetails.open=true;
+   const gmPicker=byId("unit-gm-technology"),workerPicker=byId("unit-employee-technology");
+   if(!gmPicker||!workerPicker)throw Error("GM and teammate selectors are required");
+   const originalGMValue=gmPicker.value,originalWorkerValue=workerPicker.value;
+   const pickerDay=Number(byId("day")?.textContent?.replace("Day ",""));
+   gmPicker.focus();gmPicker.dispatchEvent(new Event("pointerdown",{bubbles:true}));
+   await new Promise(r=>setTimeout(r,1600)); // More than three active 3x simulation ticks.
+   result.checks.nativeGMDropdownStable=gmPicker===byId("unit-gm-technology")&&gmPicker.isConnected&&gmPicker.value===originalGMValue;
+   result.checks.nativeTeammateDropdownStable=workerPicker===byId("unit-employee-technology")&&workerPicker.isConnected&&workerPicker.value===originalWorkerValue;
+   result.checks.tickContinuesDuringPicker=Number(byId("day")?.textContent?.replace("Day ",""))===pickerDay?(
+      Number(JSON.parse(localStorage.getItem("boss20")||"null")?.day)>pickerDay
+   ):Number(byId("day")?.textContent?.replace("Day ",""))>pickerDay;
+   gmPicker.dispatchEvent(new Event("change",{bubbles:true}));
+   await new Promise(r=>setTimeout(r,1050)); // UI catches up after mobile picker dismissal.
+   result.checks.nativePickerReconciled=!!byId("unit-gm-technology")&&!!byId("unit-employee-technology");
+   const qualityField=byId("unit-quality-technology"),authorityDetails=qualityField?.closest("details.aux-details");
+   if(!qualityField)throw Error("Unit quality field missing");
+   if(authorityDetails)authorityDetails.open=true;
+   qualityField.focus();qualityField.value="8";qualityField.dispatchEvent(new Event("input",{bubbles:true}));
+   await new Promise(r=>setTimeout(r,1200));
+   result.checks.partialUnitNumericProtected=qualityField.isConnected&&byId("unit-quality-technology")===qualityField&&qualityField.value==="8";
+   qualityField.value="88";qualityField.dispatchEvent(new Event("input",{bubbles:true}));qualityField.blur();
+   await new Promise(r=>setTimeout(r,1000));
    const restoredUnit=recovered?.exec?.units.find(u=>u.key==="technology");
    result.checks.unitAuthorityReloaded=restoredUnit?.plan?.coachingLimit===12&&
     restoredUnit.plan.perAction===4&&restoredUnit.plan.qualityTarget===88&&
@@ -263,6 +289,11 @@ async function runBrowser(){
   assert.equal(outcome.checks.unitActivationReloaded,true,"After reload exactly one unit remains and no $120 fee was repeated");
    assert.equal(outcome.checks.unitAuthoritySaved,true,"GM budget limits must confirm in extended storage");
    assert.equal(outcome.checks.unitAuthorityReloaded,true,"GM budget and quality goal must survive mobile reload without a new purchase");
+  assert.equal(outcome.checks.nativeGMDropdownStable,true,"Opened GM native picker must not be replaced by game ticks");
+  assert.equal(outcome.checks.nativeTeammateDropdownStable,true,"Dedicated colleague picker must keep DOM identity");
+  assert.equal(outcome.checks.tickContinuesDuringPicker,true,"Game simulation should continue during an open picker");
+  assert.equal(outcome.checks.nativePickerReconciled,true,"UI should refresh after select completes");
+  assert.equal(outcome.checks.partialUnitNumericProtected,true,"Partial unit budget edits must not be overwritten mid-typing");
   assert.deepEqual(outcome.errors,[]);
   await send("Emulation.setDeviceMetricsOverride",{width:414,height:896,deviceScaleFactor:1,mobile:true});
   await sleep(150);

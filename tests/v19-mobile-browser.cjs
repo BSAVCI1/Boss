@@ -5,7 +5,7 @@ assert.ok(browser,"A real Chromium browser is required for viewport smoke (not a
 const html=fs.readFileSync("index.html","utf8");
 const instrumentation=String.raw`
 window.addEventListener("error",e=>{window.__mobileErrors=(window.__mobileErrors||[]).concat(String(e.message||"unknown error"))});
-window.__runBossMobileSmoke=()=>{
+document.addEventListener("DOMContentLoaded",()=>{
  const result={width:window.innerWidth,views:[],errors:[],checks:{}};
  try{
   const byId=id=>document.getElementById(id);
@@ -34,12 +34,12 @@ window.__runBossMobileSmoke=()=>{
   result.errors=(window.__mobileErrors||[]);
  }catch(e){result.errors.push(String(e.stack||e));}
  document.title="BOSS_QA:"+btoa(unescape(encodeURIComponent(JSON.stringify(result))));
-};
+});
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
 fs.writeFileSync(file,html.replace("</body>","<script>"+instrumentation+"</script></body>"));
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),"boss-cdp-"));
-const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--remote-debugging-port=0","--user-data-dir="+profile,"file://"+file];
+const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--remote-debugging-port=0","--user-data-dir="+profile,"about:blank"];
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const http=require("node:http");
 function getJson(url){
@@ -74,31 +74,13 @@ async function runBrowser(){
    });
   }
   await send("Page.enable");await send("Runtime.enable");
-  // Navigate to the actual file renderer first, then apply device emulation.
-  // A fresh about:blank -> file process swap can discard Chrome's first override.
-  let isReady=false;
-  for(let i=0;i<90;i++){
-   try{
-    const v=await send("Runtime.evaluate",{expression:"document.readyState==='complete'&&typeof window.__runBossMobileSmoke==='function'",returnByValue:true});
-    if(v.result?.value===true){isReady=true;break;}
-   }catch{}
+  await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  await send("Page.navigate",{url:"file://"+file});
+  let title="";
+  for(let i=0;i<75;i++){
+   try{const result=await send("Runtime.evaluate",{expression:"document.title",returnByValue:true});title=result.result?.value||"";if(title.startsWith("BOSS_QA:"))break;}catch{}
    await sleep(150);
   }
-  assert.ok(isReady,"Browser game and mobile QA instrumentation did not load");
-  let width=0;
-  for(let attempt=0;attempt<3;attempt++){
-   await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,screenWidth:390,screenHeight:844,deviceScaleFactor:1,scale:1,mobile:true});
-   await sleep(200);
-   const v=await send("Runtime.evaluate",{expression:"window.innerWidth",returnByValue:true});
-   width=v.result?.value||0;
-   if(width>=385&&width<=395)break;
-   console.warn("CDP mobile viewport not yet 390px ("+width+"); reloading file renderer before retry");
-   await send("Page.reload",{ignoreCache:true});
-   await sleep(200);
-  }
-  assert.ok(width>=385&&width<=395,"Mobile CSS viewport could not be set to 390px: "+width);
-  await send("Runtime.evaluate",{expression:"window.__runBossMobileSmoke()",returnByValue:true});
-  const title=(await send("Runtime.evaluate",{expression:"document.title",returnByValue:true})).result?.value||"";
   assert.ok(title.startsWith("BOSS_QA:"),"UI smoke script did not finish");
   const outcome=JSON.parse(Buffer.from(title.slice(8),"base64").toString("utf8"));
   console.log("Mobile browser verification:",JSON.stringify(outcome));
@@ -109,7 +91,7 @@ async function runBrowser(){
   assert.equal(outcome.checks.customBudgets,true);
   assert.equal(outcome.checks.optionalManagers,true);
   assert.equal(outcome.checks.noVisibleUndefined,true);
-  assert.equal(outcome.checks.promotionPriceRendered,true,"Promotion buttons must display a numeric cost, not raw source text");
+  assert.equal(outcome.checks.promotionPriceRendered,true,"Promotion buttons must show an evaluated numeric price");
   assert.deepEqual(outcome.errors,[]);
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}

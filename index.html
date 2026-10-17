@@ -112,6 +112,29 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .bi-transactions{max-height:260px;overflow:auto}
 .bi-negative{color:var(--warn)}
 @media(min-width:650px){.bi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.bi-metric-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* Compact independent v12 performance accordions */
+.bi-accordion{border:1px solid var(--line);border-radius:12px;margin:8px 0;background:var(--panel);overflow:hidden}
+.bi-accordion>summary{display:flex;flex-wrap:wrap;align-items:center;gap:5px 9px;padding:12px 13px;cursor:pointer;list-style:none;min-height:56px}
+.bi-accordion>summary::-webkit-details-marker{display:none}
+.bi-accordion>summary:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}
+.bi-section-title{font-size:14px;font-weight:750;flex:1 1 155px}
+.bi-section-state{font-size:12px;font-weight:700;border-radius:8px;padding:4px 8px;background:var(--accentWash);white-space:nowrap}
+.bi-section-hint{flex-basis:100%;font-size:12px;color:var(--muted)}
+.bi-accordion-body{border-top:1px solid var(--line);padding:12px}
+.bi-accordion[open]>summary{border-bottom:0}
+.bi-legend{display:flex;flex-wrap:wrap;gap:8px 12px;font-size:11px;color:var(--muted);margin:1px 0 12px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:0}
+.bi-metric,.bi-grid>div{transition:background .18s,border-color .18s}
+.bi-metric.bi-critical,.bi-grid>div.bi-critical,.bi-section-state.bi-critical{background:rgba(220,60,70,.09);border-color:rgba(208,62,75,.30)}
+.bi-metric.bi-watch,.bi-grid>div.bi-watch,.bi-section-state.bi-watch{background:rgba(214,145,40,.10);border-color:rgba(195,139,44,.30)}
+.bi-metric.bi-good,.bi-grid>div.bi-good,.bi-section-state.bi-good{background:rgba(37,149,98,.07);border-color:rgba(37,149,98,.20)}
+.bi-section-state.bi-neutral{background:var(--accentWash)}
+.bi-metric.bi-critical strong,.bi-grid>div.bi-critical strong{color:var(--warn)}
+.dot-critical{background:#df7181}.dot-watch{background:#d6a34d}.dot-good{background:#4ca67c}.dot-neutral{background:#a4aab1}
+.bi-metric .bi-diagnostic{display:block;font-size:11px;margin-top:5px;line-height:1.4;color:var(--muted)}
+.bi-accordion .bi-section{border:0;padding:0;margin:0}
+@media(prefers-reduced-motion:reduce){.bi-metric,.bi-grid>div{transition:none}}
 </style>
 </head>
 <body>
@@ -140,13 +163,14 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <details class="aux-details" id="performance-panel">
 <summary>Business intelligence — Finance, Sales, Delivery &amp; People</summary>
 <div class="bi-report">
+<p class="bi-legend"><span class="dot dot-critical"></span>Needs attention <span class="dot dot-watch"></span>Watch <span class="dot dot-good"></span>Healthy <span class="dot dot-neutral"></span>Not enough data</p>
 <div class="filter-grid"><div><label for="bi-range">Reporting period</label><select id="bi-range"><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="all">All tracked days</option></select></div><div><label>Measurement started</label><p id="bi-since" class="small"></p></div></div>
-<div class="bi-section"><h3>Finance · Profit &amp; loss</h3><div id="bi-finance" class="bi-metric-grid"></div><p id="bi-finance-note" class="filter-note"></p>
+<details class="bi-accordion bi-finance" id="bi-finance-panel"><summary><span class="bi-section-title">Finance · Profit &amp; loss</span><span class="bi-section-state" id="bi-finance-state">Not assessed</span><span class="bi-section-hint" id="bi-finance-hint">Tap to inspect</span></summary><div class="bi-accordion-body"><div id="bi-finance" class="bi-metric-grid"></div><p id="bi-finance-note" class="filter-note"></p>
 <div class="lead"><b>Revenue and costs by period</b><span class="small" id="bi-chart-period">Recent periods</span></div><div id="bi-chart" class="bi-chart" aria-label="Revenue and costs trend"></div><div class="bi-chart-legend">Revenue = colored bars · Operating costs = grey bars</div><div id="bi-cost-breakdown"></div>
-<details class="aux-details"><summary>Recent cash transactions</summary><div id="bi-transactions" class="bi-transactions"></div></details></div>
-<div class="bi-section"><h3>Sales · Lead quality &amp; conversion</h3><div id="bi-sales" class="bi-metric-grid"></div><div id="bi-sources"></div><p class="filter-note">Qualification rate is qualified leads divided by generated leads. Win rate uses decisions on closed opportunities; leads still in progress are excluded.</p></div>
-<div class="bi-section"><h3>Delivery · Realization &amp; quality</h3><div id="bi-delivery" class="bi-metric-grid"></div><div id="bi-sectors"></div><details class="aux-details"><summary>Completed project profitability</summary><div id="bi-project-history"></div></details><p class="filter-note">Booked value is estimated at contract award and adjusted for contract changes. Realized revenue is recognized and paid upon completion; invoicing and receivables are not simulated yet. Project contribution margin allocates delivery labor plus direct project expenses, not general overhead.</p></div>
-<div class="bi-section"><h3>People · Capacity &amp; productivity</h3><div id="bi-people" class="bi-metric-grid"></div><p class="filter-note">Billable utilization = delivery workdays / staffed workdays. Remaining capacity can support prospecting, training, rest or leadership.</p></div>
+<details class="aux-details"><summary>Recent cash transactions</summary><div id="bi-transactions" class="bi-transactions"></div></details></div></details>
+<details class="bi-accordion bi-sales" id="bi-sales-panel"><summary><span class="bi-section-title">Sales · Lead quality &amp; conversion</span><span class="bi-section-state" id="bi-sales-state">Not assessed</span><span class="bi-section-hint" id="bi-sales-hint">Tap to inspect</span></summary><div class="bi-accordion-body"><div id="bi-sales" class="bi-metric-grid"></div><div id="bi-sources"></div><p class="filter-note">Qualification rate is qualified leads divided by generated leads. Win rate uses decisions on closed opportunities; leads still in progress are excluded.</p></div></details>
+<details class="bi-accordion bi-delivery" id="bi-delivery-panel"><summary><span class="bi-section-title">Delivery · Realization &amp; quality</span><span class="bi-section-state" id="bi-delivery-state">Not assessed</span><span class="bi-section-hint" id="bi-delivery-hint">Tap to inspect</span></summary><div class="bi-accordion-body"><div id="bi-delivery" class="bi-metric-grid"></div><div id="bi-sectors"></div><details class="aux-details"><summary>Completed project profitability</summary><div id="bi-project-history"></div></details><p class="filter-note">Booked value is estimated at contract award and adjusted for contract changes. Realized revenue is recognized and paid upon completion; invoicing and receivables are not simulated yet. Project contribution margin allocates delivery labor plus direct project expenses, not general overhead.</p></div></details>
+<details class="bi-accordion bi-people" id="bi-people-panel"><summary><span class="bi-section-title">People · Capacity &amp; productivity</span><span class="bi-section-state" id="bi-people-state">Not assessed</span><span class="bi-section-hint" id="bi-people-hint">Tap to inspect</span></summary><div class="bi-accordion-body"><div id="bi-people" class="bi-metric-grid"></div><p class="filter-note">Billable utilization = delivery workdays / staffed workdays. Remaining capacity can support prospecting, training, rest or leadership.</p></div></details>
 </div></details>
 <section aria-labelledby="deals-title"><h2 id="deals-title">Client projects: choose assignments and contracts</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
 

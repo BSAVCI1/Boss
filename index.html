@@ -1522,7 +1522,7 @@ logIt("CEO renewed "+DEPARTMENTS[dept].name+" budgets until Day "+(p.since+p.day
 orgControlsSignature="";save();renderOrganization();refresh();return true;
 }
 function orgManager(key){const id=S.org.departments[key]?.managerId;const p=person(id);return p&&p.department===key&&p.role.primary==="lead"&&p.id!==S.ops.assistantId?p:null;}
-function orgReports(key){const mgr=orgManager(key);return S.team.filter(p=>p.department===key&&p.id!==mgr?.id&&p.id!==S.ops.assistantId);}
+function orgReports(key){const mgr=orgManager(key);return S.team.filter(p=>p.department===key&&p.id!==mgr?.id&&p.id!==S.ops.assistantId&&!unitOfPerson(p.id));}
 function orgPeriod(){for(const key of DEPT_KEYS){const d=S.org.departments[key];if(S.day-d.periodStart>=30){
 const v=d.stats,attempts=v.delivered+(v.missed||0),hasEvidence=key==="commercial"?(v.leads>0||v.wins>0):attempts>=3;
 const achieved=key==="commercial"?(v.leads>=d.target.leads||v.wins>=Math.max(2,Math.ceil(d.target.leads/2))):attempts>=3&&Math.round(100*v.onTime/attempts)>=d.target.onTime;
@@ -1546,7 +1546,7 @@ function orgRestoreSpecialist(p){if(!p)return;p.role.primary=["sales","mkt","pro
 function orgChooseSubManager(dept,role,id){
 if(S.ev||!DEPARTMENTS[dept]?.skills.includes(role))return false;
 const d=S.org.departments[dept],previous=orgSubManager(dept,role),next=person(id);
-if(id&&(!next||next.department!==dept||next.id===S.ops.assistantId||next.id===orgManager(dept)?.id||!(next.career.rank>=1||next.career.xp>=10)||(!["lead",role].includes(next.role.primary))||next.role.primary==="lead"&&orgWorkRole(next)!==role))return false;
+if(id&&(!next||next.department!==dept||next.id===S.ops.assistantId||unitOfPerson(next.id)||next.id===orgManager(dept)?.id||!(next.career.rank>=1||next.career.xp>=10)||(!["lead",role].includes(next.role.primary))||next.role.primary==="lead"&&orgWorkRole(next)!==role))return false;
 if(next&&DEPT_KEYS.some(k=>DEPARTMENTS[k].skills.some(r=>r!==role&&orgSubManager(k,r)?.id===next.id)))return false;
 const before=coachSnap(id||previous?.id);
 if(previous&&previous.id!==id)orgRestoreSpecialist(previous);
@@ -1562,7 +1562,7 @@ structural="";save();renderStructure();renderOrganization();refresh();return tru
 }
 function orgChooseManager(dept,id){if(S.ev||!DEPARTMENTS[dept])return;const d=S.org.departments[dept];const before=coachSnap(id||S.org.departments[dept].managerId);
 if(!id){const prior=orgManager(dept);d.managerId=null;if(prior){orgRestoreSpecialist(prior);logIt(prior.n+" stepped down as "+DEPARTMENTS[dept].name+" manager.");}}
-else{const p=person(id);if(!p||p.department!==dept||p.id===S.ops.assistantId||!(p.career.rank>=1||p.career.xp>=10))return;
+else{const p=person(id);if(!p||p.department!==dept||p.id===S.ops.assistantId||unitOfPerson(p.id)||!(p.career.rank>=1||p.career.xp>=10))return;
 for(const key of DEPT_KEYS){if(S.org.departments[key].managerId===id)S.org.departments[key].managerId=null;for(const role of DEPARTMENTS[key].skills)if(S.org.departments[key].subManagers?.[role]===id)S.org.departments[key].subManagers[role]=null;}
 const former=orgManager(dept);if(former&&former.id!==id)orgRestoreSpecialist(former);
 for(const d of S.deals)if(d.w===p.id)d.w=null;
@@ -1657,7 +1657,7 @@ if(sig!==orgControlsSignature&&!inputBusy){orgControlsSignature=sig;renderOrgCon
 function renderOrgControls(){
 $("org-controls").innerHTML=DEPT_KEYS.map(key=>{
 const d=S.org.departments[key],director=orgManager(key),p=d.plan;
-const qualified=S.team.filter(x=>x.department===key&&x.id!==S.ops.assistantId&&(x.career.rank>=1||x.career.xp>=10));
+const qualified=S.team.filter(x=>x.department===key&&x.id!==S.ops.assistantId&&!unitOfPerson(x.id)&&(x.career.rank>=1||x.career.xp>=10));
 const number=(type,label,value,min=0,max=10000000)=>'<label>'+label+'</label><input type="number" inputmode="decimal" min="'+min+'" max="'+max+'" step="'+(type==="payrollLimit"?"0.01":"1")+'" data-org-policy="'+type+'" data-org-dept="'+key+'" value="'+value+'">';
 const opts=qualified.map(x=>'<option value="'+x.id+'" '+(director?.id===x.id?'selected':'')+'>'+esc(x.n)+' · #'+x.id+'</option>').join("");
 const roles=DEPARTMENTS[key].skills.map(role=>{

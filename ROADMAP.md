@@ -1,5 +1,16 @@
 # Boss — simulation development roadmap
 
+## v20.2 — P0 whole-company save recovery (release candidate)
+
+**Trigger:** On iPhone Safari the entire company repeatedly reopens at Day 2642, regardless of further gameplay; v20.1's per-field fixes cannot recover advances when the underlying company save fails.
+
+**Solution under review:** [PR #21](https://github.com/BSAVCI1/Boss/pull/21) adds a verified save indicator, detailed local/remote revision diagnostics, a user-exportable current-company backup, fail-closed simulation on unconfirmed writes, transactional IndexedDB fallback when localStorage is full/unavailable, and on-reload selection of the newest valid company version. Never clear or rewrite the older save keys. Protect duplicate business-line charges and accounting. Preserve standalone offline implementation.
+
+**Acceptance gate:** Run inherited versions' migration and 730-day financial tests, browser quota injection, indexed save committed before refresh, recovery at a newer day than the stale local save, paid-line persistence without repeat fees, and mobile 390px layout. PR remains unmerged until current head checks are green; production claim requires Pages success and live endpoint verification. Owner's Day 2642 Safari save can only be confirmed on-device. An exported backup contains personal company state and should remain private.
+
+**Next release candidate:** Optional local backup import and deeper on-device storage-health diagnostics, after stable iOS Safari validation. Product/subscription businesses remain outside the v20.2 defect scope.
+
+
 **Owner-updated progress (2026-10-17):** v7 Smart Office Assistant, v8 Projects & Customers and sector expansion, v9 Smarter Employees, v10 Company Operating System (continuous pipeline, persistent roles, autonomous work and capability/skill maps), v11 Mobile UI Simplification, v12 Business Intelligence and v13 Organization & Leadership, v14 Entrepreneurship & Leadership Lab and v14.1 Management Coach & Decision Intelligence delivered. v15 Advanced Business Economy delivered, including a role-focused career and hiring map. Future expansions remain in the owner-selected backlog.
 
 **Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss14`, `boss13`, `boss12`, `boss10`, `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.

@@ -253,7 +253,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
 <div class="card ceo-office"><div class="eyebrow">CEO · COMPANY IDENTITY</div><h2 id="company-name">Business Services Group</h2><p id="company-identity"></p><div class="ceo-office-grid"><div><b>My direct reports</b><div id="ceo-direct-reports"></div></div><div><b>Executive Assistant</b><div id="ceo-assistant"></div></div></div></div>
-<div class="card ceo-direction"><div class="lead"><b>Your 90-day direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p></div>
+<div class="card ceo-direction"><div class="lead"><b>Your 90-day direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p><p id="ceo-direction-confirm" class="small" role="status" aria-live="polite"></p></div>
 <div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
 <div class="card game-desk" id="game-desk">
 <div class="lead"><span class="eyebrow">YOUR COMPANY STORY</span><span class="game-chapter" id="game-chapter">Founder</span></div>
@@ -1483,7 +1483,7 @@ function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4)+(d.worldStrategy==="relationships"?3:0));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){ceoDraftPriority=null;S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -1599,7 +1599,11 @@ $("restart").addEventListener("click",()=>{if(!confirm("Restart the company from
 fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";sectorSignature="";customerSignature="";projectExpanded.clear();employeeExpanded.clear();careerExpanded.clear();roadmapExpanded.clear();attentionSignature="";orgControlsSignature="";for(const name of ["today","work","team","growth"])viewScroll[name]=0;
 paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();navigate("today");schedule();});
 document.querySelector(".bottom-nav").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(b)navigate(b.dataset.view);});
-$("ceo-set-direction").addEventListener("click",()=>ceoDirection($("ceo-priority").value));
+$("ceo-priority").addEventListener("change",()=>draftExecutiveDirection($("ceo-priority").value));
+$("ceo-set-direction").addEventListener("click",()=>{
+const priority=ceoDraftPriority??$("ceo-priority").value;
+if(!ceoDirection(priority))$("ceo-direction-confirm").textContent=S.ev?"Resolve the current CEO decision before changing direction.":"Direction unchanged. Choose a different strategy or wait for the next review.";
+});
 $("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}});
 $("launch-service-line").addEventListener("click",()=>{if(executiveLaunch($("service-line-select").value)){save();refresh();}});
 $("service-line-select").addEventListener("change",()=>executiveShow());
@@ -1741,6 +1745,13 @@ profit:{name:"Strengthen profitability",explain:"Protect cash, eliminate avoidab
 people:{name:"Develop leaders",explain:"Build managers, coaching and internal successors before increasing headcount."}
 };
 const SERVICE_LINES={marketing:{name:"Marketing studio",need:"mkt"},product:{name:"Product development",need:"prod"},operations:{name:"Operations consulting",need:"ops"},technology:{name:"Technology advisory",need:"prod"}};
+let ceoDraftPriority=null;
+function draftExecutiveDirection(priority){
+if(!CEO_PRIORITIES[priority])return false;
+ceoDraftPriority=priority;
+$("ceo-direction-confirm").textContent=priority===S.exec.priority?"Current strategy selected.":"Pending: "+CEO_PRIORITIES[priority].name+". Tap Set CEO direction to confirm.";
+return true;
+}
 function ensureExecutive(state){
 if(!state.exec||typeof state.exec!=="object")state.exec={since:state.day,priority:"grow",priorityDay:state.day,nextMeeting:state.day+7,lastMeeting:state.day,proposals:[],history:[],sequence:1,lines:[]};
 const e=state.exec;
@@ -1765,6 +1776,8 @@ S.exec.priority=priority;S.exec.priorityDay=S.day;S.exec.proposals=S.exec.propos
 const suggested={grow:"growth",rd:"innovation",specialize:"balanced",newline:"balanced",profit:"balanced",people:"balanced"}[priority];
 S.pipeline.mode=suggested;
 coachDecision("CEO direction: "+CEO_PRIORITIES[priority].name,before,"90-day strategic priority. Department plans will reflect the choice; no automatic spending or guaranteed performance improvement.",null,30);
+ceoDraftPriority=null;
+$("ceo-direction-confirm").textContent="Confirmed: "+CEO_PRIORITIES[priority].name+" · New 90-day strategy starts Day "+S.day+".";
 logIt("CEO set the strategic direction to "+CEO_PRIORITIES[priority].name+".");save();refresh();return true;
 }
 function ceoProjectValue(line,d){return line&&d&&d.need===SERVICE_LINES[line.key]?.need&&S.day>=line.since;}
@@ -1858,9 +1871,9 @@ $("ceo-direct-reports").innerHTML=DEPT_KEYS.map(key=>{
 const m=orgManager(key),staff=orgReports(key);
 return '<div class="ceo-report"><b>'+DEPARTMENTS[key].name+'</b><div>'+(m?esc(m.n)+" · Director · "+staff.length+" reports":"Founder-led · "+staff.length+" colleagues")+'</div><details><summary>View team</summary>'+staff.map(p=>'<div class="small">'+esc(p.n)+' · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'</details></div>';}).join("");
 $("ceo-assistant").textContent=a? a.n+" · CEO coordination and manager follow-ups":"Unfilled · appointment optional";
-$("ceo-priority").value=S.exec.priority;
+$("ceo-priority").value=ceoDraftPriority??S.exec.priority;
 $("ceo-direction-time").textContent="Day "+Math.max(0,S.day-S.exec.priorityDay)+" / 90";
-$("ceo-direction-note").textContent=CEO_PRIORITIES[S.exec.priority].explain;
+$("ceo-direction-note").textContent=ceoDraftPriority&&ceoDraftPriority!==S.exec.priority?"Proposed change: "+CEO_PRIORITIES[ceoDraftPriority].explain:CEO_PRIORITIES[S.exec.priority].explain;
 $("ceo-set-direction").disabled=!!S.ev;
 const inbox=S.exec.proposals,ev=S.world.activeEvent;
 $("exec-count").textContent=inbox.length+" manager requests"+(ev?" · 1 market brief":"");

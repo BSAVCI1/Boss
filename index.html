@@ -248,6 +248,12 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .save-export{font-size:11px;min-height:28px;padding:4px 7px;white-space:nowrap}
 .save-error{font-size:12px;color:var(--ink);border:1px solid var(--line);padding:8px 10px;margin:6px 0;background:var(--accentWash)}
 .save-error[hidden]{display:none}
+.unit-panel{border:1px solid var(--line);border-radius:12px;margin:9px 0;padding:10px}
+.unit-panel summary{font-weight:700;cursor:pointer}.unit-panel .unit-metrics{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0}
+.unit-panel .unit-metrics span{padding:5px 8px;border-radius:8px;background:var(--accentWash);font-size:12px}
+.unit-panel select,.unit-panel button{max-width:100%}.unit-panel .small{overflow-wrap:anywhere}
+.unit-panel .filter-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+@media(max-width:430px){.unit-panel .filter-grid{grid-template-columns:1fr}.unit-panel{padding:9px}}
 @media(max-width:700px){.ceo-office-grid{grid-template-columns:minmax(0,1fr)}.ceo-office-grid>div{min-width:0}.ceo-office-grid>div:last-child{padding:9px 11px}.ceo-report{overflow-wrap:anywhere}.ceo-report button{max-width:100%}}
 </style>
 </head>
@@ -365,7 +371,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="view-intro"><h2>Growth</h2><p>Industries, investments and company knowledge</p></div>
 <section aria-labelledby="market-title"><h2 id="market-title">Choose your direction</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><details class="aux-details" id="sector-explore"><summary>Explore customer markets</summary><div id="sector-options" class="sector-buttons"></div></details><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
 
-<section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">These are service portfolios within one company, not independent subsidiaries. Each tracks its own future contracts, revenue, quality and contribution, but staff, department managers, cash and budgets remain shared. Dedicated business-unit leaders and staff will be a separate CEO expansion. No revenue is counted twice.</p><div id="business-lines"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">CEO approval required. Track new work from launch onward; earlier projects are never invented.</p></details></section>
+<section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">These are service portfolios within one company, not independent subsidiaries. Each tracks its own future contracts, revenue, quality and contribution, but staff, department managers, cash and budgets remain shared. Dedicated business-unit leaders and staff will be a separate CEO expansion. No revenue is counted twice.</p><div id="business-lines"></div><div id="business-units" aria-label="Operating unit management"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">CEO approval required. Track new work from launch onward; earlier projects are never invented.</p></details></section>
 <section aria-labelledby="world-title"><h2 id="world-title">Your rivals</h2>
 <div class="card"><div id="game-rivals" class="game-rivals"></div><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
 
@@ -1388,7 +1394,7 @@ if(!Array.isArray(c.promotions))c.promotions=[];if(typeof c.autoRest!=="boolean"
 }
 function talentHint(p){const k=p.career.talent;return({sales:"connects naturally with people",mkt:"notices stories and customer patterns",prod:"enjoys making new things",ops:"spots ways to improve routines"})[k];}
 function rankName(p){return careerTitle(p);}
-function dailySalary(p){const rank=p.career.rank,rankPremium=rank<=2?rank*.75:(rank===3?2.55:3.95);const titleBonus=S.org&&DEPT_KEYS.some(k=>S.org.departments[k]?.managerId===p.id)?.75:S.org&&DEPT_KEYS.some(k=>DEPARTMENTS[k].skills.some(role=>S.org.departments[k]?.subManagers?.[role]===p.id))?.5:0;return(1.5+rankPremium+(p.career.raise||0)+titleBonus)*S.mod.cost;}
+function dailySalary(p){const rank=p.career.rank,rankPremium=rank<=2?rank*.75:(rank===3?2.55:3.95);const titleBonus=S.org&&DEPT_KEYS.some(k=>S.org.departments[k]?.managerId===p.id)?.75:S.org&&DEPT_KEYS.some(k=>DEPARTMENTS[k].skills.some(role=>S.org.departments[k]?.subManagers?.[role]===p.id))?.5:0;const unitPremium=S.exec?.units?.some(u=>u.managerId===p.id)?.5:0;return(1.5+rankPremium+(p.career.raise||0)+titleBonus+unitPremium)*S.mod.cost;}
 function stressFactor(p){const c=p.career;return Math.max(.56,1-(c.stress>=55?(c.stress-55)*.006:0)-c.burnout*.0025);}
 function goalFactor(p,d){const c=p.career;let factor=.95+c.satisfaction/1200;
 if(c.goal==="creativity"&&d&&["creative","technology"].includes(d.sector))factor+=.07;
@@ -1482,6 +1488,9 @@ return p.career?.rank>=4&&p.career.path==="leadership"||DEPARTMENTS[p.department
 function orgPersonPosition(p){
  if(!p)return"Unassigned";
  if(S.ops.assistantId===p.id)return"Executive Assistant";
+ const u=unitOfPerson(p.id);
+ if(u?.managerId===p.id)return SERVICE_LINES[u.key].name+" General Manager";
+ if(u)return SERVICE_LINES[u.key].name+" · "+(ROLE_NAMES[orgWorkRole(p)]||"Specialist");
  if(orgManager(p.department)?.id===p.id)return DEPARTMENTS[p.department].name+" "+orgLeaderTitle(p);
  for(const role of DEPARTMENTS[p.department]?.skills||[])
   if(orgSubManager(p.department,role)?.id===p.id)return ROLE_NAMES[role]+" Manager";
@@ -1808,7 +1817,7 @@ function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
 function release(p){if(!p)return;for(const d of S.deals)if(d.w===p.id)d.w=null;p.t="idle";}
-function removePerson(p){if(S.team.length<=1)return false;if(S.ops.assistantId===p.id)S.ops.assistantId=null;for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===p.id)S.org.departments[k].managerId=null;release(p);S.team=S.team.filter(x=>x.id!==p.id);avatars.delete(p.id);return true;}
+function removePerson(p){if(S.team.length<=1)return false;for(const u of S.exec?.units||[]){if(u.managerId===p.id)u.managerId=null;u.staffIds=u.staffIds.filter(id=>id!==p.id);}if(S.ops.assistantId===p.id)S.ops.assistantId=null;for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===p.id)S.org.departments[k].managerId=null;release(p);S.team=S.team.filter(x=>x.id!==p.id);avatars.delete(p.id);return true;}
 function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S.seeds.includes(k));if(!unused.length)return false;
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
@@ -2022,7 +2031,8 @@ function teamReportingGroups(){
   groups.push({id,title,people:entries});
  };
  add("ceo","CEO · direct reports",[
- ...DEPT_KEYS.map(key=>orgManager(key)),person(S.ops.assistantId)]);
+ ...DEPT_KEYS.map(key=>orgManager(key)),...(S.exec?.units||[]).map(u=>person(u.managerId)),person(S.ops.assistantId)]);
+ for(const u of S.exec?.units||[])add("unit-"+u.key,SERVICE_LINES[u.key].name+" → "+(person(u.managerId)?.n||"Vacant GM"),u.staffIds.map(id=>person(id)));
  for(const dept of DEPT_KEYS){
   const chief=orgManager(dept),label=DEPARTMENTS[dept].name;
   for(const role of DEPARTMENTS[dept].skills){
@@ -2037,7 +2047,7 @@ function teamReportingGroups(){
  return groups;
 }
 function renderStructure(){
-const dSig=S.deals.map(d=>d.id+":"+d.w+":"+d.negotiated+":"+d.extended+":"+d.reviewed+":"+(d.prog>=d.work*.2)).join(",")+"|"+S.team.map(p=>p.id+":"+p.t+":"+p.role.primary+":"+p.role.auto+":"+p.department).join(",")+"|"+DEPT_KEYS.map(k=>[S.org.departments[k].managerId,...DEPARTMENTS[k].skills.map(role=>S.org.departments[k].subManagers?.[role])].join(":")).join(",")+"|"+S.ops.assistantId;
+const dSig=S.deals.map(d=>d.id+":"+d.w+":"+d.negotiated+":"+d.extended+":"+d.reviewed+":"+(d.prog>=d.work*.2)).join(",")+"|"+S.team.map(p=>p.id+":"+p.t+":"+p.role.primary+":"+p.role.auto+":"+p.department).join(",")+"|"+DEPT_KEYS.map(k=>[S.org.departments[k].managerId,...DEPARTMENTS[k].skills.map(role=>S.org.departments[k].subManagers?.[role])].join(":")).join(",")+"|"+S.ops.assistantId+"|"+JSON.stringify((S.exec?.units||[]).map(u=>[u.key,u.managerId,u.staffIds]));
 if(structural===dSig)return;
 for(const el of $("deals").querySelectorAll("details[data-project-id]")){const id=Number(el.dataset.projectId);if(el.open)projectExpanded.add(id);else projectExpanded.delete(id);}
 for(const el of $("people").querySelectorAll("details[data-team-group]")){if(el.open)peopleGroupExpanded.add(el.dataset.teamGroup);else peopleGroupExpanded.delete(el.dataset.teamGroup);}
@@ -2129,7 +2139,7 @@ const SERVICE_OFFERS={
  operations:[["Process audit",1.12,1.05,76],["Workflow redesign",1.42,1.28,85],["Operational transformation",1.8,1.55,90]],
  technology:[["Automation assessment",1.2,1.1,77],["Workflow automation",1.6,1.35,85],["AI integration",2.05,1.75,91]]
 };
-let ceoDraftPriority=null;
+let ceoDraftPriority=null,unitMutationPending=false,unitViewSignature="";
 function draftExecutiveDirection(priority){
 if(!CEO_PRIORITIES[priority])return false;
 ceoDraftPriority=priority;
@@ -2150,6 +2160,20 @@ if(!Array.isArray(e.history))e.history=[];
 if(!Array.isArray(e.lines))e.lines=[];
 if(!Number.isFinite(e.sequence))e.sequence=1;
 if(!Array.isArray(e.weeklyReports))e.weeklyReports=[];
+if(!Array.isArray(e.units))e.units=[];
+if(!Array.isArray(e.unitEvents))e.unitEvents=[];
+const unitOwners=new Set(),unitKeys=new Set();
+e.units=e.units.filter(u=>{
+ if(!u||!SERVICE_LINES[u.key]||unitKeys.has(u.key)||!e.lines.some(x=>x.key===u.key))return false;
+ unitKeys.add(u.key);if(!Number.isFinite(u.since))u.since=state.day;
+ if(!Array.isArray(u.staffIds))u.staffIds=[];
+ if(!state.team.some(p=>p.id===u.managerId&&p.id!==state.ops.assistantId))u.managerId=null;
+ u.staffIds=u.staffIds.filter(id=>{if(!Number.isInteger(id)||unitOwners.has(id)||id===state.ops.assistantId||!state.team.some(p=>p.id===id))return false;unitOwners.add(id);return true;});
+ if(u.managerId&&!u.staffIds.includes(u.managerId)){if(unitOwners.has(u.managerId))u.managerId=null;else{unitOwners.add(u.managerId);u.staffIds.push(u.managerId);}}
+ for(const k of ["revenue","directCost","sharedLaborCost","payrollCost","delivered","missed","qualityTotal"])if(!Number.isFinite(u[k])||u[k]<0)u[k]=0;
+ return true;
+});
+e.unitEvents=e.unitEvents.filter(x=>x&&x.key&&Number.isFinite(x.day)).slice(-80);
 e.weeklyReports=e.weeklyReports.filter(x=>x&&Number.isFinite(x.day)).slice(0,12);
 e.proposals=e.proposals.filter(p=>p&&p.type&&p.id).slice(-12);
 e.history=e.history.slice(-40);

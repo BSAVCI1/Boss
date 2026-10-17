@@ -1,6 +1,6 @@
 # Boss — Milestone Progression & Autonomous Leadership Architecture
 
-Status: v21.4b draft implementation, release gated by tests/PR/Pages. This document defines the full multi-stage game design; **only stages explicitly marked implemented in code are live**.
+Status: **v21.4b released** through PR #29. [PR #29](https://github.com/BSAVCI1/Boss/pull/29) merged at `69972b4fe6771478cd38ce82b15e9bc3734dc3e9`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39073362391) and [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39073362154) passed for that commit. GitHub Actions covered 390/414px Chromium, 730-day cash reconciliation, fresh starts, historical save migrations, progression gates and cross-tab/save protection. The independent hosted live-browser check was unavailable due to provider wallet balance; original private iPhone Safari save was not opened. This document also covers future designs: **only stages explicitly marked implemented in code are live**.
 
 ## Product principle
 
@@ -10,10 +10,10 @@ Boss progresses from Founder → Team Builder → Department Leader → CEO → 
 
 | Next position | Hard readiness | Accountability after appointment | Status |
 |---|---|---|---|
-| Team Lead | First at **5 corporate staff**, another 3 staff for each additional lead; individual 14 role/work days, career experience or XP, leadership ability ≥45; no unfinished assigned contract | At most 3 individual contributors, weekly successor mentoring, +$0.50/game-day payroll | v21.4b draft code |
-| Manager | **3 Team Leads**, 45 days of lead experience, leadership ability ≥55 | Leads team leads and team growth, proposes recruiting/training/delegation, +$0.25/day increment over Team Lead | v21.4b draft code; broader operational authority later |
-| Senior Manager | **5 Team Leads**, 75 days since Manager appointment, leadership ability ≥65 | Multi-team capacity and successor cover, +$0.30/day over Manager | v21.4b draft code; broader operational authority later |
-| Director | **3 Managers**, 105 days since Senior Manager appointment, leadership ability ≥70 | Functional performance and succession, +$0.30/day over Senior Manager | v21.4b draft code; broader authority later |
+| Team Lead | First at **5 corporate staff**, another 3 staff for each additional lead; individual 14 role/work days, career experience or XP, leadership ability ≥45; no unfinished assigned contract | At most 3 individual contributors, weekly successor mentoring, +$0.50/game-day payroll | v21.4b implemented |
+| Manager | **3 Team Leads**, 45 days of lead experience, leadership ability ≥55 | Leads team leads and team growth, proposes recruiting/training/delegation, +$0.25/day increment over Team Lead | v21.4b implemented; broader operational authority later |
+| Senior Manager | **5 Team Leads**, 75 days since Manager appointment, leadership ability ≥65 | Multi-team capacity and successor cover, +$0.30/day over Manager | v21.4b implemented; broader operational authority later |
+| Director | **3 Managers**, 105 days since Senior Manager appointment, leadership ability ≥70 | Functional performance and succession, +$0.30/day over Senior Manager | v21.4b implemented; broader authority later |
 | General Manager | Previously purchased service line, eligible GM, dedicated unit staff; CEO appointment, explicit budget | Strategy, unit financial performance, measured outcomes, designated successors | v21.1–v21.4a already released |
 
 *Skill/professional career grades remain separate from functional management positions*. Corporate staff retain their professional history, primary department and persistent unique ID. Each worker has **one primary reporting owner**, even if corporate resources later support a unit through an expressly budgeted service allocation. Appointments may not strip employees away from active customer work.

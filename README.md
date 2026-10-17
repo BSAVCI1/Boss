@@ -1,5 +1,13 @@
 # Boss
 
+## Boss v21.4b — Leadership progression (released 2026-10-17)
+
+**Play:** Team → Leadership journey. At five corporate employees, the Executive Assistant recommends the strongest *eligible* Team Lead. Career gates use experience, leadership competency, tenure, job ownership and financial runway. Later stages: three Team Leads unlock a Manager, five Team Leads unlock a Senior Manager (with qualified Manager), three Managers unlock a Director (with qualified Senior Manager). Each new Team Lead needs three additional corporate employees; Team Leads mentor identified successors. CEO chooses an added daily management payroll ceiling (defaults to $0), and qualified promotions may execute automatically in weekly reviews inside that ceiling with 14 days' payroll reserve. Larger exceptions require CEO approval. The payroll premium is ongoing, never a fictional one-time promotion fee. Reporting groups use unique employee IDs; existing units, paid lines and employees remain intact.
+
+**Expansion:** Growth displays **advisory** service-launch readiness based on delivered projects, team leadership, reputation and capital. It does **not** block existing or new purchases yet: enforcing comprehensive expansion gates is planned for v21.5. Full independently delegated department managers and cross-unit corporate resource billing remain planned for v21.4c. See [progression architecture](docs/PROGRESSION_ARCHITECTURE.md).
+
+**Release verification:** [PR #29](https://github.com/BSAVCI1/Boss/pull/29) merged at `69972b4fe6771478cd38ce82b15e9bc3734dc3e9`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39073362391) and [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39073362154) passed for that commit. GitHub Actions covered 390/414px Chromium, 730-day cash reconciliation, fresh starts, historical save migrations, progression gates and cross-tab/save protection. The independent hosted live-browser check was unavailable due to provider wallet balance; original private iPhone Safari save was not opened.
+
 ## Boss v21.4a — GM budgets, stable editing and succession (released 2026-10-17)
 
 **How to play:** Growth → Operating units → CEO authority & GM scorecard. Choose **Fresh Manager**, **Manager +25%**, **Senior Manager +25%** and click **Apply preset**, or enter any supported amounts and click **Apply custom settings**. Multiple-digit fields stay editable without mid-typing writes. No money is spent just by approving a budget; you authorize later bounded GM expenses. A new GM receives a recommended Fresh preset but **no spending authority** until CEO approval; migrated saves keep their old limits.

@@ -206,8 +206,16 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
-<div class="overview-card card"><div class="eyebrow">EXECUTIVE BRIEFING</div><h2 id="brief-headline">Your company at a glance</h2><p class="overview-copy" id="brief-summary">Checking your projects, customers and employees.</p>
-<div class="overview-metrics"><span id="brief-projects">0 projects</span><span id="brief-pipeline">0 in pipeline</span><span id="brief-team">Team ready</span></div></div>
+<div class="card game-desk" id="game-desk">
+<div class="lead"><span class="eyebrow">YOUR COMPANY STORY</span><span class="game-chapter" id="game-chapter">Founder</span></div>
+<h2 id="brief-headline">Your company at a glance</h2><p class="overview-copy" id="brief-summary">Your team is getting started.</p>
+<div class="overview-metrics"><span id="brief-projects">0 projects</span><span id="brief-pipeline">0 in pipeline</span><span id="brief-team">Team ready</span></div>
+<div class="game-mission" id="game-mission"><div class="eyebrow">NEXT CHALLENGE</div><strong id="game-goal">Build your company</strong><p id="game-goal-hint">Choose your next step.</p><div class="game-goal-track"><span id="game-goal-bar"></span></div><div class="game-goal-progress" id="game-goal-progress"></div></div>
+<div class="game-actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
+<div class="game-story" id="game-story" aria-live="polite"></div>
+<details class="aux-details" id="game-journey"><summary>My company journey</summary><div id="game-journey-map"></div></details>
+</div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div>
+<details class="aux-details game-advanced" id="ceo-records"><summary>Coach &amp; company records</summary>
 <section class="card bi-headline" aria-labelledby="bi-headline-title"><div class="lead"><b id="bi-headline-title">Business performance</b><span class="small" id="bi-period-note">Tracked since Day 0</span></div>
 <div class="bi-grid">
 <div id="bi-tile-revenue"><span>Revenue earned</span><strong id="bi-revenue">$0</strong></div>
@@ -220,14 +228,28 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="coach-mode"><label for="coach-mode">Learning style</label><select id="coach-mode"><option value="guided">Guided · explain and recommend</option><option value="challenge">Challenge · decide, then learn</option><option value="sandbox">Sandbox · minimal assistance</option></select></div>
 <div id="coach-last-decision"></div><div id="coach-priorities"></div>
 <details class="aux-details"><summary>Cash and capacity plan</summary><div id="coach-forecast"></div><button type="button" id="coach-pay-wages">Settle available unpaid wages</button></details>
-<details class="aux-details"><summary>Leadership Decision Journal · outcomes and follow-ups</summary><div id="coach-decisions"></div></details>
-</section><div class="lab-today" id="lab-today" hidden><span id="lab-today-text"></span><button type="button" id="lab-today-open">Review experiment →</button></div><div id="attention-list" class="attention-list" aria-live="off"></div>
+<details class="aux-details"><summary>My Decisions</summary><div id="coach-decisions"></div></details>
+</section></details><div class="lab-today" id="lab-today" hidden><span id="lab-today-text"></span><button type="button" id="lab-today-open">Review experiment →</button></div><div id="attention-list" class="attention-list" aria-live="off"></div>
+<details class="aux-details game-advanced" id="today-options"><summary>Work settings &amp; activity</summary>
 <div class="card focusrow"><div><strong>Focus on current work</strong><div class="small" id="focus-hint">Pause incoming work when you need space.</div></div><button type="button" id="focus-toggle">Enable Focus</button></div>
-<details class="aux-details" id="office-panel"><summary>Office animation &amp; game settings</summary><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div><button type="button" id="restart" class="danger-secondary">Restart company</button></details>
-<details class="aux-details"><summary>Company activity <span class="small" id="log-recent"></span></summary><div class="card" id="log" aria-live="off"></div></details>
-</section>
+<details class="aux-details" id="office-panel"><summary>Office scene &amp; settings</summary><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div><button type="button" id="restart" class="danger-secondary">Restart company</button></details>
+<details class="aux-details"><summary>Company history <span class="small" id="log-recent"></span></summary><div class="card" id="log" aria-live="off"></div></details>
+</details></section>
 <section id="view-work" class="app-view" data-page="work" aria-label="Projects and sales" hidden>
 <div class="view-intro"><h2>Work</h2><p>Projects, customers and future contracts</p></div>
+<section aria-labelledby="deals-title"><h2 id="deals-title">Active projects</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
+
+<section aria-labelledby="pipeline-title"><h2 id="pipeline-title">New opportunities</h2><div class="card">
+<div class="lead"><b>Commercial pipeline</b><span id="pipeline-summary" class="small">Building opportunities</span></div>
+<p class="filter-note">Sales prospect; Marketing generates demand. Prospects move through qualification, proposal and negotiation before becoming projects. Focus holds new contract starts.</p>
+<details class="aux-details policy-details"><summary>Pipeline policy &amp; automatic work</summary><div class="filter-grid"><div><label for="work-mode">Operating policy</label><select id="work-mode"><option value="balanced">Balanced growth and development</option><option value="growth">Growth and client acquisition</option><option value="innovation">Learning and innovation</option></select></div>
+<div><label for="pipeline-target">Target qualified pipeline</label><select id="pipeline-target"><option value="2">2 opportunities</option><option value="4">4 opportunities</option><option value="6">6 opportunities</option></select></div></div>
+<label class="assistant-toggle"><input type="checkbox" id="auto-work"> Assistant / team leads plan idle work automatically</label>
+</details><div id="pipeline-stages" class="pipeline-stages"></div><details class="aux-details"><summary>Lead details</summary><div id="pipeline-details" class="small"></div></details>
+</div></section>
+
+<section aria-labelledby="customers-title"><h2 id="customers-title">Customers</h2><div class="card"><div class="assistant-queue"><div class="lead"><b>Customer relationships</b><span class="small" id="customer-summary">No customers yet</span></div><div id="customer-portfolio" class="small">Finish projects to build customer loyalty.</div></div></div></section>
+<details class="aux-details game-advanced" id="work-records"><summary>Business records &amp; money</summary>
 <details class="aux-details" id="performance-panel">
 <summary>Business intelligence — Finance, Sales, Delivery &amp; People</summary>
 <div class="bi-report">
@@ -250,27 +272,11 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <details class="aux-details"><summary>Capital investment decisions</summary><div class="buttons"><button type="button" id="economy-invest-operations">Delivery toolkit ($65)</button><button type="button" id="economy-invest-commercial">Sales toolkit ($55)</button></div><p class="small">Investments use cash and create a simulated long-lived capability. No depreciation is modeled. Return on investment would require incremental returns compared with a credible no-investment baseline.</p><div id="economy-assets"></div></details>
 <details class="aux-details"><summary>Outstanding customer invoices</summary><div id="economy-invoices"></div></details>
 </div></details>
-<section aria-labelledby="deals-title"><h2 id="deals-title">Client projects: choose assignments and contracts</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
-
-<section aria-labelledby="pipeline-title"><h2 id="pipeline-title">Sales pipeline &amp; workload planning</h2><div class="card">
-<div class="lead"><b>Commercial pipeline</b><span id="pipeline-summary" class="small">Building opportunities</span></div>
-<p class="filter-note">Sales prospect; Marketing generates demand. Prospects move through qualification, proposal and negotiation before becoming projects. Focus holds new contract starts.</p>
-<details class="aux-details policy-details"><summary>Pipeline policy &amp; automatic work</summary><div class="filter-grid"><div><label for="work-mode">Operating policy</label><select id="work-mode"><option value="balanced">Balanced growth and development</option><option value="growth">Growth and client acquisition</option><option value="innovation">Learning and innovation</option></select></div>
-<div><label for="pipeline-target">Target qualified pipeline</label><select id="pipeline-target"><option value="2">2 opportunities</option><option value="4">4 opportunities</option><option value="6">6 opportunities</option></select></div></div>
-<label class="assistant-toggle"><input type="checkbox" id="auto-work"> Assistant / team leads plan idle work automatically</label>
-</details><div id="pipeline-stages" class="pipeline-stages"></div><details class="aux-details"><summary>Lead details</summary><div id="pipeline-details" class="small"></div></details>
-</div></section>
-
-<section aria-labelledby="customers-title"><h2 id="customers-title">Customers</h2><div class="card"><div class="assistant-queue"><div class="lead"><b>Customer relationships</b><span class="small" id="customer-summary">No customers yet</span></div><div id="customer-portfolio" class="small">Finish projects to build customer loyalty.</div></div></div></section>
+</details>
 </section>
 <section id="view-team" class="app-view" data-page="team" aria-label="People and delegation" hidden>
 <div class="view-intro"><h2>Team</h2><p>Employees, roles and culture</p></div>
-<section aria-labelledby="organization-title"><h2 id="organization-title">Organization &amp; management</h2><div class="card org-overview">
-<div class="lead"><b>Reporting lines</b><span id="org-status" class="small">Flat founder-led structure</span></div>
-<p class="filter-note">Choose who reports to whom. A specialist team lead manages only their department, not everyone in the company. Managers coach, coordinate client work and own targets within an approved budget.</p>
-<div id="org-chart"></div><div id="coach-manager-review"></div><details id="org-settings" class="aux-details"><summary>Department budgets, authority &amp; targets</summary><div id="org-controls"></div><p class="filter-note">Managers need Senior rank or 10 experience points. They stop routine individual delivery to lead their department, earn an extra $0.75/day, and can improve direct reports' output by up to 7% when actively coaching. Check costs against results. The office assistant retains cross-company coordination.</p></details>
-</div></section>
-<section aria-labelledby="team-title"><h2 id="team-title">Your team</h2><p class="small" id="team-wellbeing">Career progress, stress and wellbeing</p><div id="people"></div></section>
+<section aria-labelledby="team-title"><h2 id="team-title">Your people</h2><p class="small" id="team-wellbeing">Career progress, stress and wellbeing</p><div id="people"></div></section>
 
 <section aria-labelledby="hiring-title"><h2 id="hiring-title">Recruitment &amp; team culture</h2><div class="card"><details class="aux-details" id="recruitment-panel"><summary>Search and hire employees</summary><div class="filter-grid"><div><label for="hire-skill">Specialty to find</label><select id="hire-skill"><option value="">Any skill</option><option value="sales">Sales</option><option value="mkt">Marketing</option><option value="prod">Product</option><option value="ops">Operations</option></select></div><div><label for="hire-interest">Personal interest</label><select id="hire-interest"><option value="">Any interest</option><option value="customers">Customer relationships</option><option value="creative">Creative projects</option><option value="technology">Technology</option><option value="learning">Learning and growth</option><option value="people">Helping colleagues</option><option value="systems">Better processes</option></select></div></div><p class="filter-note">Search is free; hiring has a one-time fee. Each teammate adds $1.50 per day in salary costs, before cost breakthroughs.</p><div class="buttons"><button type="button" id="search-talent">Search candidates</button></div><div class="candidate-list" id="candidates"></div></details><div class="team-culture"><b>Office assistant · Delegation desk</b><p class="filter-note" id="assistant-status">No assistant assigned.</p><div class="buttons"><button type="button" id="hire-assistant">Hire office assistant ($20)</button></div>
 <p class="filter-note">Hire for $20 or appoint an existing colleague. Configure exactly what the assistant may do; they never displace someone you assigned. Your high-stakes people decisions stay with you.</p>
@@ -291,14 +297,21 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 
 <section aria-labelledby="skills-title"><h2 id="skills-title">Employee skill &amp; mentoring map</h2><div class="card"><details class="aux-details" id="skills-panel"><summary>Show skills, promotion paths and hiring gaps</summary><p class="filter-note">Role expertise, hidden talents and mentor recommendations evolve through actual work.</p><div id="skills-map"></div></details></div></section>
 
+<details class="aux-details game-advanced" id="team-organization"><summary>Managers &amp; organization</summary>
+<section aria-labelledby="organization-title"><h2 id="organization-title">Organization &amp; management</h2><div class="card org-overview">
+<div class="lead"><b>Reporting lines</b><span id="org-status" class="small">Flat founder-led structure</span></div>
+
+<div id="org-chart"></div><div id="coach-manager-review"></div><details id="org-settings" class="aux-details"><summary>Department budgets, authority &amp; targets</summary><div id="org-controls"></div><p class="filter-note">Managers need Senior rank or 10 experience points. They stop routine individual delivery to lead their department, earn an extra $0.75/day, and can improve direct reports' output by up to 7% when actively coaching. Check costs against results. The office assistant retains cross-company coordination.</p></details>
+</div></section>
+</details>
 </section>
 <section id="view-growth" class="app-view" data-page="growth" aria-label="Strategy and capabilities" hidden>
 <div class="view-intro"><h2>Growth</h2><p>Industries, investments and company knowledge</p></div>
-<section aria-labelledby="market-title"><h2 id="market-title">Market strategy &amp; expansion</h2><div class="card"><p class="small">Build a reputation in your specialist sector, then unlock new industries. Focus improves delivery speed and client value for matching work.</p><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><div id="sector-options" class="sector-buttons"></div><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
+<section aria-labelledby="market-title"><h2 id="market-title">Choose your direction</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><div id="sector-options" class="sector-buttons"></div><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
 
-<section aria-labelledby="world-title"><h2 id="world-title">Living market &amp; competitors</h2>
-<div class="card"><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
-<p class="filter-note">Rivals respond to demand, compete on price, quality, speed and reputation, and experience their own simulated growth and setbacks. Their outcomes are fictional, not externally sourced.</p>
+<section aria-labelledby="world-title"><h2 id="world-title">Your rivals</h2>
+<div class="card"><div id="game-rivals" class="game-rivals"></div><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
+
 <details class="aux-details" id="world-panel"><summary>Explore market, competitors &amp; strategy</summary>
 <label for="world-strategy">Choose the company's approach to new customers</label>
 <select id="world-strategy"><option value="balanced">Balanced service</option><option value="premium">Premium specialist</option><option value="volume">Efficient volume</option><option value="relationships">Client partnerships</option></select>
@@ -309,7 +322,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <details class="aux-details"><summary>Competitive bid outcomes</summary><div id="world-tenders"></div></details>
 <p class="filter-note">Win probabilities are transparent simulation estimates, not real-world causation. Choosing Pass never causes a compulsory penalty; future opportunities continue.</p>
 </details></div></section>
-<section aria-labelledby="lab-title"><h2 id="lab-title">Entrepreneurship &amp; Leadership Lab</h2>
+<section aria-labelledby="lab-title"><h2 id="lab-title">Try an idea</h2>
 <div class="card lab-card"><div class="lead"><b>Experiment notebook</b><span id="lab-summary" class="small">Plan a measurable business experiment</span></div>
 <p class="filter-note">Make a prediction, adjust one business policy, then compare financial, customer and employee outcomes. Lessons are saved privately in this browser. Results are simulated evidence, not proof of cause.</p>
 <details class="aux-details" id="lab-panel"><summary>Open experiment lab</summary>
@@ -333,7 +346,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div id="lab-finished" class="lab-result"></div><div id="coach-lab-controls"></div>
 <details class="aux-details" id="lab-history-panel"><summary>Previous experiments <span id="lab-count">0</span></summary><div id="lab-history"></div></details>
 </details></div></section>
-<section aria-labelledby="idea-title"><h2 id="idea-title">Company capability map</h2><div class="card"><p class="filter-note">Ideas discovered through research, service and daily work fill the map. Related discoveries unlock capabilities automatically—no manual pair matching.</p><div class="lead"><b>Organizational knowledge</b><span class="small" id="idea-summary"></span></div><div id="ideas"></div><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div>
+<section aria-labelledby="idea-title"><h2 id="idea-title">Company upgrades</h2><div class="card"><p class="filter-note">Ideas discovered through research, service and daily work fill the map. Related discoveries unlock capabilities automatically—no manual pair matching.</p><div class="lead"><b>Organizational knowledge</b><span class="small" id="idea-summary"></span></div><div id="ideas"></div><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div>
 <details class="aux-details" id="idea-progress-panel"><summary id="idea-progress-summary">Funded idea outcomes</summary><div id="idea-progress-content"></div></details></div></section>
 
 </section>
@@ -343,7 +356,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <script>
 (function(){
 "use strict";
-const KEY="boss161";
+const KEY="boss17";
 let labHistorySignature="";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
@@ -914,7 +927,7 @@ if(brief){const button=$("world-event").querySelector("button[data-world-event=a
 if(button)button.disabled=!!S.ev||(brief.type==="tender"&&S.cash<12)||(brief.type==="referrals"&&S.cash<10)||(brief.type==="slowdown"&&S.cash<10)||(brief.type==="retention"&&!Object.values(S.market.customers).some(c=>c.loyalty>=55))||S.pipeline.leads.length>=12;}
 }
 
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 ensurePerformance(p,s.day);

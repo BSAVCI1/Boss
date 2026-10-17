@@ -1,6 +1,8 @@
 # Boss — simulation development roadmap
 
-## Current release candidate — v21.1 Independent Operating Units
+## Released increment — v21.1 Independent Operating Units
+
+**Released:** [PR #24](https://github.com/BSAVCI1/Boss/pull/24) merged at `b59a76e7cab474ec553deffaccb9a00089922177`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39065136825) and [Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39065136237) passed. v21.2 remains a separate engineering release with unit-specific authority and actual GM autonomy.
 
 [PR #24](https://github.com/BSAVCI1/Boss/pull/24) implements the **first** operating-unit increment, not the full v21 autonomy architecture:
 - Convert an existing paid portfolio to one internally managed unit without a second launch payment.

@@ -504,12 +504,13 @@ const commercial=S.org.departments.commercial.stats,delivery=S.org.departments.d
 const staffHTML='<details class="aux-details"><summary>Productivity by employee</summary>'+S.team.map(p=>{const r=S.coach.roles[p.id]||{days:0};return'<div class="coach-mini"><b>'+esc(p.n)+' · '+esc(ROLE_NAMES[p.role.primary])+'</b> · '+r.days+' tracked days · delivery '+(r.delivery||0)+' · prospecting '+(r.prospect||0)+' · marketing '+(r.market||0)+' · learning '+(r.learning||0)+' · management '+(r.manager||0)+' · rest '+(r.rest||0)+'</div>';}).join("")+'</details>';
 return '<div class="coach-grid"><div><small>Client delivery utilization</small><strong>'+biPercent(data.billableDays,work)+'</strong></div><div><small>Commercial staff time</small><strong>'+biPercent(data.salesDays+data.marketingDays,work)+'</strong></div><div><small>Development time</small><strong>'+biPercent(data.developmentDays,work)+'</strong></div><div><small>Recovery time</small><strong>'+biPercent(data.restDays,work)+'</strong></div></div>'+
 '<p class="coach-mini">Billable utilization alone is not a performance grade. Salespeople prospect, marketers create demand, managers mentor, and specialists deliver projects. Review outputs alongside time spent.</p>'+
-'<div class="coach-mini">Current 30-day department outcomes: Commercial '+commercial.leads+' leads / '+S.org.departments.commercial.target.leads+' target, '+commercial.wins+' wins; Delivery '+delivery.delivered+' completions, '+(delivery.delivered?biPercent(delivery.onTime,delivery.delivered):"insufficient data")+' on time.</div>'+staffHTML;
+'<div class="coach-mini">Current 30-day department outcomes: Commercial '+commercial.leads+' leads / '+S.org.departments.commercial.target.leads+' target, '+commercial.wins+' wins; Delivery '+delivery.delivered+' completions, '+(delivery.delivered+delivery.missed?biPercent(delivery.onTime,delivery.delivered+delivery.missed):"insufficient data")+' on time.</div>'+staffHTML;
 }
 function coachManagerProfiles(){return DEPT_KEYS.map(k=>{
 const d=S.org.departments[k],m=orgManager(k),reports=orgReports(k),stat=d.stats;const experience=m?m.career.xp:0;
 const leadership=m?Math.round(managerCompetence(m)):0;
-const score=k==="commercial"?(stat.leads>=d.target.leads?"Target reached":stat.leads===0?"No measured leads":"Below lead target"):(stat.delivered>=3?(stat.onTime/stat.delivered*100>=d.target.onTime?"Target reached":"Below on-time target"):"Not enough deliveries");
+const attempts=stat.delivered+(stat.missed||0);
+const score=k==="commercial"?(stat.leads>=d.target.leads?"Target reached":stat.leads===0?"No measured leads":"Below lead target"):(attempts>=3?(stat.onTime/attempts*100>=d.target.onTime?"Target reached":"Below on-time target"):"Not enough deliveries");
 return'<div class="coach-manager-profile"><b>'+DEPARTMENTS[k].name+': '+esc(m?.n||"Founder-led")+'</b><div class="coach-mini">'+(m?"Leadership competency "+leadership.toFixed(0)+" / 100. Planning "+m.management.planning.toFixed(0)+" · Delegation "+m.management.delegation.toFixed(0)+" · Coaching "+m.management.coaching.toFixed(0)+" · Communication "+m.management.communication.toFixed(0)+". These skills improve with relevant practice.":"Appoint an experienced employee to delegate coaching and team assignments.")+'</div><div class="coach-mini">Direct reports: '+reports.length+' · Performance: '+score+' · Coaching budget '+biCurrency(d.spent)+'/'+biCurrency(d.budget)+' · Coaching sessions '+stat.coached+'</div><div class="coach-mini">'+(m?"May coordinate assigned-department tasks and coach within the approved budget. Must escalate hiring, firing, cross-department transfers and promotions to the CEO.":"You currently own department decisions.")+'</div>'+(d.reviews?.length?'<div class="coach-mini">Last review: '+esc(d.reviews[d.reviews.length-1].result)+' · '+esc(d.reviews[d.reviews.length-1].reading)+'</div>':'')+'</div>';}).join("");}
 function coachSectorReport(){const all=S.market.open;return '<p class="coach-help">Sector focus directs new prospecting, adds about 12% to the fee when a project is agreed, and increases delivery speed for matching active work. <b>Existing agreed fees no longer change when focus changes.</b> Expansion costs cash up front; the game does not guarantee demand or investment payback.</p>'+
 SECTOR_KEYS.map(k=>{const sc=SECTORS[k],wins=S.market.sectorWins[k]||0,tracked=S.bi.sectorTotals[k]||{};
@@ -569,6 +570,7 @@ const work=S.team.filter(p=>p.department===dept&&p.id!==m.id&&p.id!==S.ops.assis
 if(!open.length||!work.length){logIt(DEPARTMENTS[dept].name+" manager found no suitable free worker and unassigned project.");return false;}
 const d=open[0],p=work.sort((a,b)=>b.s[d.need]-a.s[d.need])[0];
 const before=coachSnap(p.id);d.w=p.id;p.t="d"+d.id;p.role.autoTask=true;
+ensureManagement(m);m.management.delegation=clamp(m.management.delegation+.25);m.management.planning=clamp(m.management.planning+.08);
 coachDecision(DEPARTMENTS[dept].name+" manager assigned "+p.n,before,"Assigned "+p.n+" to "+d.cl+" without overriding manual orders.",p.id,7);
 logIt(m.n+" delegated "+p.n+" to "+d.cl+" within departmental authority.");structural="";save();renderStructure();refresh();return true;
 }
@@ -578,11 +580,11 @@ const manual=S.team.filter(p=>!p.role.auto),delivery=S.team.filter(p=>p.t.starts
 const note=topic==="learning"?"Autonomous idle workers can study or experiment; assigned deliveries and manual instructions continue.":topic==="wellbeing"?"Focus pauses new contracts, but existing deadlines still progress and may create workload.":topic==="demand"?"Autonomous Sales and Marketing employees can prospect; future wins require available delivery capacity.":topic==="delivery"?"The assistant prioritizes deadlines; the reduced pipeline target may lower future demand.":topic==="sector"?"Future customer sourcing favors the focused sector. Existing contract fees remain locked.":"No policy is changed automatically. Your manual decisions determine what workers do.";
 $("coach-lab-impact").innerHTML='<div class="coach-row"><b>Predicted operational effect</b><p>'+esc(note)+'</p><p>Eligible autonomous staff: '+eligible.length+' · Existing deliveries: '+delivery.length+' · Manual-control employees: '+manual.length+'. These are current snapshots, not guaranteed future staffing.</p></div>';
 }
-function coachTrackRole(p){const r=S.coach.roles[p.id]||(S.coach.roles[p.id]={days:0,delivery:0,prospect:0,market:0,learning:0,manager:0,rest:0,other:0});r.days++;
-const key=p.t.startsWith("d")?"delivery":p.t==="prospect"?"prospect":p.t==="market"?"market":["study","teach","exp"].includes(p.t)?"learning":["coachteam","assist"].includes(p.t)?"manager":p.t==="rest"?"rest":"other";r[key]++;}
-function coachLabParticipation(p){const exp=S.lab.active;if(!exp||S.day<=exp.startDay)return;
+function coachTrackRole(p,task=p.t){const r=S.coach.roles[p.id]||(S.coach.roles[p.id]={days:0,delivery:0,prospect:0,market:0,learning:0,manager:0,rest:0,other:0});r.days++;
+const key=task.startsWith("d")?"delivery":task==="prospect"?"prospect":task==="market"?"market":["study","teach","exp"].includes(task)?"learning":["coachteam","assist"].includes(task)?"manager":task==="rest"?"rest":"other";r[key]++;}
+function coachLabParticipation(p,task=p.t){const exp=S.lab.active;if(!exp||S.day<=exp.startDay)return;
 if(!exp.participation)exp.participation={delivery:0,sales:0,learning:0,recovery:0,managing:0,manual:0};
-const key=p.t.startsWith("d")?"delivery":["prospect","market"].includes(p.t)?"sales":["study","teach","exp"].includes(p.t)?"learning":["rest"].includes(p.t)?"recovery":["assist","coachteam"].includes(p.t)?"managing":null;
+const key=task.startsWith("d")?"delivery":["prospect","market"].includes(task)?"sales":["study","teach","exp"].includes(task)?"learning":task==="rest"?"recovery":["assist","coachteam"].includes(task)?"managing":null;
 if(key)exp.participation[key]++;if(!p.role.auto)exp.participation.manual++;
 }
 function coachLabRestore(id){const last=S.lab.history.find(e=>e.id===id);if(!last||last.restored||S.lab.active)return false;
@@ -678,7 +680,7 @@ function biFunnel(stage,lead){if(!S.bi)return;orgTrackLead(stage);const f=({lead
 const source=lead.source||"unknown",total=S.bi.sourceTotals[source]||(S.bi.sourceTotals[source]={});total[f]=(total[f]||0)+1;
 const bucket=biBucket().sources;const day=bucket[source]||(bucket[source]={});day[f]=(day[f]||0)+1;}
 function biSector(sector,values){const all=S.bi.sectorTotals[sector]||(S.bi.sectorTotals[sector]={});const day=biBucket().sectors[sector]||(biBucket().sectors[sector]={});for(const [k,v]of Object.entries(values)){all[k]=(all[k]||0)+v;day[k]=(day[k]||0)+v;}}
-function biTeamDay(p){biAdd("staffDays",1);const task=p.t;if(task.startsWith("d"))biAdd("billableDays",1);else if(task==="prospect"){biAdd("salesDays",1);biAdd("acquisitionLabor",dailySalary(p));}else if(task==="market"){biAdd("marketingDays",1);biAdd("acquisitionLabor",dailySalary(p));}else if(["study","teach","exp","coachteam"].includes(task))biAdd("developmentDays",1);else if(task==="rest"||p.career.recoveryDays>0)biAdd("restDays",1);}
+function biTeamDay(p,task=p.t){biAdd("staffDays",1);if(task.startsWith("d"))biAdd("billableDays",1);else if(task==="prospect"){biAdd("salesDays",1);biAdd("acquisitionLabor",dailySalary(p));}else if(task==="market"){biAdd("marketingDays",1);biAdd("acquisitionLabor",dailySalary(p));}else if(["study","teach","exp","coachteam"].includes(task))biAdd("developmentDays",1);else if(task==="rest"||p.career.recoveryDays>0)biAdd("restDays",1);}
 function biProjectEnd(d,success,payout=0){const quality=Number.isFinite(d.quality)?d.quality:75;const labor=d.laborCost||0,direct=d.directCost||0;
 if(success){biMoney("revenue",payout,"Payment from "+d.cl,payout);if(d.biBooked){biAdd("bookedDelivered",d.bookVal);biAdd("realizedComparable",payout);}biAdd("delivered",1);if(d.dl>=0)biAdd("onTime",1);biAdd("qualityTotal",quality);biAdd("projectContribution",payout-labor-direct);biSector(d.sector,{delivered:1,revenue:payout,qualityTotal:quality,contribution:payout-labor-direct});}
 else{biAdd("missed",1);biAdd("projectContribution",-labor-direct);biSector(d.sector,{missed:1,contribution:-labor-direct});}
@@ -893,7 +895,7 @@ logIt(DEPARTMENTS[key].name+" 30-day review: "+result.result+" ("+reading+").");
 function orgEffective(key){const m=orgManager(key);if(!m||m.career.recoveryDays>0||m.career.autoRest||!["coachteam","teach"].includes(m.t))return 0;const count=orgReports(key).length;if(!count)return 0;
 return Math.max(.3,Math.min(1,6/Math.max(2,count+1)))*stressFactor(m)*(.78+managerCompetence(m)/250);}
 function orgManagerBoost(p){return p&&p.role.primary!=="lead"?1+.07*orgEffective(p.department):1;}
-function orgTrackPerson(p){const d=S.org.departments[p.department];if(!d||p.id===S.ops.assistantId)return;d.stats.staffDays++;if(p.t.startsWith("d"))d.stats.billableDays++;if(orgManager(p.department)?.id===p.id)d.stats.managerDays++;}
+function orgTrackPerson(p,task=p.t){const d=S.org.departments[p.department];if(!d||p.id===S.ops.assistantId)return;d.stats.staffDays++;if(task.startsWith("d"))d.stats.billableDays++;if(orgManager(p.department)?.id===p.id)d.stats.managerDays++;}
 function orgTrackLead(stage){const x=S.org.departments.commercial.stats;if(stage==="lead")x.leads++;if(stage==="qualified")x.qualified++;if(stage==="won")x.wins++;}
 function orgTrackDelivery(d,success){const m=S.org.departments.delivery.stats;if(success){m.delivered++;if(d.dl>=0)m.onTime++;m.qualityTotal+=d.quality;}else m.missed++;}
 
@@ -919,8 +921,8 @@ else if(type==="leads"&&dept==="commercial"&&[3,5,8].includes(value))d.target.le
 else if(type==="onTime"&&dept==="delivery"&&[70,85,95].includes(value))d.target.onTime=value;
 else return;coachDecision(DEPARTMENTS[dept].name+" target and budget setting",before,"Changed "+type+" to "+value+"; performance will be evaluated over the review period.",null,30);save();renderOrganization();refresh();}
 function orgManagerDay(p){const dept=p.department,d=S.org.departments[dept];if(!d||orgManager(dept)?.id!==p.id)return;
-ensureManagement(p);p.management.planning=clamp(p.management.planning+.035);p.management.delegation=clamp(p.management.delegation+.025);
-if(p.t!=="coachteam"&&p.t!=="teach")return;
+ensureManagement(p);if(p.t!=="coachteam"&&p.t!=="teach")return;
+p.management.planning=clamp(p.management.planning+.035);
 if(S.day%7!==0||d.spent+4>d.budget||S.cash<4)return;
 const candidates=orgReports(dept).filter(x=>x.career.recoveryDays===0);
 if(!candidates.length)return;
@@ -1107,9 +1109,9 @@ else if(p.t==="exp"){const spent=Math.min(1,S.cash);S.cash-=spent;if(spent>0)biM
 else if(p.t==="rest"){dm=2;}
 else if(p.t==="assist"){p.s.ops+=.025*S.mod.learn;dm=.25;}
 const assignedDeadline=p.t.startsWith("d")?deal(Number(p.t.slice(1)))?.dl??99:99;
-talentAndCareerDay(p,recovering?"rest":p.t,assignedDeadline);biTeamDay(p);coachLabParticipation(p);coachTrackRole(p);
+const effectiveTask=recovering?"rest":p.t;talentAndCareerDay(p,effectiveTask,assignedDeadline);biTeamDay(p,effectiveTask);coachLabParticipation(p,effectiveTask);coachTrackRole(p,effectiveTask);
 p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
-if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);orgTrackPerson(p);if(!recovering)orgManagerDay(p);
+if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);orgTrackPerson(p,effectiveTask);if(!recovering)orgManagerDay(p);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
 }
 for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){orgTrackDelivery(d,true);const payout=feeFor(d);S.cash+=payout;biProjectEnd(d,true,payout);S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" paid $"+payout+" for the finished "+SECTORS[d.sector].name+" project. Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
@@ -1140,6 +1142,7 @@ const lead=!activeAssistant&&m&&["coachteam","teach"].includes(m.t)&&m.career.re
 const boss=activeAssistant?assistant:lead;if(!boss)continue;
 const employee=bestIdle(d,lead?dept:null);if(!employee)continue;
 d.w=employee.id;employee.t="d"+d.id;employee.role.autoTask=true;S.ops.assigned++;
+if(lead){ensureManagement(lead);lead.management.delegation=clamp(lead.management.delegation+.25);lead.management.planning=clamp(lead.management.planning+.08);}
 logIt(boss.n+" assigned "+employee.n+" to "+d.cl+" ("+(lead?DEPARTMENTS[dept].name+" department":"office assistant")+").");
 changed=true;
 }return changed;}

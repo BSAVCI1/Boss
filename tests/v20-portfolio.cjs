@@ -76,6 +76,17 @@ test("a scheduled leadership week generates an actual read-only report",()=>{
  const body=el("ea-weekly-body").innerHTML;assert.ok(body.includes("Direct-report briefing"));
  assert.ok(body.includes("Exceptions"));assert.ok(body.includes("cash paid"));reconcile(s);
 });
+test("730-day active service business preserves contract value and financial reconciliation",()=>{
+ const s=init();fund(s,15000);s.day=20;s.nextEv=999999;
+ assert.ok(G.executiveLaunch("operations"));
+ const d=G.createDeal(),signed=G.feeFor(d);
+ for(let i=0;i<730;i++){if(s.ev)s.ev=null;G.tick();}
+ assert.equal(s.day,750);assert.equal(G.feeFor(d),signed);
+ assert.ok(Number.isFinite(s.cash));assert.ok(Number.isFinite(s.exec.lines[0].contribution||0));
+ reconcile(s);G.save();
+ const saved=G.load();assert.equal(saved.day,750);assert.equal(saved.exec.lines[0].key,"operations");
+ assert.ok(saved.deals.every(x=>Number.isFinite(G.feeFor(x))));reconcile(saved);
+});
 test("stale browser tab cannot replace a newer saved company",()=>{
  const s=init();fund(s,200);assert.ok(G.save());const newer=JSON.parse(store.get("boss20"));
  newer._saveRevision+=5;newer.cash+=35;newer.bi.openingCash+=35;

@@ -758,7 +758,7 @@ version:16,since:state.day,strategy:"balanced",changedAt:state.day-45,
 rivals:WORLD_RIVALS.map(x=>({...x,wins:0,losses:0})),
 tenders:[],stats:{won:0,lost:0},
 activeEvent:null,nextEvent:state.day+45,
-boostUntil:0,researchUntil:0,repeatAt:state.day+28,lastRivalCycle:-1};
+boostUntil:0,researchUntil:0,shockUntil:0,repeatAt:state.day+28,lastRivalCycle:Math.floor(state.day/30)};
 const w=state.world;
 if(!WORLD_STRATEGIES[w.strategy])w.strategy="balanced";
 if(!Number.isFinite(w.changedAt))w.changedAt=state.day-45;
@@ -767,11 +767,11 @@ for(const rival of w.rivals){if(!Number.isFinite(rival.wins))rival.wins=0;if(!Nu
 if(!Array.isArray(w.tenders))w.tenders=[];
 if(!w.stats||typeof w.stats!=="object")w.stats={won:0,lost:0};
 for(const k of ["won","lost"])if(!Number.isFinite(w.stats[k]))w.stats[k]=0;
-for(const k of ["nextEvent","boostUntil","researchUntil","repeatAt","lastRivalCycle"])if(!Number.isFinite(w[k]))w[k]=k==="lastRivalCycle"?-1:state.day+45;
+for(const k of ["nextEvent","boostUntil","researchUntil","shockUntil","repeatAt","lastRivalCycle"])if(!Number.isFinite(w[k]))w[k]=k==="lastRivalCycle"?Math.floor(state.day/30):k==="shockUntil"?0:state.day+45;
 if(!Number.isFinite(w.since))w.since=state.day;
 }
 function worldStrategy(){return WORLD_STRATEGIES[S.world.strategy]||WORLD_STRATEGIES.balanced;}
-function worldDemand(){return economyPressure().factor*(S.world?.activeEvent?.type==="slowdown"?.92:1);}
+function worldDemand(){return economyPressure().factor*(S.day<=S.world.shockUntil?.92:1);}
 function worldRivalFor(lead){const rivals=S.world.rivals,ix=(lead.id*7+lead.sector.length)%rivals.length;
 const expert=rivals.find(r=>r.sector===lead.sector);return expert||rivals[ix];}
 function worldTenderPreview(lead){const rival=worldRivalFor(lead),policy=worldStrategy(),loyalty=S.market.customers[lead.client]?.loyalty||0;
@@ -801,6 +801,7 @@ const old=S.world.strategy,before=coachSnap();S.world.strategy=key;S.world.chang
 coachDecision("Company strategy: "+WORLD_STRATEGIES[key].name,before,"Moved from "+WORLD_STRATEGIES[old].name+". Changes future customer win odds and future contract price/scope, never reprices existing agreements.",null,30);
 logIt("New commercial strategy: "+WORLD_STRATEGIES[key].name+". Review competitive bids and project contribution over 30 days.");save();refresh();return true;}
 function worldNewEvent(){const w=S.world,phase=Math.floor(S.day/50)%4,types=["tender","referrals","slowdown","retention"],type=types[phase];w.activeEvent={id:S.day,opened:S.day,until:S.day+13,type};w.nextEvent=S.day+55;
+if(type==="slowdown")w.shockUntil=S.day+25;
 logIt("New market brief: "+({tender:"Major contract tender",referrals:"Referral window",slowdown:"Competitive slowdown",retention:"Client relationship opportunity"}[type])+". Review Growth when convenient.");
 }
 function worldEventChoice(choice){const w=S.world,event=w.activeEvent;if(S.ev||!event||!["act","pass"].includes(choice))return false;
@@ -851,7 +852,7 @@ $("world-strategy").disabled=!!S.ev||S.day-w.changedAt<30;
 $("world-strategy-note").textContent=worldStrategy().description+" · Next strategy change "+(S.day-w.changedAt<30?"in "+(30-(S.day-w.changedAt))+" game days":"available now")+". Contract changes apply only to new agreements.";
 $("world-rivals").innerHTML=w.rivals.map(r=>'<div class="coach-row"><b>'+esc(r.name)+'</b> · '+esc(r.archetype)+'<div class="coach-mini">Focus: '+esc(SECTORS[r.sector].name)+' · Price index '+r.pricing.toFixed(2)+' · Quality '+Math.round(r.quality)+' · Speed '+Math.round(r.speed)+' · Reputation '+Math.round(r.rep)+'</div><div class="coach-mini">Shared bids: '+r.wins+' rival wins · '+r.losses+' bids beaten by you · Outside-market simulated wins '+(r.marketWins||0)+' · setbacks '+(r.marketMisses||0)+' (all forward-only)</div></div>').join("");
 $("world-tenders").innerHTML=w.tenders.slice(0,7).map(t=>'<div class="coach-row"><b>'+esc(t.client)+'</b> · '+(t.result==="won"?"Won":"Lost")+' against '+esc(t.rival)+'<div class="coach-mini">Day '+t.day+' · '+esc(t.priority)+' buyer · '+esc(t.strategy)+' strategy · Estimated win chance '+Math.round(100*t.probability)+'%. Probability is a game model, not a guarantee.</div></div>').join("")||'<p class="small">No competitive tender outcomes recorded yet. New bids will accumulate as Sales converts prospects.</p>';
-$("world-market-info").textContent=economyPressure().name+" · "+(45-S.day%45)+" days until next market cycle · Bid outcomes depend on customer needs, competitive offers, reputation and your strategy.";
+$("world-market-info").textContent=economyPressure().name+" · "+(45-S.day%45)+" days until next market cycle · "+(S.day<=w.shockUntil?"Additional competitor-driven slowdown through Day "+w.shockUntil+". ":"")+"Bid outcomes depend on customer needs, competitive offers, reputation and your strategy.";
 const brief=w.activeEvent,labels={tender:"A major customer is accepting bids",referrals:"Customers are open to referrals",slowdown:"Competitive pressure is rising",retention:"A trusted customer may renew"};
 $("world-event").innerHTML=brief?'<div class="coach-row coach-amber"><b>'+labels[brief.type]+'</b><div class="coach-mini">Decision window: until Day '+brief.until+'. '+(brief.type==="tender"?"Prepare a qualified tender proposal for $12; the contract is not guaranteed.":brief.type==="referrals"?"Run a $10 referral campaign; 30-day prospecting boost.":brief.type==="slowdown"?"Spend $10 on competitive research to improve bid readiness for 30 days.":"Invite a loyal customer to a new qualified opportunity without promising a sale.")+'</div><div class="buttons"><button type="button" data-world-event="act">Take opportunity</button><button type="button" data-world-event="pass">Pass</button></div></div>':
 '<p class="small">No action required. Next optional market brief around Day '+w.nextEvent+'.</p>';

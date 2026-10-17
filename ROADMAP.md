@@ -76,9 +76,9 @@
 - **Promotion path:** eligible manager candidates have Senior rank or ≥10 experience points. Leadership is an appointment to exactly one department, not an arbitrary title; removes their individual billable capacity and adds $0.75/day salary premium.
 - **Authority:** managers without an office assistant delegate only relevant work to available autonomous direct reports; office assistant remains cross-company. Coaching/teaching applies only to that department, and manual boss orders always win.
 - **Budget and behavioral effects:** $0 / $8 / $16 / $30 coaching allocation per 30 days, with limited $4 weekly coaching actions; improves employees while incurring real costs. Active management offers up to a 7% direct-report performance benefit, decreasing as span increases.
-- **Department performance:** new forward-only 30-day stats, reports and goals: Commercial lead target and wins; Delivery deliveries, missed deadlines, on-time rate, coaching investment, and staffing. Founder can leave departments flat until managers become useful.
-- **Lifecycle rules:** safe unassignment on manager exit, firing, cross-team transfer, assistant appointment or specialist-role change; preserve existing business and financial history and no network dependencies.
-- **Validated:** scoped authority, budgets, salary impact, migration, 24 functional cases and unchanged baseline economy during a 360-day flat-organization comparison with v12.1.
+- **Department performance:** new forward-only 30-day stats, reports and goals: Commercial lead target and wins; Delivery deliveries, missed deadlines, on-time rate, coaching investment, and staffing. Completed 30-day reviews persist, including last manager, target result and coaching spend. Founder can leave departments flat until managers become useful.
+- **Lifecycle rules:** manager departure or replacement restores the former specialist role and base pay; unappointed leads can still deliver. Safe unassignment on firing, cross-team transfer, assistant appointment or specialist-role change; preserve existing business and financial history and no network dependencies.
+- **Validated:** scoped authority, budgets, salary impact, migration, 27 functional checks and unchanged baseline economy during a 360-day flat-organization comparison with v12.1.
 
 ## Next: v14 — Entrepreneurship & Leadership Lab
 - **Hypothesis and forecast:** player chooses a learning question (pricing, recruiting, marketing mix, industry focus, management structure), specifies an expected outcome, then runs a time-bounded experiment.

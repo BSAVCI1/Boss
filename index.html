@@ -1941,6 +1941,14 @@ const priority=ceoDraftPriority??$("ceo-priority").value;
 if(!ceoDirection(priority))$("ceo-direction-confirm").textContent=S.ev?"Resolve the current CEO decision before changing direction.":"Direction unchanged. Choose a different strategy or wait for the next review.";
 });
 $("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
+$("business-units").addEventListener("click",e=>{
+ const b=e.target.closest("button[data-unit-action]");if(!b)return;
+ const key=b.dataset.unitKey,action=b.dataset.unitAction;
+ if(action==="activate")unitActivate(key);
+ else if(action==="manager")unitAppoint(key,Number($("unit-gm-"+key)?.value)||null);
+ else if(action==="transfer")unitTransfer(key,Number($("unit-employee-"+key)?.value)||null);
+ else if(action==="release")unitRelease(key,Number($("unit-release-"+key)?.value)||null);
+});
 $("launch-service-line").addEventListener("click",()=>{
  const result=executiveLaunch($("service-line-select").value);
  if(result&&typeof result.then==="function")result.then(ok=>{if(ok)refresh();});
@@ -2214,6 +2222,97 @@ function chooseServiceOffer(d){
  d.serviceLine=best.key;d.serviceOffer=name;d.serviceTier=level+1;d.need=SERVICE_LINES[best.key].need;d.bookedAt=S.day;
  d.serviceQualityTarget=target;d.base=Math.round(d.base*price);d.work=Math.ceil(d.work*scope);d.dl=Math.ceil(d.dl*scope);
 }
+
+function unitOfPerson(id){return(S.exec?.units||[]).find(u=>u.staffIds.includes(id))||null;}
+function unitGMEligible(p,key){
+ if(!p||p.id===S.ops.assistantId||!(p.career.rank>=1||p.career.xp>=10))return false;
+ if(DEPT_KEYS.some(k=>orgManager(k)?.id===p.id||DEPARTMENTS[k].skills.some(role=>orgSubManager(k,role)?.id===p.id)))return false;
+ const other=unitOfPerson(p.id);return !other||other.key===key;
+}
+function unitRecord(key,type,detail){S.exec.unitEvents.push({key,day:S.day,type,detail});S.exec.unitEvents=S.exec.unitEvents.slice(-80);}
+function unitCommit(action){
+ if(unitMutationPending||S.ev||saveConflict||saveErrorReason)return false;
+ const checkpoint=JSON.stringify(S),priorPaused=paused;
+ unitMutationPending=true;paused=true;
+ const finish=ok=>{
+  if(!ok)S=JSON.parse(checkpoint);
+  unitMutationPending=false;
+  if(!saveConflict&&!saveErrorReason)paused=priorPaused;
+  unitViewSignature="";structural="";renderStructure();refresh();paintControls();schedule();
+  return !!ok;
+ };
+ try{
+  if(action()===false){unitMutationPending=false;paused=priorPaused;return false;}
+  const result=save();
+  return result&&typeof result.then==="function"?result.then(finish).catch(()=>finish(false)):finish(result);
+ }catch(e){S=JSON.parse(checkpoint);unitMutationPending=false;paused=priorPaused;return false;}
+}
+function unitActivate(key){
+ if(!SERVICE_LINES[key]||!S.exec.lines.some(x=>x.key===key)||S.exec.units.some(u=>u.key===key))return false;
+ return unitCommit(()=>{
+  S.exec.units.push({key,since:S.day,managerId:null,staffIds:[],revenue:0,directCost:0,sharedLaborCost:0,payrollCost:0,delivered:0,missed:0,qualityTotal:0});
+  unitRecord(key,"activated","Created a managed operating unit from an existing paid service portfolio. No purchase charged.");
+  logIt(SERVICE_LINES[key].name+" now has an operating unit (no additional investment).");
+  return true;
+ });
+}
+function unitAppoint(key,id){
+ const u=S.exec.units.find(x=>x.key===key),p=person(id);
+ if(!u||!unitGMEligible(p,key)||u.managerId===id||S.deals.some(d=>d.w===id))return false;
+ return unitCommit(()=>{
+  if(u.managerId)u.staffIds=u.staffIds.filter(pid=>pid!==u.managerId);
+  u.managerId=id;if(!u.staffIds.includes(id))u.staffIds.unshift(id);
+  unitRecord(key,"manager",p.n+" (#"+id+") appointed General Manager; additional payroll "+biCurrency(.5*S.mod.cost)+"/day.");
+  logIt(p.n+" became General Manager of "+SERVICE_LINES[key].name+".");
+  return true;
+ });
+}
+function unitTransfer(key,id){
+ const u=S.exec.units.find(x=>x.key===key),p=person(id);
+ if(!u||!p||!unitGMEligible(p,key)||u.staffIds.includes(id)||S.deals.some(d=>d.w===id))return false;
+ return unitCommit(()=>{
+  u.staffIds.push(id);unitRecord(key,"staff",p.n+" (#"+id+") allocated to dedicated unit staff without changing salary or past contracts.");
+  logIt(p.n+" joined "+SERVICE_LINES[key].name+" unit.");return true;
+ });
+}
+function unitRelease(key,id){
+ const u=S.exec.units.find(x=>x.key===key),p=person(id);
+ if(!u||!p||u.managerId===id||!u.staffIds.includes(id)||S.deals.some(d=>d.w===id))return false;
+ return unitCommit(()=>{
+  u.staffIds=u.staffIds.filter(x=>x!==id);unitRecord(key,"transfer",p.n+" (#"+id+") returned to shared company services.");
+  logIt(p.n+" returned from "+SERVICE_LINES[key].name+" to shared services.");return true;
+ });
+}
+function unitPayrollDay(){
+ if(!S.exec?.units)return;
+ for(const u of S.exec.units)for(const id of u.staffIds){const p=person(id);if(p)u.payrollCost+=dailySalary(p);}
+}
+function renderBusinessUnits(){
+ const target=$("business-units");if(!target)return;
+ if(document.activeElement?.closest?.("#business-units")?.matches?.("select"))return;
+ const open=new Set([...target.querySelectorAll("details[data-unit-open]")].filter(p=>p.open).map(p=>p.dataset.unitOpen));
+ const signature=JSON.stringify({units:S.exec.units,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id])});
+ if(signature===unitViewSignature)return;unitViewSignature=signature;
+ const choices=S.exec.lines.map(l=>{
+  const u=S.exec.units.find(x=>x.key===l.key);
+  if(!u)return'<div class="unit-panel"><b>'+esc(SERVICE_LINES[l.key].name)+'</b><p class="small">Company-wide service portfolio · shared managers and staff.</p><button type="button" data-unit-action="activate" data-unit-key="'+l.key+'">Organize as operating unit · no repurchase</button></div>';
+  const gm=person(u.managerId),staff=u.staffIds.map(id=>person(id)).filter(Boolean);
+  const candidates=S.team.filter(p=>unitGMEligible(p,l.key)&&p.id!==u.managerId&&!S.deals.some(d=>d.w===p.id));
+  const transfers=S.team.filter(p=>unitGMEligible(p,l.key)&&!u.staffIds.includes(p.id)&&!S.deals.some(d=>d.w===p.id));
+  const releasing=staff.filter(p=>p.id!==u.managerId&&!S.deals.some(d=>d.w===p.id));
+  const result=u.revenue-u.directCost-u.sharedLaborCost-u.payrollCost;
+  return'<details class="unit-panel" data-unit-open="'+l.key+'" '+(open.has(l.key)?'open':'')+'><summary>'+esc(SERVICE_LINES[l.key].name)+' · operating unit · '+(gm?esc(gm.n)+" (GM)":"vacant GM")+'</summary>'+
+   '<div class="unit-metrics"><span>'+staff.length+' dedicated staff</span><span>'+u.delivered+' delivered</span><span>'+biCurrency(u.revenue)+' earned</span><span>'+biCurrency(result)+' operating result</span></div>'+
+   '<p class="small">From Day '+u.since+' only. Direct costs '+biCurrency(u.directCost)+'; shared contract labor '+biCurrency(u.sharedLaborCost)+'; dedicated payroll '+biCurrency(u.payrollCost)+'. These are attributed slices of existing company income and costs, never additional revenue. Corporate overhead stays central.</p>'+
+   '<p class="small">'+(gm?"GM: "+esc(gm.n)+" (#"+gm.id+") · +"+biCurrency(.5*S.mod.cost)+"/day management pay.":"CEO must appoint a General Manager for autonomous unit leadership.")+' Team: '+(staff.map(p=>esc(p.n)+" (#"+p.id+")").join(", ")||"none")+'.</p>'+
+   '<div class="filter-grid"><div><label for="unit-gm-'+l.key+'">General Manager</label><select id="unit-gm-'+l.key+'"><option value="">Choose qualified employee</option>'+candidates.map(p=>'<option value="'+p.id+'">'+esc(p.n)+' (#'+p.id+')</option>').join("")+'</select><button type="button" data-unit-action="manager" data-unit-key="'+l.key+'" '+(!candidates.length?"disabled":"")+'>Appoint GM</button></div>'+
+   '<div><label for="unit-employee-'+l.key+'">Dedicated employee</label><select id="unit-employee-'+l.key+'"><option value="">Choose available teammate</option>'+transfers.map(p=>'<option value="'+p.id+'">'+esc(p.n)+' (#'+p.id+')</option>').join("")+'</select><button type="button" data-unit-action="transfer" data-unit-key="'+l.key+'" '+(!transfers.length?"disabled":"")+'>Transfer to unit</button></div></div>'+
+   (releasing.length?'<label for="unit-release-'+l.key+'">Return employee to shared services</label><select id="unit-release-'+l.key+'">'+releasing.map(p=>'<option value="'+p.id+'">'+esc(p.n)+' (#'+p.id+')</option>').join("")+'</select><button type="button" data-unit-action="release" data-unit-key="'+l.key+'">Return to shared team</button>':"")+
+   '<p class="small">Active customer contracts finish before transfers. Each employee has one primary unit; departmental spending authority remains shared.</p></details>';
+ }).join("");
+ target.innerHTML='<h3>Operating units</h3><p class="small">Build an independent management structure from a service you already purchased; no second launch fee. Managers and dedicated employees affect future work, while all cash and signed contract history remain consolidated.</p>'+choices;
+}
+
 function executiveLaunch(key){
 if(!SERVICE_LINES[key]||S.exec.lines.some(x=>x.key===key)||S.cash<120||S.ev)return false;
 if(saveConflict)return false;
@@ -2435,7 +2534,7 @@ const chief=orgManager(key),staff=orgReports(key),direct=orgDirectReports(key);
 const managed=DEPARTMENTS[key].skills.map(role=>{const head=orgSubManager(key,role);
 return head?'<div class="small"><b>'+esc(ROLE_NAMES[role])+' Manager · '+esc(head.n)+' (#'+head.id+')</b> · '+orgSubReports(key,role).length+' reports'+orgSubReports(key,role).map(p=>'<div class="small">↳ '+esc(p.n)+' (#'+p.id+')</div>').join("")+'</div>':"";}).join("");
 const unmanaged=direct.filter(p=>DEPARTMENTS[key].skills.every(role=>orgSubManager(key,role)?.id!==p.id));
-return '<div class="ceo-report"><b>'+DEPARTMENTS[key].name+'</b><div>'+(chief?esc(chief.n)+" · "+orgLeaderTitle(chief)+" · "+direct.length+" direct · "+staff.length+" team members":"Founder-led · "+staff.length+" colleagues")+'</div><details data-ceo-team="'+key+'" '+(expanded.has(key)?"open":"")+'><summary>View team</summary>'+managed+unmanaged.map(p=>'<div class="small">'+esc(p.n)+' (#'+p.id+') · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'</details></div>';}).join("");
+return '<div class="ceo-report"><b>'+DEPARTMENTS[key].name+'</b><div>'+(chief?esc(chief.n)+" · "+orgLeaderTitle(chief)+" · "+direct.length+" direct · "+staff.length+" team members":"Founder-led · "+staff.length+" colleagues")+'</div><details data-ceo-team="'+key+'" '+(expanded.has(key)?"open":"")+'><summary>View team</summary>'+managed+unmanaged.map(p=>'<div class="small">'+esc(p.n)+' (#'+p.id+') · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'</details></div>';}).join("")+(S.exec.units||[]).map(u=>'<div class="ceo-report"><b>'+esc(SERVICE_LINES[u.key].name)+' · Operating unit</b><div>'+esc(person(u.managerId)?.n||"Unfilled")+" · General Manager · "+u.staffIds.length+" assigned</div></div>').join("");
 $("ceo-assistant").textContent=a? a.n+" · CEO coordination and manager follow-ups":"Unfilled · appointment optional";
 $("ceo-priority").value=ceoDraftPriority??S.exec.priority;
  if(ceoDraftPriority&&ceoDraftPriority!==S.exec.priority)$("ceo-direction-confirm").textContent="Pending: "+CEO_PRIORITIES[ceoDraftPriority].name+". Tap Set CEO direction to confirm.";
@@ -2463,6 +2562,7 @@ $("business-lines").innerHTML=lines.map(x=>{
  return '<div class="service-line"><b>'+esc(SERVICE_LINES[x.key].name)+'</b><div class="small">Opened Day '+x.since+' · '+(x.delivered||0)+' delivered · '+(x.missed||0)+' missed · Revenue '+biCurrency(x.revenue||0)+' · Contribution '+biCurrency(x.contribution||0)+'</div><div class="small">Offering: '+esc(offers[level][0])+' · Tier '+(level+1)+'/3 · Quality '+quality+' · '+specialists+' specialist(s)</div>'+(level<2?'<div class="small">'+((level===0?3:10)-(x.delivered||0))+' further deliveries unlock '+esc(offers[level+1][0])+'</div>':'')+(!x.delivered&&S.day-x.since>=30?'<p class="small risk-watch">No deliveries since launch. Review demand, staffing and active opportunities.</p>':'')+'</div>';
 }).join("");
 $("launch-service-line").disabled=!!S.ev||S.cash<120||S.exec.lines.some(x=>x.key===$("service-line-select").value);
+ renderBusinessUnits();
 }
 
 function gameChapter(){const n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;return n>=100&&S.rep>=100?(S.team.length>=12&&leaders===2?"Established company":"Established specialist firm"):n>=30&&leaders===2?"Growing company":n>=12&&S.team.length>=6?"Small company":n>=3?"Small agency":"Founder";}

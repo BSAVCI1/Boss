@@ -143,6 +143,6 @@ test("730-day autonomous simulated activity keeps cash reconciled, no hidden rev
  s.nextEv=999999;s.flow.focus=true;
  for(let n=0;n<730;n++){if(s.ev)s.ev=null;G.tick()}
  assert.equal(s.day,730);assert.ok(Number.isFinite(s.cash));assert.ok(G.orgPlan("commercial").spent.training<=24);
- balanced(s);G.save();assert.equal(JSON.parse(saved.get("boss18")).day,730);
+ balanced(s);G.save();assert.equal(JSON.parse(saved.get("boss19")).day,730);assert.equal(saved.has("boss18"),false,"v19 must not rewrite an older save key");
 });
 console.log("Boss v19 autonomy and market regression checks passed.");

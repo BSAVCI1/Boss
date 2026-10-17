@@ -2345,7 +2345,14 @@ S.cash-=p.cost;biMoney("development",p.cost,"CEO-approved development plan: "+wh
 const skill=DEPARTMENTS[p.dept].skills[0];who.s[skill]+=.3;who.career.satisfaction=clamp(who.career.satisfaction+3);manager.management.coaching=clamp(manager.management.coaching+.35);
 message="Approved "+biCurrency(p.cost)+" development for "+who.n+". Real skills improved; future results are still uncertain.";
 }else if(p.type==="line"){
-if(!executiveLaunch(p.key))return false;
+// Include removal of the proposal in the first durable launch snapshot.
+const proposalsBefore=e.proposals.slice();e.proposals=e.proposals.filter(x=>x.id!==id);
+const launched=executiveLaunch(p.key);
+if(launched&&typeof launched.then==="function")return launched.then(ok=>{
+ if(!ok){S.exec.proposals=proposalsBefore;return false;}
+ return finishExecutiveDecision(id,p,action,manager,before,"Approved director proposal to launch "+SERVICE_LINES[p.key].name+". New project outcomes will be tracked from launch.");
+});
+if(!launched){S.exec.proposals=proposalsBefore;return false;}
 message="Approved director proposal to launch "+SERVICE_LINES[p.key].name+". New project outcomes will be tracked from launch.";
 }else if(p.type==="raise"){
 const who=person(p.personId);if(!who||who.department!==p.dept)return false;
@@ -2372,11 +2379,18 @@ message="Appointed "+worker.n+" as "+ROLE_NAMES[p.role]+" Manager. Additional re
 S.pipeline.mode="balanced";message="Manager instructed to prioritize efficient use of existing people. No immediate cash impact.";
 }else return false;
 }
-e.proposals=e.proposals.filter(x=>x.id!==id);
-e.history.unshift({day:S.day,dept:p.dept,manager:manager?.n||"Former manager",priority:p.priority,action,result:message,proposal:p.type});
-e.history=e.history.slice(0,40);
+return finishExecutiveDecision(id,p,action,manager,before,message);
+}
+function finishExecutiveDecision(id,p,action,manager,before,message){
+S.exec.proposals=S.exec.proposals.filter(x=>x.id!==id);
+S.exec.history.unshift({day:S.day,dept:p.dept,manager:manager?.n||"Former manager",priority:p.priority,action,result:message,proposal:p.type});
+S.exec.history=S.exec.history.slice(0,40);
 coachDecision("Leadership meeting: "+p.dept+" — "+action,before,message+" Review department results after 30 days.",p.managerId,30);
-logIt(message);save();renderStructure();refresh();return true;
+logIt(message);
+const saved=save();
+if(saved&&typeof saved.then==="function")return saved.then(ok=>{if(ok){renderStructure();refresh();}return ok;});
+if(!saved)return false;
+renderStructure();refresh();return true;
 }
 function executiveShow(){
 const a=person(S.ops.assistantId);
@@ -2595,15 +2609,47 @@ a.x+=(a.tx-a.x)*.03;a.y+=(a.ty-a.y)*.03;if(Math.random()<.004){const e=p.mood<30
 ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(a.x,a.y,11,0,Math.PI*2);ctx.fill();ctx.fillStyle="#192435";ctx.beginPath();ctx.arc(a.x-3,a.y-2,1.1,0,Math.PI*2);ctx.arc(a.x+3,a.y-2,1.1,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#192435";ctx.lineWidth=1.1;ctx.beginPath();if(p.mood>50)ctx.arc(a.x,a.y+1,4,0,Math.PI);else if(p.mood>25){ctx.moveTo(a.x-4,a.y+5);ctx.lineTo(a.x+4,a.y+5);}else ctx.arc(a.x,a.y+8,4,Math.PI,2*Math.PI);ctx.stroke();ctx.textAlign="center";ctx.fillStyle=ink;ctx.font="12px system-ui";ctx.fillText(p.n,a.x,a.y+25);
 if(a.frames>0){ctx.font="19px system-ui";ctx.fillText(a.emoji,a.x,a.y-17);a.frames--;}
 });requestAnimationFrame(avatarDraw);}
-let existingSave=false,sourceStorageError=false;
-try{existingSave=Boolean(localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17"));}catch(e){sourceStorageError=true;}
-S=load();
-const loadFailed=!S&&(existingSave||sourceStorageError);
-if(!S)fresh();else if(S.ui?.pendingCEO&&CEO_PRIORITIES[S.ui.pendingCEO])ceoDraftPriority=S.ui.pendingCEO;
-if(loadFailed){saveConflict=true;paused=true;saveError("UnreadableSave","An earlier game was found but could not be loaded. Its browser keys have NOT been overwritten.");}
-spd=[1,3,8].includes(S.ui?.speed)?S.ui.speed:1;
-if(S.ui?.selectedService&&SERVICE_LINES[S.ui.selectedService])$("service-line-select").value=S.ui.selectedService;
-window.addEventListener("storage",event=>{if(event.key===KEY&&event.newValue){let rev=0;try{rev=Number(JSON.parse(event.newValue)._saveRevision)||0;}catch{}if(rev>persistedRevision){saveConflict=true;paused=true;saveState("Not saved — a newer company is open in another tab",true);const warning=$("save-warning");if(warning){warning.hidden=false;warning.textContent="Another Boss tab saved this company. Reload this tab to protect the latest progress.";}}}});if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;labPreview();capabilityProgress();save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
+// Preserve the established test entry point; no persistence occurs before bootstrap.
+S=load();if(!S)fresh();
+async function bootstrapBoss(){
+ let existingSave=false,sourceStorageError=false;
+ try{existingSave=Boolean(localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17"));}catch(e){sourceStorageError=true;}
+ let localState=load(),chosen=localState;
+ let backup=await readExtendedSave(),backupState=null;
+ if(backup?.payload){
+  backupState=load(backup.payload);
+  const localRevision=Number(localState?._saveRevision)||0,backupRevision=Number(backup.revision)||0;
+  if(backupState&&(!localState||backupRevision>localRevision||(backupRevision===localRevision&&backupState.day>localState.day))){
+   chosen=backupState;extendedStorage=true;
+  }else if(!backupState&&backupRevision>localRevision){
+   // A newer backup exists but is invalid. Do not overwrite it with stale local progress.
+   chosen=null;sourceStorageError=true;
+  }
+ }
+ const loadFailed=!chosen&&(existingSave||sourceStorageError||Boolean(backup));
+ if(chosen)S=chosen;else fresh();
+ persistedRevision=Number(S._saveRevision)||0;
+ if(S.ui?.pendingCEO&&CEO_PRIORITIES[S.ui.pendingCEO])ceoDraftPriority=S.ui.pendingCEO;
+ spd=[1,3,8].includes(S.ui?.speed)?S.ui.speed:1;
+ if(S.ui?.selectedService&&SERVICE_LINES[S.ui.selectedService])$("service-line-select").value=S.ui.selectedService;
+ if(loadFailed){saveConflict=true;paused=true;saveError("UnreadableSave","An existing company could not be loaded. Stored versions have NOT been overwritten.");}
+ window.addEventListener("storage",event=>{if(event.key===KEY&&event.newValue){
+  let rev=0;try{rev=Number(JSON.parse(event.newValue)._saveRevision)||0;}catch{}
+  if(rev>persistedRevision){saveConflict=true;paused=true;saveError("RevisionConflict","Another Boss tab saved newer progress. Reload this tab rather than overwriting it.");}
+ }});
+ if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;
+ labPreview();capabilityProgress();
+ if(!loadFailed){const saved=save();if(saved&&typeof saved.then==="function")await saved;}
+ renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();
+ gameReady=true;document.documentElement.dataset.bossReady="true";
+ requestAnimationFrame(avatarDraw);schedule();
+}
+bootstrapBoss().catch(e=>{
+ saveConflict=true;paused=true;
+ if(!S)fresh();
+ saveError(String(e?.name||"LoadError"),"Loading the saved company failed. No browser data was cleared.");
+ document.documentElement.dataset.bossReady="true";
+});
 })();
 </script>
 </body>

@@ -9,7 +9,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,open:false,innerHTML:""
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveWeek,orgSubManager,orgManager,orgSubReports,orgDirectReports,orgChooseManager,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
+const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgSubReports,orgDirectReports,orgChooseManager,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exported+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -75,6 +75,20 @@ test("a scheduled leadership week generates an actual read-only report",()=>{
  el("ea-weekly-report").open=true;G.renderExecutiveWeekly();
  const body=el("ea-weekly-body").innerHTML;assert.ok(body.includes("Direct-report briefing"));
  assert.ok(body.includes("Exceptions"));assert.ok(body.includes("cash paid"));reconcile(s);
+});
+test("Marketing Manager can request and execute an appropriately skilled hire under CEO-approved budget",()=>{
+ const s=init();fund(s,750);s.day=7;
+ const director=s.team[0],lead=s.team[1];
+ director.department="commercial";director.role.primary="lead";director.career.rank=4;s.org.departments.commercial.managerId=director.id;
+ lead.department="commercial";lead.role.primary="lead";lead.role.previousPrimary="mkt";s.org.departments.commercial.subManagers.mkt=lead.id;
+ assert.ok(G.executiveLaunch("marketing"));
+ const request=G.executiveProposal("commercial");assert.equal(request.type,"hire");assert.equal(request.role,"mkt");
+ const plan=s.org.departments.commercial.plan;plan.limits.hiring=40;plan.perAction=20;plan.hireSlots=1;plan.payrollLimit=2;
+ const before=s.team.length;
+ assert.equal(G.executiveAutonomous("commercial",request),true);
+ assert.equal(s.team.length,before+1);assert.equal(s.team.at(-1).role.primary,"mkt");
+ assert.ok(s.team.at(-1).s.mkt>=2);assert.equal(plan.hires,1);
+ reconcile(s);
 });
 test("730-day active service business preserves contract value and financial reconciliation",()=>{
  const s=init();fund(s,15000);s.day=20;s.nextEv=999999;

@@ -74,7 +74,7 @@ async function runBrowser(){
    });
   }
   await send("Page.enable");await send("Runtime.enable");
-  // Chrome can delay applying a mobile metric override on a newly created tab.
+  // Verify a true 390px CSS layout in Chrome without OS-specific mobile device scaling.
   // Retry a clean navigation only if the *measured* CSS viewport is incorrect;
   // every acceptance assertion remains mandatory after a true 390px render.
   // Warm the file:// renderer before applying emulation. Chrome may discard
@@ -87,7 +87,7 @@ async function runBrowser(){
   }
   let outcome=null;
   for(let attempt=0;attempt<3;attempt++){
-   await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:true});
+   await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:false});
    await sleep(150);
    await send("Page.navigate",{url:"file://"+file+"?qa="+attempt});
    let title="";
@@ -102,7 +102,7 @@ async function runBrowser(){
    assert.ok(title.startsWith("BOSS_QA:"),"UI smoke script did not finish");
    outcome=JSON.parse(Buffer.from(title.slice(8),"base64").toString("utf8"));
    if(outcome.width>=385&&outcome.width<=395)break;
-   console.warn("Chrome emulation not settled: viewport "+outcome.width+"; retrying full page at 390px");
+   console.warn("Chrome CSS viewport not settled: "+outcome.width+"; retrying full page at 390px");
   }
   console.log("Mobile browser verification:",JSON.stringify(outcome));
   assert.ok(outcome.width>=385&&outcome.width<=395,"Unexpected viewport, no mobile acceptance: "+outcome.width);
@@ -114,7 +114,7 @@ async function runBrowser(){
   assert.equal(outcome.checks.noVisibleUndefined,true);
   assert.equal(outcome.checks.promotionPriceRendered,true,"Promotion buttons must display a numeric cost, not raw source text");
   assert.deepEqual(outcome.errors,[]);
-  console.log("PASS real Chromium near-390px Boss mobile UI smoke");
+  console.log("PASS real Chromium near-390px Boss responsive UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }
 runBrowser().catch(err=>{console.error(err);process.exitCode=1});

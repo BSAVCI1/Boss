@@ -4,6 +4,20 @@
 
 **Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss14`, `boss13`, `boss12`, `boss10`, `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
 
+## In development: v20 — Service Portfolio & Autonomous Business Leadership
+
+**Approved additions from iPhone gameplay at Days 2800–2900:**
+
+1. **Group Team by reporting line and role.** Show CEO direct reports, Commercial → Sales/Marketing and Delivery → Product/Operations, including each manager's actual people. Preserve employee cards, exact identity IDs, expandable state, and appointments after refresh.
+2. **Business-line launch persistence / suspected save overwrite.** An investment must be recorded once, survive reload and older-tab writes, and be recoverable when the current financial ledger independently contains evidence of payment. Do not give free launches or charge twice. Distinguish zero line revenue from lost purchases, and track realized contributions from the launch date.
+3. **Replace the redundant Review leadership meeting shortcut.** When selected from the mature-company mission, open an Executive Assistant weekly briefing with real current metrics, department health, project risks, service development and outstanding CEO decisions. A button that merely scrolls to an already-visible card is not accepted.
+
+**Original v20 scope:** Individual marketed services rather than generic projects; service tiers, differentiated contract fees/scope, quality-linked repeat business, skill requirements, attributed earnings and margins, and managers who recommend hiring specialists into their own reporting teams. Preserve single-file, offline, game-first UX and consolidated company accounting.
+
+**Implementation:** Feature branch `boss-v20-service-portfolio`, PR #17; production `main` intentionally separate. v20 saves to `boss20` and imports the exact previous keys. Test brand-new company, at least two previously purchased lines, refresh recovery from paid receipts, no-receipt safety, old-save preservation, multiple-tab stale-save conflict, 730-day economics and true 390px mobile UI. Merge only with complete CI and live Pages verification. Do not claim iOS Safari old-save data inspected by automated Linux Chrome tests.
+
+**Longer-term v21:** Product and subscription businesses, service-unit P&L, acquisition, strategic investment and valuation only after v20 core economics are robust.
+
 ## Delivered: v7 — Smarter Office Assistant
 - A collapsible Delegation Desk. Owner can set automatic task assignment on/off, and choose project order: **balanced urgency and skills**, **earliest deadline**, or **best skill fit**.
 - Configure separately whether the assistant shares praise, approves family leave ($5), coaches mistakes (free), or supports experiments ($10). Per-decision automatic-spending cap: $0, $5, $10, or $20. Each routine choice checks actual cash.

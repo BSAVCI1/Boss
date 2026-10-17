@@ -416,6 +416,66 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 const KEY="boss20";
 const LEGACY_KEY="boss19";
 let persistedRevision=0,saveConflict=false,saveErrorReason="";
+let extendedStorage=false,backupDB=null,indexedWriteQueue=Promise.resolve(),indexedWriteCount=0,indexedWasPaused=false,gameReady=false;
+function openBackupDB(){
+ if(typeof indexedDB==="undefined")return Promise.resolve(null);
+ if(backupDB)return backupDB;
+ backupDB=new Promise(resolve=>{
+  let req;try{req=indexedDB.open("BossSafeProgress",1);}catch{resolve(null);return;}
+  req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains("game"))req.result.createObjectStore("game");};
+  req.onsuccess=()=>resolve(req.result);
+  req.onerror=()=>resolve(null);req.onblocked=()=>resolve(null);
+ });
+ return backupDB;
+}
+async function readExtendedSave(){
+ const db=await openBackupDB();if(!db)return null;
+ return new Promise(resolve=>{
+  try{
+   const tx=db.transaction("game","readonly"),req=tx.objectStore("game").get("boss20");
+   req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null);tx.onabort=()=>resolve(null);
+  }catch{resolve(null);}
+ });
+}
+async function indexedCommit(payload,revision,day){
+ const db=await openBackupDB();if(!db)return false;
+ return new Promise(resolve=>{
+  let ok=true,finished=false;const done=value=>{if(!finished){finished=true;resolve(value);}};
+  try{
+   const tx=db.transaction("game","readwrite"),store=tx.objectStore("game");
+   const req=store.get("boss20");
+   req.onsuccess=()=>{
+    const prior=req.result;
+    if(prior&&Number(prior.revision)>revision-1){ok=false;try{tx.abort();}catch{}return;}
+    store.put({payload,revision,day},"boss20");
+   };
+   req.onerror=()=>{ok=false;try{tx.abort();}catch{}};
+   tx.oncomplete=()=>done(ok);tx.onerror=()=>done(false);tx.onabort=()=>done(false);
+  }catch{done(false);}
+ });
+}
+function queueIndexedSave(payload,revision,day){
+ if(indexedWriteCount===0){indexedWasPaused=paused;paused=true;}
+ indexedWriteCount++;saveState("Saving Day "+day+" to extended device storage…");
+ const work=indexedWriteQueue.then(()=>indexedCommit(payload,revision,day));
+ indexedWriteQueue=work.then(()=>{},()=>{});
+ return work.then(ok=>{
+  if(ok){
+   persistedRevision=Math.max(persistedRevision,revision);saveErrorReason="";
+   const warning=$("save-warning");if(warning)warning.hidden=true;
+   saveState("Saved Day "+day+" · extended device storage · revision "+revision);
+  }else saveError("IndexedDBError","Extended device storage did not confirm the save at Day "+day+".");
+  indexedWriteCount--;
+  if(indexedWriteCount===0&&ok&&!saveConflict&&!saveErrorReason){
+   paused=indexedWasPaused;if(gameReady){paintControls();schedule();}
+  }
+  return ok;
+ }).catch(e=>{
+  indexedWriteCount--;saveError("IndexedDBError","Extended device storage failed on Day "+day+": "+String(e?.name||"unknown")+".");
+  return false;
+ });
+}
+
 const LAUNCH_JOURNAL_KEY="boss20_service_line_journal";
 let labHistorySignature="";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
@@ -812,22 +872,21 @@ function exportGameBackup(){
  }catch(e){saveState("Backup preparation failed · "+String(e?.name||"unknown"),true);return false;}
 }
 function save(){
- let payload=null;
+ let payload=null,nextRevision=0;
  try{
   const current=localStorage.getItem(KEY);
   if(current){
    let existing=null;try{existing=JSON.parse(current);}catch{}
    const remoteRev=Number(existing?._saveRevision)||0;
    if(remoteRev>persistedRevision){
-    saveConflict=true;
-    saveError("RevisionConflict","Latest saved Day "+(existing?.day??"unknown")+" (revision "+remoteRev+"), this tab's last revision "+persistedRevision+".");
+    saveConflict=true;saveError("RevisionConflict","Latest saved Day "+(existing?.day??"unknown")+" (revision "+remoteRev+"), this tab's last revision "+persistedRevision+".");
     return false;
    }
   }
   if(saveConflict){saveError("RevisionConflict","This tab must reload the newer saved company before continuing.");return false;}
-  const nextRevision=Math.max(persistedRevision,Number(S._saveRevision)||0)+1;
-  S._saveRevision=nextRevision;
-  payload=JSON.stringify(S);
+  nextRevision=Math.max(persistedRevision,Number(S._saveRevision)||0)+1;
+  S._saveRevision=nextRevision;payload=JSON.stringify(S);
+  if(extendedStorage)return queueIndexedSave(payload,nextRevision,S.day);
   localStorage.setItem(KEY,payload);
   if(localStorage.getItem(KEY)!==payload)throw new Error("Save verification failed");
   persistedRevision=nextRevision;saveErrorReason="";
@@ -836,8 +895,11 @@ function save(){
   if(!unfinished)saveState("Saved Day "+S.day+" · revision "+nextRevision+" · "+Math.ceil(payload.length/1024)+" KB");
   return true;
  }catch(e){
-  let savedDay="unknown";
-  try{savedDay=JSON.parse(localStorage.getItem(KEY)||"null")?.day??"none";}catch{}
+  // Never clear or rewrite old save versions to make room.
+  if(payload&&!saveConflict&&typeof indexedDB!=="undefined"){
+   extendedStorage=true;return queueIndexedSave(payload,nextRevision,S.day);
+  }
+  let savedDay="unknown";try{savedDay=JSON.parse(localStorage.getItem(KEY)||"null")?.day??"none";}catch{}
   saveError(String(e?.name||"StorageError"),"Current Day "+S.day+", last stored Day "+savedDay+", new save approximately "+(payload?Math.ceil(payload.length/1024)+" KB":"unknown size")+".");
   return false;
  }
@@ -1095,7 +1157,7 @@ const brief=w.activeEvent,labels={tender:"A major customer is accepting bids",re
 $("world-event").innerHTML=brief?'<div class="coach-row coach-amber"><b>'+labels[brief.type]+'</b><div class="coach-mini">Decision window: through Day '+brief.until+'. '+esc(worldOfferTerms(brief).description)+'</div>'+(worldOfferEligibility(brief).allowed?'':'<div class="risk-watch small">Unavailable: '+esc(worldOfferEligibility(brief).reason)+'</div>')+'<div class="buttons"><button type="button" data-world-event="act" '+(worldOfferEligibility(brief).allowed?'':'disabled')+'>Take opportunity</button><button type="button" data-world-event="pass">Pass</button></div></div>':'<p class="small">No action required. Next optional market brief around Day '+w.nextEvent+'.</p>';
 }
 
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17")||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+function load(rawOverride){try{const raw=rawOverride===undefined?(localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17")||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3")):rawOverride;if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 ensurePerformance(p,s.day);
@@ -1862,7 +1924,11 @@ const priority=ceoDraftPriority??$("ceo-priority").value;
 if(!ceoDirection(priority))$("ceo-direction-confirm").textContent=S.ev?"Resolve the current CEO decision before changing direction.":"Direction unchanged. Choose a different strategy or wait for the next review.";
 });
 $("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
-$("launch-service-line").addEventListener("click",()=>{if(executiveLaunch($("service-line-select").value))refresh();});
+$("launch-service-line").addEventListener("click",()=>{
+ const result=executiveLaunch($("service-line-select").value);
+ if(result&&typeof result.then==="function")result.then(ok=>{if(ok)refresh();});
+ else if(result)refresh();
+});
 $("service-line-select").addEventListener("change",()=>{S.ui.selectedService=$("service-line-select").value;save();executiveShow();});
 $("game-primary").addEventListener("click",()=>{const b=$("game-primary"),view=b.dataset.go||"work";
 navigate(view,b.dataset.project?Number(b.dataset.project):undefined);
@@ -2127,7 +2193,9 @@ const launch={key,since:S.day,spent:120,delivered:0,missed:0,revenue:0};
 S.exec.lines.push(launch);
 coachDecision("Launched "+SERVICE_LINES[key].name,before,"$120 launch investment. Matching future contracts receive a small delivery-readiness benefit; income is measured only on new line-attributed deals, no guaranteed demand.",null,30);
 logIt("Launched "+SERVICE_LINES[key].name+"; the team can now build its first trackable service-line results.");
-if(!save()){S=JSON.parse(checkpoint);return false;}
+const saved=save();
+if(saved&&typeof saved.then==="function")return saved.then(ok=>{if(!ok){S=JSON.parse(checkpoint);return false;}recordLineLaunch(launch);return true;});
+if(!saved){S=JSON.parse(checkpoint);return false;}
 recordLineLaunch(launch);return true;
 }
 function executiveAutonomous(dept,spec){
@@ -2380,7 +2448,7 @@ $("game-journey-map").innerHTML=stages.map(([name,done])=>'<span class="game-jou
 const rivals=S.world?.rivals||[],rivalText=rivals.map(q=>'<div class="game-rival"><span class="game-rival-icon">◆</span><span><b>'+esc(q.name)+'</b><small>'+esc(q.archetype)+' approach · '+q.wins+' wins</small></span></div>').join("");
 if($("game-rivals").innerHTML!==rivalText)$("game-rivals").innerHTML=rivalText;
 }
-function gameAdvanceDays(){if(S.ev)return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
+function gameAdvanceDays(){if(S.ev)return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev||indexedWriteCount>0;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
 
 function renderBriefing(){
 const urgent=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"||f.risk==="watch");

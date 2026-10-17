@@ -356,9 +356,9 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </section>
 <section id="view-growth" class="app-view" data-page="growth" aria-label="Strategy and capabilities" hidden>
 <div class="view-intro"><h2>Growth</h2><p>Industries, investments and company knowledge</p></div>
-<section aria-labelledby="market-title"><h2 id="market-title">Choose your direction</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><div id="sector-options" class="sector-buttons"></div><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
+<section aria-labelledby="market-title"><h2 id="market-title">Choose your direction</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><details class="aux-details" id="sector-explore"><summary>Explore customer markets</summary><div id="sector-options" class="sector-buttons"></div></details><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
 
-<section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Services are what you sell; industries are the customers you serve. Lines share your company finances and employees.</p><div id="business-lines"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Propose launch · $120</button><p class="small">CEO approval required. Track new work from launch onward; earlier projects are never invented.</p></details></section>
+<section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Services are what you sell; industries are the customers you serve. Lines share your company finances and employees.</p><div id="business-lines"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">CEO approval required. Track new work from launch onward; earlier projects are never invented.</p></details></section>
 <section aria-labelledby="world-title"><h2 id="world-title">Your rivals</h2>
 <div class="card"><div id="game-rivals" class="game-rivals"></div><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
 
@@ -1785,7 +1785,12 @@ const v=S.org.departments[dept].stats,people=orgReports(dept);
 const burden=dept==="commercial"?S.pipeline.leads.length:S.deals.filter(d=>["prod","ops"].includes(d.need)).length;
 const busy=people.filter(p=>p.t.startsWith("d")).length;
 if(S.exec.priority==="newline")return{type:"training",dept,cost:8,benefit:"Build practical capability for the proposed business line",risk:"Training uses employee time and may not unlock revenue immediately"};
-if(S.exec.priority==="rd"||S.exec.priority==="people")return{type:"training",dept,cost:8,benefit:"Improve role skills, manager coaching and long-term readiness",risk:"Training does not guarantee a contract or promotion"};
+if(S.exec.priority==="people"){
+const retention=people.filter(p=>p.career.satisfaction<=52&&!p.career.autoRest);
+if(retention.length){const target=retention.sort((a,b)=>a.career.satisfaction-b.career.satisfaction)[0];
+return{type:"raise",dept,cost:0,personId:target.id,benefit:"Retention proposal for "+target.n+" · salary +$0.25/day",risk:"Recurring payroll rises; retention is not guaranteed"};}
+return{type:"training",dept,cost:8,benefit:"Develop successors and coaching",risk:"Learning does not guarantee a promotion"};}
+if(S.exec.priority==="rd")return{type:"training",dept,cost:8,benefit:"Improve role skills and research readiness",risk:"Results remain uncertain"};
 if(S.exec.priority==="profit")return{type:"optimize",dept,cost:0,benefit:"Reduce new prospecting or unnecessary spending while protecting delivery",risk:"Lower acquisition effort may reduce future demand"};
 if((burden>Math.max(4,people.length+2))&&S.cash>=120&&people.length<9)return{type:"hire",dept,cost:20,benefit:"Add one specialist to increase available capacity",risk:"Additional recurring payroll $1.50/day (before modifiers); demand may not justify it"};
 return{type:"training",dept,cost:8,benefit:"Build a key colleague's skill and reduce workload strain",risk:"Training costs cash without guaranteed results"};
@@ -1815,6 +1820,10 @@ const who=[...peers].sort((a,b)=>a.s[DEPARTMENTS[p.dept].skills[0]]-b.s[DEPARTME
 S.cash-=p.cost;biMoney("development",p.cost,"CEO-approved development plan: "+who.n);
 const skill=DEPARTMENTS[p.dept].skills[0];who.s[skill]+=.3;who.career.satisfaction=clamp(who.career.satisfaction+3);manager.management.coaching=clamp(manager.management.coaching+.35);
 message="Approved "+biCurrency(p.cost)+" development for "+who.n+". Real skills improved; future results are still uncertain.";
+}else if(p.type==="raise"){
+const who=person(p.personId);if(!who||who.department!==p.dept)return false;
+who.career.raise=(who.career.raise||0)+.25;who.career.satisfaction=clamp(who.career.satisfaction+3);
+message="Approved $0.25/day recurring raise for "+who.n+" after director recommendation.";
 }else if(p.type==="hire"){
 if(S.cash<p.cost)return false;
 const personNew=createPerson();ensureCareer(personNew);ensureRole(personNew);
@@ -1839,7 +1848,7 @@ const primary=SECTORS[S.market.focus]?.name||"Services",strategy=worldStrategy()
 $("company-identity").textContent="B2B client services · Serving "+primary+" and "+S.market.open.length+" industries · "+strategy+".";
 $("ceo-direct-reports").innerHTML=DEPT_KEYS.map(key=>{
 const m=orgManager(key),staff=orgReports(key);
-return '<div class="ceo-report"><b>'+DEPARTMENTS[key].name+'</b><div>'+(m?esc(m.n)+" · Director · "+staff.length+" reports":"Founder-led · "+staff.length+" team members")+'</div></div>';}).join("");
+return '<div class="ceo-report"><b>'+DEPARTMENTS[key].name+'</b><div>'+(m?esc(m.n)+" · Director · "+staff.length+" reports":"Founder-led · "+staff.length+" colleagues")+'</div><details><summary>View team</summary>'+staff.map(p=>'<div class="small">'+esc(p.n)+' · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'</details></div>';}).join("");
 $("ceo-assistant").textContent=a? a.n+" · CEO coordination and manager follow-ups":"Unfilled · appointment optional";
 $("ceo-priority").value=S.exec.priority;
 $("ceo-direction-time").textContent="Day "+Math.max(0,S.day-S.exec.priorityDay)+" / 90";
@@ -1847,11 +1856,11 @@ $("ceo-direction-note").textContent=CEO_PRIORITIES[S.exec.priority].explain;
 $("ceo-set-direction").disabled=!!S.ev;
 const inbox=S.exec.proposals,ev=S.world.activeEvent;
 $("exec-count").textContent=inbox.length+" manager requests"+(ev?" · 1 market brief":"");
-$("executive-meeting-summary").textContent="Weekly manager proposals, optional market opportunities and CEO approvals. Routine department work stays delegated.";
+$("executive-meeting-summary").textContent="Weekly manager proposals, monthly performance reviews, and CEO approvals. Routine work stays delegated.";
 const brief=ev?'<div class="exec-proposal exec-opportunity"><b>Market opportunity — '+esc(ev.type)+'</b><p>Available through Day '+ev.until+'. Optional; evaluate in Growth before it expires.</p><button type="button" data-go="growth">Review opportunity →</button></div>':"";
 $("exec-inbox").innerHTML=brief+(inbox.map(p=>{
 const chief=person(p.managerId),cost=biCurrency(p.cost),affordable=S.cash>=p.cost;
-return '<div class="exec-proposal"><b>'+esc(chief?.n||"Director")+' · '+esc(DEPARTMENTS[p.dept].name)+'</b><p>'+esc(p.benefit)+' · '+cost+' one-time'+(p.type==="hire"?" + salary $1.50/day":"")+'</p><p><b>Risk:</b> '+esc(p.risk)+'</p><div class="buttons"><button data-exec-action="approve" data-exec-id="'+p.id+'" '+(affordable?"":"disabled")+' type="button">Approve</button><button data-exec-action="decline" data-exec-id="'+p.id+'" type="button">Decline</button></div></div>';}).join("")||(!ev?'<p class="small">No CEO approvals needed. Your managers continue running their departments.</p>':""));
+return '<div class="exec-proposal"><b>'+esc(chief?.n||"Director")+' · '+esc(DEPARTMENTS[p.dept].name)+'</b><p>'+esc(p.benefit)+' · '+cost+' one-time'+(p.type==="hire"?" + salary $1.50/day":p.type==="raise"?" · salary +$0.25/day":"")+'</p><p><b>Risk:</b> '+esc(p.risk)+'</p><div class="buttons"><button data-exec-action="approve" data-exec-id="'+p.id+'" '+(affordable?"":"disabled")+' type="button">Approve</button><button data-exec-action="decline" data-exec-id="'+p.id+'" type="button">Decline</button></div></div>';}).join("")||(!ev?'<p class="small">No CEO approvals needed. Your managers continue running their departments.</p>':""));
 if($("exec-history").parentNode.open)$("exec-history").innerHTML=S.exec.history.slice(0,12).map(x=>'<p class="small">Day '+x.day+' · '+esc(x.manager)+' · '+esc(x.action)+' — '+esc(x.result)+'</p>').join("")||'<p class="small">No executive decisions yet.</p>';
 const lines=[{key:"core",since:0,delivered:S.market.completed,baseline:true},...S.exec.lines];
 $("business-lines-summary").textContent=lines.length+" operating";

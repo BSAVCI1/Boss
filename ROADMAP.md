@@ -1,11 +1,11 @@
 # Boss — simulation development roadmap
 
-## v21.3.1 — Repeating mobile controls reliability defect (release candidate)
+## Released v21.3.1 — Repeating mobile controls reliability correction
 
 - Fix the native General Manager / dedicated employee picker closing during 1×/8× game updates; apply shared interaction shield to all editable controls instead of one field.
 - Keep model/saves progressing and defer DOM replacement until edit completes. Protect partial numeric entries and disclosure state.
 - Add real 390px browser tests simulating multiple ticks while GM select is open, focus on unit numeric draft, release after change, plus regression on financial/saving invariants.
-- [UI interaction governance and release checklist](docs/UI_INTERACTION_GOVERNANCE.md) is now mandatory for all future features. [PR #27](https://github.com/BSAVCI1/Boss/pull/27) must pass QA and deploy before marking released.
+- [UI interaction governance and release checklist](docs/UI_INTERACTION_GOVERNANCE.md) is now mandatory for all future features. **Release verified:** [PR #27](https://github.com/BSAVCI1/Boss/pull/27) merged at `08991ca08b9c6baaed4e40580c7dee727257a5cd`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39070464611), [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39070464072) and [real Chromium 390/414px save/interaction checks](https://github.com/BSAVCI1/Boss/actions/runs/39070360831) passed. Owner Safari save not accessed.
 
 
 ## Released v21.3 — Dedicated GM capacity and measurable operating strategies (PR #26)

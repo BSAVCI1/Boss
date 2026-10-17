@@ -1,10 +1,10 @@
 # Boss
 
-## Boss v21.3.1 — Native mobile editing stability (release candidate)
+## Boss v21.3.1 — Native mobile editing stability (released 2026-10-17)
 
 User-reported GM and dedicated teammate dropdowns closed before selection because autonomous game ticks recreated the whole Operating units DOM. All active select/input/textarea edits now use a shared capture-phase interaction shield with a brief iOS picker dismissal grace period. Background game logic and saving continue, while UI redraws defer until the edit finishes. Other controls in Today, Work, Team and Growth share the same safety rule. See [mandatory mobile UI governance](docs/UI_INTERACTION_GOVERNANCE.md). This fix is not a new business investment and does not reset player saves.
 
-**Release gate:** [PR #27](https://github.com/BSAVCI1/Boss/pull/27) and mobile 390px/414px/browser-save regressions. Do not call this released until merged production checks, GitHub Pages and live verification pass.
+**Release evidence:** [PR #27](https://github.com/BSAVCI1/Boss/pull/27) merged at `08991ca08b9c6baaed4e40580c7dee727257a5cd`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39070464611), [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39070464072) and [real Chromium 390/414px save/interaction checks](https://github.com/BSAVCI1/Boss/actions/runs/39070360831) passed. Owner Safari save not accessed. The selected GM/teammate stays chosen through the deferred repaint until the CEO presses the appointment/transfer action. Unit authority disclosures also remain open.
 
 
 ## Boss v21.3 — GM-owned delivery capacity (released 2026-10-17 · PR #26)

@@ -1835,8 +1835,8 @@ if((p.t.startsWith("d")||p.t==="assist"||p.t==="exp")&&p.career.stress>=92&&p.ca
 p.career.recoveryDays=4;logIt(p.n+" took a four-day recovery pause after sustained workload.");}
 const recovering=p.career.recoveryDays>0;
 if(recovering){p.career.recoveryDays--;dm=1.5;}
-else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*(S.economy.invested.operations?1.06:1)*(1+S.improvements.operations)*(d.serviceLine&&S.exec.lines.some(x=>x.key===d.serviceLine)?1.05:1);d.prog+=e;d.laborCost=(d.laborCost||0)+dailySalary(p);
-d.quality=clamp(d.quality+S.improvements.product*.06+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1)-(p.career.stress>=75?.25:0)-(p.career.burnout>=45?.18:0)+.12*orgEffective("delivery"));
+else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const owned=unitOfPerson(p.id),unitMode=owned?.key===d.unitKey?owned.plan?.focus:"balanced";const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*(S.economy.invested.operations?1.06:1)*(1+S.improvements.operations)*(d.serviceLine&&S.exec.lines.some(x=>x.key===d.serviceLine)?1.05:1);d.prog+=e*(unitMode==="speed"?1.10:unitMode==="quality"?.94:1);d.laborCost=(d.laborCost||0)+dailySalary(p);
+d.quality=clamp(d.quality+S.improvements.product*.06+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1)-(p.career.stress>=75?.25:0)-(p.career.burnout>=45?.18:0)+.12*orgEffective("delivery")+(unitMode==="quality"?.14:unitMode==="speed"?-.08:0));
 for(const [index,limit,name] of [[1,.34,"Plan approved"],[2,.73,"Build completed"]])if(d.milestone<index&&d.prog>=d.work*limit){d.milestone=index;logIt(d.cl+": "+name+" ("+Math.round(d.quality)+"% quality).");}
 p.s[d.need]+=.05*S.mod.learn*(aligned?1.12:1);dm=(e>=.9?.4:-.3)+(aligned?.15:0);}else{p.t="idle";dm=-.2;dirty=true;}}
 else if(p.t==="prospect"||p.t==="market"){p.s[p.t==="prospect"?"sales":"mkt"]+=.025*S.mod.learn;dm=.12;if(discoverFromWork(p))ideaDirty=true;}
@@ -1849,7 +1849,7 @@ else if(p.t==="exp"){const spent=Math.min(1,S.cash);S.cash-=spent;if(spent>0)biM
 else if(p.t==="rest"){dm=2;}
 else if(p.t==="assist"){p.s.ops+=.025*S.mod.learn;dm=.25;}
 const assignedDeadline=p.t.startsWith("d")?deal(Number(p.t.slice(1)))?.dl??99:99;
-const effectiveTask=recovering?"rest":p.t;performanceWork(p,effectiveTask);careerTrack(p,effectiveTask);talentAndCareerDay(p,effectiveTask,assignedDeadline);biTeamDay(p,effectiveTask);coachLabParticipation(p,effectiveTask);coachTrackRole(p,effectiveTask);
+const effectiveTask=recovering?"rest":p.t;performanceWork(p,effectiveTask);careerTrack(p,effectiveTask);talentAndCareerDay(p,effectiveTask,assignedDeadline);biTeamDay(p,effectiveTask);const assignedUnit=unitOfPerson(p.id);if(assignedUnit&&p.id!==assignedUnit.managerId&&effectiveTask.startsWith("d")&&deal(Number(effectiveTask.slice(1)))?.unitKey===assignedUnit.key)assignedUnit.billableDays++;coachLabParticipation(p,effectiveTask);coachTrackRole(p,effectiveTask);
 p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
 if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);orgTrackPerson(p,effectiveTask);if(!recovering)orgManagerDay(p);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
@@ -1978,7 +1978,8 @@ $("business-units").addEventListener("input",e=>{
 });
 $("business-units").addEventListener("change",e=>{
  const field=e.target;if(!field?.matches?.("select[data-unit-field]"))return;
- unitAuthorize(field.dataset.unitKey,field.dataset.unitField,Number(field.value));
+ if(field.dataset.unitField==="focus")unitSetFocus(field.dataset.unitKey,field.value);
+ else unitAuthorize(field.dataset.unitKey,field.dataset.unitField,Number(field.value));
 });
 $("business-units").addEventListener("click",e=>{
  const button=e.target.closest("button[data-unit-request]");
@@ -2212,6 +2213,7 @@ e.units=e.units.filter(u=>{
  if(!u||!SERVICE_LINES[u.key]||unitKeys.has(u.key)||!e.lines.some(x=>x.key===u.key))return false;
  unitKeys.add(u.key);if(!Number.isFinite(u.since))u.since=state.day;
  if(!Array.isArray(u.staffIds))u.staffIds=[];
+ for(const key of ["staffDays","billableDays"])if(!Number.isFinite(u[key])||u[key]<0)u[key]=0;
  if(!state.team.some(p=>p.id===u.managerId&&p.id!==state.ops.assistantId))u.managerId=null;
  u.staffIds=u.staffIds.filter(id=>{if(!Number.isInteger(id)||unitOwners.has(id)||id===state.ops.assistantId||!state.team.some(p=>p.id===id))return false;unitOwners.add(id);return true;});
  if(u.managerId&&!u.staffIds.includes(u.managerId)){if(unitOwners.has(u.managerId))u.managerId=null;else{unitOwners.add(u.managerId);u.staffIds.push(u.managerId);}}
@@ -2221,6 +2223,13 @@ e.units=e.units.filter(u=>{
  for(const [key,def] of Object.entries({since:state.day,days:90,coachingLimit:0,perAction:0,spent:0,lastCoached:-99,qualityTarget:80,lastReview:state.day,baselineDelivered:u.delivered,baselineQuality:u.qualityTotal,baselineMissed:u.missed})){
   if(!Number.isFinite(p[key])||p[key]<0&&key!=="lastCoached")p[key]=def;
  }
+ if(!["balanced","quality","speed"].includes(p.focus))p.focus="balanced";
+ if(!Number.isFinite(p.revenueTarget)||p.revenueTarget<0)p.revenueTarget=0;
+ if(!Number.isFinite(p.utilizationTarget)||p.utilizationTarget<0||p.utilizationTarget>100)p.utilizationTarget=65;
+ if(!Number.isFinite(p.baselineRevenue))p.baselineRevenue=u.revenue;
+ if(!Number.isFinite(p.baselineCosts))p.baselineCosts=u.directCost+u.sharedLaborCost+u.payrollCost+u.developmentCost;
+ if(!Number.isFinite(p.baselineBillableDays))p.baselineBillableDays=u.billableDays;
+ if(!Number.isFinite(p.baselineStaffDays))p.baselineStaffDays=u.staffDays;
  if(![90,180].includes(p.days))p.days=90;
  p.qualityTarget=Math.max(65,Math.min(100,p.qualityTarget));
  if(!Array.isArray(u.reviews))u.reviews=[];
@@ -2317,7 +2326,7 @@ function unitCommit(action){
 function unitActivate(key){
  if(!SERVICE_LINES[key]||!S.exec.lines.some(x=>x.key===key)||S.exec.units.some(u=>u.key===key))return false;
  return unitCommit(()=>{
-  S.exec.units.push({key,since:S.day,managerId:null,staffIds:[],revenue:0,directCost:0,sharedLaborCost:0,payrollCost:0,developmentCost:0,delivered:0,missed:0,qualityTotal:0,plan:{since:S.day,days:90,coachingLimit:0,perAction:0,spent:0,lastCoached:-99,qualityTarget:80,lastReview:S.day,baselineDelivered:0,baselineQuality:0,baselineMissed:0},reviews:[]});
+  S.exec.units.push({key,since:S.day,managerId:null,staffIds:[],revenue:0,directCost:0,sharedLaborCost:0,payrollCost:0,developmentCost:0,staffDays:0,billableDays:0,delivered:0,missed:0,qualityTotal:0,plan:{since:S.day,days:90,coachingLimit:0,perAction:0,spent:0,lastCoached:-99,qualityTarget:80,focus:"balanced",revenueTarget:0,utilizationTarget:65,lastReview:S.day,baselineDelivered:0,baselineQuality:0,baselineMissed:0,baselineRevenue:0,baselineCosts:0,baselineStaffDays:0,baselineBillableDays:0},reviews:[]});
   unitRecord(key,"activated","Created a managed operating unit from an existing paid service portfolio. No purchase charged.");
   logIt(SERVICE_LINES[key].name+" now has an operating unit (no additional investment).");
   return true;
@@ -2359,14 +2368,20 @@ function unitBudgetAllowed(u,amount){
 function unitAuthorize(key,field,value){
  const u=S.exec.units.find(x=>x.key===key),p=u?.plan;
  if(!p||!Number.isFinite(value)||value<0||value>1000000)return false;
- if(!["coachingLimit","perAction","qualityTarget","days"].includes(field))return false;
+ if(!["coachingLimit","perAction","qualityTarget","days","revenueTarget","utilizationTarget"].includes(field))return false;
  if(field==="days"&&![90,180].includes(value))return false;
  if(field==="qualityTarget"&&(value<65||value>100))return false;
+ if(field==="utilizationTarget"&&value>100)return false;
  return unitCommit(()=>{
   p[field]=Math.floor(value);
   unitRecord(key,"authority","CEO set "+field+" to "+value+"; spend remains zero until a manager acts.");
   return true;
  });
+}
+function unitSetFocus(key,focus){
+ if(!["balanced","quality","speed"].includes(focus))return false;
+ const u=S.exec.units.find(x=>x.key===key);if(!u)return false;
+ return unitCommit(()=>{u.plan.focus=focus;unitRecord(key,"strategy","CEO set "+SERVICE_LINES[key].name+" delivery priority to "+focus+".");return true;});
 }
 function unitRenewAuthority(key){
  const u=S.exec.units.find(x=>x.key===key);
@@ -2428,7 +2443,7 @@ function unitRequestDecision(id,action){
 }
 function unitPayrollDay(){
  if(!S.exec?.units)return;
- for(const u of S.exec.units)for(const id of u.staffIds){const p=person(id);if(p)u.payrollCost+=dailySalary(p);}
+ for(const u of S.exec.units)for(const id of u.staffIds){const p=person(id);if(p){u.payrollCost+=dailySalary(p);if(id!==u.managerId)u.staffDays++;}}
 }
 function renderBusinessUnits(){
  const target=$("business-units");if(!target)return;

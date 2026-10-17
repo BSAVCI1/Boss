@@ -1817,7 +1817,7 @@ function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
 function release(p){if(!p)return;for(const d of S.deals)if(d.w===p.id)d.w=null;p.t="idle";}
-function removePerson(p){if(S.team.length<=1)return false;for(const u of S.exec?.units||[]){if(u.managerId===p.id)u.managerId=null;u.staffIds=u.staffIds.filter(id=>id!==p.id);}if(S.ops.assistantId===p.id)S.ops.assistantId=null;for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===p.id)S.org.departments[k].managerId=null;release(p);S.team=S.team.filter(x=>x.id!==p.id);avatars.delete(p.id);return true;}
+function removePerson(p){if(S.team.length<=1)return false;for(const u of S.exec?.units||[]){if(u.managerId===p.id){u.managerId=null;for(const req of S.exec.unitRequests||[])if(req.key===u.key&&req.status==="open"){req.status="withdrawn";req.decidedAt=S.day;}}u.staffIds=u.staffIds.filter(id=>id!==p.id);}if(S.ops.assistantId===p.id)S.ops.assistantId=null;for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===p.id)S.org.departments[k].managerId=null;release(p);S.team=S.team.filter(x=>x.id!==p.id);avatars.delete(p.id);return true;}
 function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S.seeds.includes(k));if(!unused.length)return false;
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
@@ -2210,7 +2210,7 @@ e.units=e.units.filter(u=>{
  return true;
 });
 e.unitEvents=e.unitEvents.filter(x=>x&&x.key&&Number.isFinite(x.day)).slice(-80);
-e.unitRequests=e.unitRequests.filter(x=>x&&SERVICE_LINES[x.key]&&e.units.some(u=>u.key===x.key)&&Number.isFinite(x.id)&&["open","approved","declined"].includes(x.status)).slice(-45);
+e.unitRequests=e.unitRequests.filter(x=>x&&SERVICE_LINES[x.key]&&e.units.some(u=>u.key===x.key)&&Number.isFinite(x.id)&&["open","approved","declined","withdrawn"].includes(x.status)).slice(-45);
 e.unitRequestSeq=Math.max(e.unitRequestSeq,1,...e.unitRequests.map(x=>x.id+1));
 e.weeklyReports=e.weeklyReports.filter(x=>x&&Number.isFinite(x.day)).slice(0,12);
 e.proposals=e.proposals.filter(p=>p&&p.type&&p.id).slice(-12);
@@ -2310,6 +2310,7 @@ function unitAppoint(key,id){
  if(!u||!unitGMEligible(p,key)||u.managerId===id||S.deals.some(d=>d.w===id))return false;
  return unitCommit(()=>{
   if(u.managerId)u.staffIds=u.staffIds.filter(pid=>pid!==u.managerId);
+  for(const req of S.exec.unitRequests||[])if(req.key===key&&req.status==="open"){req.status="withdrawn";req.decidedAt=S.day;}
   u.managerId=id;if(!u.staffIds.includes(id))u.staffIds.unshift(id);
   unitRecord(key,"manager",p.n+" (#"+id+") appointed General Manager; additional payroll "+biCurrency(.5*S.mod.cost)+"/day.");
   logIt(p.n+" became General Manager of "+SERVICE_LINES[key].name+".");
@@ -2353,7 +2354,7 @@ function unitRenewAuthority(key){
  const u=S.exec.units.find(x=>x.key===key);
  if(!u)return false;
  return unitCommit(()=>{
-  u.plan.since=S.day;u.plan.spent=0;u.plan.lastCoached=-99;
+  u.plan.since=S.day;u.plan.spent=0; // Keep lastCoached: CEO renewal must not bypass the seven-day coaching cooldown.
   unitRecord(key,"renewal","CEO renewed "+u.plan.days+"-day GM authority without spending cash.");
   return true;
  });
@@ -2390,7 +2391,7 @@ function unitAutonomousDay(){
 }
 function unitRequestDecision(id,action){
  const req=S.exec.unitRequests.find(r=>r.id===id&&r.status==="open"),u=S.exec.units.find(x=>x.key===req?.key);
- if(!req||!u||!["approve","decline"].includes(action))return false;
+ if(!req||!u||req.managerId!==u.managerId||!["approve","decline"].includes(action))return false;
  if(action==="approve"&&(S.cash<req.cost||u.staffIds.length>=5||!person(u.managerId)))return false;
  return unitCommit(()=>{
   req.status=action==="approve"?"approved":"declined";req.decidedAt=S.day;

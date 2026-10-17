@@ -416,12 +416,12 @@ test("v21.2 one real paid coaching intervention obeys both caps, term and cooldo
  assert.equal(s.exec.units[0].plan.spent,4);
  G.unitAutonomousDay();assert.equal(s.cash,initialCash-4,"same-day repeated call must not double-charge");
  s.day+=7;G.unitAutonomousDay();assert.equal(s.cash,initialCash-8);
- s.day+=7;G.unitAutonomousDay();assert.equal(s.cash,initialCash-8,"budget exhausted");
+ s.day+=1;G.unitAutonomousDay();assert.equal(s.cash,initialCash-8,"budget exhausted");
  const priorSpending=s.exec.units[0].developmentCost;
  assert.equal(G.unitRenewAuthority("product"),true);
  assert.equal(s.exec.units[0].developmentCost,priorSpending,"renewal itself does not spend");
- G.unitAutonomousDay();assert.equal(s.exec.units[0].developmentCost,priorSpending,"renewal must not bypass the weekly cooldown");
- s.day+=7;G.unitAutonomousDay();assert.equal(s.exec.units[0].developmentCost,priorSpending+4);
+ G.unitAutonomousDay();assert.equal(s.exec.units[0].developmentCost,priorSpending,"renewal the day after coaching must not bypass its weekly cooldown");
+ s.day+=6;G.unitAutonomousDay();assert.equal(s.exec.units[0].developmentCost,priorSpending+4,"coaching resumes exactly seven days after the previous session");
  assert.equal(G.load().exec.units[0].plan.coachingLimit,8);
  reconcile(s);
 });

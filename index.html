@@ -174,7 +174,7 @@ if(c.goal==="creativity"&&d&&["creative","technology"].includes(d.sector))factor
 if(c.goal==="impact"&&d&&LIKED_SKILLS[d.need].includes(p.interest))factor+=.06;
 return factor;}
 function discoverTalent(p,amount){const c=p.career;if(c.revealed)return false;c.observed+=amount;
-if(c.observed<6)return false;c.revealed=true;p.s[c.talent]+=.65;const message=p.n+" discovered a talent for "+SKILLS[c.talent]+"!";logIt(message);Me(p,"My hidden talent was discovered");return true;}
+if(c.observed<6)return false;c.revealed=true;p.s[c.talent]+=.65;structural="";const message=p.n+" discovered a talent for "+SKILLS[c.talent]+"!";logIt(message);Me(p,"My hidden talent was discovered");return true;}
 function goalProgress(p,task){const c=p.career;
 if(c.goal==="growth"&&(task==="study"||task==="teach"))c.satisfaction=clamp(c.satisfaction+.48);
 else if(c.goal==="creativity"&&task==="exp")c.satisfaction=clamp(c.satisfaction+.45);
@@ -262,8 +262,8 @@ function tick(){if(paused||S.ev)return;S.day+=1;let dirty=false,ideaDirty=false;
 if(!S.flow.focus&&S.day>=S.flow.nextLead&&(Date.now()-S.flow.lastLeadAt>=25000||S.deals.length===0)){S.flow.lastLeadAt=Date.now();const cap=Math.max(2,Math.min(4,2+Math.floor(S.team.length/3)));if(S.deals.length<cap){createDeal();dirty=true;}S.flow.nextLead=S.day+Math.max(7,Math.round((12+R(9))/S.mod.deals));}
 if(delegateWork())dirty=true;
 for(const p of [...S.team]){const mf=.6+p.mood/250,lb=p.loy>70?1.1:1;let dm=-.2;
-if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1);d.prog+=e;
-d.quality=clamp(d.quality+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1));
+if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1);d.prog+=e;
+d.quality=clamp(d.quality+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1)-(p.career.stress>=75?.25:0)-(p.career.burnout>=45?.18:0));
 for(const [index,limit,name] of [[1,.34,"Plan approved"],[2,.73,"Build completed"]])if(d.milestone<index&&d.prog>=d.work*limit){d.milestone=index;logIt(d.cl+": "+name+" ("+Math.round(d.quality)+"% quality).");}
 p.s[d.need]+=.05*S.mod.learn*(aligned?1.12:1);dm=(e>=.9?.4:-.3)+(aligned?.15:0);}else{p.t="idle";dm=-.2;dirty=true;}}
 else if(p.t==="study"){p.s[weakest(p)]+=.14*S.mod.learn*mf*(p.interest==="learning"?1.2:1);dm=.3;}
@@ -271,18 +271,20 @@ else if(p.t==="teach"&&S.team.length>1){const k=strongest(p),others=S.team.filte
 else if(p.t==="exp"){S.cash=Math.max(0,S.cash-1);const avg=KEYS.reduce((s,k)=>s+p.s[k],0)/4;const chance=(.04+.01*avg)*mf*(p.trait==="Curious"?1.5:1)*(p.trait==="Creative"?1.3:1)*(p.interest==="creative"?1.2:1);if(Math.random()<chance){ideaDirty=discover(p.n)||ideaDirty;}dm=.3;}
 else if(p.t==="rest"){dm=2;}
 else if(p.t==="assist"){p.s.ops+=.025*S.mod.learn;dm=.25;}
+const assignedDeadline=p.t.startsWith("d")?deal(Number(p.t.slice(1)))?.dl??99:99;
+talentAndCareerDay(p,p.t,assignedDeadline);
 p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
 if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
 }
-for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){const payout=feeFor(d);S.cash+=payout;S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" paid $"+payout+" for the finished "+SECTORS[d.sector].name+" project. Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
+for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){const payout=feeFor(d);S.cash+=payout;S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" paid $"+payout+" for the finished "+SECTORS[d.sector].name+" project. Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
 else if(d.dl<=0){S.rep=Math.max(0,S.rep-3);recordCustomer(d,false);logIt("Missed the deadline for "+d.cl+". Reputation and customer loyalty dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
 assistantDeadlineAlerts();
-const salary=S.team.length*1.5*S.mod.cost;if(S.cash<salary){S.cash=0;for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford salaries. Team morale dropped.",true);}else S.cash-=salary;
+const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);if(S.cash<salary){S.cash=0;for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford salaries. Team morale dropped.",true);}else S.cash-=salary;
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
-save();if(dirty||S.deals.some(d=>(!d.negotiated&&d.prog>=d.work*.2)))renderStructure();if(ideaDirty)renderIdeas();refresh();}
+save();if(dirty||!structural||S.deals.some(d=>(!d.negotiated&&d.prog>=d.work*.2)))renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;}save();renderStructure();refresh();}
-function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1));}
+function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1));}
 function bestIdle(d){return S.team.filter(p=>p.id!==S.ops.assistantId&&p.t==="idle").sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
 function forecast(d){const assigned=person(d.w);const candidate=assigned||bestIdle(d);const speed=workerSpeed(candidate,d);const remaining=Math.max(0,d.work-d.prog);const eta=speed?Math.ceil(remaining/speed):null;const slack=eta===null?null:d.dl-eta;const risk=!assigned?"unassigned":slack<0?"critical":slack<=4?"watch":"ok";return{d,assigned,candidate,eta,slack,risk,fit:speed};}
 function rankedProjects(){const priority=S.ops.policy.priority;return S.deals.map(forecast).sort((a,b)=>{
@@ -355,15 +357,21 @@ function hireCandidate(id){if(S.ev)return;const index=S.hr.pool.findIndex(x=>x.i
 logIt(p.n+" joined the team for $"+c.fee+". Specialty: "+SKILLS[c.focus]+". Interest: "+INTERESTS[p.interest]+".");
 save();structural="";renderStructure();renderCandidates();refresh();}
 function fireEmployee(id){if(S.ev||S.team.length<=1)return;const p=person(id);if(!p)return;if(!confirm("Fire "+p.n+"? Their client deal will become unassigned, and the remaining team will be unsettled."))return;
-removePerson(p);S.rep=Math.max(0,S.rep-2);for(const other of S.team){Mo(other,-4);L(other,-1);}logIt("You fired "+p.n+". Team morale and reputation dropped.",true);
+removePerson(p);S.rep=Math.max(0,S.rep-2);for(const other of S.team){Mo(other,-4);L(other,-1);other.career.stress=clamp(other.career.stress+4);other.career.satisfaction=clamp(other.career.satisfaction-3);}logIt("You fired "+p.n+". Team morale and reputation dropped.",true);
 save();structural="";renderStructure();renderCandidates();refresh();}
 function motivate(id,kind){if(S.ev)return;const p=person(id);if(!p||S.day-p.lastCareDay<7)return;const cost=kind==="bonus"?12:kind==="coach"?8:0;if(S.cash<cost)return;S.cash-=cost;p.lastCareDay=S.day;let message="";
-if(kind==="praise"){Mo(p,12);L(p,6);Me(p,"You recognized my work");message="You recognized "+p.n+"’s contribution.";}
-else if(kind==="bonus"){Mo(p,18);L(p,12);Me(p,"You rewarded my hard work");message="You rewarded "+p.n+" with a $12 bonus.";}
-else if(kind==="coach"){p.s[weakest(p)]+=.3*S.mod.learn;Mo(p,9);L(p,8);Me(p,"You invested time in my growth");message="You coached "+p.n+" in their weakest skill.";}
+if(kind==="praise"){Mo(p,12);L(p,6);p.career.recognizedAt=S.day;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="recognition"?13:4));p.career.stress=clamp(p.career.stress-4);Me(p,"You recognized my work");message="You recognized "+p.n+"’s contribution.";}
+else if(kind==="bonus"){Mo(p,18);L(p,12);p.career.recognizedAt=S.day;p.career.satisfaction=clamp(p.career.satisfaction+9);p.career.stress=clamp(p.career.stress-6);Me(p,"You rewarded my hard work");message="You rewarded "+p.n+" with a $12 bonus.";}
+else if(kind==="coach"){p.s[weakest(p)]+=.3*S.mod.learn;p.career.xp+=1.5;p.career.satisfaction=clamp(p.career.satisfaction+7);p.career.stress=clamp(p.career.stress-3);discoverTalent(p,1.5);Mo(p,9);L(p,8);Me(p,"You invested time in my growth");message="You coached "+p.n+" in their weakest skill.";}
 else return;
 logIt(message);save();refresh();}
-function teamActivity(){if(S.ev||S.day-S.hr.lastTeamDay<12)return;const cost=S.team.length*5;if(S.cash<cost)return;S.cash-=cost;S.hr.lastTeamDay=S.day;for(const p of S.team){Mo(p,10);L(p,4);Me(p,"You brought us together as a team");}logIt("The team enjoyed a shared activity. Morale improved.");save();refresh();}
+function careerAction(pid,action){const p=person(pid);if(!p||S.ev)return;const c=p.career;
+if(action==="checkin"){if(S.day-c.lastCheckin<9)return;c.lastCheckin=S.day;c.stress=clamp(c.stress-7);c.satisfaction=clamp(c.satisfaction+7);Mo(p,4);L(p,3);Me(p,"We talked about my goals");logIt("Career check-in with "+p.n+": "+GOALS[c.goal].toLowerCase()+" matters.");}
+else if(action==="plan"){if(S.cash<10||S.day-c.lastPlan<14)return;S.cash-=10;c.lastPlan=S.day;c.xp+=3;c.satisfaction=clamp(c.satisfaction+7);c.stress=clamp(c.stress-2);p.s[c.revealed?c.talent:weakest(p)]+=.4*S.mod.learn;discoverTalent(p,2.5);Me(p,"You created a growth plan for me");logIt("Started a $10 development plan for "+p.n+".");}
+else if(action==="promote"){const minXp=c.rank===0?8:24;if(c.rank>=2||c.xp<minXp||Math.max(...KEYS.map(k=>p.s[k]))<1.85||S.cash<25||S.day-c.promotedAt<18)return;S.cash-=25;c.rank++;c.promotedAt=S.day;c.stress=clamp(c.stress+4);c.satisfaction=clamp(c.satisfaction+18);p.loy=clamp(p.loy+13);p.mood=clamp(p.mood+10);Me(p,"You promoted me to "+rankName(p));logIt("Promoted "+p.n+" to "+rankName(p)+". Higher pay adds $0.75/day.");structural="";}
+else return;
+save();if(!structural)renderStructure();refresh();}
+function teamActivity(){if(S.ev||S.day-S.hr.lastTeamDay<12)return;const cost=S.team.length*5;if(S.cash<cost)return;S.cash-=cost;S.hr.lastTeamDay=S.day;for(const p of S.team){Mo(p,10);L(p,4);p.career.stress=clamp(p.career.stress-7);p.career.satisfaction=clamp(p.career.satisfaction+3);Me(p,"You brought us together as a team");}logIt("The team enjoyed a shared activity. Morale improved.");save();refresh();}
 function renderCandidates(){
 $("hire-skill").value=S.hr.skill;
 $("hire-interest").value=S.hr.interest;
@@ -421,6 +429,10 @@ case"family":if(i===0){pay(5);Mo(a,20);L(a,15);Me(a,"You supported me when I nee
 case"poach":if(i===0){pay(25);L(a,15);Me(a,"You matched a rival offer");result="You matched the rival’s offer for "+a.n+".";}else{removePerson(a);result="You let "+a.n+" join the rival company.";}break;
 case"praise":if(i===0){L(a,10);Mo(a,10);S.rep+=3;Me(a,"You gave me public credit");result="You shared the client’s praise with "+a.n+".";}else if(i===1){S.rep+=5;L(a,-15);Me(a,"You took credit for my work");result="You took the credit for "+a.n+"’s work.";}else{L(a,5);Mo(a,5);result="You thanked "+a.n+" privately.";}break;
 }
+if(ev.k==="praise"&&i===0){a.career.recognizedAt=S.day;a.career.satisfaction=clamp(a.career.satisfaction+11);}
+if(ev.k==="family"&&i===0){a.career.stress=clamp(a.career.stress-12);a.career.satisfaction=clamp(a.career.satisfaction+8);}
+if(ev.k==="mistake"&&i===1){a.career.xp+=2;discoverTalent(a,1.5);a.career.satisfaction=clamp(a.career.satisfaction+5);}
+if(ev.k==="raise"&&i===0){a.career.satisfaction=clamp(a.career.satisfaction+10);}
 if(delegated){S.ops.handled++;const assistant=person(S.ops.assistantId);logIt((assistant?assistant.n:"Assistant")+" handled a routine request: "+result,true);}else logIt(result,true);
 S.ev=null;S.nextEv=S.day+28+R(15);S.flow.lastInterruptAt=Date.now();
 if(!delegated){save();structural="";renderStructure();renderIdeas();refresh();schedule();}}

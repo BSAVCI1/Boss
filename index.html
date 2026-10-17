@@ -525,9 +525,22 @@ save();structural="";renderStructure();refresh();}
 function hireOfficeAssistant(){if(S.ev||S.ops.assistantId||S.cash<20)return;const p=createPerson();p.s.ops=Math.max(2.3,p.s.ops);p.interest="systems";p.trait="Social";p.mood=75;p.loy=70;p.t="assist";S.cash-=20;ensureCareer(p);ensureRole(p);S.team.push(p);S.ops.assistantId=p.id;logIt("You hired "+p.n+" as office assistant for $20.");save();structural="";renderStructure();refresh();}
 function toggleFocus(){if(S.ev)return;S.flow.focus=!S.flow.focus;if(!S.flow.focus){S.flow.nextLead=Math.max(S.flow.nextLead,S.day+5);S.flow.lastLeadAt=Date.now();S.nextEv=Math.max(S.nextEv,S.day+12);}logIt(S.flow.focus?"You closed intake to focus on existing work.":"You reopened client inquiries and staff matters.");save();refresh();}
 function order(pid,t){const p=person(pid);if(!p||S.ev)return;p.role.auto=false;p.role.autoTask=false;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===pid)S.ops.assistantId=null;release(p);p.t=t;save();renderStructure();refresh();}
-function updateButtons(){for(const b of document.querySelectorAll("[data-speed]")){const yes=Number(b.dataset.speed)===spd&&!paused;b.classList.toggle("selected",yes);b.setAttribute("aria-pressed",String(yes));}$("pause").classList.toggle("selected",paused);$("pause").textContent=paused?"Resume":"Pause";}
+function updateButtons(){$("speed-select").value=String(spd);$("pause").classList.toggle("selected",paused);$("pause").setAttribute("aria-pressed",String(paused));$("pause").textContent=paused?"Resume":"Pause";}
 function paintControls(){updateButtons();}
-$("controls").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.speed){spd=Number(b.dataset.speed);paused=false;paintControls();schedule();}else if(b.id==="pause"){paused=!paused;paintControls();schedule();}else if(b.id==="restart"){if(confirm("Restart the company from zero?")){fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();schedule();}}});
+function navigate(view,projectId){if(!["today","work","team","growth"].includes(view))return;
+activeView=view;
+for(const name of ["today","work","team","growth"])$("view-"+name).hidden=name!==view;
+for(const b of document.querySelectorAll(".bottom-nav button[data-view]")){const active=b.dataset.view===view;b.classList.toggle("active",active);if(active)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");}
+if(view==="work"&&Number.isFinite(projectId)){for(const el of $("deals").querySelectorAll("details[data-project-id]"))if(Number(el.dataset.projectId)===projectId){el.open=true;projectExpanded.add(projectId);}}
+if(typeof window!=="undefined"&&typeof window.scrollTo==="function")window.scrollTo(0,0);
+}
+$("speed-select").addEventListener("change",()=>{spd=Number($("speed-select").value)||1;paused=false;paintControls();schedule();});
+$("pause").addEventListener("click",()=>{paused=!paused;paintControls();schedule();});
+$("restart").addEventListener("click",()=>{if(!confirm("Restart the company from zero?"))return;
+fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";sectorSignature="";customerSignature="";projectExpanded.clear();employeeExpanded.clear();careerExpanded.clear();
+paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();navigate("today");schedule();});
+document.querySelector(".bottom-nav").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(b)navigate(b.dataset.view);});
+$("attention-list").addEventListener("click",e=>{const b=e.target.closest("button[data-go]");if(b)navigate(b.dataset.go,b.dataset.project?Number(b.dataset.project):undefined);});
 $("sector-options").addEventListener("click",e=>{const b=e.target.closest("button[data-sector]");if(b)sectorAction(b.dataset.sector);});
 $("deals").addEventListener("click",e=>{const b=e.target.closest("button[data-contract]");if(b)negotiateDeal(Number(b.dataset.contract),b.dataset.option);const act=e.target.closest("button[data-project]");if(act)projectAction(Number(act.dataset.project),act.dataset.action);});
 $("focus-toggle").addEventListener("click",toggleFocus);
@@ -601,8 +614,30 @@ $("ideas").innerHTML=RECIPES.map(r=>{const done=S.built.some(b=>b[0]===r[2]),hav
 return '<div class="knowledge-row"><div class="lead"><b>'+esc(r[2])+'</b><span class="small">'+(done?'✓ Active':have+'/2 discoveries')+'</span></div><div class="small">'+esc(IDEAS[r[0]])+' '+(S.seeds.includes(r[0])?'✓':'○')+' · '+esc(IDEAS[r[1]])+' '+(S.seeds.includes(r[1])?'✓':'○')+' · '+esc(r[3])+'</div><div class="progress"><i style="width:'+(done?100:have*45)+'%"></i></div></div>';}).join("");
 $("built").innerHTML=all.length?'<div class="filter-note">Discovered: '+all.map(k=>esc(IDEAS[k])).join(" · ")+'</div>':'<div class="empty">Employees will discover capabilities through work, research and experimentation.</div>';
 $("idea-message").textContent=ideaMessage||"Connected discoveries automatically unlock improvements; no matching required.";}
+function renderBriefing(){
+const urgent=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"||f.risk==="watch");
+const stressed=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35);
+const atRiskMoney=S.cash<S.team.reduce((sum,p)=>sum+dailySalary(p),0)*7;
+const actionable=urgent.length+stressed.length+(atRiskMoney?1:0);
+$("brief-headline").textContent=actionable?actionable+" area"+(actionable===1?"":"s")+" to review":"Your company is on track";
+$("brief-summary").textContent=actionable?"Your office assistant has identified issues worth reviewing. Routine work continues without intervention.":"Projects and development are moving forward. You're free to focus on strategy.";
+$("brief-projects").textContent=S.deals.length+" active project"+(S.deals.length===1?"":"s");
+$("brief-pipeline").textContent=S.pipeline.leads.length+" pipeline leads";
+$("brief-team").textContent=S.team.length+" employees";
+$("log-recent").textContent=S.log.length+" updates";
+const notices=[];
+for(const f of urgent.slice(0,2)){
+const label=f.risk==="critical"?"Deadline risk":f.risk==="unassigned"?"Needs an owner":"Limited schedule buffer";
+const info=f.d.dl+" days remaining"+(f.eta!==null?" · "+f.eta+" days of work estimated":"");
+notices.push('<div class="card"><h3>'+label+'</h3><p>'+esc(f.d.cl)+' — '+esc(info)+'</p><button type="button" data-go="work" data-project="'+f.d.id+'">Review project →</button></div>');
+}
+if(stressed.length)notices.push('<div class="card"><h3>Team wellbeing</h3><p>'+stressed.length+' employee'+(stressed.length===1?"":"s")+' under high stress. Review workload and recovery.</p><button type="button" data-go="team">Review team →</button></div>');
+if(atRiskMoney)notices.push('<div class="card"><h3>Cash runway</h3><p>Available cash covers fewer than seven days of payroll. Check delivery and new contracts.</p><button type="button" data-go="work">Review work →</button></div>');
+if(!notices.length)notices.push('<div class="card"><h3>No urgent decisions</h3><p>Employees are handling routine activities. Check Work or Growth when you want to make strategic decisions.</p></div>');
+$("attention-list").innerHTML=notices.join("");
+}
 function refresh(){
-renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();
+renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderBriefing();
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);

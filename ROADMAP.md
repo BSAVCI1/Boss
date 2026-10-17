@@ -127,6 +127,15 @@
 - Existing titles, salaries, legacy XP, financial data, projects and organizational roles retained in `boss151`; no retrospective career practice fabricated. Old `boss15` key remains untouched.
 - Acceptance: all v15 finance/play tests pass plus long-running 365+ day simulation, no premature or automatic promotions, distinct leadership eligibility and mobile disclosures.
 
+
+## Delivered: v16 — Living Business World
+- Three locally simulated competitors specialize in value, premium quality or speed. Each evolves every 30 game days, gaining independently simulated business and setbacks; shared customer bids also influence results. Rival history starts forward-only at the upgrade day.
+- Customer choices model price, quality, delivery speed and trust. New competitive tenders compare customer priorities, rival capability, corporate strategy, sector specialization, customer loyalty, payment terms and market pressure. Bids lock agreed contract value only when genuinely won; lost bids do not create phantom revenue.
+- Four business strategies: Balanced, Premium specialist, Efficient volume and Client partnerships. Each affects future bid odds, price, workload, prospecting, quality and/or returning-customer opportunity. 30-game-day strategy cooldown; no retroactive repricing.
+- Every ~55 days, optional no-modal market briefs support major tenders, referrals, downturn research and account renewals. There is no mandatory administrative action; decisions log immediate costs and delayed observations through the existing Decision Journal.
+- Save key `boss16` reads `boss151` and older histories without fabricating pre-v16 rivals, bids or events. One local HTML file, no trackers/APIs or external dependencies.
+- Acceptance: preserve v15 accounting/career tests; add competition, business strategy, market event, contract lock, migration, 365+ day open-market and 730-day Focus-mode financial reconciliation; verify live Pages navigation and mobile.
+
 ## Backlog (await owner selection)
 - Office expansions and richer multi-level organizations (first department managers delivered v13)
 - Reactive rival companies

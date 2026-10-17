@@ -54,13 +54,13 @@ const id=s.exec.proposals[0].id,cash=s.cash;
 assert.ok(G.executiveDecision(id,"approve"));assert.equal(s.cash,cash-8);assert.equal(s.exec.history.length,1);accounting(s);
 });
 test("approval of a hire creates one colleague, payroll and initial recruiting cost",()=>{
-fresh();const s=G.get();appoint(s,"commercial",s.team[0]);s.cash=300;s.day=7;G.executiveWeek();
+fresh();const s=G.get();appoint(s,"commercial",s.team[0]);s.day=7;G.executiveWeek();
 const req=s.exec.proposals[0];req.type="hire";req.cost=20;
 const before=s.team.length,cash=s.cash;
 assert.ok(G.executiveDecision(req.id,"approve"));assert.equal(s.team.length,before+1);assert.equal(s.cash,cash-20);assert.equal(s.team.at(-1).department,"commercial");accounting(s);
 });
 test("new service line is paid once and does not rewrite old signed project values",()=>{
-fresh();const s=G.get();s.cash=600;const old=G.feeFor(s.deals[0]);
+fresh();const s=G.get();const injection=600-s.cash;s.cash+=injection;s.bi.openingCash+=injection;const old=G.feeFor(s.deals[0]);
 assert.ok(G.executiveLaunch("product"));assert.equal(s.exec.lines.length,1);assert.equal(s.cash,480);assert.equal(G.feeFor(s.deals[0]),old);
 assert.equal(G.executiveLaunch("product"),false);
 const line=s.exec.lines[0];G.ceoLineFinish({serviceLine:"product",bookedAt:s.day},true,210);

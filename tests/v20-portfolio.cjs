@@ -9,7 +9,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,open:false,innerHTML:""
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgSubReports,orgDirectReports,orgChooseManager,orgChangePolicy,draftExecutiveDirection,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
+const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgSubReports,orgDirectReports,orgChooseManager,orgChangePolicy,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exported+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -215,6 +215,21 @@ test("an unconfirmed CEO strategy draft persists without changing company direct
  assert.equal(s.exec.priority,"grow");
  assert.equal(G.load().ui.pendingCEO,"people");
  assert.equal(G.load().exec.priority,"grow");
+});
+
+test("failed device storage halts every subsequent game day and cannot be bypassed with Skip",()=>{
+ const s=init();fund(s,350);assert.ok(G.save());
+ const old=sandbox.localStorage.setItem;
+ sandbox.localStorage.setItem=(key,value)=>{if(key==="boss20")throw Error("simulated Safari storage exhaustion");return old(key,value)};
+ try{
+  G.tick();
+  const blockedAt=s.day;
+  assert.ok(blockedAt>=1,"first tick must reach the failed-save checkpoint");
+  G.tick();assert.equal(s.day,blockedAt,"simulation advanced despite an unresolved save error");
+  G.gameAdvanceDays();assert.equal(s.day,blockedAt,"Skip advanced company with no durable save");
+  assert.equal(el("save-state").dataset.error,"true");
+  assert.ok(store.has("boss20"),"older valid save should remain recoverable");
+ }finally{sandbox.localStorage.setItem=old;}
 });
 
 console.log("Boss v20 functional and persistence checks passed.");

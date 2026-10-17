@@ -2082,6 +2082,12 @@ S.exec.history=S.exec.history.slice(0,40);return true;
 function executiveProposal(dept){
 const manager=orgManager(dept);if(!manager)return null;
 const people=orgReports(dept),burden=dept==="commercial"?S.pipeline.leads.length:S.deals.filter(x=>["prod","ops"].includes(x.need)).length,plan=orgPlan(dept);
+const needed=new Set(S.exec.lines.map(x=>SERVICE_LINES[x.key]?.need));
+const gaps=DEPARTMENTS[dept].skills.filter(role=>orgSubManager(dept,role)&&!orgSubReports(dept,role).length&&needed.has(role));
+if(gaps.length&&S.cash>=20&&S.exec.priority!=="profit"){
+ const role=gaps[0],head=orgSubManager(dept,role);
+ return{type:"hire",dept,role,cost:20,benefit:head.n+" proposes "+ROLE_NAMES[role]+" specialist recruitment: the new service line needs staffing",risk:"$20 recruiting fee and recurring salary $1.50/day (plus modifiers)"};
+}
 if(orgDirectReports(dept).length>5){
 const candidates=DEPARTMENTS[dept].skills.flatMap(role=>orgSubManager(dept,role)?[]:people.filter(p=>orgWorkRole(p)===role&&p.role.primary!=="lead"&&(p.career.rank>=1||p.career.xp>=10)).map(p=>({p,role})));
 if(candidates.length){const chosen=candidates.sort((a,b)=>b.p.career.xp-a.p.career.xp)[0];

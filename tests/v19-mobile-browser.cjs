@@ -37,20 +37,53 @@ document.addEventListener("DOMContentLoaded",()=>{
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
 fs.writeFileSync(file,html.replace("</body>","<script>"+instrumentation+"</script></body>"));
-const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--force-device-scale-factor=1.28","--window-size=390,844","--virtual-time-budget=3000","--dump-dom","file://"+file];
-const r=cp.spawnSync(browser,args,{encoding:"utf8",timeout:30000,maxBuffer:10*1024*1024});
-if(r.error)throw r.error;
-assert.equal(r.status,0,"Chromium failed: "+(r.stderr||"").slice(-1300));
-const m=(r.stdout||"").match(/<title>BOSS_QA:([^<]+)<\/title>/);
-assert.ok(m,"Mobile instrument did not complete: "+(r.stderr||"").slice(-1200));
-const outcome=JSON.parse(Buffer.from(m[1],"base64").toString("utf8"));
-console.log("Mobile browser verification:",JSON.stringify(outcome));
-assert.ok(outcome.width>=370&&outcome.width<=430,"Unexpected viewport; cannot claim 390px layout: "+outcome.width);
-assert.equal(outcome.views.length,4,"All four tabs must navigate");
-assert.equal(outcome.checks.navPresent,true);
-assert.equal(outcome.checks.navInViewport,true);
-assert.equal(outcome.checks.customBudgets,true);
-assert.equal(outcome.checks.optionalManagers,true);
-assert.equal(outcome.checks.noVisibleUndefined,true);
-assert.deepEqual(outcome.errors,[]);
-console.log("PASS real Chromium near-390px Boss mobile UI smoke");
+const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--remote-debugging-port=9223","--user-data-dir="+path.join(os.tmpdir(),"boss-cdp-"+process.pid),"about:blank"];
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const http=require("node:http");
+function getJson(url){
+ return new Promise((resolve,reject)=>{
+  const req=http.get(url,res=>{let raw="";res.on("data",x=>raw+=x);res.on("end",()=>{try{resolve(JSON.parse(raw))}catch(e){reject(e)}})});req.on("error",reject);req.setTimeout(2000,()=>req.destroy(new Error("HTTP timed out")));
+ });
+}
+async function runBrowser(){
+ assert.ok(globalThis.WebSocket,"Enable global browser WebSocket: node --experimental-websocket");
+ const chrome=cp.spawn(browser,args,{stdio:"ignore"});
+ let ws;
+ try{
+  let tabs;
+  for(let i=0;i<70;i++){try{tabs=await getJson("http://127.0.0.1:9223/json");if(tabs?.length)break;}catch{}await sleep(150)}
+  assert.ok(tabs?.length,"Chromium DevTools did not open");
+  const tab=tabs.find(x=>x.type==="page")||tabs[0];
+  ws=new WebSocket(tab.webSocketDebuggerUrl);
+  await new Promise((resolve,reject)=>{const wait=setTimeout(()=>reject(new Error("CDP connection timeout")),8000);ws.addEventListener("open",()=>{clearTimeout(wait);resolve()},{once:true});ws.addEventListener("error",()=>{clearTimeout(wait);reject(new Error("CDP WebSocket failed"))},{once:true})});
+  const pending=new Map();let id=0;
+  ws.addEventListener("message",ev=>{try{const msg=JSON.parse(ev.data);if(msg.id&&pending.has(msg.id)){pending.get(msg.id)(msg);pending.delete(msg.id);}}catch{}});
+  function send(method,params={}){
+   return new Promise((resolve,reject)=>{const seq=++id;const timer=setTimeout(()=>{pending.delete(seq);reject(new Error("CDP timeout "+method))},10000);
+    pending.set(seq,msg=>{clearTimeout(timer);if(msg.error)reject(Error(method+": "+JSON.stringify(msg.error)));else resolve(msg.result)});
+    ws.send(JSON.stringify({id:seq,method,params}));
+   });
+  }
+  await send("Page.enable");await send("Runtime.enable");
+  await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  await send("Page.navigate",{url:"file://"+file});
+  let title="";
+  for(let i=0;i<75;i++){
+   try{const result=await send("Runtime.evaluate",{expression:"document.title",returnByValue:true});title=result.result?.value||"";if(title.startsWith("BOSS_QA:"))break;}catch{}
+   await sleep(150);
+  }
+  assert.ok(title.startsWith("BOSS_QA:"),"UI smoke script did not finish");
+  const outcome=JSON.parse(Buffer.from(title.slice(8),"base64").toString("utf8"));
+  console.log("Mobile browser verification:",JSON.stringify(outcome));
+  assert.ok(outcome.width>=385&&outcome.width<=395,"Unexpected viewport, no mobile acceptance: "+outcome.width);
+  assert.equal(outcome.views.length,4,"All four tabs must navigate");
+  assert.equal(outcome.checks.navPresent,true);
+  assert.equal(outcome.checks.navInViewport,true);
+  assert.equal(outcome.checks.customBudgets,true);
+  assert.equal(outcome.checks.optionalManagers,true);
+  assert.equal(outcome.checks.noVisibleUndefined,true);
+  assert.deepEqual(outcome.errors,[]);
+  console.log("PASS real Chromium near-390px Boss mobile UI smoke");
+ }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM")}
+}
+runBrowser().catch(err=>{console.error(err);process.exitCode=1});

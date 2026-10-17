@@ -263,7 +263,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="game-actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
 <div class="game-scene"><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div></div><div class="game-story" id="game-story" aria-live="polite"></div>
 <details class="aux-details" id="game-journey"><summary>My company journey</summary><div id="game-journey-map"></div></details>
-</div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div>
+</div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div><p id="save-warning" class="risk-watch" role="alert" hidden></p>
 <details class="aux-details game-advanced" id="ceo-records"><summary>Coach &amp; company records</summary>
 <section class="card bi-headline" aria-labelledby="bi-headline-title"><div class="lead"><b id="bi-headline-title">Business performance</b><span class="small" id="bi-period-note">Tracked since Day 0</span></div>
 <div class="bi-grid">
@@ -406,7 +406,10 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <script>
 (function(){
 "use strict";
-const KEY="boss19";
+const KEY="boss20";
+const LEGACY_KEY="boss19";
+let persistedRevision=0,saveConflict=false;
+const LAUNCH_JOURNAL_KEY="boss20_service_line_journal";
 let labHistorySignature="";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
@@ -773,7 +776,48 @@ if([0,7,14,30].includes(b.terms))S.economy.terms=b.terms;
 if(["standard","competitive","premium"].includes(b.pricing))S.economy.pricing=b.pricing;
 last.restored=true;coachDecision("Restore settings after experiment #"+id,before,"Returned the controllable policies to their pre-experiment settings.");save();renderAssistantPolicy();renderSectorChoices();refresh();return true;
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* Storage may be unavailable; play continues in memory. */}}
+function save(){
+try{
+ const current=localStorage.getItem(KEY);
+ if(current){
+  let existing=null;try{existing=JSON.parse(current);}catch{}
+  const remoteRev=Number(existing?._saveRevision)||0;
+  if(remoteRev>persistedRevision){
+   saveConflict=true;paused=true;
+   const warning=$("save-warning");
+   if(warning){warning.hidden=false;warning.textContent="Another Boss tab saved newer progress. This tab has paused to protect your company. Reload this tab to continue from the latest save.";}
+   return false;
+  }
+ }
+ if(saveConflict)return false;
+ S._saveRevision=Math.max(persistedRevision,Number(S._saveRevision)||0)+1;
+ localStorage.setItem(KEY,JSON.stringify(S));persistedRevision=S._saveRevision;
+ return true;
+}catch(e){return false;}
+}
+function launchJournal(){
+ try{const x=JSON.parse(localStorage.getItem(LAUNCH_JOURNAL_KEY)||"[]");return Array.isArray(x)?x.filter(t=>t&&SERVICE_LINES[t.key]&&Number.isFinite(t.since)):[];}catch{return [];}
+}
+function recordLineLaunch(line){
+ try{
+  const log=launchJournal();if(!log.some(x=>x.key===line.key))log.push({key:line.key,since:line.since,investment:120});
+  localStorage.setItem(LAUNCH_JOURNAL_KEY,JSON.stringify(log));
+ }catch{}
+}
+function restoreRecordedLines(state){
+ if(!state.exec||!Array.isArray(state.exec.lines))return;
+ const seen=new Set(state.exec.lines.map(x=>x.key));
+ const receipts=state.bi?.recent||[];
+ for(const entry of launchJournal()){
+  if(seen.has(entry.key))continue;
+  // Never reconstruct an investment from an unverified journal alone.
+  // The current save must independently contain a matching accounting receipt.
+  const receipt=receipts.find(x=>x.kind==="investment"&&x.info==="New business line: "+SERVICE_LINES[entry.key].name&&x.day===entry.since);
+  if(!receipt)continue;
+  state.exec.lines.push({key:entry.key,since:entry.since,spent:120,delivered:0,missed:0,revenue:0,recovered:true});
+  seen.add(entry.key);
+ }
+}
 
 /* v15 advanced economy: forward-only invoicing, credit and demand. No invented historical events. */
 function ensureEconomy(state){
@@ -995,7 +1039,7 @@ const brief=w.activeEvent,labels={tender:"A major customer is accepting bids",re
 $("world-event").innerHTML=brief?'<div class="coach-row coach-amber"><b>'+labels[brief.type]+'</b><div class="coach-mini">Decision window: through Day '+brief.until+'. '+esc(worldOfferTerms(brief).description)+'</div>'+(worldOfferEligibility(brief).allowed?'':'<div class="risk-watch small">Unavailable: '+esc(worldOfferEligibility(brief).reason)+'</div>')+'<div class="buttons"><button type="button" data-world-event="act" '+(worldOfferEligibility(brief).allowed?'':'disabled')+'>Take opportunity</button><button type="button" data-world-event="pass">Pass</button></div></div>':'<p class="small">No action required. Next optional market brief around Day '+w.nextEvent+'.</p>';
 }
 
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17")||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17")||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 ensurePerformance(p,s.day);
@@ -1058,9 +1102,9 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
-ensureOrganization(s);ensureExecutive(s);ensureBI(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureWorld(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
+ensureOrganization(s);ensureExecutive(s);ensureBI(s);restoreRecordedLines(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureWorld(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
 for(const d of s.deals)if(!Number.isFinite(d.agreedFee))d.agreedFee=d.biBooked&&Number.isFinite(d.bookVal)?d.bookVal:estimatedFee(d,s);
-return s;}catch(e){return null;}}
+persistedRevision=Number(s._saveRevision)||0;return s;}catch(e){return null;}}
 const BI_FIELDS=["deliveryEligibleDays","deliveryRoleWorkDays","revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
 function biZero(){return Object.fromEntries(BI_FIELDS.map(k=>[k,0]));}
 function ensureBI(state){if(state.bi&&state.bi.version===12&&Array.isArray(state.bi.daily)){for(const k of ["deliveryEligibleDays","deliveryRoleWorkDays"])if(!Number.isFinite(state.bi.totals[k]))state.bi.totals[k]=0;return;}
@@ -1621,7 +1665,7 @@ function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4)+(d.worldStrategy==="relationships"?3:0));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){ceoDraftPriority=null;S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){ceoDraftPriority=null;persistedRevision=0;saveConflict=false;S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -1936,10 +1980,13 @@ if(success){line.delivered=(line.delivered||0)+1;line.revenue=(line.revenue||0)+
 }
 function executiveLaunch(key){
 if(!SERVICE_LINES[key]||S.exec.lines.some(x=>x.key===key)||S.cash<120||S.ev)return false;
+if(saveConflict)return false;
+const old=localStorage.getItem(KEY);if(old){try{const r=JSON.parse(old);if((Number(r._saveRevision)||0)>persistedRevision){save();return false;}}catch{}}
 const before=coachSnap();S.cash-=120;biMoney("investment",120,"New business line: "+SERVICE_LINES[key].name);
-S.exec.lines.push({key,since:S.day,spent:120,delivered:0,missed:0,revenue:0});
+const launch={key,since:S.day,spent:120,delivered:0,missed:0,revenue:0};
+S.exec.lines.push(launch);recordLineLaunch(launch);
 coachDecision("Launched "+SERVICE_LINES[key].name,before,"$120 launch investment. Matching future contracts receive a small delivery-readiness benefit; income is measured only on new line-attributed deals, no guaranteed demand.",null,30);
-logIt("Launched "+SERVICE_LINES[key].name+"; the team can now build its first trackable service-line results.");return true;
+logIt("Launched "+SERVICE_LINES[key].name+"; the team can now build its first trackable service-line results.");save();return true;
 }
 function executiveAutonomous(dept,spec){
 const director=orgManager(dept),plan=orgPlan(dept);
@@ -2271,7 +2318,8 @@ a.x+=(a.tx-a.x)*.03;a.y+=(a.ty-a.y)*.03;if(Math.random()<.004){const e=p.mood<30
 ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(a.x,a.y,11,0,Math.PI*2);ctx.fill();ctx.fillStyle="#192435";ctx.beginPath();ctx.arc(a.x-3,a.y-2,1.1,0,Math.PI*2);ctx.arc(a.x+3,a.y-2,1.1,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#192435";ctx.lineWidth=1.1;ctx.beginPath();if(p.mood>50)ctx.arc(a.x,a.y+1,4,0,Math.PI);else if(p.mood>25){ctx.moveTo(a.x-4,a.y+5);ctx.lineTo(a.x+4,a.y+5);}else ctx.arc(a.x,a.y+8,4,Math.PI,2*Math.PI);ctx.stroke();ctx.textAlign="center";ctx.fillStyle=ink;ctx.font="12px system-ui";ctx.fillText(p.n,a.x,a.y+25);
 if(a.frames>0){ctx.font="19px system-ui";ctx.fillText(a.emoji,a.x,a.y-17);a.frames--;}
 });requestAnimationFrame(avatarDraw);}
-S=load();if(!S)fresh();if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;labPreview();capabilityProgress();save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
+S=load();if(!S)fresh();
+window.addEventListener("storage",event=>{if(event.key===KEY&&event.newValue){let rev=0;try{rev=Number(JSON.parse(event.newValue)._saveRevision)||0;}catch{}if(rev>persistedRevision){saveConflict=true;paused=true;const warning=$("save-warning");if(warning){warning.hidden=false;warning.textContent="Another Boss tab saved this company. Reload this tab to protect the latest progress.";}}}});if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;labPreview();capabilityProgress();save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
 })();
 </script>
 </body>

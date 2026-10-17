@@ -4,7 +4,7 @@
 
 **Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss14`, `boss13`, `boss12`, `boss10`, `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
 
-## In development: v20 — Service Portfolio & Autonomous Business Leadership
+## Released: v20 — Service Portfolio & Autonomous Business Leadership
 
 **Approved additions from iPhone gameplay at Days 2800–2900:**
 
@@ -14,7 +14,7 @@
 
 **Original v20 scope:** Individual marketed services rather than generic projects; service tiers, differentiated contract fees/scope, quality-linked repeat business, skill requirements, attributed earnings and margins, and managers who recommend hiring specialists into their own reporting teams. Preserve single-file, offline, game-first UX and consolidated company accounting.
 
-**Implementation:** Feature branch `boss-v20-service-portfolio`, PR #17; production `main` intentionally separate. v20 saves to `boss20` and imports the exact previous keys. Test brand-new company, at least two previously purchased lines, refresh recovery from paid receipts, no-receipt safety, old-save preservation, multiple-tab stale-save conflict, 730-day economics and true 390px mobile UI. Merge only with complete CI and live Pages verification. Do not claim iOS Safari old-save data inspected by automated Linux Chrome tests.
+**Implementation:** [PR #17](https://github.com/BSAVCI1/Boss/pull/17) merged to `main` commit `6070dc9e12daa3397618d471f540b2a0340e90d5`; [main CI](https://github.com/BSAVCI1/Boss/actions/runs/39056228682) and [Pages](https://github.com/BSAVCI1/Boss/actions/runs/39056228239) succeeded, plus a successful isolated live-browser smoke test. The owner's personal iOS Safari save is not available to automated QA. Paid line recovery requires a surviving matching financial receipt; absent evidence, don't invent prior lines or refund. v20 saves to `boss20` and imports the exact previous keys. Test brand-new company, at least two previously purchased lines, refresh recovery from paid receipts, no-receipt safety, old-save preservation, multiple-tab stale-save conflict, 730-day economics and true 390px mobile UI. Merge only with complete CI and live Pages verification. Do not claim iOS Safari old-save data inspected by automated Linux Chrome tests.
 
 **Longer-term v21:** Product and subscription businesses, service-unit P&L, acquisition, strategic investment and valuation only after v20 core economics are robust.
 

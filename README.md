@@ -4,8 +4,8 @@ Boss is a free, ad-free, offline-capable, mobile-first, endless leader simulatio
 
 **Play:** https://bsavci1.github.io/Boss/.
 
-## Boss v20 — Service Portfolio & CEO Office (development branch, not released)
-**v20 is under review** on `boss-v20-service-portfolio`. The live game remains v19.1 until complete testing, save migration, Pages and browser checks succeed.
+## Boss v20 — Service Portfolio & CEO Office (released)
+**v20 is live** at [Boss](https://bsavci1.github.io/Boss/) via [PR #17](https://github.com/BSAVCI1/Boss/pull/17), production commit `6070dc9e12daa3397618d471f540b2a0340e90d5`. [Main regression checks](https://github.com/BSAVCI1/Boss/actions/runs/39056228682) and [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39056228239) succeeded. The live game was opened in an isolated browser with functional Today, Work, Team, Growth, expandable reporting groups and Executive Assistant briefing. Real user-owned iOS Safari migration remains to be checked on-device.
 
 - **Real service offerings:** Launch Marketing, Product, Operations or Technology lines. Subsequent contracts sell named offerings with tier-specific fees, workload and quality targets. Successful deliveries unlock higher service tiers. Attribution records each line's actual revenue, delivery quality and contribution; the company ledger remains consolidated, never counted twice. Previously agreed fees and historic customers are unchanged.
 - **A recoverable business launch:** `boss20` imports `boss19` and older saves forward-only. Each new line is saved immediately, with an independent local receipt. Disappeared lines can be reconstructed only when the current financial ledger confirms that exact paid investment; no refund, duplicate charge or fabricated revenue. A running older browser tab pauses rather than overwrite a newer `boss20` state.

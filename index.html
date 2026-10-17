@@ -242,6 +242,8 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .ceo-direction select{width:100%;margin:7px 0}.ceo-direction button{width:100%}
 #business-lines .service-line{border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0}
 #upgrades-complete[hidden]{display:none}
+.save-state{font-size:11px;color:var(--muted);padding:0 12px 3px;text-align:right}
+.save-state[data-error="true"]{font-weight:600;color:var(--red,var(--danger,#c64c46))}
 @media(max-width:390px){.ceo-office-grid{grid-template-columns:1fr}.ceo-report button{max-width:100%}}
 </style>
 </head>
@@ -249,6 +251,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <main id="game-root">
 <header class="app-header"><h1>Boss</h1><div class="compact-controls" id="controls">
 <label for="speed-select">Speed</label><select id="speed-select" aria-label="Simulation speed"><option value="1">1×</option><option value="3">3×</option><option value="8">8×</option></select><button type="button" id="pause" aria-pressed="false">Pause</button></div></header>
+<div id="save-state" class="save-state" aria-live="off">Game progress is saved on this device</div>
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
@@ -464,6 +467,8 @@ function ensureLab(state){if(!state.lab||typeof state.lab!=="object")state.lab={
 const l=state.lab;l.version=14;if(!Array.isArray(l.history))l.history=[];l.history=l.history.slice(0,12);
 if(!LAB_TOPICS[l.topic])l.topic="demand";if(![15,30,45].includes(l.duration))l.duration=30;
 if(![-25,-10,0,10,25,50].includes(l.forecast))l.forecast=25;
+if(typeof l.hypothesis!=="string")l.hypothesis="";
+if(!state.market?.open?.includes(l.sector))l.sector=state.market?.focus||"hospitality";
 if(!Number.isInteger(l.nextId)||l.nextId<1)l.nextId=Math.max(1,...l.history.map(x=>(x.id||0)+1));
 if(l.active&&(!LAB_TOPICS[l.active.topic]||!Number.isFinite(l.active.startDay)))l.active=null;}
 function labSnapshotPolicies(){return{mode:S.pipeline.mode,target:S.pipeline.target,assign:S.ops.policy.assign,priority:S.ops.policy.priority,focus:S.flow.focus,sector:S.market.focus,terms:S.economy?.terms??7,pricing:S.economy?.pricing||"standard"};}
@@ -515,7 +520,7 @@ if(topic==="learning")S.pipeline.mode="innovation";
 if(topic==="wellbeing"){S.pipeline.mode="balanced";S.flow.focus=true;}
 if(topic==="sector")S.market.focus=sector;
 exp.policyAfterStart=labSnapshotPolicies();
-S.lab.active=exp;S.lab.topic=topic;S.lab.duration=duration;S.lab.forecast=forecast;
+S.lab.active=exp;S.lab.topic=topic;S.lab.duration=duration;S.lab.forecast=forecast;S.lab.sector=sector;S.lab.hypothesis=exp.note;
 logIt("Experiment #"+exp.id+" started: "+LAB_TOPICS[topic].title+" ("+duration+" days).");
 save();renderAssistantPolicy();renderSectorChoices();renderLab(true);refresh();return true;}
 function labDay(){const exp=S.lab.active;if(!exp||S.day-exp.startDay<exp.duration)return;
@@ -550,14 +555,15 @@ if(!$("lab-panel").open&&!force)return;
 $("lab-setup").hidden=!!exp;
 $("lab-active").innerHTML=exp?labResultHTML(exp,true):"";
 $("lab-count").textContent=String(lab.history.length);
-if(!exp&&force){$("lab-topic").value=lab.topic;$("lab-duration").value=String(lab.duration);$("lab-forecast").value=String(lab.forecast);labPreview();}
+if(!exp&&force){$("lab-topic").value=lab.topic;$("lab-duration").value=String(lab.duration);$("lab-forecast").value=String(lab.forecast);$("lab-hypothesis").value=lab.hypothesis||"";labPreview();}
 const historyMarkup=lab.history.map(e=>'<details class="lab-history-row"><summary>#'+e.id+' · '+esc(LAB_TOPICS[e.topic]?.title||"Experiment")+' · Day '+e.endedDay+' · '+esc(e.result.grade.title)+'</summary>'+labResultHTML(e,false)+'<label>What did you learn? (saved on this device)</label><textarea rows="2" maxlength="600" data-lab-reflection="'+e.id+'" placeholder="What worked? What surprised you? What would you change?">'+esc(e.reflection||"")+'</textarea></details>').join("");
-if(historyMarkup!==labHistorySignature){labHistorySignature=historyMarkup;$("lab-history").innerHTML=historyMarkup;}
+if(historyMarkup!==labHistorySignature&&!document.activeElement?.matches?.("textarea[data-lab-reflection]")){labHistorySignature=historyMarkup;$("lab-history").innerHTML=historyMarkup;}
 $("coach-lab-controls").innerHTML=!exp&&lab.history.length&&!lab.history[0].restored?'<button type="button" data-lab-restore="'+lab.history[0].id+'">Restore pre-experiment policies</button>':"";
 $("lab-finished").innerHTML=!exp&&lab.history.length?'<p class="filter-note">Latest result: '+esc(lab.history[0].result.grade.title)+'. Open Previous experiments to reflect or compare.</p>':"";
 }
 function labPreview(){const topic=$("lab-topic").value;const t=LAB_TOPICS[topic];if(!t)return;
 $("lab-sector").innerHTML=S.market.open.map(s=>'<option value="'+s+'">'+esc(SECTORS[s].name)+'</option>').join("");
+if(S.market.open.includes(S.lab.sector))$("lab-sector").value=S.lab.sector;
 $("lab-sector-label").hidden=topic!=="sector";$("lab-sector").hidden=topic!=="sector";
 $("lab-preview").textContent=t.description+" Main measure: "+LAB_METRICS[t.metric].name+". Changes remain until you adjust them. Only one experiment runs at a time.";coachExperimentPreview();
 }
@@ -776,29 +782,40 @@ if([0,7,14,30].includes(b.terms))S.economy.terms=b.terms;
 if(["standard","competitive","premium"].includes(b.pricing))S.economy.pricing=b.pricing;
 last.restored=true;coachDecision("Restore settings after experiment #"+id,before,"Returned the controllable policies to their pre-experiment settings.");save();renderAssistantPolicy();renderSectorChoices();refresh();return true;
 }
-function save(){
-try{
- const current=localStorage.getItem(KEY);
- if(current){
-  let existing=null;try{existing=JSON.parse(current);}catch{}
-  const remoteRev=Number(existing?._saveRevision)||0;
-  if(remoteRev>persistedRevision){
-   saveConflict=true;paused=true;
-   const warning=$("save-warning");
-   if(warning){warning.hidden=false;warning.textContent="Another Boss tab saved newer progress. This tab has paused to protect your company. Reload this tab to continue from the latest save.";}
-   return false;
-  }
- }
- if(saveConflict)return false;
- S._saveRevision=Math.max(persistedRevision,Number(S._saveRevision)||0)+1;
- localStorage.setItem(KEY,JSON.stringify(S));persistedRevision=S._saveRevision;
- return true;
-}catch(e){
- paused=true;
- const warning=$("save-warning");
- if(warning){warning.hidden=false;warning.textContent="Boss could not save progress in this browser. The simulation is paused. Check browser storage; do not clear site data.";}
- return false;
+function saveState(message,error=false){
+ const status=$("save-state");
+ if(status){status.textContent=message;status.dataset.error=error?"true":"false";}
 }
+function save(){
+ try{
+  const current=localStorage.getItem(KEY);
+  if(current){
+   let existing=null;try{existing=JSON.parse(current);}catch{}
+   const remoteRev=Number(existing?._saveRevision)||0;
+   if(remoteRev>persistedRevision){
+    saveConflict=true;paused=true;
+    const message="Another Boss tab saved newer progress. This tab has paused to protect your company. Reload this tab to continue from the latest save.";
+    const warning=$("save-warning");
+    if(warning){warning.hidden=false;warning.textContent=message;}
+    saveState("Not saved — newer company progress exists in another tab",true);
+    return false;
+   }
+  }
+  if(saveConflict){saveState("Not saved — reload to continue from the newer company",true);return false;}
+  S._saveRevision=Math.max(persistedRevision,Number(S._saveRevision)||0)+1;
+  const payload=JSON.stringify(S);
+  localStorage.setItem(KEY,payload);
+  if(localStorage.getItem(KEY)!==payload)throw new Error("Save readback mismatch");
+  persistedRevision=S._saveRevision;
+  saveState("Saved on this device");
+  return true;
+ }catch(e){
+  paused=true;
+  const warning=$("save-warning");
+  if(warning){warning.hidden=false;warning.textContent="Boss could not save progress in this browser. The simulation is paused. Check browser storage; do not clear site data.";}
+  saveState("Not saved — browser storage failed; do not refresh",true);
+  return false;
+ }
 }
 function launchJournal(){
  try{const x=JSON.parse(localStorage.getItem(LAUNCH_JOURNAL_KEY)||"[]");return Array.isArray(x)?x.filter(t=>t&&SERVICE_LINES[t.key]&&Number.isFinite(t.since)):[];}catch{return [];}
@@ -1454,20 +1471,29 @@ function orgChangeDepartment(pid,dept){if(S.ev||!DEPARTMENTS[dept])return;const 
 let wasManager=false;for(const key of DEPT_KEYS)if(S.org.departments[key].managerId===pid){S.org.departments[key].managerId=null;wasManager=true;}
 if(wasManager)orgRestoreSpecialist(p);p.department=dept;if(!p.t.startsWith("d")){p.t="idle";p.role.autoTask=false;}
 logIt(p.n+" moved to "+DEPARTMENTS[dept].name+" department.");coachDecision("Move "+p.n+" to "+DEPARTMENTS[dept].name,before,"Changed reporting lines, responsibility and manager support.",pid,30);structural="";save();renderStructure();renderOrganization();refresh();}
-function orgChangePolicy(dept,type,value){
-if(!DEPARTMENTS[dept]||S.ev)return false;
-const d=S.org.departments[dept],p=d.plan,old=coachSnap();
-if(!Number.isFinite(value)||value<0||value>10000000)return false;
-if(["coaching","training","team","hiring"].includes(type))p.limits[type]=Math.floor(value);
-else if(type==="days"&&[90,180].includes(value))p.days=value;
-else if(type==="perAction")p.perAction=Math.floor(value);
-else if(type==="hireSlots")p.hireSlots=Math.floor(value);
-else if(type==="payrollLimit")p.payrollLimit=value;
-else if(type==="leads"&&dept==="commercial"&&value>=1)d.target.leads=Math.floor(value);
-else if(type==="onTime"&&dept==="delivery"&&value>=1&&value<=100)d.target.onTime=value;
-else return false;
-coachDecision(DEPARTMENTS[dept].name+" delegation authority",old,"CEO authorized "+type+" = "+value+" until Day "+(p.since+p.days)+". Automatic spend requires cash, category capacity and per-action approval.",null,30);
-orgControlsSignature="";save();renderOrganization();refresh();return true;
+function orgChangePolicy(dept,type,value,quiet=false){
+ if(!DEPARTMENTS[dept]||S.ev||saveConflict)return false;
+ const d=S.org.departments[dept],p=d.plan;
+ if(!Number.isFinite(value)||value<0||value>10000000)return false;
+ let obj=null,key=null,newValue=value;
+ if(["coaching","training","team","hiring"].includes(type)){obj=p.limits;key=type;newValue=Math.floor(value);}
+ else if(type==="days"&&[90,180].includes(value)){obj=p;key="days";}
+ else if(["perAction","hireSlots"].includes(type)){obj=p;key=type;newValue=Math.floor(value);}
+ else if(type==="payrollLimit"){obj=p;key=type;}
+ else if(type==="leads"&&dept==="commercial"&&value>=1){obj=d.target;key="leads";newValue=Math.floor(value);}
+ else if(type==="onTime"&&dept==="delivery"&&value>=1&&value<=100){obj=d.target;key="onTime";}
+ else return false;
+ const previous=obj[key];
+ if(previous===newValue)return true;
+ const old=quiet?null:coachSnap();
+ obj[key]=newValue;
+ // Persist input edits before Safari can dismiss the keyboard or a game-day rerender.
+ if(!save()){obj[key]=previous;return false;}
+ if(!quiet){
+  coachDecision(DEPARTMENTS[dept].name+" delegation authority",old,"CEO authorized "+type+" = "+value+" until Day "+(p.since+p.days)+". Automatic spend requires cash, category capacity and per-action approval.",null,30);
+  save();orgControlsSignature="";renderOrganization();refresh();
+ }
+ return true;
 }
 function orgManagerDay(p){
 const dept=p.department,d=S.org.departments[dept],director=orgManager(dept);
@@ -1767,8 +1793,8 @@ S.ops.alerted[key]=level;}}
 function renderAssistantPolicy(){const p=S.ops.policy;$("policy-assign").checked=p.assign;$("policy-priority").value=p.priority;$("policy-praise").checked=p.praise;$("policy-family").checked=p.family;$("policy-mistake").checked=p.mistake;$("policy-idea").checked=p.idea;$("policy-alerts").checked=p.alerts;$("policy-budget").value=String(p.budget);$("policy-total").value=String(p.totalBudget);$("policy-days").value=String(p.days);
 $("policy-budget-status").textContent="Routine spending "+biCurrency(p.spent)+" / "+biCurrency(p.totalBudget)+" · expires Day "+(p.since+p.days)+(S.day>=p.since+p.days?" · EXPIRED — renew to continue":"");}
 function updateAssistantPolicy(){const p=S.ops.policy;p.assign=$("policy-assign").checked;p.priority=$("policy-priority").value;p.praise=$("policy-praise").checked;p.family=$("policy-family").checked;p.mistake=$("policy-mistake").checked;p.idea=$("policy-idea").checked;p.alerts=$("policy-alerts").checked;const perAction=Number($("policy-budget").value),total=Number($("policy-total").value),days=Number($("policy-days").value);
-if(Number.isFinite(perAction)&&perAction>=0&&perAction<=10000000)p.budget=perAction;
-if(Number.isFinite(total)&&total>=0&&total<=10000000)p.totalBudget=total;
+if($("policy-budget").value.trim()!==""&&$("policy-budget").validity?.valid!==false&&Number.isFinite(perAction)&&perAction>=0&&perAction<=10000000)p.budget=perAction;
+if($("policy-total").value.trim()!==""&&$("policy-total").validity?.valid!==false&&Number.isFinite(total)&&total>=0&&total<=10000000)p.totalBudget=total;
 if([90,180].includes(days))p.days=days;
 logIt("Executive assistant authority updated; spending remains capped and expires until renewed.");save();refresh();}
 function renderAssistantQueue(){const projects=rankedProjects(),a=person(S.ops.assistantId);
@@ -1822,15 +1848,18 @@ $("game-journey").addEventListener("toggle",()=>{if($("game-journey").open)gameR
 $("attention-list").addEventListener("click",e=>{const b=e.target.closest("button[data-go]");if(b)navigate(b.dataset.go,b.dataset.project?Number(b.dataset.project):undefined);});
 $("lab-today-open").addEventListener("click",()=>{navigate("growth");$("lab-panel").open=true;renderLab(true);});
 $("lab-panel").addEventListener("toggle",()=>{if($("lab-panel").open)renderLab(true);});
-$("lab-topic").addEventListener("change",()=>{S.lab.topic=$("lab-topic").value;labPreview();});
-$("lab-duration").addEventListener("change",()=>{S.lab.duration=Number($("lab-duration").value);});
-$("lab-forecast").addEventListener("change",()=>{S.lab.forecast=Number($("lab-forecast").value);});
+$("lab-topic").addEventListener("change",()=>{S.lab.topic=$("lab-topic").value;save();labPreview();});
+$("lab-duration").addEventListener("change",()=>{S.lab.duration=Number($("lab-duration").value);save();});
+$("lab-forecast").addEventListener("change",()=>{S.lab.forecast=Number($("lab-forecast").value);save();});
+$("lab-sector").addEventListener("change",()=>{if(S.market.open.includes($("lab-sector").value)){S.lab.sector=$("lab-sector").value;save();}});
+$("lab-hypothesis").addEventListener("input",()=>{S.lab.hypothesis=$("lab-hypothesis").value.slice(0,250);save();});
 $("coach-mode").addEventListener("change",()=>{S.coach.mode=$("coach-mode").value;save();coachRender();});
 $("coach-priorities").addEventListener("click",e=>{const b=e.target.closest("button[data-coach-go]");if(b)navigate(b.dataset.coachGo);});
 $("coach-pay-wages").addEventListener("click",coachSettlePayroll);
 $("coach-manager-review").addEventListener("click",e=>{const b=e.target.closest("button[data-coach-allocate]");if(b)coachManagerAllocate(b.dataset.coachAllocate);});
 $("coach-lab-controls").addEventListener("click",e=>{const b=e.target.closest("button[data-lab-restore]");if(b)coachLabRestore(Number(b.dataset.labRestore));});
 $("lab-start").addEventListener("click",labStart);
+$("lab-history").addEventListener("input",e=>{const target=e.target;if(target?.dataset?.labReflection)labSaveReflection(Number(target.dataset.labReflection),target.value);});
 $("lab-history").addEventListener("change",e=>{const target=e.target;if(target?.dataset?.labReflection){labSaveReflection(Number(target.dataset.labReflection),target.value);labHistorySignature="";}});
 $("bi-open-details").addEventListener("click",()=>{navigate("work");$("performance-panel").open=true;renderBI(true);});
 $("performance-panel").addEventListener("toggle",()=>{if($("performance-panel").open)renderBI(true);});
@@ -1847,6 +1876,11 @@ for(const [field,key] of [["employeeId","employees"],["careerId","careers"],["ro
 $("coach-role-performance").addEventListener("toggle",e=>{if(e.isTrusted&&e.target?.tagName==="DETAILS"&&S?.ui){S.ui.productivityOpen=e.target.open;save();}},true);
 $("policy-renew").addEventListener("click",()=>{if(S.ev)return;const p=S.ops.policy;p.since=S.day;p.spent=0;logIt("CEO renewed assistant authority for "+p.days+" game days.");save();renderAssistantPolicy();refresh();});
 for(const id of ["policy-assign","policy-priority","policy-budget","policy-total","policy-days","policy-praise","policy-family","policy-mistake","policy-idea","policy-alerts"])$(id).addEventListener("change",updateAssistantPolicy);
+for(const [id,field] of [["policy-budget","budget"],["policy-total","totalBudget"]])$(id).addEventListener("input",()=>{
+ const input=$(id),raw=String(input.value||"").trim(),value=Number(raw);
+ if(!raw||input.validity?.valid===false||!Number.isFinite(value)||value<0||value>10000000){saveState("Finish entering a valid number to save this field");return;}
+ S.ops.policy[field]=value;save();
+});
 $("deals").addEventListener("click",e=>{const b=e.target.closest("button[data-deal]");if(b)assign(Number(b.dataset.deal),Number(b.dataset.person));});
 $("people").addEventListener("change",e=>{const el=e.target;if(el.dataset.orgEmployee)orgChangeDepartment(Number(el.dataset.orgEmployee),el.value);
 else if(el.dataset.path){const p=person(Number(el.dataset.path));if(p&&p.career.rank>=2&&p.career.rank<3&&!S.ev&&["specialist","leadership"].includes(el.value)){p.career.path=el.value;save();structural="";renderStructure();refresh();}}
@@ -1861,6 +1895,13 @@ $("skills-panel").addEventListener("toggle",()=>{if($("skills-panel").open)rende
 $("skills-map").addEventListener("click",e=>{const b=e.target.closest("button[data-skill-hire]");if(!b)return;S.hr.skill=b.dataset.skillHire;S.hr.pool=[];const panel=$("recruitment-panel");if(panel)panel.open=true;renderCandidates();save();});
 $("org-settings").addEventListener("toggle",()=>{orgControlsSignature="";if($("org-settings").open)renderOrganization();});
 $("org-controls").addEventListener("click",e=>{const b=e.target.closest("button[data-org-renew]");if(b)orgRenewPlan(b.dataset.orgRenew);});
+$("org-controls").addEventListener("input",e=>{
+ const field=e.target;
+ if(!field?.matches?.("input[data-org-policy]"))return;
+ const raw=String(field.value||"").trim();
+ if(!raw||field.validity?.valid===false){saveState("Finish entering a valid number to save this field");return;}
+ orgChangePolicy(field.dataset.orgDept,field.dataset.orgPolicy,Number(raw),true);
+});
 $("org-controls").addEventListener("change",e=>{const el=e.target;if(el.dataset.orgManager!==undefined)orgChooseManager(el.dataset.orgManager,Number(el.value)||null);
 else if(el.dataset.orgSubrole)orgChooseSubManager(el.dataset.orgDept,el.dataset.orgSubrole,Number(el.value)||null);else if(el.dataset.orgPolicy)orgChangePolicy(el.dataset.orgDept,el.dataset.orgPolicy,Number(el.value));});
 $("economy-terms").addEventListener("change",()=>economyChangePolicy("terms",$("economy-terms").value));
@@ -1992,6 +2033,7 @@ let ceoDraftPriority=null;
 function draftExecutiveDirection(priority){
 if(!CEO_PRIORITIES[priority])return false;
 ceoDraftPriority=priority;
+S.ui.pendingCEO=priority;save();
 $("ceo-direction-confirm").textContent=priority===S.exec.priority?"Current strategy selected.":"Pending: "+CEO_PRIORITIES[priority].name+". Tap Set CEO direction to confirm.";
 return true;
 }
@@ -2021,7 +2063,7 @@ S.exec.priority=priority;S.exec.priorityDay=S.day;S.exec.proposals=S.exec.propos
 const suggested={grow:"growth",rd:"innovation",specialize:"balanced",newline:"balanced",profit:"balanced",people:"balanced"}[priority];
 S.pipeline.mode=suggested;
 coachDecision("CEO direction: "+CEO_PRIORITIES[priority].name,before,"90-day strategic priority. Department plans will reflect the choice; no automatic spending or guaranteed performance improvement.",null,30);
-ceoDraftPriority=null;
+ceoDraftPriority=null;S.ui.pendingCEO=null;
 $("ceo-direction-confirm").textContent="Confirmed: "+CEO_PRIORITIES[priority].name+" · New 90-day strategy starts Day "+S.day+".";
 logIt("CEO set the strategic direction to "+CEO_PRIORITIES[priority].name+".");save();refresh();return true;
 }
@@ -2458,8 +2500,8 @@ a.x+=(a.tx-a.x)*.03;a.y+=(a.ty-a.y)*.03;if(Math.random()<.004){const e=p.mood<30
 ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(a.x,a.y,11,0,Math.PI*2);ctx.fill();ctx.fillStyle="#192435";ctx.beginPath();ctx.arc(a.x-3,a.y-2,1.1,0,Math.PI*2);ctx.arc(a.x+3,a.y-2,1.1,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#192435";ctx.lineWidth=1.1;ctx.beginPath();if(p.mood>50)ctx.arc(a.x,a.y+1,4,0,Math.PI);else if(p.mood>25){ctx.moveTo(a.x-4,a.y+5);ctx.lineTo(a.x+4,a.y+5);}else ctx.arc(a.x,a.y+8,4,Math.PI,2*Math.PI);ctx.stroke();ctx.textAlign="center";ctx.fillStyle=ink;ctx.font="12px system-ui";ctx.fillText(p.n,a.x,a.y+25);
 if(a.frames>0){ctx.font="19px system-ui";ctx.fillText(a.emoji,a.x,a.y-17);a.frames--;}
 });requestAnimationFrame(avatarDraw);}
-S=load();if(!S)fresh();
-window.addEventListener("storage",event=>{if(event.key===KEY&&event.newValue){let rev=0;try{rev=Number(JSON.parse(event.newValue)._saveRevision)||0;}catch{}if(rev>persistedRevision){saveConflict=true;paused=true;const warning=$("save-warning");if(warning){warning.hidden=false;warning.textContent="Another Boss tab saved this company. Reload this tab to protect the latest progress.";}}}});if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;labPreview();capabilityProgress();save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
+S=load();if(!S)fresh();else if(S.ui?.pendingCEO&&CEO_PRIORITIES[S.ui.pendingCEO])ceoDraftPriority=S.ui.pendingCEO;
+window.addEventListener("storage",event=>{if(event.key===KEY&&event.newValue){let rev=0;try{rev=Number(JSON.parse(event.newValue)._saveRevision)||0;}catch{}if(rev>persistedRevision){saveConflict=true;paused=true;saveState("Not saved — a newer company is open in another tab",true);const warning=$("save-warning");if(warning){warning.hidden=false;warning.textContent="Another Boss tab saved this company. Reload this tab to protect the latest progress.";}}}});if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;labPreview();capabilityProgress();save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
 })();
 </script>
 </body>

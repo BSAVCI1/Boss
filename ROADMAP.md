@@ -1,8 +1,8 @@
 # Boss — simulation development roadmap
 
-**Owner-updated progress (2026-10-17):** 1. Smart Office Assistant (v7 delivered). 2. Projects & Customers and sector expansion (v8 delivered first at owner request). 3. Smarter Employees (v9 delivered). Further priorities await owner selection.
+**Owner-updated progress (2026-10-17):** v7 Smart Office Assistant, v8 Projects & Customers and sector expansion, v9 Smarter Employees, and v10 Company Operating System (continuous pipeline, persistent roles, autonomous work and capability/skill maps) all delivered. Further priorities await owner selection.
 
-**Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
+**Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
 
 ## Delivered: v7 — Smarter Office Assistant
 - A collapsible Delegation Desk. Owner can set automatic task assignment on/off, and choose project order: **balanced urgency and skills**, **earliest deadline**, or **best skill fit**.
@@ -37,6 +37,15 @@
 - Hidden, deterministic talent affinity has an explainable clue. Discovery through actual experiences produces one once-only ability increase.
 - Existing intelligent assistant respects recovery and manual commands always win.
 - Tests covered cooldowns and costs, project delivery and cash-flow, migrated saved games, talent discovery once, promotions, stress recovery and a 400-day accelerated run. Offline single-file source retained.
+
+## Delivered: v10 — Company Operating System
+- **Commercial generation:** Employees actively source opportunities, marketing increases demand, and organic/referral leads help sustain a pipeline. Prospects progress visibly through qualification, proposal and negotiation. Contracts start only with capacity and at least eight game days after the previous win; no more random instant projects. Focus mode holds accepted work while leads mature.
+- **Explicit organizational roles:** Persistent primary role per employee — Sales, Marketing, Product, Operations or experienced Team Lead. Role controls reside in the employee card. Starting staff span Sales/Product/Operations. Teams can grow and leaders take responsibility for mentoring and coordinating.
+- **Autonomous work planning:** Balanced, Growth or Innovation policy and adjustable qualified-pipeline target; global toggle plus per-person switch between autonomous and manual instructions. Idle team members select relevant prospecting, campaigns, development, research, mentoring or rest according to role, workforce health and pipeline. Direct orders always take precedence. Assistant or active Team Lead can pull available autonomous workers into paid customer delivery.
+- **Capability knowledge graph:** Replaces the old two-idea guessing game. Discoveries are earned through experimentation and relevant employee work, added to a visual prerequisites map, and applied once automatically when all dependencies are present. Prior seeds, completed breakthroughs and modifiers remain valid.
+- **Skills/mentor map:** View the company's comparative skill strengths, candidate mentor-to-learner pairings, roles and evolving hidden talents.
+- **Balance:** Existing customer/sector/career systems continue. Verify onboarding, save migration from boss9 and earlier, contract spacing, stable cash flow, no forced pop-ups, mobile single-file offline operation, and long-run accelerated simulation.
+- **Future improvements (not automatically approved):** richer sales forecasting and lead-specific negotiations, explicit departmental budgets, deeper manager performance reviews, more nuanced market competition and capability investment decisions.
 
 ## Backlog (await owner selection)
 - Departments/managers and office expansions

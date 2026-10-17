@@ -11,7 +11,7 @@ const el=id=>{if(!elements.has(id))elements.set(id,{id,innerHTML:"",textContent:
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){}},window:{scrollY:0,innerWidth:390,addEventListener(){},scrollTo(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout:()=>{},getComputedStyle:()=>({getPropertyValue:()=>""}),clearInterval:()=>{},Math,Date,Map,Set,JSON,console};
 vm.createContext(sandbox);
 const boot=javascript.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0,"Missing boot");
-vm.runInContext(javascript.slice(0,boot)+"globalThis.G={fresh,load,get:()=>S,set:x=>S=x,save,tick,gameChapter,gamePlan,gameRender,gameAdvanceDays,renderStructure,renderBriefing,refresh,navigate,ensureExecutive,executiveWeek,executiveProposal,executiveDecision,ceoDirection,executiveShow,executiveLaunch,ceoLineFinish,createDeal,worldNewEvent,worldDay,worldEventChoice,renderIdeas,ideaProgressDay,delegateWork,orgChooseManager,feeFor,careerRoleSkill};})();",sandbox,{timeout:3000});
+vm.runInContext(javascript.slice(0,boot)+"globalThis.G={fresh,load,get:()=>S,set:x=>S=x,save,tick,gameChapter,gamePlan,gameRender,gameAdvanceDays,renderStructure,renderBriefing,refresh,navigate,ensureExecutive,executiveWeek,executiveProposal,executiveDecision,ceoDirection,draftExecutiveDirection,executiveShow,executiveLaunch,ceoLineFinish,createDeal,worldNewEvent,worldDay,worldEventChoice,renderIdeas,ideaProgressDay,delegateWork,orgChooseManager,feeFor,careerRoleSkill};})();",sandbox,{timeout:3000});
 const G=sandbox.G;
 function fresh(){store.clear();G.fresh();el("lab-topic").value="learning";el("lab-duration").value="15";el("lab-forecast").value="25";el("lab-sector").value="hospitality";}
 
@@ -35,6 +35,25 @@ assert.ok(el("ceo-assistant").textContent.includes("Unfilled"));
 });
 test("CEO direction is intentional and costs no cash, changes pipeline policy only",()=>{
 fresh();const s=G.get(),cash=s.cash;assert.ok(G.ceoDirection("rd"));assert.equal(s.exec.priority,"rd");assert.equal(s.pipeline.mode,"innovation");assert.equal(s.cash,cash);assert.ok(s.coach.journal.some(x=>x.title.includes("CEO direction")));accounting(s);
+});
+test("CEO strategy selection survives rapid simulation refresh until confirmed",()=>{
+fresh();const s=G.get();const original=s.exec.priority;assert.equal(original,"grow");
+assert.ok(G.draftExecutiveDirection("people"));
+assert.ok(el("ceo-direction-confirm").textContent.includes("Pending: Develop leaders"));
+G.executiveShow();
+assert.equal(el("ceo-priority").value,"people");assert.equal(s.exec.priority,"grow");
+s.nextEv=999999;s.flow.focus=true;G.tick();G.tick();
+assert.equal(el("ceo-priority").value,"people","Refresh must not erase pending CEO strategy");
+assert.ok(G.ceoDirection(el("ceo-priority").value));
+assert.equal(s.exec.priority,"people");assert.equal(el("ceo-priority").value,"people");
+assert.ok(el("ceo-direction-confirm").textContent.includes("Confirmed: Develop leaders"));
+G.save();assert.equal(G.load().exec.priority,"people");
+});
+test("new company clears unfinished strategy selection",()=>{
+fresh();G.draftExecutiveDirection("profit");G.executiveShow();
+assert.equal(el("ceo-priority").value,"profit");
+G.fresh();G.executiveShow();
+assert.equal(el("ceo-priority").value,"grow");
 });
 test("managers automatically prepare role-specific weekly proposals without spending",()=>{
 fresh();const s=G.get();const m=s.team[0],m2=s.team[1];appoint(s,"commercial",m);appoint(s,"delivery",m2);const cash=s.cash;

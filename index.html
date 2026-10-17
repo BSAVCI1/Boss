@@ -320,6 +320,114 @@ let S,spd=1,paused=false,selected=[],ideaMessage="",avatars=new Map(),clock,stru
 const projectExpanded=new Set(),employeeExpanded=new Set(),careerExpanded=new Set();
 let orgControlsSignature="";let activeView="today";const viewScroll={today:0,work:0,team:0,growth:0};let attentionSignature="";
 let canvas=$("office"),ctx=canvas.getContext("2d");
+const LAB_TOPICS={
+demand:{title:"Generate more qualified demand",metric:"leads",description:"Switch to Growth and increase pipeline coverage to six opportunities.",intervention:"Growth policy and target six"},
+delivery:{title:"Improve delivery reliability",metric:"onTime",description:"Prioritize deadlines and temporarily reduce the pipeline target to two.",intervention:"Deadline-first assistant and pipeline target two"},
+learning:{title:"Grow employee capabilities",metric:"skill",description:"Favor innovation, training and experimentation within current staffing.",intervention:"Innovation work policy"},
+wellbeing:{title:"Protect employee wellbeing",metric:"stress",description:"Use balanced assignments and pause incoming project starts; existing deliveries continue.",intervention:"Balanced work and Focus mode"},
+sector:{title:"Develop a focused market",metric:"sectorRevenue",description:"Choose an already unlocked sector; the game prioritizes its customers.",intervention:"Change the sector focus"},
+custom:{title:"Test your own leadership decision",metric:"profit",description:"Track profitability while you make your own hiring, pricing, or organizational decisions.",intervention:"No automatic changes; player decides"}
+};
+const LAB_METRICS={leads:{name:"Leads per game day",unit:"rate",decimals:2},onTime:{name:"On-time delivery",unit:"percent",decimals:1},skill:{name:"Average employee skill",unit:"index",decimals:2},stress:{name:"Average employee stress",unit:"percent",decimals:1},sectorRevenue:{name:"Focused sector revenue per day",unit:"moneyrate",decimals:1},profit:{name:"Operating profit per day",unit:"moneyrate",decimals:1}};
+function ensureLab(state){if(!state.lab||typeof state.lab!=="object")state.lab={version:14,nextId:1,active:null,history:[],topic:"demand",duration:30,forecast:25};
+const l=state.lab;l.version=14;if(!Array.isArray(l.history))l.history=[];l.history=l.history.slice(0,12);
+if(!LAB_TOPICS[l.topic])l.topic="demand";if(![15,30,45].includes(l.duration))l.duration=30;
+if(![-25,-10,0,10,25,50].includes(l.forecast))l.forecast=25;
+if(!Number.isInteger(l.nextId)||l.nextId<1)l.nextId=Math.max(1,...l.history.map(x=>(x.id||0)+1));
+if(l.active&&(!LAB_TOPICS[l.active.topic]||!Number.isFinite(l.active.startDay)))l.active=null;}
+function labSnapshotPolicies(){return{mode:S.pipeline.mode,target:S.pipeline.target,assign:S.ops.policy.assign,priority:S.ops.policy.priority,focus:S.flow.focus,sector:S.market.focus};}
+function labTalent(){let sum=0,n=0;for(const p of S.team)for(const key of KEYS){sum+=p.s[key];n++;}return n?sum/n:null;}
+function labStress(){return S.team.length?S.team.reduce((s,p)=>s+p.career.stress,0)/S.team.length:null;}
+function labSectorRevenue(key){return S.bi.sectorTotals[key]?.revenue||0;}
+function labMetricFromValues(key,values,days,sector=null){if(!days||days<=0)return null;
+if(key==="leads")return (values.leads||0)/days;
+if(key==="profit")return ((values.revenue||0)-(values.costs||0))/days;
+if(key==="sectorRevenue")return (sector||0)/days;
+if(key==="onTime")return (values.delivered||0)>=3?(values.onTime||0)/(values.delivered||1)*100:null;
+return null;}
+function labBaseline(topic,sector){const key=LAB_TOPICS[topic].metric;
+if(key==="skill")return{value:labTalent(),days:0,note:"Starting team skill levels, not historical trend"};
+if(key==="stress")return{value:labStress(),days:0,note:"Current team stress at launch; roster changes affect comparisons"};
+const sampleDays=Math.min(30,Math.max(0,S.day-S.bi.since));
+if(sampleDays<7)return{value:null,days:sampleDays,note:"Need seven tracked days for a useful historical baseline"};
+const from=S.day-sampleDays+1;
+const events=S.bi.daily.filter(x=>x.day>=from&&x.day<=S.day);
+const totals=biZero();let income=0;
+for(const b of events){for(const field of BI_FIELDS)totals[field]+=(b.values[field]||0);income+=(b.sectors?.[sector]?.revenue||0);}
+return{value:labMetricFromValues(key,totals,sampleDays,income),days:sampleDays,note:"Previous "+sampleDays+" tracked days"+(key==="onTime"&&totals.delivered<3?"; fewer than three completed projects":"")};}
+function labValuesDifference(now,before){const v=biZero();for(const k of BI_FIELDS)v[k]=(now[k]||0)-(before[k]||0);return v;}
+function labOutcome(exp,elapsed){const values=labValuesDifference(S.bi.totals,exp.startTotals),days=Math.max(1,elapsed);
+const sectorValue=labSectorRevenue(exp.sector)-exp.startSectorRevenue;
+let val=null;const key=LAB_TOPICS[exp.topic].metric;
+if(key==="skill")val=labTalent();
+else if(key==="stress")val=labStress();
+else val=labMetricFromValues(key,values,days,sectorValue);
+return{value:val,values,days,sectorValue};}
+function labGrade(exp,outcome){if(exp.baseline.value===null||outcome.value===null)return{kind:"unknown",title:"Inconclusive: insufficient comparable data"};
+if(Math.abs(exp.baseline.value)<.01)return{kind:"unknown",title:"Inconclusive: baseline is close to zero"};
+const expected=exp.baseline.value*(1+exp.forecast/100),actual=outcome.value;
+const margin=Math.abs(exp.baseline.value)*.1;
+let met=exp.forecast>0?actual>=expected:exp.forecast<0?actual<=expected:Math.abs(actual-expected)<=margin;
+return{kind:met?"met":"missed",title:met?"Forecast met or exceeded":"Result did not meet the forecast",expected};}
+function labStart(){if(S.ev||S.lab.active)return false;
+const topic=$("lab-topic").value,duration=Number($("lab-duration").value),forecast=Number($("lab-forecast").value),sector=$("lab-sector").value;
+if(!LAB_TOPICS[topic]||![15,30,45].includes(duration)||![-25,-10,0,10,25,50].includes(forecast))return false;
+if(topic==="sector"&&!S.market.open.includes(sector))return false;
+const old=labSnapshotPolicies(),baseline=labBaseline(topic,topic==="sector"?sector:S.market.focus);
+const exp={id:S.lab.nextId++,topic,sector:topic==="sector"?sector:S.market.focus,startDay:S.day,duration,forecast,note:String($("lab-hypothesis").value||"").trim().slice(0,250),
+baseline,startTotals:{...S.bi.totals},startSectorRevenue:labSectorRevenue(topic==="sector"?sector:S.market.focus),
+startCash:S.cash,startReputation:S.rep,startPolicies:old,intervention:LAB_TOPICS[topic].intervention,status:"active",reflection:""};
+if(topic==="demand"){S.pipeline.mode="growth";S.pipeline.target=6;}
+if(topic==="delivery"){S.ops.policy.priority="deadline";S.ops.policy.assign=true;S.pipeline.target=2;}
+if(topic==="learning")S.pipeline.mode="innovation";
+if(topic==="wellbeing"){S.pipeline.mode="balanced";S.flow.focus=true;}
+if(topic==="sector")S.market.focus=sector;
+exp.policyAfterStart=labSnapshotPolicies();
+S.lab.active=exp;S.lab.topic=topic;S.lab.duration=duration;S.lab.forecast=forecast;
+logIt("Experiment #"+exp.id+" started: "+LAB_TOPICS[topic].title+" ("+duration+" days).");
+save();renderAssistantPolicy();renderSectorChoices();renderLab(true);refresh();return true;}
+function labDay(){const exp=S.lab.active;if(!exp||S.day-exp.startDay<exp.duration)return;
+const out=labOutcome(exp,exp.duration),grade=labGrade(exp,out);
+exp.endedDay=S.day;exp.endCash=S.cash;exp.endReputation=S.rep;exp.endPolicies=labSnapshotPolicies();
+exp.result={primary:out.value,grade,values:out.values,elapsed:out.days,sectorRevenue:out.sectorValue,
+forecastValue:exp.baseline.value===null?null:exp.baseline.value*(1+exp.forecast/100)};
+exp.policyChanged=Object.keys(exp.policyAfterStart).some(k=>exp.policyAfterStart[k]!==exp.endPolicies[k]);
+exp.status="complete";
+S.lab.history.unshift(exp);S.lab.history=S.lab.history.slice(0,12);S.lab.active=null;
+logIt("Experiment #"+exp.id+" finished: "+grade.title+". See Growth → Entrepreneurship Lab.");}
+function labFormat(metric,x){if(x===null||!Number.isFinite(x))return"Not enough data";
+const m=LAB_METRICS[metric],number=Math.abs(x).toFixed(m.decimals);
+if(m.unit==="moneyrate")return(x<0?"-$":"$")+number+"/day";
+if(m.unit==="percent")return x.toFixed(1)+"%";
+if(m.unit==="rate")return x.toFixed(2)+"/day";return x.toFixed(2);}
+function labStat(label,value){return'<div><small>'+esc(label)+'</small><strong>'+esc(value)+'</strong></div>';}
+function labResultHTML(exp,isActive){const info=LAB_TOPICS[exp.topic],metric=info.metric,days=isActive?Math.max(0,S.day-exp.startDay):exp.result.elapsed;
+const outcome=isActive?labOutcome(exp,days):{value:exp.result.primary,values:exp.result.values,days:exp.result.elapsed};
+const forecastValue=exp.baseline.value===null?null:exp.baseline.value*(1+exp.forecast/100);
+const grade=isActive?{kind:"unknown",title:"Experiment in progress"}:exp.result.grade;
+const before=exp.baseline.value,after=outcome.value,actualDelta=before!==null&&after!==null?after-before:null;
+const polarity=actualDelta!==null&&before!==0?(actualDelta/Math.abs(before)*100).toFixed(1)+"%":"No comparable baseline";
+const data=outcome.values||biZero();
+return '<div class="lab-insight"><h3>'+esc(info.title)+'</h3><div class="lab-meta">Day '+exp.startDay+' → '+(exp.startDay+exp.duration)+' · '+days+'/'+exp.duration+' days · '+esc(exp.intervention)+'</div><p class="lab-note"><b>Hypothesis:</b> '+esc(exp.note||"Compare this policy with recent performance")+'</p><div class="lab-grid">'+labStat("Baseline",labFormat(metric,before))+labStat("Forecast "+(exp.forecast>=0?"+":"")+exp.forecast+"%",labFormat(metric,forecastValue))+labStat(isActive?"So far":"Actual result",labFormat(metric,after))+labStat("Change vs baseline",polarity)+'</div><span class="lab-signal '+grade.kind+'">'+esc(grade.title)+'</span><p class="lab-note">'+esc(exp.baseline.note)+'</p><div class="lab-grid">'+labStat("Revenue",biCurrency(data.revenue||0))+labStat("Operating costs",biCurrency(data.costs||0))+labStat("Operating profit",biCurrency((data.revenue||0)-(data.costs||0)))+labStat("Leads / wins",String(data.leads||0)+" / "+String(data.wins||0))+labStat("Projects delivered",String(data.delivered||0))+labStat("On time",biPercent(data.onTime||0,data.delivered||0))+labStat("Billable utilization",biPercent(data.billableDays||0,data.staffDays||0))+labStat("Cash change",biCurrency((isActive?S.cash:exp.endCash)-exp.startCash))+'</div><p class="lab-note">Interpretation: performance also depends on available projects, staffing, customer behavior, random game events and changes elsewhere in your company.'+(exp.policyChanged?' At least one experiment policy was changed during the run.':'')+' Automatic policy changes are not rolled back.</p></div>';}
+function labSaveReflection(id,value){const exp=S.lab.history.find(e=>e.id===id);if(!exp)return;exp.reflection=String(value||"").slice(0,600);save();}
+function renderLab(force=false){if(!$("lab-summary"))return;
+const lab=S.lab,exp=lab.active;
+$("lab-summary").textContent=exp?"Day "+(S.day-exp.startDay)+" / "+exp.duration+" · "+LAB_TOPICS[exp.topic].title:lab.history.length+" finished experiments";
+$("lab-today").hidden=!exp;$("lab-today-text").textContent=exp?"Experiment in progress: "+LAB_TOPICS[exp.topic].title+" · "+Math.max(0,exp.duration-(S.day-exp.startDay))+" days left":"";
+if(!$("lab-panel").open&&!force)return;
+$("lab-setup").hidden=!!exp;
+$("lab-active").innerHTML=exp?labResultHTML(exp,true):"";
+$("lab-count").textContent=String(lab.history.length);
+if(!exp){$("lab-topic").value=lab.topic;$("lab-duration").value=String(lab.duration);$("lab-forecast").value=String(lab.forecast);$("lab-sector-label").hidden=lab.topic!=="sector";$("lab-sector").hidden=lab.topic!=="sector";}
+const historyMarkup=lab.history.map(e=>'<details class="lab-history-row"><summary>#'+e.id+' · '+esc(LAB_TOPICS[e.topic]?.title||"Experiment")+' · Day '+e.endedDay+' · '+esc(e.result.grade.title)+'</summary>'+labResultHTML(e,false)+'<label>What did you learn? (saved on this device)</label><textarea rows="2" maxlength="600" data-lab-reflection="'+e.id+'" placeholder="What worked? What surprised you? What would you change?">'+esc(e.reflection||"")+'</textarea></details>').join("");
+if(historyMarkup!==labHistorySignature){labHistorySignature=historyMarkup;$("lab-history").innerHTML=historyMarkup;}
+$("lab-finished").innerHTML=!exp&&lab.history.length?'<p class="filter-note">Latest result: '+esc(lab.history[0].result.grade.title)+'. Open Previous experiments to reflect or compare.</p>':"";
+}
+function labPreview(){const topic=$("lab-topic").value;const t=LAB_TOPICS[topic];if(!t)return;
+$("lab-sector").innerHTML=S.market.open.map(s=>'<option value="'+s+'">'+esc(SECTORS[s].name)+'</option>').join("");
+$("lab-sector-label").hidden=topic!=="sector";$("lab-sector").hidden=topic!=="sector";
+$("lab-preview").textContent=t.description+" Main measure: "+LAB_METRICS[t.metric].name+". Changes remain until you adjust them. Only one experiment runs at a time.";
+}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* Storage may be unavailable; play continues in memory. */}}
 function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;

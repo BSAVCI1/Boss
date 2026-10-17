@@ -771,7 +771,7 @@ clientNeed==="trust"?(loyalty?loyalty/500:.005)+(S.rep-rival.rep)/500:
 priceEdge*1.5;
 const specialist=lead.sector===S.market.focus?.035:0;
 const opponent=lead.sector===rival.sector?.06:0;
-const base=.77+needEdge+specialist-opponent+policy.win+(loyalty>=60?.075:0)+(S.day<=S.world.researchUntil?.06:0);
+const base=.77+needEdge+specialist-opponent+policy.win+(loyalty>=60?.075:0)+(S.day<=S.world.researchUntil?.06:0)+({0:-.04,7:0,14:.035,30:.065}[S.economy.terms]||0);
 const chance=Math.max(.48,Math.min(.94,base*worldDemand()));
 const feeHint=Math.floor((84+(Math.max(0,dealTier()-1)*18))*(SECTORS[lead.sector]?.premium||1)*pos);
 return{chance,rival,clientNeed,feeHint,rivalIndex:rival.pricing,playerPosition:pos,reason:clientNeed==="price"?"competing mainly on price":clientNeed==="quality"?"comparing quality and reputation":clientNeed==="speed"?"prioritizing reliable delivery":"prioritizing trusted suppliers"};}
@@ -781,7 +781,7 @@ const result={day:S.day,client:lead.client,sector:lead.sector,rival:preview.riva
 S.world.tenders.unshift(result);if(S.world.tenders.length>70)S.world.tenders.length=70;
 S.world.stats[won?"won":"lost"]++;
 preview.rival[won?"losses":"wins"]++;
-if(!won){preview.rival.rep=Math.min(95,preview.rival.rep+.35);}
+if(!won){preview.rival.rep=Math.min(95,preview.rival.rep+.35);const cust=S.market.customers[lead.client];if(cust)cust.loyalty=Math.max(0,cust.loyalty-2);}
 return{won,result,preview};}
 function worldChangeStrategy(key){if(S.ev||!WORLD_STRATEGIES[key]||S.world.strategy===key||S.day-S.world.changedAt<30)return false;
 const old=S.world.strategy,before=coachSnap();S.world.strategy=key;S.world.changedAt=S.day;
@@ -793,10 +793,9 @@ logIt("New market brief: "+({tender:"Major contract tender",referrals:"Referral 
 function worldEventChoice(choice){const w=S.world,event=w.activeEvent;if(S.ev||!event||!["act","pass"].includes(choice))return false;
 const before=coachSnap();let info="";
 if(choice==="pass"){info="Skipped optional market opportunity without direct cash cost.";}
-else if(event.type==="tender"){if(S.cash<12)return false;S.cash-=12;biMoney("marketing",12,"Bid preparation: major tender");const sec=S.market.focus,client=SECTORS[sec].clients[(S.day+3)%SECTORS[sec].clients.length];
+else if(event.type==="tender"){if(S.cash<12||S.pipeline.leads.length>=12)return false;S.cash-=12;biMoney("marketing",12,"Bid preparation: major tender");const sec=S.market.focus,client=SECTORS[sec].clients[(S.day+3)%SECTORS[sec].clients.length];
 const lead={id:S.pipeline.seq++,client,sector:sec,stage:"negotiation",progress:0,age:7,source:"major tender",created:S.day,preference:"quality"};
-if(S.pipeline.leads.length<12){S.pipeline.leads.push(lead);biFunnel("lead",lead);biFunnel("qualified",lead);biFunnel("proposal",lead);biFunnel("negotiation",lead);}
-else{S.cash+=12;biAdd("cashIn",12);/* reverse unusable proposal without double expense below */biMoney("revenue",0,"");return false;}
+S.pipeline.leads.push(lead);biFunnel("lead",lead);biFunnel("qualified",lead);biFunnel("proposal",lead);biFunnel("negotiation",lead);
 info="Spent $12 preparing a major tender; a qualified bid enters negotiation, but capacity and competitors still determine success.";}
 else if(event.type==="referrals"){if(S.cash<10)return false;S.cash-=10;biMoney("marketing",10,"Customer referral campaign");w.boostUntil=S.day+30;info="Spent $10 to expand prospecting for 30 days; sales and delivery capacity remain constraints.";}
 else if(event.type==="slowdown"){if(S.cash<10)return false;S.cash-=10;biMoney("research",10,"Competitive market intelligence");w.researchUntil=S.day+30;info="Spent $10 on customer/competitor research; a small bid-readiness advantage lasts 30 days.";}
@@ -813,7 +812,16 @@ logIt(info);save();refresh();return true;
 }
 function worldDay(){
 const w=S.world,cycle=Math.floor(S.day/30);
-if(cycle!==w.lastRivalCycle&&S.day>w.since){w.lastRivalCycle=cycle;for(let i=0;i<w.rivals.length;i++){const r=w.rivals[i];const drift=([-.9,.3,1.1,0][(cycle+i)%4]);r.rep=Math.max(30,Math.min(94,r.rep+drift));r.pricing=+(WORLD_RIVALS[i].pricing+(Math.floor(cycle/2+i)%3-1)*.02).toFixed(2);}}
+if(cycle!==w.lastRivalCycle&&S.day>w.since){w.lastRivalCycle=cycle;for(let i=0;i<w.rivals.length;i++){const r=w.rivals[i];const drift=([-.9,.3,1.1,0][(cycle+i)%4]);r.rep=Math.max(30,Math.min(94,r.rep+drift));r.pricing=+(WORLD_RIVALS[i].pricing+(Math.floor(cycle/2+i)%3-1)*.02).toFixed(2);
+r.quality=Math.max(62,Math.min(95,r.quality+[-2,1,2,-1][(cycle+i)%4]));
+r.speed=Math.max(58,Math.min(96,r.speed+[1,-2,2,0][(cycle+i)%4]));
+/* Simulate rival activity outside direct tenders; never claim this is the player's history. */
+if(!Number.isFinite(r.marketWins))r.marketWins=0;
+if(!Number.isFinite(r.marketMisses))r.marketMisses=0;
+const growth=(cycle+i)%4===0?1:2;
+r.marketWins+=growth;
+if((cycle+i)%3===0){r.marketMisses++;r.rep=Math.max(30,r.rep-1.2);}
+}}
 if(w.activeEvent&&S.day>w.activeEvent.until){logIt("Market brief expired; no compulsory decision.");w.activeEvent=null;}
 if(!w.activeEvent&&S.day>=w.nextEvent)worldNewEvent();
 if(S.world.strategy==="relationships"&&S.day>=w.repeatAt){w.repeatAt=S.day+32;
@@ -828,7 +836,7 @@ if(!panel.open)return;
 $("world-strategy").value=w.strategy;
 $("world-strategy").disabled=!!S.ev||S.day-w.changedAt<30;
 $("world-strategy-note").textContent=worldStrategy().description+" · Next strategy change "+(S.day-w.changedAt<30?"in "+(30-(S.day-w.changedAt))+" game days":"available now")+". Contract changes apply only to new agreements.";
-$("world-rivals").innerHTML=w.rivals.map(r=>'<div class="coach-row"><b>'+esc(r.name)+'</b> · '+esc(r.archetype)+'<div class="coach-mini">Focus: '+esc(SECTORS[r.sector].name)+' · Price index '+r.pricing.toFixed(2)+' · Quality '+Math.round(r.quality)+' · Speed '+Math.round(r.speed)+' · Reputation '+Math.round(r.rep)+'</div><div class="coach-mini">Observed shared tenders: '+r.wins+' rival wins · '+r.losses+' bids beaten by you (tracked since Day '+w.since+')</div></div>').join("");
+$("world-rivals").innerHTML=w.rivals.map(r=>'<div class="coach-row"><b>'+esc(r.name)+'</b> · '+esc(r.archetype)+'<div class="coach-mini">Focus: '+esc(SECTORS[r.sector].name)+' · Price index '+r.pricing.toFixed(2)+' · Quality '+Math.round(r.quality)+' · Speed '+Math.round(r.speed)+' · Reputation '+Math.round(r.rep)+'</div><div class="coach-mini">Shared bids: '+r.wins+' rival wins · '+r.losses+' bids beaten by you · Outside-market simulated wins '+(r.marketWins||0)+' · setbacks '+(r.marketMisses||0)+' (all forward-only)</div></div>').join("");
 $("world-tenders").innerHTML=w.tenders.slice(0,7).map(t=>'<div class="coach-row"><b>'+esc(t.client)+'</b> · '+(t.result==="won"?"Won":"Lost")+' against '+esc(t.rival)+'<div class="coach-mini">Day '+t.day+' · '+esc(t.priority)+' buyer · '+esc(t.strategy)+' strategy · Estimated win chance '+Math.round(100*t.probability)+'%. Probability is a game model, not a guarantee.</div></div>').join("")||'<p class="small">No competitive tender outcomes recorded yet. New bids will accumulate as Sales converts prospects.</p>';
 $("world-market-info").textContent=economyPressure().name+" · "+(45-S.day%45)+" days until next market cycle · Bid outcomes depend on customer needs, competitive offers, reputation and your strategy.";
 const brief=w.activeEvent,labels={tender:"A major customer is accepting bids",referrals:"Customers are open to referrals",slowdown:"Competitive pressure is rising",retention:"A trusted customer may renew"};
@@ -1221,12 +1229,12 @@ function addProspect(source){if(S.pipeline.leads.length>=12)return false;
 const sec=S.market.open.includes(S.market.focus)?S.market.focus:pick(S.market.open);
 const returning=Object.entries(S.market.customers).filter(([name,c])=>c.sector===sec&&c.loyalty>=60);
 const cl=returning.length&&Math.random()<.28?pick(returning)[0]:pick(SECTORS[sec].clients);
-S.pipeline.leads.push({id:S.pipeline.seq++,client:cl,sector:sec,stage:"prospect",progress:0,age:0,source,created:S.day});
+S.pipeline.leads.push({id:S.pipeline.seq++,client:cl,sector:sec,stage:"prospect",progress:0,age:0,source,created:S.day,preference:["price","quality","speed","trust"][(S.pipeline.seq+S.day)%4]});
 biFunnel("lead",S.pipeline.leads[S.pipeline.leads.length-1]);return true;}
 function activeProspectors(){return S.team.filter(p=>p.t==="prospect"||p.t==="market").filter(p=>p.career.recoveryDays===0);}
 function pipelineDay(){const leads=S.pipeline.leads;
 if(S.day>=S.pipeline.nextInbound){if(leads.length<12)addProspect("inbound");S.pipeline.nextInbound=S.day+Math.max(8,Math.round(12/S.mod.deals));}
-const sellers=activeProspectors();const energy=sellers.reduce((s,p)=>s+(p.t==="prospect"?p.s.sales*.6:p.s.mkt*.37)*stressFactor(p)*orgManagerBoost(p),0)*(S.economy.invested.commercial?1.08:1)*economyPressure().factor;
+const sellers=activeProspectors();const energy=sellers.reduce((s,p)=>s+(p.t==="prospect"?p.s.sales*.6:p.s.mkt*.37)*stressFactor(p)*orgManagerBoost(p),0)*(S.economy.invested.commercial?1.08:1)*worldDemand()*worldStrategy().prospect*(S.day<=S.world.boostUntil?1.2:1);
 S.pipeline.prospecting+=energy;
 const wanted=S.pipeline.target+Math.max(0,pipelineCapacity()-S.deals.length-1);
 if(S.pipeline.prospecting>=3.2&&leads.length<Math.min(12,wanted+3)){S.pipeline.prospecting-=3.2;addProspect(sellers.length?"team prospecting":"referrals");}
@@ -1239,9 +1247,13 @@ let converted=false;
 for(const lead of [...leads].filter(l=>l.stage==="negotiation")){
 const cap=pipelineCapacity();if(S.flow.focus||S.deals.length>=cap||converted||S.day-S.pipeline.lastWon<8)continue;
 if(lead.age<6)continue;
-if(Math.random()<Math.max(.65,Math.min(.93,.84*economyPressure().factor*({premium:.9,standard:1,competitive:1.07}[S.economy.pricing]||1)*({0:.94,7:1,14:1.04,30:1.07}[S.economy.terms]||1)))||S.market.customers[lead.client]?.loyalty>72){
-const d=createDeal(lead.client);d.sector=lead.sector;d.sourceLead=lead.id;d.leadSource=lead.source;S.pipeline.closed++;S.pipeline.lastWon=S.day;biFunnel("won",lead);logIt("Sales won "+lead.client+" ("+SECTORS[lead.sector].name+"). Project booked from pipeline.");converted=true;}
-else{biFunnel("lost",lead);logIt("Proposal to "+lead.client+" was declined. Sales will pursue other opportunities.");}
+const tender=worldResolveTender(lead);
+if(tender.won){
+const d=createDeal(lead.client,0,lead.sector);d.sourceLead=lead.id;d.leadSource=lead.source;
+S.pipeline.closed++;S.pipeline.lastWon=S.day;biFunnel("won",lead);
+logIt("Won "+lead.client+" against "+tender.preview.rival.name+" ("+SECTORS[lead.sector].name+"); customer prioritized "+tender.preview.clientNeed+".");
+converted=true;
+}else{biFunnel("lost",lead);logIt(lead.client+" selected "+tender.preview.rival.name+"; buyer prioritized "+tender.preview.clientNeed+". Review pricing, quality and capacity.");}
 S.pipeline.leads=S.pipeline.leads.filter(x=>x.id!==lead.id);
 }
 S.pipeline.leads=S.pipeline.leads.filter(l=>{if(l.age>=100){biFunnel("lost",l);return false;}return true;});return converted;}
@@ -1285,19 +1297,20 @@ $("skills-map").innerHTML=pyramid+'<p class="filter-note">Career coverage · Ass
 function createPerson(){const id=S.pid++;const base=NAMES[(id-1)%NAMES.length];return{id:id,n:base+(id>20?" "+(Math.floor((id-1)/20)+1):""),col:COLORS[(id-1)%COLORS.length],trait:pick(TRAITS),s:Object.fromEntries(KEYS.map(k=>[k,+(1+Math.random()*.6).toFixed(2)])),mood:70,loy:60,t:"idle",mem:[],interest:pick(INTEREST_KEYS),lastCareDay:-99,career:null};}
 function sectorOfClient(client){for(const k of SECTOR_KEYS)if(SECTORS[k].clients.includes(client))return k;return null;}
 function dealTier(){return Math.min(5,1+Math.floor(S.market.completed/5));}
-function estimatedFee(d,game=S){const focusBonus=d.sector===game.market.focus?1.12:1;return Math.floor(d.base*game.mod.reward*(1+game.rep/200)*focusBonus*(SECTORS[d.sector].premium||1)*(d.priceFactor||1)*(d.termPriceFactor||1));}
+function estimatedFee(d,game=S){const focusBonus=d.sector===game.market.focus?1.12:1;return Math.floor(d.base*game.mod.reward*(1+game.rep/200)*focusBonus*(SECTORS[d.sector].premium||1)*(d.priceFactor||1)*(d.termPriceFactor||1)*(d.worldPriceFactor||1));}
 function feeFor(d){return Number.isFinite(d.agreedFee)?d.agreedFee:estimatedFee(d);}
 function lockDealFee(d){d.agreedFee=estimatedFee(d);if(d.biBooked)biReprice(d);}
-function createDeal(client,extra=0){const tier=dealTier();let sector=client?sectorOfClient(client):null;if(!sector||!S.market.open.includes(sector))sector=S.market.focus;
+function createDeal(client,extra=0,chosenSector=null){const tier=dealTier();let sector=chosenSector&&SECTORS[chosenSector]?chosenSector:client?sectorOfClient(client):null;if(!sector||!S.market.open.includes(sector))sector=S.market.focus;
 let customer=client||"";let returning=false;
 if(!customer&&Object.keys(S.market.customers).length&&Math.random()<.38){
 const pool=Object.entries(S.market.customers).filter(([name,c])=>S.market.open.includes(c.sector)&&c.loyalty>=55);
 if(pool.length){customer=pick(pool)[0];sector=S.market.customers[customer].sector;returning=true;}}
 if(!customer){sector=Math.random()<.62?S.market.focus:pick(S.market.open);customer=pick(SECTORS[sector].clients);}
 const diff=+(1+(tier-1)*.32+Math.random()*.4).toFixed(2);
-const work=6+Math.round(diff*2.2)+(tier-1);
+const strategy=S.day===0?WORLD_STRATEGIES.balanced:worldStrategy();
+const work=Math.max(4,Math.ceil((6+Math.round(diff*2.2)+(tier-1))*strategy.scope));
 const base=66+Math.floor(diff*13)+(tier-1)*17+extra+(returning?10:0);
-const d={id:S.did++,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning,laborCost:0,directCost:0,biBooked:false,bookVal:0,paymentTerms:S.economy?(S.day===0?0:S.economy.terms):0,priceFactor:S.economy?({standard:1,competitive:.94,premium:1.10}[S.economy.pricing]||1):1,termPriceFactor:S.day===0?1:({0:.96,7:1,14:1.04,30:1.08}[S.economy.terms]||1)};
+const d={id:S.did++,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78+strategy.quality,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning,laborCost:0,directCost:0,biBooked:false,bookVal:0,paymentTerms:S.economy?(S.day===0?0:S.economy.terms):0,priceFactor:S.economy?({standard:1,competitive:.94,premium:1.10}[S.economy.pricing]||1):1,termPriceFactor:S.day===0?1:({0:.96,7:1,14:1.04,30:1.08}[S.economy.terms]||1),worldStrategy:S.day===0?"balanced":S.world.strategy,worldPriceFactor:strategy.price};
 d.agreedFee=estimatedFee(d);S.deals.push(d);if(S.bi)biBook(d);return d;}
 function sectorAction(key){if(S.ev||!SECTORS[key])return;const before=coachSnap();
 if(S.market.open.includes(key)){if(S.market.focus===key)return;S.market.focus=key;logIt("Your company now specializes in "+SECTORS[key].name+".");}
@@ -1327,7 +1340,7 @@ if(action==="extend"&&!d.extended&&d.prog<d.work){d.extended=true;d.dl+=8;d.base
 else if(action==="review"&&!d.reviewed&&d.prog<d.work&&S.cash>=8){d.reviewed=true;S.cash-=8;d.directCost=(d.directCost||0)+8;biMoney("quality",8,"Quality review: "+d.cl);d.quality=clamp(d.quality+12);logIt("A quality review improved "+d.cl+"'s project for $8.");}
 else return;coachDecision("Project: "+action+" for "+d.cl,before,"Review changed cost, agreed fee, deadline and final delivery quality.",null,7);save();structural="";renderStructure();refresh();}
 function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:d.sector,loyalty:48,orders:0,quality:0};prev.sector=d.sector;
-if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
+if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4)+(d.worldStrategy==="relationships"?3:0));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
 function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
@@ -1340,7 +1353,7 @@ function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
-function tick(){if(paused||S.ev)return;S.day+=1;orgPeriod();let dirty=false,ideaDirty=false;
+function tick(){if(paused||S.ev)return;S.day+=1;orgPeriod();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
 if(delegateWork())dirty=true;
 if(autonomousWork())dirty=true;

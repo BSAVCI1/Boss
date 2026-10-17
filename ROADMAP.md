@@ -1,6 +1,6 @@
 # Boss — simulation development roadmap
 
-**Owner-updated progress (2026-10-17):** v7 Smart Office Assistant, v8 Projects & Customers and sector expansion, v9 Smarter Employees, v10 Company Operating System (continuous pipeline, persistent roles, autonomous work and capability/skill maps), v11 Mobile UI Simplification, v12 Business Intelligence and v13 Organization & Leadership, v14 Entrepreneurship & Leadership Lab and v14.1 Management Coach & Decision Intelligence delivered. Next priority: v15 Advanced Business Economy.
+**Owner-updated progress (2026-10-17):** v7 Smart Office Assistant, v8 Projects & Customers and sector expansion, v9 Smarter Employees, v10 Company Operating System (continuous pipeline, persistent roles, autonomous work and capability/skill maps), v11 Mobile UI Simplification, v12 Business Intelligence and v13 Organization & Leadership, v14 Entrepreneurship & Leadership Lab and v14.1 Management Coach & Decision Intelligence delivered. v15 Advanced Business Economy delivered, including a role-focused career and hiring map. Future expansions remain in the owner-selected backlog.
 
 **Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss14`, `boss13`, `boss12`, `boss10`, `boss9`, `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
 
@@ -111,11 +111,13 @@
 - Preserve 4-tab mobile shell, independently expandable sections, save migration to `boss141`, private offline single-file operation; all reports labeled with measurement limitations.
 - Tested with finance reconciliation, actual wage settlements, intervention/manager progression, saved-game migration, price locks, experiments and 400-day gameplay runs.
 
-## Next: v15 — Advanced Business Economy
-- Distinguish invoicing, collection and accounts receivable from earnings; customer payment terms, overdue amounts and working-capital cycles.
-- Evaluate pricing, discounting, expansion financing and investment ROI; distinguish cash, profit, committed liabilities and capital assets.
-- Add fair competition, market demand variability and strategic choices; make future uncertainty visible.
-- **Acceptance:** accurate ledger and recoverable saves, realistic business tradeoffs, stable small-company play and no soft-lock due to unavoidable debt.
+## Delivered: v15 — Advanced Business Economy & Career Skill Map
+- Earned revenue is recorded on completed delivery and an invoice is issued. Cash collection occurs when paid; accounts receivable are displayed independently and automatically resolved by due date, with bounded late settlement. Early collection incurs a 3% expense. Migrated pre-v15 signed deals honor immediate payment.
+- New client work receives a user-chosen 0/7/14/30 day payment term with fee premium/discount and prospect-win consequences. Standard/competitive/premium pricing locks on agreement. Market pressure cycles transparently every 45 game days.
+- CEO may draw up to $150 credit, repay principal and accrued interest, or invest $65 in a delivery toolkit or $55 in a sales toolkit. Accounting separates financing cash, interest expense, capital investment, receivables and payroll obligations; no invented payables, depreciation or tax.
+- Team skill coverage guides internal focused development versus recruitment, maps role-specific expertise and reports bottlenecks. Associate → Senior requires 8 XP and role skill Lv 1.85; Senior → Lead 24 XP and role skill Lv 2.60. Existing ranks and acquired XP carry forward.
+- Save key `boss15` reads `boss141` and all earlier supported history, starts forward-only v15 invoice records and preserves signed fees. Offline single-file guardrails remain.
+- **Acceptance:** JS game tests for migration, accrual vs collection, credit interest and debt repayment, cash reconciliation, contract price locks, investment P&L, promotion criteria, 365+ days and narrow-screen UX. Historical/causal limits stay transparent.
 
 ## Backlog (await owner selection)
 - Office expansions and richer multi-level organizations (first department managers delivered v13)

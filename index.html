@@ -360,7 +360,7 @@ biEvent(kind,amount,info,cashPaid);
 }
 function biBook(d){if(d.biBooked)return;d.biBooked=true;d.bookVal=feeFor(d);biAdd("booked",d.bookVal);}
 function biReprice(d){if(!d.biBooked)return;const newPrice=feeFor(d);biAdd("booked",newPrice-d.bookVal);d.bookVal=newPrice;}
-function biFunnel(stage,lead){if(!S.bi)return;const f=({lead:"leads",qualified:"qualified",proposal:"proposals",negotiation:"negotiations",won:"wins",lost:"lost"})[stage];if(!f)return;biAdd(f,1);
+function biFunnel(stage,lead){if(!S.bi)return;orgTrackLead(stage);const f=({lead:"leads",qualified:"qualified",proposal:"proposals",negotiation:"negotiations",won:"wins",lost:"lost"})[stage];if(!f)return;biAdd(f,1);
 const source=lead.source||"unknown",total=S.bi.sourceTotals[source]||(S.bi.sourceTotals[source]={});total[f]=(total[f]||0)+1;
 const bucket=biBucket().sources;const day=bucket[source]||(bucket[source]={});day[f]=(day[f]||0)+1;}
 function biSector(sector,values){const all=S.bi.sectorTotals[sector]||(S.bi.sectorTotals[sector]={});const day=biBucket().sectors[sector]||(biBucket().sectors[sector]={});for(const [k,v]of Object.entries(values)){all[k]=(all[k]||0)+v;day[k]=(day[k]||0)+v;}}
@@ -494,7 +494,7 @@ if(!Number.isFinite(c.completions))c.completions=0;if(typeof c.autoRest!=="boole
 }
 function talentHint(p){const k=p.career.talent;return({sales:"connects naturally with people",mkt:"notices stories and customer patterns",prod:"enjoys making new things",ops:"spots ways to improve routines"})[k];}
 function rankName(p){return ["Associate","Senior","Lead"][p.career.rank];}
-function dailySalary(p){return (1.5+p.career.rank*.75)*S.mod.cost;}
+function dailySalary(p){return (1.5+p.career.rank*.75+(S.org&&DEPT_KEYS.some(k=>S.org.departments[k]?.managerId===p.id)?.75:0))*S.mod.cost;}
 function stressFactor(p){const c=p.career;return Math.max(.56,1-(c.stress>=55?(c.stress-55)*.006:0)-c.burnout*.0025);}
 function goalFactor(p,d){const c=p.career;let factor=.95+c.satisfaction/1200;
 if(c.goal==="creativity"&&d&&["creative","technology"].includes(d.sector))factor+=.07;
@@ -626,6 +626,7 @@ if(action==="resume"){if(p.id===S.ops.assistantId)return;r.auto=true;if(!p.t.sta
 else if(action==="manual"){r.auto=false;r.autoTask=false;logIt("Manual task control enabled for "+p.n+".");}
 else if(ROLE_KEYS.includes(action)){if(action==="lead"&&p.career.rank<1&&p.career.xp<10)return;
 if(p.id===S.ops.assistantId){S.ops.assistantId=null;}
+if(action!=="lead")for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===id)S.org.departments[k].managerId=null;
 r.primary=action;r.auto=true;r.autoTask=false;if(!p.t.startsWith("d"))p.t="idle";
 logIt(p.n+" owns "+ROLE_NAMES[action]+" responsibilities.");}
 else return;save();structural="";renderStructure();renderSkillMap();refresh();}
@@ -641,7 +642,7 @@ biFunnel("lead",S.pipeline.leads[S.pipeline.leads.length-1]);return true;}
 function activeProspectors(){return S.team.filter(p=>p.t==="prospect"||p.t==="market").filter(p=>p.career.recoveryDays===0);}
 function pipelineDay(){const leads=S.pipeline.leads;
 if(S.day>=S.pipeline.nextInbound){if(leads.length<12)addProspect("inbound");S.pipeline.nextInbound=S.day+Math.max(8,Math.round(12/S.mod.deals));}
-const sellers=activeProspectors();const energy=sellers.reduce((s,p)=>s+(p.t==="prospect"?p.s.sales*.6:p.s.mkt*.37)*stressFactor(p),0);
+const sellers=activeProspectors();const energy=sellers.reduce((s,p)=>s+(p.t==="prospect"?p.s.sales*.6:p.s.mkt*.37)*stressFactor(p)*orgManagerBoost(p),0);
 S.pipeline.prospecting+=energy;
 const wanted=S.pipeline.target+Math.max(0,pipelineCapacity()-S.deals.length-1);
 if(S.pipeline.prospecting>=3.2&&leads.length<Math.min(12,wanted+3)){S.pipeline.prospecting-=3.2;addProspect(sellers.length?"team prospecting":"referrals");}
@@ -665,7 +666,7 @@ const shortage=qualified<S.pipeline.target,stress=p.career.stress;
 if(stress>=63||p.career.burnout>=35)return"rest";
 if(p.role.primary==="sales")return shortage||policy==="growth"?"prospect":(policy==="innovation"?"study":"prospect");
 if(p.role.primary==="mkt")return shortage||policy==="growth"?"market":policy==="innovation"?"exp":"market";
-if(p.role.primary==="lead")return S.team.some(x=>x.id!==p.id&&x.career.stress>55)?"coachteam":"teach";
+if(p.role.primary==="lead"){const reports=orgReports(p.department);return reports.some(x=>x.career.stress>55)?"coachteam":"teach";}
 if(policy==="growth"&&shortage&&p.role.secondary==="sales")return"prospect";
 if(policy==="innovation")return p.role.primary==="prod"?"exp":p.role.primary==="ops"?"study":"teach";
 if(p.career.goal==="growth"||p.role.primary==="ops")return"study";
@@ -677,7 +678,7 @@ if(p.id===S.ops.assistantId||!p.role.auto||p.t.startsWith("d")||p.career.recover
 if(p.t==="idle"||p.role.autoTask&&S.day%5===0){
 const next=chooseAutoTask(p);if(p.t!==next){p.t=next;changed=true;}p.role.autoTask=true;}}
 return changed;}
-function mentorDay(lead){const others=S.team.filter(x=>x.id!==lead.id&&x.career.recoveryDays===0).sort((a,b)=>a.s[strongest(lead)]-b.s[strongest(lead)]);
+function mentorDay(lead){const pool=lead.role.primary==="lead"?orgReports(lead.department):S.team.filter(x=>x.id!==lead.id);const others=pool.filter(x=>x.career.recoveryDays===0).sort((a,b)=>a.s[strongest(lead)]-b.s[strongest(lead)]);
 const target=others[0];if(target){const k=strongest(lead);if(lead.s[k]>target.s[k]){target.s[k]+=.13*S.mod.learn;target.career.xp+=.12;lead.role.mentored++;target.career.stress=clamp(target.career.stress-1.6);}}
 }
 function capabilityProgress(){let n=0;for(const r of RECIPES){if(S.built.some(b=>b[0]===r[2]))continue;
@@ -744,12 +745,12 @@ function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
 function release(p){if(!p)return;for(const d of S.deals)if(d.w===p.id)d.w=null;p.t="idle";}
-function removePerson(p){if(S.team.length<=1)return false;if(S.ops.assistantId===p.id)S.ops.assistantId=null;release(p);S.team=S.team.filter(x=>x.id!==p.id);avatars.delete(p.id);return true;}
+function removePerson(p){if(S.team.length<=1)return false;if(S.ops.assistantId===p.id)S.ops.assistantId=null;for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===p.id)S.org.departments[k].managerId=null;release(p);S.team=S.team.filter(x=>x.id!==p.id);avatars.delete(p.id);return true;}
 function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S.seeds.includes(k));if(!unused.length)return false;
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
-function tick(){if(paused||S.ev)return;S.day+=1;let dirty=false,ideaDirty=false;
+function tick(){if(paused||S.ev)return;S.day+=1;orgPeriod();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
 if(delegateWork())dirty=true;
 if(autonomousWork())dirty=true;
@@ -761,7 +762,7 @@ if((p.t.startsWith("d")||p.t==="assist"||p.t==="exp")&&p.career.stress>=92&&p.ca
 p.career.recoveryDays=4;logIt(p.n+" took a four-day recovery pause after sustained workload.");}
 const recovering=p.career.recoveryDays>0;
 if(recovering){p.career.recoveryDays--;dm=1.5;}
-else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1);d.prog+=e;d.laborCost=(d.laborCost||0)+dailySalary(p);
+else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p);d.prog+=e;d.laborCost=(d.laborCost||0)+dailySalary(p);
 d.quality=clamp(d.quality+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1)-(p.career.stress>=75?.25:0)-(p.career.burnout>=45?.18:0));
 for(const [index,limit,name] of [[1,.34,"Plan approved"],[2,.73,"Build completed"]])if(d.milestone<index&&d.prog>=d.work*limit){d.milestone=index;logIt(d.cl+": "+name+" ("+Math.round(d.quality)+"% quality).");}
 p.s[d.need]+=.05*S.mod.learn*(aligned?1.12:1);dm=(e>=.9?.4:-.3)+(aligned?.15:0);}else{p.t="idle";dm=-.2;dirty=true;}}
@@ -775,10 +776,10 @@ else if(p.t==="assist"){p.s.ops+=.025*S.mod.learn;dm=.25;}
 const assignedDeadline=p.t.startsWith("d")?deal(Number(p.t.slice(1)))?.dl??99:99;
 talentAndCareerDay(p,recovering?"rest":p.t,assignedDeadline);biTeamDay(p);
 p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
-if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);
+if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);orgTrackPerson(p);if(!recovering)orgManagerDay(p);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
 }
-for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){const payout=feeFor(d);S.cash+=payout;biProjectEnd(d,true,payout);S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" paid $"+payout+" for the finished "+SECTORS[d.sector].name+" project. Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
+for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){orgTrackDelivery(d);const payout=feeFor(d);S.cash+=payout;biProjectEnd(d,true,payout);S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" paid $"+payout+" for the finished "+SECTORS[d.sector].name+" project. Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
 else if(d.dl<=0){biProjectEnd(d,false);S.rep=Math.max(0,S.rep-3);recordCustomer(d,false);logIt("Missed the deadline for "+d.cl+". Reputation and customer loyalty dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
 assistantDeadlineAlerts();
 const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(S.cash,salary);S.cash-=actuallyPaid;
@@ -787,7 +788,7 @@ if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5=
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
 save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;}save();renderStructure();refresh();}
-function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1));}
+function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p));}
 function bestIdle(d){return S.team.filter(p=>p.id!==S.ops.assistantId&&p.role.primary!=="lead"&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
 function forecast(d){const assigned=person(d.w);const candidate=assigned||bestIdle(d);const speed=workerSpeed(candidate,d);const remaining=Math.max(0,d.work-d.prog);const eta=speed?Math.ceil(remaining/speed):null;const slack=eta===null?null:d.dl-eta;const risk=!assigned?"unassigned":slack<0?"critical":slack<=4?"watch":"ok";return{d,assigned,candidate,eta,slack,risk,fit:speed};}
 function rankedProjects(){const priority=S.ops.policy.priority;return S.deals.map(forecast).sort((a,b)=>{
@@ -822,7 +823,7 @@ return '<div class="queue-item"><div class="lead"><b>'+(i+1)+'. '+esc(d.cl)+'</b
 }
 function appointAssistant(pid){if(S.ev)return;const p=person(pid);if(!p)return;const old=person(S.ops.assistantId);
 if(old){old.t="idle";S.ops.assistantId=null;}
-if(!old||old.id!==pid){release(p);p.t="assist";S.ops.assistantId=p.id;logIt(p.n+" became your office assistant.");}
+if(!old||old.id!==pid){for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===pid)S.org.departments[k].managerId=null;release(p);p.t="assist";S.ops.assistantId=p.id;logIt(p.n+" became your office assistant.");}
 else logIt(p.n+" returned to ordinary team duties.");
 save();structural="";renderStructure();refresh();}
 function hireOfficeAssistant(){if(S.ev||S.ops.assistantId||S.cash<20)return;const p=createPerson();p.s.ops=Math.max(2.3,p.s.ops);p.interest="systems";p.trait="Social";p.mood=75;p.loy=70;p.t="assist";S.cash-=20;biMoney("recruiting",20,"Hire office assistant: "+p.n);ensureCareer(p);ensureRole(p);ensureDepartment(p);S.team.push(p);S.ops.assistantId=p.id;logIt("You hired "+p.n+" as office assistant for $20.");save();structural="";renderStructure();refresh();}

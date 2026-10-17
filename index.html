@@ -1656,9 +1656,9 @@ const manager=orgSubManager(key,role),people=qualified.filter(x=>x.id!==director
 return '<label>'+esc(ROLE_NAMES[role])+' team manager (optional)</label><select data-org-subrole="'+role+'" data-org-dept="'+key+'"><option value="">Director manages directly</option>'+people.map(x=>'<option value="'+x.id+'" '+(manager?.id===x.id?'selected':'')+'>'+esc(x.n)+' · #'+x.id+'</option>').join("")+'</select>';
 }).join("");
 return '<div class="org-settings-row"><b>'+DEPARTMENTS[key].name+'</b><label>Department head</label><select data-org-manager="'+key+'"><option value="">Founder manages directly</option>'+opts+'</select>'+roles+
-'<p class="small">Delegated budget until Day '+(p.since+p.days)+' · '+(S.day>=p.since+p.days?'EXPIRED — CEO renewal required':'Unused authority does not spend cash')+'.</p><button type="button" data-org-renew="'+key+'">Renew '+p.days+'-day authority</button><label>Budget period</label><select data-org-policy="days" data-org-dept="'+key+'"><option value="90" '+(p.days===90?'selected':'')+'>90 days</option><option value="180" '+(p.days===180?'selected':'')+'>180 days</option></select>'+
+'<p class="small"><b>Shared '+DEPARTMENTS[key].name+' department authority</b> · Until Day '+(p.since+p.days)+' · '+(S.day>=p.since+p.days?'EXPIRED — CEO renewal required':'Unused authority does not spend cash')+'. Coaching may be carried out by the department head and its team managers; budget limits are shared, not multiplied by the number of managers.</p><button type="button" data-org-renew="'+key+'">Renew '+p.days+'-day authority</button><label>Budget period</label><select data-org-policy="days" data-org-dept="'+key+'"><option value="90" '+(p.days===90?'selected':'')+'>90 days</option><option value="180" '+(p.days===180?'selected':'')+'>180 days</option></select>'+
 number("coaching","Coaching budget ($)",p.limits.coaching)+number("training","Training budget ($)",p.limits.training)+number("team","Team-building budget ($)",p.limits.team)+number("hiring","Recruiting budget ($)",p.limits.hiring)+
-number("perAction","Maximum delegated cost per decision ($)",p.perAction)+number("hireSlots","Maximum delegated hires this period",p.hireSlots)+number("payrollLimit","Maximum new recurring payroll ($/day)",p.payrollLimit)+
+number("perAction","Maximum cost per delegated decision ($)",p.perAction)+number("hireSlots","Maximum hires across this department this period",p.hireSlots)+number("payrollLimit","Maximum combined new daily payroll ($/day)",p.payrollLimit)+
 '<p class="small">Spent: coaching '+biCurrency(p.spent.coaching)+' / '+biCurrency(p.limits.coaching)+'; training '+biCurrency(p.spent.training)+' / '+biCurrency(p.limits.training)+'; team '+biCurrency(p.spent.team)+' / '+biCurrency(p.limits.team)+'; recruiting '+biCurrency(p.spent.hiring)+' / '+biCurrency(p.limits.hiring)+'. Hires '+p.hires+'/'+p.hireSlots+' · additional payroll '+biCurrency(p.payrollAdded)+' / '+biCurrency(p.payrollLimit)+'/day.</p>'+'<p class="small">Hiring requires headcount slots, recruiting funds, a per-decision limit and enough new daily payroll authority. '+(p.hireSlots>0&&p.payrollLimit<p.payrollAdded+1.5*S.mod.cost?'Hiring currently blocked by the recurring-payroll ceiling.':'Department heads propose hiring against real workload.')+'</p>'+
 (key==="commercial"?number("leads","New leads target per 30 game days",d.target.leads,1,100000):number("onTime","On-time delivery target (%)",d.target.onTime,1,100))+
 '</div>';
@@ -2411,12 +2411,14 @@ const chief=orgManager(key),staff=orgReports(key),direct=orgDirectReports(key);
 const managed=DEPARTMENTS[key].skills.map(role=>{const head=orgSubManager(key,role);
 return head?'<div class="small"><b>'+esc(ROLE_NAMES[role])+' Manager · '+esc(head.n)+' (#'+head.id+')</b> · '+orgSubReports(key,role).length+' reports'+orgSubReports(key,role).map(p=>'<div class="small">↳ '+esc(p.n)+' (#'+p.id+')</div>').join("")+'</div>':"";}).join("");
 const unmanaged=direct.filter(p=>DEPARTMENTS[key].skills.every(role=>orgSubManager(key,role)?.id!==p.id));
-return '<div class="ceo-report"><b>'+DEPARTMENTS[key].name+'</b><div>'+(chief?esc(chief.n)+" · "+orgLeaderTitle(chief)+" · "+direct.length+" direct / "+staff.length+" total":"Founder-led · "+staff.length+" colleagues")+'</div><details data-ceo-team="'+key+'" '+(expanded.has(key)?"open":"")+'><summary>View team</summary>'+managed+unmanaged.map(p=>'<div class="small">'+esc(p.n)+' (#'+p.id+') · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'</details></div>';}).join("");
+return '<div class="ceo-report"><b>'+DEPARTMENTS[key].name+'</b><div>'+(chief?esc(chief.n)+" · "+orgLeaderTitle(chief)+" · "+direct.length+" direct · "+staff.length+" team members":"Founder-led · "+staff.length+" colleagues")+'</div><details data-ceo-team="'+key+'" '+(expanded.has(key)?"open":"")+'><summary>View team</summary>'+managed+unmanaged.map(p=>'<div class="small">'+esc(p.n)+' (#'+p.id+') · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'</details></div>';}).join("");
 $("ceo-assistant").textContent=a? a.n+" · CEO coordination and manager follow-ups":"Unfilled · appointment optional";
 $("ceo-priority").value=ceoDraftPriority??S.exec.priority;
  if(ceoDraftPriority&&ceoDraftPriority!==S.exec.priority)$("ceo-direction-confirm").textContent="Pending: "+CEO_PRIORITIES[ceoDraftPriority].name+". Tap Set CEO direction to confirm.";
-$("ceo-direction-time").textContent="Day "+Math.max(0,S.day-S.exec.priorityDay)+" / 90";
-$("ceo-direction-note").textContent=ceoDraftPriority&&ceoDraftPriority!==S.exec.priority?"Proposed change: "+CEO_PRIORITIES[ceoDraftPriority].explain:CEO_PRIORITIES[S.exec.priority].explain;
+const strategicDays=Math.max(0,S.day-S.exec.priorityDay),reviewOverdue=strategicDays>=90;
+ $("ceo-direction-time").textContent=reviewOverdue?"Review overdue · "+(strategicDays-90)+" days":"Day "+strategicDays+" of 90";
+ $("ceo-direction-note").textContent=(reviewOverdue?"Your 90-day strategy review is overdue. Renew the same priority or choose a new one. Department spending authorities renew separately. ":"")+(ceoDraftPriority&&ceoDraftPriority!==S.exec.priority?"Proposed change: "+CEO_PRIORITIES[ceoDraftPriority].explain:CEO_PRIORITIES[S.exec.priority].explain);
+ $("ceo-set-direction").textContent=reviewOverdue&&(!ceoDraftPriority||ceoDraftPriority===S.exec.priority)?"Renew direction for 90 days":"Set CEO direction";
 $("ceo-set-direction").disabled=!!S.ev;
 const inbox=S.exec.proposals,ev=S.world.activeEvent;
 $("exec-count").textContent=inbox.length+" manager requests"+(ev?" · 1 market brief":"");
@@ -2428,7 +2430,7 @@ return '<div class="exec-proposal"><b>'+esc(chief?.n||"Director")+' · '+esc(DEP
 renderExecutiveWeekly();
 if($("exec-history").parentNode.open)$("exec-history").innerHTML=S.exec.history.slice(0,12).map(x=>'<p class="small">Day '+x.day+' · '+esc(x.manager)+' · '+esc(x.action)+' — '+esc(x.result)+'</p>').join("")||'<p class="small">No executive decisions yet.</p>';
 const lines=[{key:"core",since:0,delivered:S.market.completed,baseline:true},...S.exec.lines];
-$("business-lines-summary").textContent=lines.length+" operating";
+$("business-lines-summary").textContent=S.exec.lines.length+" launched · 1 core";
 $("business-lines").innerHTML=lines.map(x=>{
  if(x.baseline)return '<div class="service-line"><b>General business services</b><div class="small">Consolidated company history: '+x.delivered+' completed (including service lines, not additional revenue)</div></div>';
  const offers=SERVICE_OFFERS[x.key],level=(x.delivered||0)>=10?2:(x.delivered||0)>=3?1:0;

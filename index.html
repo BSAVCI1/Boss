@@ -854,7 +854,7 @@ function saveError(name,note){
  saveErrorReason=name||"StorageError";paused=true;
  const reason=(name==="QuotaExceededError"?"Browser storage appears full":name==="SyntaxError"?"Save data could not be serialized":name==="RevisionConflict"?"Another tab has newer progress":"The browser rejected the save");
  const warning=$("save-warning");
- if(warning){warning.hidden=false;warning.textContent=reason+". "+note+" Stop playing until the save is confirmed. Use Export game backup before refreshing. Do not restart or clear website data.";}
+ if(warning){warning.hidden=false;warning.textContent="Boss could not save progress. "+reason+". "+note+" Stop playing until the save is confirmed. Use Export game backup before refreshing. Do not restart or clear website data.";}
  saveState("NOT SAVED · Day "+S.day+" · "+saveErrorReason,true);
 }
 function exportGameBackup(){

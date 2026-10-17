@@ -909,15 +909,15 @@ p.t="idle";p.role.primary="lead";p.role.auto=true;p.role.autoTask=false;
 d.managerId=id;logIt(p.n+" now manages "+DEPARTMENTS[dept].name+". Salary rises by $0.75/day; direct delivery time is reduced.");}
 coachDecision(DEPARTMENTS[dept].name+" management change",before,"Reporting lines and supervisor salary/capacity have changed. Review department outcomes after 30 days.",id||null,30);
 structural="";save();renderStructure();renderOrganization();refresh();}
-function orgChangeDepartment(pid,dept){if(S.ev||!DEPARTMENTS[dept])return;const p=person(pid);if(!p||p.id===S.ops.assistantId||p.department===dept)return;
+function orgChangeDepartment(pid,dept){if(S.ev||!DEPARTMENTS[dept])return;const p=person(pid);if(!p||p.id===S.ops.assistantId||p.department===dept)return;const before=coachSnap(pid);
 let wasManager=false;for(const key of DEPT_KEYS)if(S.org.departments[key].managerId===pid){S.org.departments[key].managerId=null;wasManager=true;}
 if(wasManager)orgRestoreSpecialist(p);p.department=dept;if(!p.t.startsWith("d")){p.t="idle";p.role.autoTask=false;}
-logIt(p.n+" moved to "+DEPARTMENTS[dept].name+" department.");structural="";save();renderStructure();renderOrganization();refresh();}
-function orgChangePolicy(dept,type,value){if(!DEPARTMENTS[dept])return;const d=S.org.departments[dept];
+logIt(p.n+" moved to "+DEPARTMENTS[dept].name+" department.");coachDecision("Move "+p.n+" to "+DEPARTMENTS[dept].name,before,"Changed reporting lines, responsibility and manager support.",pid,30);structural="";save();renderStructure();renderOrganization();refresh();}
+function orgChangePolicy(dept,type,value){if(!DEPARTMENTS[dept])return;const before=coachSnap();const d=S.org.departments[dept];
 if(type==="budget"&&[0,8,16,30].includes(value))d.budget=value;
 else if(type==="leads"&&dept==="commercial"&&[3,5,8].includes(value))d.target.leads=value;
 else if(type==="onTime"&&dept==="delivery"&&[70,85,95].includes(value))d.target.onTime=value;
-else return;save();renderOrganization();refresh();}
+else return;coachDecision(DEPARTMENTS[dept].name+" target and budget setting",before,"Changed "+type+" to "+value+"; performance will be evaluated over the review period.",null,30);save();renderOrganization();refresh();}
 function orgManagerDay(p){const dept=p.department,d=S.org.departments[dept];if(!d||orgManager(dept)?.id!==p.id)return;
 ensureManagement(p);p.management.planning=clamp(p.management.planning+.035);p.management.delegation=clamp(p.management.delegation+.025);
 if(p.t!=="coachteam"&&p.t!=="teach")return;
@@ -951,7 +951,7 @@ return '<div class="org-settings-row"><b>'+DEPARTMENTS[key].name+'</b><label>App
 '<label>Department objective</label>'+(key==="commercial"?dropdown("leads",[3,5,8],d.target.leads," new leads"):dropdown("onTime",[70,85,95],d.target.onTime,"% on time"))+'</div>';
 }).join("");
 }
-function roleAction(id,action){if(S.ev)return;const p=person(id);if(!p)return;const r=p.role;
+function roleAction(id,action){if(S.ev)return;const p=person(id);if(!p)return;const before=coachSnap(id);const r=p.role;
 if(action==="resume"){if(p.id===S.ops.assistantId)return;r.auto=true;if(!p.t.startsWith("d")){p.t="idle";r.autoTask=false;}logIt(p.n+" returned to the team work plan.");}
 else if(action==="manual"){r.auto=false;r.autoTask=false;logIt("Manual task control enabled for "+p.n+".");}
 else if(ROLE_KEYS.includes(action)){if(action==="lead"&&p.career.rank<1&&p.career.xp<10)return;
@@ -959,7 +959,7 @@ if(p.id===S.ops.assistantId){S.ops.assistantId=null;}
 if(action!=="lead"){for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===id)S.org.departments[k].managerId=null;delete r.previousPrimary;}
 if(action!=="lead")p.department=["sales","mkt"].includes(action)?"commercial":"delivery";r.primary=action;r.auto=true;r.autoTask=false;if(!p.t.startsWith("d"))p.t="idle";
 logIt(p.n+" owns "+ROLE_NAMES[action]+" responsibilities.");}
-else return;save();structural="";renderStructure();renderSkillMap();refresh();}
+else return;coachDecision("Work role: "+p.n,before,"Changed to "+action+". Role-based work, development and staffing will respond.",id,7);save();structural="";renderStructure();renderSkillMap();refresh();}
 function readyForJob(p){return p.t==="idle"&&p.career.recoveryDays<=0&&p.career.stress<72&&!p.career.autoRest;}
 function qualifiedPipeline(){return S.pipeline.leads.filter(l=>l.stage!=="prospect").length;}
 function pipelineCapacity(){return Math.max(2,Math.min(4,2+Math.floor(S.team.length/3)));}
@@ -1253,12 +1253,12 @@ save();structural="";renderStructure();renderCandidates();refresh();}
 function fireEmployee(id){if(S.ev||S.team.length<=1)return;const p=person(id);if(!p)return;if(!confirm("Fire "+p.n+"? Their client deal will become unassigned, and the remaining team will be unsettled."))return;
 const before=coachSnap(p.id);removePerson(p);S.rep=Math.max(0,S.rep-2);for(const other of S.team){Mo(other,-4);L(other,-1);other.career.stress=clamp(other.career.stress+4);other.career.satisfaction=clamp(other.career.satisfaction-3);}logIt("You fired "+p.n+". Team morale and reputation dropped.",true);coachDecision("Dismiss "+p.n,before,"Reduced payroll but unsettled remaining employees and lost two reputation points.",null,30);
 save();structural="";renderStructure();renderCandidates();refresh();}
-function motivate(id,kind){if(S.ev)return;const p=person(id);if(!p||S.day-p.lastCareDay<7)return;const cost=kind==="bonus"?12:kind==="coach"?8:0;if(S.cash<cost)return;S.cash-=cost;if(cost>0)biMoney("people",cost,(kind==="bonus"?"Bonus: ":"Coaching: ")+p.n);p.lastCareDay=S.day;let message="";
+function motivate(id,kind){if(S.ev)return;const p=person(id);if(!p||S.day-p.lastCareDay<7)return;const before=coachSnap(id);const cost=kind==="bonus"?12:kind==="coach"?8:0;if(S.cash<cost)return;S.cash-=cost;if(cost>0)biMoney("people",cost,(kind==="bonus"?"Bonus: ":"Coaching: ")+p.n);p.lastCareDay=S.day;let message="";
 if(kind==="praise"){Mo(p,12);L(p,6);p.career.recognizedAt=S.day;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="recognition"?13:4));p.career.stress=clamp(p.career.stress-4);Me(p,"You recognized my work");message="You recognized "+p.n+"’s contribution.";}
 else if(kind==="bonus"){Mo(p,18);L(p,12);p.career.recognizedAt=S.day;p.career.satisfaction=clamp(p.career.satisfaction+9);p.career.stress=clamp(p.career.stress-6);Me(p,"You rewarded my hard work");message="You rewarded "+p.n+" with a $12 bonus.";}
 else if(kind==="coach"){p.s[weakest(p)]+=.3*S.mod.learn;p.career.xp+=1.5;p.career.satisfaction=clamp(p.career.satisfaction+7);p.career.stress=clamp(p.career.stress-3);discoverTalent(p,1.5);Mo(p,9);L(p,8);Me(p,"You invested time in my growth");message="You coached "+p.n+" in their weakest skill.";}
 else return;
-logIt(message);save();refresh();}
+coachDecision("Employee "+kind+": "+p.n,before,message,id,7);logIt(message);save();refresh();}
 function careerAction(pid,action){const p=person(pid);if(!p||S.ev)return;const c=p.career;const before=coachSnap(pid);
 if(action==="checkin"){if(S.day-c.lastCheckin<9)return;c.lastCheckin=S.day;c.stress=clamp(c.stress-7);c.satisfaction=clamp(c.satisfaction+7);Mo(p,4);L(p,3);Me(p,"We talked about my goals");logIt("Career check-in with "+p.n+": "+GOALS[c.goal].toLowerCase()+" matters.");}
 else if(action==="plan"){if(S.cash<10||S.day-c.lastPlan<14)return;S.cash-=10;biMoney("development",10,"Career growth plan: "+p.n);c.lastPlan=S.day;c.xp+=3;c.satisfaction=clamp(c.satisfaction+7);c.stress=clamp(c.stress-2);p.s[c.revealed?c.talent:weakest(p)]+=.4*S.mod.learn;discoverTalent(p,2.5);Me(p,"You created a growth plan for me");logIt("Started a $10 development plan for "+p.n+".");}
@@ -1266,7 +1266,7 @@ else if(action==="promote"){const minXp=c.rank===0?8:24;if(c.rank>=2||c.xp<minXp
 else return;
 coachDecision("Career: "+action+" for "+p.n,before,"Updated experience, employee satisfaction and direct career costs; review performance later.",pid,30);
 save();if(!structural)renderStructure();refresh();}
-function teamActivity(){if(S.ev||S.day-S.hr.lastTeamDay<12)return;const cost=S.team.length*5;if(S.cash<cost)return;S.cash-=cost;biMoney("people",cost,"Team activity");S.hr.lastTeamDay=S.day;for(const p of S.team){Mo(p,10);L(p,4);p.career.stress=clamp(p.career.stress-7);p.career.satisfaction=clamp(p.career.satisfaction+3);Me(p,"You brought us together as a team");}logIt("The team enjoyed a shared activity. Morale improved.");save();refresh();}
+function teamActivity(){if(S.ev||S.day-S.hr.lastTeamDay<12)return;const before=coachSnap();const cost=S.team.length*5;if(S.cash<cost)return;S.cash-=cost;biMoney("people",cost,"Team activity");S.hr.lastTeamDay=S.day;for(const p of S.team){Mo(p,10);L(p,4);p.career.stress=clamp(p.career.stress-7);p.career.satisfaction=clamp(p.career.satisfaction+3);Me(p,"You brought us together as a team");}logIt("The team enjoyed a shared activity. Morale improved.");coachDecision("Team culture activity",before,"Cost "+biCurrency(cost)+" with improved employee mood and recovery.",null,7);save();refresh();}
 function renderCandidates(){
 $("hire-skill").value=S.hr.skill;
 $("hire-interest").value=S.hr.interest;

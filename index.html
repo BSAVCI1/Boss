@@ -254,7 +254,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
 <div class="card ceo-office"><div class="eyebrow">CEO · COMPANY IDENTITY</div><h2 id="company-name">Business Services Group</h2><p id="company-identity"></p><div class="ceo-office-grid"><div><b>My direct reports</b><div id="ceo-direct-reports"></div></div><div><b>Executive Assistant</b><div id="ceo-assistant"></div></div></div></div>
 <div class="card ceo-direction"><div class="lead"><b>Your 90-day direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p><p id="ceo-direction-confirm" class="small" role="status" aria-live="polite"></p></div>
-<div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
+<div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><details class="aux-details" id="ea-weekly-report"><summary>Executive Assistant · weekly business briefing</summary><div id="ea-weekly-body"></div></details><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
 <div class="card game-desk" id="game-desk">
 <div class="lead"><span class="eyebrow">YOUR COMPANY STORY</span><span class="game-chapter" id="game-chapter">Founder</span></div>
 <h2 id="brief-headline">Your company at a glance</h2><p class="overview-copy" id="brief-summary">Your team is getting started.</p>
@@ -1797,8 +1797,9 @@ $("launch-service-line").addEventListener("click",()=>{if(executiveLaunch($("ser
 $("service-line-select").addEventListener("change",()=>executiveShow());
 $("game-primary").addEventListener("click",()=>{const b=$("game-primary"),view=b.dataset.go||"work";
 navigate(view,b.dataset.project?Number(b.dataset.project):undefined);
-if(view==="today")requestAnimationFrame(()=>{const panel=$("executive-inbox-panel");if(panel&&typeof panel.scrollIntoView==="function")panel.scrollIntoView({behavior:"smooth",block:"start"});});
+if(view==="today")requestAnimationFrame(()=>{const panel=$("ea-weekly-report");if(panel){panel.open=true;renderExecutiveWeekly();if(typeof panel.scrollIntoView==="function")panel.scrollIntoView({behavior:"smooth",block:"start"});}});
 });
+$("ea-weekly-report").addEventListener("toggle",()=>renderExecutiveWeekly());
 $("game-forward").addEventListener("click",gameAdvanceDays);
 $("game-journey").addEventListener("toggle",()=>{if($("game-journey").open)gameRender();});
 $("attention-list").addEventListener("click",e=>{const b=e.target.closest("button[data-go]");if(b)navigate(b.dataset.go,b.dataset.project?Number(b.dataset.project):undefined);});
@@ -1983,6 +1984,8 @@ if(!Array.isArray(e.proposals))e.proposals=[];
 if(!Array.isArray(e.history))e.history=[];
 if(!Array.isArray(e.lines))e.lines=[];
 if(!Number.isFinite(e.sequence))e.sequence=1;
+if(!Array.isArray(e.weeklyReports))e.weeklyReports=[];
+e.weeklyReports=e.weeklyReports.filter(x=>x&&Number.isFinite(x.day)).slice(0,12);
 e.proposals=e.proposals.filter(p=>p&&p.type&&p.id).slice(-12);
 e.history=e.history.slice(-40);
 e.lines=e.lines.filter(x=>x&&SERVICE_LINES[x.key]&&Number.isFinite(x.since));
@@ -2070,6 +2073,40 @@ if(burden>Math.max(4,people.length+2)&&S.cash>=120&&people.length<9)return{type:
 if(S.day-S.exec.since>21)return null;
 return{type:"training",dept,cost:8,benefit:"Build a key colleague's skill and reduce workload strain",risk:"Training costs cash without guaranteed results"};
 }
+function executiveWeeklySnapshot(){
+ const weekly=S.bi.daily.filter(b=>b.day>S.day-7&&b.day<=S.day);
+ const sum=k=>weekly.reduce((n,b)=>n+(b.values?.[k]||0),0);
+ const risks=S.deals.filter(d=>d.dl<=5&&d.prog<d.work).length;
+ const staff=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35).length;
+ const dept=DEPT_KEYS.map(key=>{const head=orgManager(key),d=S.org.departments[key],staff=orgReports(key);return{key,head:head?.n||"Founder",staff:staff.length,review:d.reviews[d.reviews.length-1]?.result||null};});
+ const services=S.exec.lines.map(x=>({key:x.key,delivered:x.delivered||0,days:S.day-x.since}));
+ return{day:S.day,periodDays:Math.min(7,weekly.length),revenue:sum("revenue"),cashIn:sum("cashIn"),cashOut:sum("cashOut"),wins:sum("wins"),delivered:sum("delivered"),missed:sum("missed"),active:S.deals.length,pipeline:S.pipeline.leads.length,proposals:S.exec.proposals.length,risks,staff,dept,services};
+}
+function updateExecutiveWeekly(){
+ const latest=executiveWeeklySnapshot();
+ if(S.exec.weeklyReports[0]?.day!==S.day){
+  S.exec.weeklyReports.unshift(latest);S.exec.weeklyReports=S.exec.weeklyReports.slice(0,12);
+ }else S.exec.weeklyReports[0]=latest;
+}
+function renderExecutiveWeekly(){
+ const panel=$("ea-weekly-report");if(!panel||!panel.open)return;
+ const report=S.exec.weeklyReports[0],live=executiveWeeklySnapshot(),a=person(S.ops.assistantId),since=report?.day;
+ const warnings=[];
+ if(live.risks)warnings.push(live.risks+" projects need a deadline review");
+ if(live.staff)warnings.push(live.staff+" colleagues have elevated stress or burnout");
+ for(const d of live.dept)if(d.staff>5&&!DEPARTMENTS[d.key].skills.some(role=>orgSubManager(d.key,role)))warnings.push(DEPARTMENTS[d.key].name+" has a wide reporting span");
+ for(const line of live.services)if(line.days>=30&&!line.delivered)warnings.push(SERVICE_LINES[line.key].name+" has not completed any attributed engagements since launch");
+ if(S.exec.proposals.length)warnings.push(S.exec.proposals.length+" management proposals awaiting a CEO response");
+ if(!warnings.length)warnings.push("No urgent cross-department escalation identified");
+ const dept=live.dept.map(d=>'<p class="small"><b>'+esc(DEPARTMENTS[d.key].name)+'</b> · '+esc(d.head)+' · '+d.staff+' staff'+(d.review?' · last review: '+esc(String(d.review)):'')+'</p>').join("");
+ const lines=live.services.map(x=>'<p class="small">'+esc(SERVICE_LINES[x.key].name)+' · '+x.delivered+' delivered · '+x.days+' days since launch</p>').join("");
+ $("ea-weekly-body").innerHTML='<p class="small"><b>'+esc(a?.n||"Founder")+'</b> · Current assessment at Day '+S.day+(since?' · last scheduled meeting Day '+since:' · no scheduled meeting recorded yet')+'</p>'+
+ '<p class="small">Previous '+live.periodDays+' tracked days: '+live.wins+' won · '+live.delivered+' delivered · '+live.missed+' missed · cash received '+biCurrency(live.cashIn)+' · cash paid '+biCurrency(live.cashOut)+'. Current cash '+biCurrency(S.cash)+'.</p>'+
+ '<p class="small">Today: '+live.active+' active jobs · '+live.pipeline+' open leads · '+S.team.length+' employees. Company priority: '+esc(CEO_PRIORITIES[S.exec.priority].name)+'.</p><b>Direct-report briefing</b>'+dept+
+ '<b>Exceptions &amp; recommendations</b><ul>'+warnings.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>'+
+ (lines?'<b>Business development</b>'+lines:"")+
+ '<p class="small">This is a read-only report. Managers continue delegated work. Approvals remain in the executive inbox below.</p>';
+}
 function executiveWeek(){
 const e=S.exec;if(S.day<e.nextMeeting)return;
 e.lastMeeting=S.day;e.nextMeeting=S.day+7;
@@ -2084,6 +2121,7 @@ if(e.history.some(x=>x.dept===dept&&x.proposal===spec.type&&x.action!=="delegate
 if(executiveAutonomous(dept,spec)){delegated++;continue;}
 e.proposals.push({...spec,id:e.sequence++,day:S.day,managerId:orgManager(dept).id,priority:e.priority});proposed++;
 }
+updateExecutiveWeekly();
 if(proposed||delegated)logIt("Executive meeting on Day "+S.day+": "+proposed+" CEO requests; "+delegated+" actions completed within delegated authority.");
 }
 function executiveDecision(id,action){
@@ -2159,6 +2197,7 @@ const brief=ev?'<div class="exec-proposal exec-opportunity"><b>Market opportunit
 $("exec-inbox").innerHTML=brief+(inbox.map(p=>{
 const chief=person(p.managerId),cost=biCurrency(p.cost),affordable=S.cash>=p.cost;
 return '<div class="exec-proposal"><b>'+esc(chief?.n||"Director")+' · '+esc(DEPARTMENTS[p.dept].name)+'</b><p>'+esc(p.benefit)+' · '+cost+' one-time'+(p.type==="hire"?" + salary $1.50/day":p.type==="raise"?" · salary +$0.25/day":p.type==="line"?" · new service-line investment":"")+'</p><p><b>Risk:</b> '+esc(p.risk)+'</p><div class="buttons"><button data-exec-action="approve" data-exec-id="'+p.id+'" '+(affordable?"":"disabled")+' type="button">Approve</button><button data-exec-action="decline" data-exec-id="'+p.id+'" type="button">Decline</button></div></div>';}).join("")||(!ev?'<p class="small">No CEO approvals needed. Your managers continue running their departments.</p>':""));
+renderExecutiveWeekly();
 if($("exec-history").parentNode.open)$("exec-history").innerHTML=S.exec.history.slice(0,12).map(x=>'<p class="small">Day '+x.day+' · '+esc(x.manager)+' · '+esc(x.action)+' — '+esc(x.result)+'</p>').join("")||'<p class="small">No executive decisions yet.</p>';
 const lines=[{key:"core",since:0,delivered:S.market.completed,baseline:true},...S.exec.lines];
 $("business-lines-summary").textContent=lines.length+" operating";
@@ -2187,7 +2226,7 @@ const [title,hint,value,max,view,project]=gamePlan(),event={delivered:S.market.c
 if(lastGameEvent){if(event.delivered>lastGameEvent.delivered)gameToast("Client project completed — great work!");else if(event.built>lastGameEvent.built)gameToast("You unlocked a company capability!");else if(event.wins>lastGameEvent.wins)gameToast("Competitive contract won!");}lastGameEvent=event;
 $("game-chapter").textContent=gameChapter()+" · Day "+S.day;
 $("game-goal").textContent=title;$("game-goal-hint").textContent=hint;$("game-goal-progress").textContent=value+" / "+max;$("game-goal-bar").style.width=Math.min(100,Math.max(0,value/Math.max(1,max)*100))+"%";
-$("game-primary").textContent=(project?"Open this project":view==="work"?"See client work":view==="team"?"Meet your team":view==="today"?"Review leadership meeting":"Explore Growth")+" →";
+$("game-primary").textContent=(project?"Open this project":view==="work"?"See client work":view==="team"?"Meet your team":view==="today"?"Read executive briefing":"Explore Growth")+" →";
 $("game-primary").dataset.go=view;if(project)$("game-primary").dataset.project=String(project);else delete $("game-primary").dataset.project;
 const stories=S.log.map(x=>String(x).replace(/<[^>]+>/g,"")).filter(x=>/completed|hired|joined|promot|won|missed|quit|unlocked|founded|discovered/i.test(x)).slice(0,2);
 const html=(stories.length?stories:["Your team's next achievement is waiting."]).map(x=>'<div class="game-story-item">'+esc(x)+'</div>').join("");if($("game-story").innerHTML!==html)$("game-story").innerHTML=html;

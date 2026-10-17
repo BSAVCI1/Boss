@@ -1,5 +1,11 @@
 # Boss
 
+## Boss v20.1 — Editable settings persistence (PR #20, released 2026-10-17)
+
+The [settings reliability correction](https://github.com/BSAVCI1/Boss/pull/20) now saves valid departmental budget and authority edits **as the player types**, rather than waiting for Safari to blur the field. Commercial/Delivery coaching, training, team, recruitment, per-decision limits, authorized hires, new daily payroll ceiling (including cents), period and performance targets survive a full browser refresh. Other saved player inputs include Executive Assistant spending caps, experiment topic/duration/forecast/sector/hypothesis/reflections, speed, selected service proposal, and unconfirmed CEO strategy drafts; selecting a CEO draft does **not** activate it until the Set CEO direction button is tapped. Pause/Resume remains a session control, not a lasting company policy.
+
+A small global save indicator reports verified local browser writes, storage failures and stale-tab conflicts. An incomplete/invalid number is not described as saved. The underlying `boss20` save key, historical contracts, staff, customers and accounting remain unchanged. Tests check every editable departmental budget/limit, invalid/failed input, draft retention and an actual 390px Chromium type → save → browser refresh → restore path. Production [regression](https://github.com/BSAVCI1/Boss/actions/runs/39058299668) and [Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39058299044) both passed. The [live game](https://bsavci1.github.io/Boss/) serves the new save-status interface. Existing personal Safari data is not remotely inspectable; do not clear browser site data.
+
 ## Boss v20.1 — release hardening (PR #19)
 
 The [v20.1 correction](https://github.com/BSAVCI1/Boss/pull/19) makes each new $120 business-line investment conditional on a successful local `boss20` write. A storage failure rolls back cash, investment ledger, company line and decision history rather than claiming a successful purchase. It pauses gameplay with a browser-storage warning; it never erases older saves. The independent line journal is written only after successful primary persistence.

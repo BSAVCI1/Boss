@@ -87,7 +87,7 @@ test("multiple managed departments do not require executive assistant for local 
 fresh();const s=G.get();const m=s.team[0],ops=s.team[2];appoint(s,"delivery",m);
 ops.department="delivery";ops.role.primary="ops";ops.role.auto=true;ops.role.autoTask=true;ops.t="idle";
 s.deals[0].need="ops";s.deals[0].w=null;s.ops.assistantId=null;
-assert.ok(G.delegateWork());assert.ok([s.team[1].id,ops.id].includes(s.deals[0].w),"Department manager selected an eligible delivery colleague");assert.equal(s.ops.assigned,1);
+assert.ok(G.delegateWork());assert.ok([s.team[1].id,ops.id].includes(s.deals[0].w),"Department manager selected an eligible delivery colleague");assert.ok(s.ops.assigned>=1,"Department manager may assign multiple available projects");
 });
 test("CEO layer survives 730 days without automatic hidden hiring or invented line revenue",()=>{
 fresh();const s=G.get();const count=s.team.length;

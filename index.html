@@ -333,7 +333,8 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div id="lab-finished" class="lab-result"></div><div id="coach-lab-controls"></div>
 <details class="aux-details" id="lab-history-panel"><summary>Previous experiments <span id="lab-count">0</span></summary><div id="lab-history"></div></details>
 </details></div></section>
-<section aria-labelledby="idea-title"><h2 id="idea-title">Company capability map</h2><div class="card"><p class="filter-note">Ideas discovered through research, service and daily work fill the map. Related discoveries unlock capabilities automatically—no manual pair matching.</p><div class="lead"><b>Organizational knowledge</b><span class="small" id="idea-summary"></span></div><div id="ideas"></div><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div></div></section>
+<section aria-labelledby="idea-title"><h2 id="idea-title">Company capability map</h2><div class="card"><p class="filter-note">Ideas discovered through research, service and daily work fill the map. Related discoveries unlock capabilities automatically—no manual pair matching.</p><div class="lead"><b>Organizational knowledge</b><span class="small" id="idea-summary"></span></div><div id="ideas"></div><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div>
+<details class="aux-details" id="idea-progress-panel"><summary id="idea-progress-summary">Funded idea outcomes</summary><div id="idea-progress-content"></div></details></div></section>
 
 </section>
 </main>
@@ -1628,7 +1629,13 @@ $("ideas").innerHTML=RECIPES.map(r=>{const done=S.built.some(b=>b[0]===r[2]),hav
 return '<div class="knowledge-row"><div class="lead"><b>'+esc(r[2])+'</b><span class="small">'+(done?'✓ Active':have+'/2 discoveries')+'</span></div><div class="small">'+esc(IDEAS[r[0]])+' '+(S.seeds.includes(r[0])?'✓':'○')+' · '+esc(IDEAS[r[1]])+' '+(S.seeds.includes(r[1])?'✓':'○')+' · '+esc(r[3])+'</div><div class="progress"><i style="width:'+(done?100:have*45)+'%"></i></div></div>';}).join("");
 $("built").innerHTML=all.length?'<div class="filter-note">Discovered: '+all.map(k=>esc(IDEAS[k])).join(" · ")+'</div>':'<div class="empty">Employees will discover capabilities through work, research and experimentation.</div>';
 $("idea-message").textContent=ideaMessage||"Ideas now have different funding requirements and measured participation. Unlocks depend on results; past discoveries remain intact.";
-$("built").innerHTML+='<details class="aux-details"><summary>Funded idea outcomes · '+S.ideaWork.active.length+' active / '+S.ideaWork.history.length+' completed</summary>'+S.ideaWork.active.map(x=>'<div class="coach-mini">'+esc(x.proposal.name)+' · '+biCurrency(x.cost)+' · '+x.done.toFixed(1)+'/'+x.proposal.days+' days</div>').join("")+S.ideaWork.history.slice(0,10).map(x=>'<div class="coach-mini">Day '+x.finished+' · '+esc(x.proposal.name)+' · '+biCurrency(x.cost)+' · '+esc(x.result)+' · '+x.actualParticipation+' employee-days</div>').join("")+'</details>';}
+renderIdeaProgress();}
+function renderIdeaProgress(){const area=$("idea-progress-content");if(!area)return;
+$("idea-progress-summary").textContent="Funded idea outcomes · "+S.ideaWork.active.length+" active / "+S.ideaWork.history.length+" completed";
+if(!$("idea-progress-panel").open)return;
+const rows=S.ideaWork.active.map(x=>'<div class="coach-mini">'+esc(x.proposal.name)+' · '+biCurrency(x.cost)+' · '+x.done.toFixed(1)+'/'+x.proposal.days+' employee-days · '+esc(x.proposal.risk)+' risk</div>').join("")+
+S.ideaWork.history.slice(0,12).map(x=>'<div class="coach-mini">Day '+x.finished+' · '+esc(x.proposal.name)+' · '+biCurrency(x.cost)+' · '+esc(x.result)+' · '+x.actualParticipation+' employee-days</div>').join("");
+if(area.innerHTML!==rows)area.innerHTML=rows||'<p class="small">No funded proposals yet; new requests will offer three price tiers with participation requirements.</p>';}
 function renderBriefing(){
 const urgent=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"||f.risk==="watch");
 const stressed=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35);
@@ -1654,7 +1661,7 @@ const markup=notices.join("");if(markup!==attentionSignature){attentionSignature
 for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}
 }
 function refresh(){
-economyRender();worldRender();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
+economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);

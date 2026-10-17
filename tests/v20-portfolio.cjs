@@ -420,6 +420,7 @@ test("v21.2 one real paid coaching intervention obeys both caps, term and cooldo
  const priorSpending=s.exec.units[0].developmentCost;
  assert.equal(G.unitRenewAuthority("product"),true);
  assert.equal(s.exec.units[0].developmentCost,priorSpending,"renewal itself does not spend");
+ G.unitAutonomousDay();assert.equal(s.exec.units[0].developmentCost,priorSpending,"renewal must not bypass the weekly cooldown");
  s.day+=7;G.unitAutonomousDay();assert.equal(s.exec.units[0].developmentCost,priorSpending+4);
  assert.equal(G.load().exec.units[0].plan.coachingLimit,8);
  reconcile(s);
@@ -463,6 +464,23 @@ test("v21.2 rejected CEO unit proposal does not hire or spend",()=>{
  assert.equal(s.cash,cash);assert.equal(s.team.length,count);
  assert.equal(s.exec.unitRequests.find(q=>q.id===req.id).status,"declined");
  assert.equal(G.unitRequestDecision(req.id,"approve"),false);
+ reconcile(s);
+});
+
+test("v21.2 replacing or losing a General Manager withdraws outdated hiring requests",()=>{
+ const s=init();fund(s,500);s.deals=[];
+ assert.equal(G.executiveLaunch("product"),true);assert.equal(G.unitActivate("product"),true);
+ const first=s.team[0],replacement=s.team[1];first.career.rank=1;replacement.career.rank=1;
+ assert.equal(G.unitAppoint("product",first.id),true);
+ G.createDeal("Qualified open backlog",0,"hospitality");s.day=35;G.unitAutonomousDay();
+ const request=s.exec.unitRequests.find(r=>r.status==="open");
+ assert.ok(request,"First GM should propose hiring based on live unit demand");
+ const oldCash=s.cash,oldHeadcount=s.team.length;
+ assert.equal(G.unitAppoint("product",replacement.id),true);
+ assert.equal(s.exec.unitRequests.find(r=>r.id===request.id).status,"withdrawn");
+ assert.equal(G.unitRequestDecision(request.id,"approve"),false,"Previous manager proposal cannot be charged");
+ assert.equal(s.cash,oldCash);assert.equal(s.team.length,oldHeadcount);
+ assert.equal(G.load().exec.unitRequests.find(r=>r.id===request.id).status,"withdrawn");
  reconcile(s);
 });
 

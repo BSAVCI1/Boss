@@ -120,4 +120,30 @@ test("stale browser tab cannot replace a newer saved company",()=>{
  assert.equal(G.save(),false,"outdated tab overwrote progress");
  assert.equal(JSON.parse(store.get("boss20")).cash,newer.cash);
 });
+test("two independently purchased service lines persist, recover from legacy receipts and cannot be charged twice",()=>{
+ const s=init();fund(s,1500);s.day=2852;
+ const opening=s.cash,investments=s.bi.totals.investments;
+ assert.equal(G.executiveLaunch("marketing"),true);
+ s.day=2859;
+ assert.equal(G.executiveLaunch("product"),true);
+ const cash=s.cash,paid=s.bi.totals.investments;
+ assert.equal(cash,opening-240);assert.equal(paid,investments+240);
+ let saved=G.load();assert.deepEqual([...saved.exec.lines.map(x=>x.key)].sort(),["marketing","product"]);
+ assert.equal(saved.cash,cash);reconcile(saved);
+ const before=store.get("boss20");assert.ok(before);
+ // A legacy browser tab is permitted to write only its own v19 key.
+ const legacy=JSON.parse(store.get("boss20"));
+ legacy.exec.lines=[];store.set("boss19",JSON.stringify(legacy));
+ assert.equal(store.get("boss20"),before,"older-tab write must not erase newer v20 investments");
+ store.delete("boss20");store.delete("boss20_service_line_journal");
+ saved=G.load();
+ assert.deepEqual([...saved.exec.lines.map(x=>x.key)].sort(),["marketing","product"]);
+ assert.equal(saved.exec.lines.filter(x=>x.recovered).length,2);
+ assert.equal(saved.cash,cash);assert.equal(saved.bi.totals.investments,paid);
+ G.set(saved);assert.equal(G.executiveLaunch("marketing"),false);
+ assert.equal(G.executiveLaunch("product"),false);
+ assert.equal(G.save(),true);assert.equal(G.load().exec.lines.length,2);
+ reconcile(saved);
+});
+
 console.log("Boss v20 functional and persistence checks passed.");

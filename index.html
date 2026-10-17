@@ -962,7 +962,7 @@ state.bi={version:12,since:state.day,openingCash:state.cash,totals:biZero(),dail
 for(const d of state.deals){if(!Number.isFinite(d.laborCost))d.laborCost=0;if(!Number.isFinite(d.directCost))d.directCost=0;d.biBooked=false;d.bookVal=0;}
 }
 function biBucket(){const all=S.bi.daily;let b=all[all.length-1];if(!b||b.day!==S.day){b={day:S.day,values:biZero(),sources:{},sectors:{},categories:{}};all.push(b);if(all.length>366)all.shift();}return b;}
-function biAdd(field,amount){if(!Number.isFinite(amount)||!BI_FIELDS.includes(field))return;S.bi.totals[field]+=amount;biBucket().values[field]+=amount;}
+function biAdd(field,amount){if(!Number.isFinite(amount)||!BI_FIELDS.includes(field))return;if(!Number.isFinite(S.bi.totals[field]))S.bi.totals[field]=0;const row=biBucket().values;if(!Number.isFinite(row[field]))row[field]=0;S.bi.totals[field]+=amount;row[field]+=amount;}
 function biEvent(kind,amount,info,cashPaid=amount){const event={day:S.day,kind,amount:+amount.toFixed(2),cash:+cashPaid.toFixed(2),info:String(info||"")};S.bi.recent.unshift(event);if(S.bi.recent.length>80)S.bi.recent.length=80;}
 function biMoney(kind,amount,info,actualCash=null){if(!Number.isFinite(amount)||amount<=0)return;const cashPaid=actualCash===null?amount:Math.max(0,Math.min(amount,actualCash));
 if(kind==="revenue"){biAdd("revenue",amount);biAdd("cashIn",cashPaid);}

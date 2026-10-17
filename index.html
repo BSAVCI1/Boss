@@ -242,8 +242,12 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .ceo-direction select{width:100%;margin:7px 0}.ceo-direction button{width:100%}
 #business-lines .service-line{border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0}
 #upgrades-complete[hidden]{display:none}
-.save-state{font-size:11px;color:var(--muted);padding:0 12px 3px;text-align:right}
-.save-state[data-error="true"]{font-weight:600;color:var(--red,var(--danger,#c64c46))}
+.save-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 5px;padding:0 4px}
+.save-state{font-size:11px;color:var(--muted);padding:0 3px}
+.save-state[data-error="true"]{font-weight:700;color:var(--red,var(--danger,#c64c46))}
+.save-export{font-size:11px;min-height:28px;padding:4px 7px;white-space:nowrap}
+.save-error{font-size:12px;color:var(--ink);border:1px solid var(--line);padding:8px 10px;margin:6px 0;background:var(--accentWash)}
+.save-error[hidden]{display:none}
 @media(max-width:390px){.ceo-office-grid{grid-template-columns:1fr}.ceo-report button{max-width:100%}}
 </style>
 </head>
@@ -251,7 +255,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <main id="game-root">
 <header class="app-header"><h1>Boss</h1><div class="compact-controls" id="controls">
 <label for="speed-select">Speed</label><select id="speed-select" aria-label="Simulation speed"><option value="1">1×</option><option value="3">3×</option><option value="8">8×</option></select><button type="button" id="pause" aria-pressed="false">Pause</button></div></header>
-<div id="save-state" class="save-state" aria-live="off">Game progress is saved on this device</div>
+<div class="save-toolbar"><span id="save-state" class="save-state" aria-live="polite">Checking saved game…</span><button id="export-save" type="button" class="save-export">Export game backup</button></div><div id="save-warning" class="save-error" role="alert" hidden></div>
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
@@ -266,7 +270,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="game-actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
 <div class="game-scene"><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div></div><div class="game-story" id="game-story" aria-live="polite"></div>
 <details class="aux-details" id="game-journey"><summary>My company journey</summary><div id="game-journey-map"></div></details>
-</div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div><p id="save-warning" class="risk-watch" role="alert" hidden></p>
+</div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div>
 <details class="aux-details game-advanced" id="ceo-records"><summary>Coach &amp; company records</summary>
 <section class="card bi-headline" aria-labelledby="bi-headline-title"><div class="lead"><b id="bi-headline-title">Business performance</b><span class="small" id="bi-period-note">Tracked since Day 0</span></div>
 <div class="bi-grid">
@@ -411,7 +415,67 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 "use strict";
 const KEY="boss20";
 const LEGACY_KEY="boss19";
-let persistedRevision=0,saveConflict=false;
+let persistedRevision=0,saveConflict=false,saveErrorReason="";
+let extendedStorage=false,backupDB=null,indexedWriteQueue=Promise.resolve(),indexedWriteCount=0,indexedWasPaused=false,gameReady=false;
+function openBackupDB(){
+ if(typeof indexedDB==="undefined")return Promise.resolve(null);
+ if(backupDB)return backupDB;
+ backupDB=new Promise(resolve=>{
+  let req;try{req=indexedDB.open("BossSafeProgress",1);}catch{resolve(null);return;}
+  req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains("game"))req.result.createObjectStore("game");};
+  req.onsuccess=()=>resolve(req.result);
+  req.onerror=()=>resolve(null);req.onblocked=()=>resolve(null);
+ });
+ return backupDB;
+}
+async function readExtendedSave(){
+ const db=await openBackupDB();if(!db)return null;
+ return new Promise(resolve=>{
+  try{
+   const tx=db.transaction("game","readonly"),req=tx.objectStore("game").get("boss20");
+   req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null);tx.onabort=()=>resolve(null);
+  }catch{resolve(null);}
+ });
+}
+async function indexedCommit(payload,revision,day){
+ const db=await openBackupDB();if(!db)return false;
+ return new Promise(resolve=>{
+  let ok=true,finished=false;const done=value=>{if(!finished){finished=true;resolve(value);}};
+  try{
+   const tx=db.transaction("game","readwrite"),store=tx.objectStore("game");
+   const req=store.get("boss20");
+   req.onsuccess=()=>{
+    const prior=req.result;
+    if(prior&&Number(prior.revision)>revision-1){ok=false;try{tx.abort();}catch{}return;}
+    store.put({payload,revision,day},"boss20");
+   };
+   req.onerror=()=>{ok=false;try{tx.abort();}catch{}};
+   tx.oncomplete=()=>done(ok);tx.onerror=()=>done(false);tx.onabort=()=>done(false);
+  }catch{done(false);}
+ });
+}
+function queueIndexedSave(payload,revision,day){
+ if(indexedWriteCount===0){indexedWasPaused=paused;paused=true;}
+ indexedWriteCount++;saveState("Saving Day "+day+" to extended device storage…");
+ const work=indexedWriteQueue.then(()=>indexedCommit(payload,revision,day));
+ indexedWriteQueue=work.then(()=>{},()=>{});
+ return work.then(ok=>{
+  if(ok){
+   persistedRevision=Math.max(persistedRevision,revision);saveErrorReason="";
+   const warning=$("save-warning");if(warning)warning.hidden=true;
+   saveState("Saved Day "+day+" · extended device storage · revision "+revision);
+  }else saveError("IndexedDBError","Extended device storage did not confirm the save at Day "+day+".");
+  indexedWriteCount--;
+  if(indexedWriteCount===0&&ok&&!saveConflict&&!saveErrorReason){
+   paused=indexedWasPaused;if(gameReady){paintControls();schedule();}
+  }
+  return ok;
+ }).catch(e=>{
+  indexedWriteCount--;saveError("IndexedDBError","Extended device storage failed on Day "+day+": "+String(e?.name||"unknown")+".");
+  return false;
+ });
+}
+
 const LAUNCH_JOURNAL_KEY="boss20_service_line_journal";
 let labHistorySignature="";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
@@ -786,35 +850,57 @@ function saveState(message,error=false){
  const status=$("save-state");
  if(status){status.textContent=message;status.dataset.error=error?"true":"false";}
 }
+function saveError(name,note){
+ saveErrorReason=name||"StorageError";paused=true;
+ const reason=(name==="QuotaExceededError"?"Browser storage appears full":name==="SyntaxError"?"Save data could not be serialized":name==="RevisionConflict"?"Another tab has newer progress":"The browser rejected the save");
+ const warning=$("save-warning");
+ if(warning){warning.hidden=false;warning.textContent="Boss could not save progress. "+reason+". "+note+" Stop playing until the save is confirmed. Use Export game backup before refreshing. Do not restart or clear website data.";}
+ saveState("NOT SAVED · Day "+S.day+" · "+saveErrorReason,true);
+}
+function exportGameBackup(){
+ // Preserve in-memory progress even when the browser cannot persist a new save.
+ let data;
+ try{data=JSON.stringify({format:"Boss v20 game backup",exportDay:S.day,createdAt:new Date().toISOString(),state:S});}
+ catch(e){saveState("Backup could not be prepared: "+String(e?.name||"unknown"),true);return false;}
+ try{
+  const blob=new Blob([data],{type:"application/json"}),link=document.createElement("a"),url=URL.createObjectURL(blob);
+  link.href=url;link.download="Boss-Day-"+S.day+"-backup.json";link.style.display="none";
+  document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  if(!saveErrorReason)saveState("Backup file prepared · Day "+S.day);
+  return true;
+ }catch(e){saveState("Backup preparation failed · "+String(e?.name||"unknown"),true);return false;}
+}
 function save(){
+ let payload=null,nextRevision=0;
  try{
   const current=localStorage.getItem(KEY);
   if(current){
    let existing=null;try{existing=JSON.parse(current);}catch{}
    const remoteRev=Number(existing?._saveRevision)||0;
    if(remoteRev>persistedRevision){
-    saveConflict=true;paused=true;
-    const message="Another Boss tab saved newer progress. This tab has paused to protect your company. Reload this tab to continue from the latest save.";
-    const warning=$("save-warning");
-    if(warning){warning.hidden=false;warning.textContent=message;}
-    saveState("Not saved — newer company progress exists in another tab",true);
+    saveConflict=true;saveError("RevisionConflict","Latest saved Day "+(existing?.day??"unknown")+" (revision "+remoteRev+"), this tab's last revision "+persistedRevision+".");
     return false;
    }
   }
-  if(saveConflict){saveState("Not saved — reload to continue from the newer company",true);return false;}
-  S._saveRevision=Math.max(persistedRevision,Number(S._saveRevision)||0)+1;
-  const payload=JSON.stringify(S);
+  if(saveConflict){saveError("RevisionConflict","This tab must reload the newer saved company before continuing.");return false;}
+  nextRevision=Math.max(persistedRevision,Number(S._saveRevision)||0)+1;
+  S._saveRevision=nextRevision;payload=JSON.stringify(S);
+  if(extendedStorage)return queueIndexedSave(payload,nextRevision,S.day);
   localStorage.setItem(KEY,payload);
-  if(localStorage.getItem(KEY)!==payload)throw new Error("Save readback mismatch");
-  persistedRevision=S._saveRevision;
+  if(localStorage.getItem(KEY)!==payload)throw new Error("Save verification failed");
+  persistedRevision=nextRevision;saveErrorReason="";
+  const warning=$("save-warning");if(warning)warning.hidden=true;
   const field=document.activeElement,unfinished=field?.matches?.('input[data-org-policy],#policy-budget,#policy-total')&&(!String(field.value||"").trim()||field.validity?.valid===false);
-  if(!unfinished)saveState("Saved on this device");
+  if(!unfinished)saveState("Saved Day "+S.day+" · revision "+nextRevision+" · "+Math.ceil(payload.length/1024)+" KB");
   return true;
  }catch(e){
-  paused=true;
-  const warning=$("save-warning");
-  if(warning){warning.hidden=false;warning.textContent="Boss could not save progress in this browser. The simulation is paused. Check browser storage; do not clear site data.";}
-  saveState("Not saved — browser storage failed; do not refresh",true);
+  // Never clear or rewrite old save versions to make room.
+  if(payload&&!saveConflict&&typeof indexedDB!=="undefined"){
+   extendedStorage=true;return queueIndexedSave(payload,nextRevision,S.day);
+  }
+  let savedDay="unknown";try{savedDay=JSON.parse(localStorage.getItem(KEY)||"null")?.day??"none";}catch{}
+  saveError(String(e?.name||"StorageError"),"Current Day "+S.day+", last stored Day "+savedDay+", new save approximately "+(payload?Math.ceil(payload.length/1024)+" KB":"unknown size")+".");
   return false;
  }
 }
@@ -1071,7 +1157,7 @@ const brief=w.activeEvent,labels={tender:"A major customer is accepting bids",re
 $("world-event").innerHTML=brief?'<div class="coach-row coach-amber"><b>'+labels[brief.type]+'</b><div class="coach-mini">Decision window: through Day '+brief.until+'. '+esc(worldOfferTerms(brief).description)+'</div>'+(worldOfferEligibility(brief).allowed?'':'<div class="risk-watch small">Unavailable: '+esc(worldOfferEligibility(brief).reason)+'</div>')+'<div class="buttons"><button type="button" data-world-event="act" '+(worldOfferEligibility(brief).allowed?'':'disabled')+'>Take opportunity</button><button type="button" data-world-event="pass">Pass</button></div></div>':'<p class="small">No action required. Next optional market brief around Day '+w.nextEvent+'.</p>';
 }
 
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17")||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+function load(rawOverride){try{const raw=rawOverride===undefined?(localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17")||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3")):rawOverride;if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 ensurePerformance(p,s.day);
@@ -1707,7 +1793,7 @@ if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
 function fresh(){
- ceoDraftPriority=null;saveConflict=false;
+ ceoDraftPriority=null;saveConflict=false;saveErrorReason="";paused=false;
  try{persistedRevision=Number(JSON.parse(localStorage.getItem(KEY)||"null")?._saveRevision)||0;}catch{persistedRevision=0;}
  S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
@@ -1719,7 +1805,7 @@ function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
-function tick(){if(paused||S.ev)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();worldDay();let dirty=false,ideaDirty=false;
+function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
 if(delegateWork())dirty=true;
 if(autonomousWork())dirty=true;
@@ -1815,7 +1901,7 @@ save();structural="";renderStructure();refresh();}
 function hireOfficeAssistant(){if(S.ev||S.ops.assistantId||S.cash<20)return;const p=createPerson();p.s.ops=Math.max(2.3,p.s.ops);p.interest="systems";p.trait="Social";p.mood=75;p.loy=70;p.t="assist";S.cash-=20;biMoney("recruiting",20,"Hire executive assistant: "+p.n);ensureCareer(p);ensureRole(p);ensureDepartment(p);S.team.push(p);S.ops.assistantId=p.id;logIt("You hired "+p.n+" as executive assistant for $20.");save();structural="";renderStructure();refresh();}
 function toggleFocus(){if(S.ev)return;S.flow.focus=!S.flow.focus;if(!S.flow.focus){S.flow.nextLead=Math.max(S.flow.nextLead,S.day+5);S.flow.lastLeadAt=Date.now();S.nextEv=Math.max(S.nextEv,S.day+12);}logIt(S.flow.focus?"You closed intake to focus on existing work.":"You reopened client inquiries and staff matters.");save();refresh();}
 function order(pid,t){const p=person(pid);if(!p||S.ev)return;p.role.auto=false;p.role.autoTask=false;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===pid)S.ops.assistantId=null;release(p);p.t=t;save();renderStructure();refresh();}
-function updateButtons(){$("speed-select").value=String(spd);$("pause").classList.toggle("selected",paused);$("pause").setAttribute("aria-pressed",String(paused));$("pause").textContent=paused?"Resume":"Pause";}
+function updateButtons(){$("speed-select").value=String(spd);$("pause").classList.toggle("selected",paused);$("pause").setAttribute("aria-pressed",String(paused));$("pause").textContent=paused?"Resume":"Pause";$("pause").disabled=!!(saveConflict||saveErrorReason||indexedWriteCount>0);$("game-forward").disabled=!!(saveConflict||saveErrorReason||indexedWriteCount>0);}
 function paintControls(){updateButtons();}
 function navigate(view,projectId){if(!["today","work","team","growth"].includes(view))return;
 if(typeof window!=="undefined")viewScroll[activeView]=window.scrollY||0;
@@ -1825,9 +1911,10 @@ for(const b of document.querySelectorAll(".bottom-nav button[data-view]")){const
 if(view==="work"&&Number.isFinite(projectId)){for(const el of $("deals").querySelectorAll("details[data-project-id]"))if(Number(el.dataset.projectId)===projectId){el.open=true;projectExpanded.add(projectId);}}
 if(typeof window!=="undefined"&&typeof window.scrollTo==="function"){const target=Number.isFinite(projectId)?0:viewScroll[view]||0;requestAnimationFrame(()=>window.scrollTo(0,target));}
 }
-$("speed-select").addEventListener("change",()=>{spd=[1,3,8].includes(Number($("speed-select").value))?Number($("speed-select").value):1;S.ui.speed=spd;save();paused=false;paintControls();schedule();});
-$("pause").addEventListener("click",()=>{paused=!paused;paintControls();schedule();});
-$("restart").addEventListener("click",()=>{if(!confirm("Restart the company from zero?"))return;
+$("speed-select").addEventListener("change",()=>{spd=[1,3,8].includes(Number($("speed-select").value))?Number($("speed-select").value):1;S.ui.speed=spd;save();if(!saveConflict&&!saveErrorReason&&indexedWriteCount===0)paused=false;paintControls();schedule();});
+$("pause").addEventListener("click",()=>{if(saveConflict||saveErrorReason||indexedWriteCount>0)return;paused=!paused;paintControls();schedule();});
+$("export-save").addEventListener("click",exportGameBackup);
+$("restart").addEventListener("click",()=>{if(saveConflict||saveErrorReason){saveState("Cannot restart while existing progress is unverified. Export your company backup first.",true);return;}if(!confirm("Restart the company from zero?"))return;
 fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";sectorSignature="";customerSignature="";projectExpanded.clear();employeeExpanded.clear();careerExpanded.clear();roadmapExpanded.clear();attentionSignature="";orgControlsSignature="";for(const name of ["today","work","team","growth"])viewScroll[name]=0;
 paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();navigate("today");schedule();});
 document.querySelector(".bottom-nav").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(b)navigate(b.dataset.view);});
@@ -1837,7 +1924,11 @@ const priority=ceoDraftPriority??$("ceo-priority").value;
 if(!ceoDirection(priority))$("ceo-direction-confirm").textContent=S.ev?"Resolve the current CEO decision before changing direction.":"Direction unchanged. Choose a different strategy or wait for the next review.";
 });
 $("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
-$("launch-service-line").addEventListener("click",()=>{if(executiveLaunch($("service-line-select").value))refresh();});
+$("launch-service-line").addEventListener("click",()=>{
+ const result=executiveLaunch($("service-line-select").value);
+ if(result&&typeof result.then==="function")result.then(ok=>{if(ok)refresh();});
+ else if(result)refresh();
+});
 $("service-line-select").addEventListener("change",()=>{S.ui.selectedService=$("service-line-select").value;save();executiveShow();});
 $("game-primary").addEventListener("click",()=>{const b=$("game-primary"),view=b.dataset.go||"work";
 navigate(view,b.dataset.project?Number(b.dataset.project):undefined);
@@ -2102,7 +2193,9 @@ const launch={key,since:S.day,spent:120,delivered:0,missed:0,revenue:0};
 S.exec.lines.push(launch);
 coachDecision("Launched "+SERVICE_LINES[key].name,before,"$120 launch investment. Matching future contracts receive a small delivery-readiness benefit; income is measured only on new line-attributed deals, no guaranteed demand.",null,30);
 logIt("Launched "+SERVICE_LINES[key].name+"; the team can now build its first trackable service-line results.");
-if(!save()){S=JSON.parse(checkpoint);return false;}
+const saved=save();
+if(saved&&typeof saved.then==="function")return saved.then(ok=>{if(!ok){S=JSON.parse(checkpoint);return false;}recordLineLaunch(launch);return true;});
+if(!saved){S=JSON.parse(checkpoint);return false;}
 recordLineLaunch(launch);return true;
 }
 function executiveAutonomous(dept,spec){
@@ -2252,7 +2345,14 @@ S.cash-=p.cost;biMoney("development",p.cost,"CEO-approved development plan: "+wh
 const skill=DEPARTMENTS[p.dept].skills[0];who.s[skill]+=.3;who.career.satisfaction=clamp(who.career.satisfaction+3);manager.management.coaching=clamp(manager.management.coaching+.35);
 message="Approved "+biCurrency(p.cost)+" development for "+who.n+". Real skills improved; future results are still uncertain.";
 }else if(p.type==="line"){
-if(!executiveLaunch(p.key))return false;
+// Include removal of the proposal in the first durable launch snapshot.
+const proposalsBefore=e.proposals.slice();e.proposals=e.proposals.filter(x=>x.id!==id);
+const launched=executiveLaunch(p.key);
+if(launched&&typeof launched.then==="function")return launched.then(ok=>{
+ if(!ok){S.exec.proposals=proposalsBefore;return false;}
+ return finishExecutiveDecision(id,p,action,manager,before,"Approved director proposal to launch "+SERVICE_LINES[p.key].name+". New project outcomes will be tracked from launch.");
+});
+if(!launched){S.exec.proposals=proposalsBefore;return false;}
 message="Approved director proposal to launch "+SERVICE_LINES[p.key].name+". New project outcomes will be tracked from launch.";
 }else if(p.type==="raise"){
 const who=person(p.personId);if(!who||who.department!==p.dept)return false;
@@ -2279,11 +2379,18 @@ message="Appointed "+worker.n+" as "+ROLE_NAMES[p.role]+" Manager. Additional re
 S.pipeline.mode="balanced";message="Manager instructed to prioritize efficient use of existing people. No immediate cash impact.";
 }else return false;
 }
-e.proposals=e.proposals.filter(x=>x.id!==id);
-e.history.unshift({day:S.day,dept:p.dept,manager:manager?.n||"Former manager",priority:p.priority,action,result:message,proposal:p.type});
-e.history=e.history.slice(0,40);
+return finishExecutiveDecision(id,p,action,manager,before,message);
+}
+function finishExecutiveDecision(id,p,action,manager,before,message){
+S.exec.proposals=S.exec.proposals.filter(x=>x.id!==id);
+S.exec.history.unshift({day:S.day,dept:p.dept,manager:manager?.n||"Former manager",priority:p.priority,action,result:message,proposal:p.type});
+S.exec.history=S.exec.history.slice(0,40);
 coachDecision("Leadership meeting: "+p.dept+" — "+action,before,message+" Review department results after 30 days.",p.managerId,30);
-logIt(message);save();renderStructure();refresh();return true;
+logIt(message);
+const saved=save();
+if(saved&&typeof saved.then==="function")return saved.then(ok=>{if(ok){renderStructure();refresh();}return ok;});
+if(!saved)return false;
+renderStructure();refresh();return true;
 }
 function executiveShow(){
 const a=person(S.ops.assistantId);
@@ -2355,7 +2462,7 @@ $("game-journey-map").innerHTML=stages.map(([name,done])=>'<span class="game-jou
 const rivals=S.world?.rivals||[],rivalText=rivals.map(q=>'<div class="game-rival"><span class="game-rival-icon">◆</span><span><b>'+esc(q.name)+'</b><small>'+esc(q.archetype)+' approach · '+q.wins+' wins</small></span></div>').join("");
 if($("game-rivals").innerHTML!==rivalText)$("game-rivals").innerHTML=rivalText;
 }
-function gameAdvanceDays(){if(S.ev)return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
+function gameAdvanceDays(){if(S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev||indexedWriteCount>0;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
 
 function renderBriefing(){
 const urgent=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"||f.risk==="watch");
@@ -2491,7 +2598,7 @@ poach:"Matching an outside offer is a one-time retention cost; letting an employ
 praise:"Sharing credit improves employee morale; taking credit favors short-term reputation at a loyalty cost."})[kind]||"The decision journal records immediate changes and reviews later results.";
 }
 function showModal(){const m=$("modal");if(!S.ev){m.hidden=true;document.body.classList.remove("modal-open");return;}const d=dilemmaInfo(S.ev);if(!d){S.ev=null;save();m.hidden=true;return;}if(m.hidden||$("modal-title").textContent!==d[0]){$("modal-title").textContent=d[0];$("modal-text").textContent=d[1]+(S.coach.mode==="guided"?"\n\nDecision preview: "+coachDecisionPreview(S.ev.k):"");$("choices").innerHTML=d[2].map((txt,i)=>{const cost=coachChoiceCost(S.ev.k,i);return '<button type="button" data-choice="'+i+'" '+(cost>S.cash?'disabled title="Insufficient cash"':'')+'>'+esc(txt)+(cost>S.cash?' · insufficient cash':'')+'</button>';}).join("");}m.hidden=false;document.body.classList.add("modal-open");}
-function schedule(){clearTimeout(clock);if(!paused&&!S.ev)clock=setTimeout(()=>{tick();schedule();},1200/spd);}
+function schedule(){clearTimeout(clock);if(!paused&&!S.ev&&!saveConflict&&!saveErrorReason&&indexedWriteCount===0)clock=setTimeout(()=>{tick();schedule();},1200/spd);}
 function bubble(id,emoji,frames){let a=avatars.get(id);if(!a){a={x:0,y:0,tx:0,ty:0,away:false,hold:0,emoji:"",frames:0};avatars.set(id,a);}a.emoji=emoji||"💬";a.frames=frames;}
 function avatarDraw(){if(activeView!=="today"){requestAnimationFrame(avatarDraw);return;}const rows=Math.ceil(S.team.length/5),h=Math.max(150,80*rows+50);if(canvas.height!==h)canvas.height=h;const style=getComputedStyle(document.documentElement);const bar=style.getPropertyValue("--bar").trim(),ink=style.getPropertyValue("--ink").trim(),muted=style.getPropertyValue("--muted").trim();ctx.clearRect(0,0,640,h);ctx.fillStyle=bar;ctx.fillRect(0,0,640,h);
 ctx.fillStyle="#b7d7e8";ctx.fillRect(611,(h-32)/2,22,32);ctx.fillStyle="#224b67";ctx.font="9px system-ui";ctx.textAlign="center";ctx.fillText("water",622,(h-32)/2+19);
@@ -2502,10 +2609,47 @@ a.x+=(a.tx-a.x)*.03;a.y+=(a.ty-a.y)*.03;if(Math.random()<.004){const e=p.mood<30
 ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(a.x,a.y,11,0,Math.PI*2);ctx.fill();ctx.fillStyle="#192435";ctx.beginPath();ctx.arc(a.x-3,a.y-2,1.1,0,Math.PI*2);ctx.arc(a.x+3,a.y-2,1.1,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#192435";ctx.lineWidth=1.1;ctx.beginPath();if(p.mood>50)ctx.arc(a.x,a.y+1,4,0,Math.PI);else if(p.mood>25){ctx.moveTo(a.x-4,a.y+5);ctx.lineTo(a.x+4,a.y+5);}else ctx.arc(a.x,a.y+8,4,Math.PI,2*Math.PI);ctx.stroke();ctx.textAlign="center";ctx.fillStyle=ink;ctx.font="12px system-ui";ctx.fillText(p.n,a.x,a.y+25);
 if(a.frames>0){ctx.font="19px system-ui";ctx.fillText(a.emoji,a.x,a.y-17);a.frames--;}
 });requestAnimationFrame(avatarDraw);}
-S=load();if(!S)fresh();else if(S.ui?.pendingCEO&&CEO_PRIORITIES[S.ui.pendingCEO])ceoDraftPriority=S.ui.pendingCEO;
-spd=[1,3,8].includes(S.ui?.speed)?S.ui.speed:1;
-if(S.ui?.selectedService&&SERVICE_LINES[S.ui.selectedService])$("service-line-select").value=S.ui.selectedService;
-window.addEventListener("storage",event=>{if(event.key===KEY&&event.newValue){let rev=0;try{rev=Number(JSON.parse(event.newValue)._saveRevision)||0;}catch{}if(rev>persistedRevision){saveConflict=true;paused=true;saveState("Not saved — a newer company is open in another tab",true);const warning=$("save-warning");if(warning){warning.hidden=false;warning.textContent="Another Boss tab saved this company. Reload this tab to protect the latest progress.";}}}});if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;labPreview();capabilityProgress();save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
+// Preserve the established test entry point; no persistence occurs before bootstrap.
+S=load();if(!S)fresh();
+async function bootstrapBoss(){
+ let existingSave=false,sourceStorageError=false;
+ try{existingSave=Boolean(localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17"));}catch(e){sourceStorageError=true;}
+ let localState=load(),chosen=localState;
+ let backup=await readExtendedSave(),backupState=null;
+ if(backup?.payload){
+  backupState=load(backup.payload);
+  const localRevision=Number(localState?._saveRevision)||0,backupRevision=Number(backup.revision)||0;
+  if(backupState&&(!localState||backupRevision>localRevision||(backupRevision===localRevision&&backupState.day>localState.day))){
+   chosen=backupState;extendedStorage=true;
+  }else if(!backupState&&backupRevision>localRevision){
+   // A newer backup exists but is invalid. Do not overwrite it with stale local progress.
+   chosen=null;sourceStorageError=true;
+  }
+ }
+ const loadFailed=!chosen&&(existingSave||sourceStorageError||Boolean(backup));
+ if(chosen)S=chosen;else fresh();
+ persistedRevision=Number(S._saveRevision)||0;
+ if(S.ui?.pendingCEO&&CEO_PRIORITIES[S.ui.pendingCEO])ceoDraftPriority=S.ui.pendingCEO;
+ spd=[1,3,8].includes(S.ui?.speed)?S.ui.speed:1;
+ if(S.ui?.selectedService&&SERVICE_LINES[S.ui.selectedService])$("service-line-select").value=S.ui.selectedService;
+ if(loadFailed){saveConflict=true;paused=true;saveError("UnreadableSave","An existing company could not be loaded. Stored versions have NOT been overwritten.");}
+ window.addEventListener("storage",event=>{if(event.key===KEY&&event.newValue){
+  let rev=0;try{rev=Number(JSON.parse(event.newValue)._saveRevision)||0;}catch{}
+  if(rev>persistedRevision){saveConflict=true;paused=true;saveError("RevisionConflict","Another Boss tab saved newer progress. Reload this tab rather than overwriting it.");}
+ }});
+ if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;
+ labPreview();capabilityProgress();
+ if(!loadFailed){const saved=save();if(saved&&typeof saved.then==="function")await saved;}
+ renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();
+ gameReady=true;document.documentElement.dataset.bossReady="true";
+ requestAnimationFrame(avatarDraw);schedule();
+}
+bootstrapBoss().catch(e=>{
+ saveConflict=true;paused=true;
+ if(!S)fresh();
+ saveError(String(e?.name||"LoadError"),"Loading the saved company failed. No browser data was cleared.");
+ document.documentElement.dataset.bossReady="true";
+});
 })();
 </script>
 </body>

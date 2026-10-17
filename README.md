@@ -1,5 +1,13 @@
 # Boss
 
+## Boss v20.2 — Full-game save recovery (pending release)
+
+**Why this release exists:** A long-running iPhone Safari company repeatedly returned to Day 2642 on refresh. The entire company's progress, not just editable settings, was failing to persist. The exact on-device browser failure code cannot be inferred remotely.
+
+**Recovery design:** Each successful browser save is verified and shows the committed game day. If regular `localStorage` rejects a save, Boss pauses progression while making a transactional, offline `IndexedDB` save. It resumes only after that transaction is committed. On reload Boss compares verified revisions and restores the newer on-device company; old `boss19` / `boss20` local data is **not cleared, overwritten to free space, or fabricated**. Browser conflicts or failure in both stores block further simulation rather than pretending progress has saved. A top-of-screen warning describes the error and provides **Export game backup**, which prepares a JSON file from the current in-memory company. Do not use Restart or clear Safari website data to fix a save error.
+
+**QA gate:** PR [#21](https://github.com/BSAVCI1/Boss/pull/21) must pass existing finance, migration, business-line investment and 730-day tests, plus real 390px Chromium tests for injected storage quota → alternate-save commit → refresh → newer-day recovery → single paid service-line launch. This is not a direct test of the owner's private Safari data. An exported backup file can be reviewed for a device-specific diagnosis without modifying the browser save.
+
 ## Boss v20.1 — Editable settings persistence (PR #20, released 2026-10-17)
 
 The [settings reliability correction](https://github.com/BSAVCI1/Boss/pull/20) now saves valid departmental budget and authority edits **as the player types**, rather than waiting for Safari to blur the field. Commercial/Delivery coaching, training, team, recruitment, per-decision limits, authorized hires, new daily payroll ceiling (including cents), period and performance targets survive a full browser refresh. Other saved player inputs include Executive Assistant spending caps, experiment topic/duration/forecast/sector/hypothesis/reflections, speed, selected service proposal, and unconfirmed CEO strategy drafts; selecting a CEO draft does **not** activate it until the Set CEO direction button is tapped. Pause/Resume remains a session control, not a lasting company policy.

@@ -1,5 +1,14 @@
 # Boss
 
+## Boss v21.4a — GM budget presets and successor development (candidate PR #28)
+
+The GM authority editor now **stages all digits without saving**; use **Apply custom settings** for one verified, validated save. 90-day Fresh manager, Manager (+25%), Senior manager (+25%) budget options set coaching, successor training, team development, per-action authority and team-size guidance, or choose Custom. A new GM receives a Fresh-manager *recommendation* only; no new spending is authorized until the CEO applies it.
+
+Managers can identify a successor, and—when the CEO has approved spending—invest $8 in training at most every 14 game days, use existing $4 coaching, and support team wellbeing for $6 at most every 30 days under separate category caps. Financial entries are posted once to corporate cash/ledger and attributed to the unit; historical company save state is not repriced. The GM panel shows review results and succession readiness. Corporate multilevel promotions and cross-unit sharing are [planned next](docs/V21_MANAGER_CAREER_PLAN.md), not yet implemented.
+
+[PR #28](https://github.com/BSAVCI1/Boss/pull/28) must pass complete save/finance regression and mobile browser tests before release. See [Manager Career Architecture](docs/V21_MANAGER_CAREER_PLAN.md) and [UI governance](docs/UI_INTERACTION_GOVERNANCE.md).
+
+
 ## Boss v21.3.1 — Native mobile editing stability (released 2026-10-17)
 
 User-reported GM and dedicated teammate dropdowns closed before selection because autonomous game ticks recreated the whole Operating units DOM. All active select/input/textarea edits now use a shared capture-phase interaction shield with a brief iOS picker dismissal grace period. Background game logic and saving continue, while UI redraws defer until the edit finishes. Other controls in Today, Work, Team and Growth share the same safety rule. See [mandatory mobile UI governance](docs/UI_INTERACTION_GOVERNANCE.md). This fix is not a new business investment and does not reset player saves.

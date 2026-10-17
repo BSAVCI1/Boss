@@ -1,5 +1,8 @@
 # Changelog
 
+- 2026-10-17 — **Boss v21.4a (candidate, PR #28):** Stage GM authority digits without per-character write/blur or redraw, then apply all valid values once. CEO may select Fresh, Manager +25%, Senior +25%, or Custom 90-day manager envelopes (coaching, training, team, per-action, staff target). Newly appointed GMs get **recommendations**, not automatically spendable money. Budget-limited real $8 successor training (14-day cooldown) and $6 team wellbeing (30-day cooldown) use the one group ledger. GM panel displays successor and management milestones; automatic multi-level promotions and shared cross-unit staffing remain a future gated release. [Career design](docs/V21_MANAGER_CAREER_PLAN.md). Regression and deployment pending.
+
+
 - 2026-10-17 — **Boss v21.3.1 (released, PR #27):** Correct cross-screen interaction lifecycle: game ticks previously rebuilt GM and teammate native selects mid-picker; the `closest(...).matches(...)` guard tested a parent container, not the active control. Centralized touch/focus/keyboard/input editing shield and deferred refresh protects live form DOM nodes, with regression coverage at 390px and documented [UI release checklist](docs/UI_INTERACTION_GOVERNANCE.md). **Release verified:** [PR #27](https://github.com/BSAVCI1/Boss/pull/27) merged at `08991ca08b9c6baaed4e40580c7dee727257a5cd`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39070464611), [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39070464072) and [real Chromium 390/414px save/interaction checks](https://github.com/BSAVCI1/Boss/actions/runs/39070360831) passed. Owner Safari save not accessed. No historical save changes.
 
 

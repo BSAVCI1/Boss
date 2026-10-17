@@ -1,5 +1,16 @@
 # Boss — simulation development roadmap
 
+## v21.4a — GM authority editing, presets and successor pipeline (candidate)
+
+- Stop per-keystroke budget authorization and any render side effects; stage multi-digit edits, then validate/apply atomically through one explicit CEO action. Preserve drafts across in-game redraws.
+- Budget presets: Fresh coaching/training/team $24/$24/$12, Manager +25%, Senior Manager another +25%; per-action $8/$10/$13; Custom editable and unit size targets 1–25.
+- GM appointment recommends but does not **authorize** new spending without explicit CEO preset acceptance, preserving v21.2 default-zero governance.
+- Actually train a named successor ($8, 14-day interval) and protect stressed teams ($6, 30 days), with budget, cash, cooldown and single-ledger gates.
+- Show a management succession milestone and performance evidence; **do not** claim actual Team Lead promotion, manager-to-director cascading or cross-unit staff sharing in this first phase.
+- Future v21.4b will implement unique-ID subordinate hierarchy and corporate Sales, Marketing, Product, Operations functional management and opt-in central shared-resource employee days. [Detailed architecture](docs/V21_MANAGER_CAREER_PLAN.md).
+- **Release blocked pending checks**: [PR #28](https://github.com/BSAVCI1/Boss/pull/28), 730-day, legacy save and 390px/414px real mobile tests.
+
+
 ## Released v21.3.1 — Repeating mobile controls reliability correction
 
 - Fix the native General Manager / dedicated employee picker closing during 1×/8× game updates; apply shared interaction shield to all editable controls instead of one field.

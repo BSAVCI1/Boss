@@ -1,0 +1,16 @@
+name: Boss offline regression checks
+on:
+  push:
+    branches: [main, boss-v15-advanced-economy]
+  pull_request:
+    branches: [main]
+jobs:
+  game:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run standalone game regression checks
+        run: node tests/v15-smoke.cjs

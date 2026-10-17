@@ -1,5 +1,14 @@
 # Boss — simulation development roadmap
 
+## Released v21.4b — Evidence-based leadership stages
+
+- New-game ladder: five people → Team Lead, then 3 Team Leads → Manager, 5 Team Leads → Senior Manager, 3 Managers → Director; further Team Leads need three more people each. Skills, work/practice days and unfinished contracts affect candidate selection.
+- CEO payroll authorization defaults to zero; appointments above budget become CEO exceptions. Within the ceiling, weekly automatic promotions may proceed when 14 days of full payroll can be funded. No upfront fee or duplicate corporate ledger entries.
+- Unique-ID reporting, bounded three-person Team Lead groups, successor mentoring, new CEO Today/Team priorities and suggested business-line expansion readiness; preserve all original saves and existing appointments.
+- **Still upcoming (v21.4c onward):** strong rules for buying *new* service lines, formal stage-locked business opportunities, manager-led hiring/organizational delegation and costed shared corporate employee-day allocation to unit GMs. v22 offices/property and v23–v24 investing/manufacturing stay planned.
+- **Release verification:** [PR #29](https://github.com/BSAVCI1/Boss/pull/29) merged at `69972b4fe6771478cd38ce82b15e9bc3734dc3e9`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39073362391) and [GitHub Pages](https://github.com/BSAVCI1/Boss/actions/runs/39073362154) passed at that commit. Automated 390/414px Chromium, IndexedDB and 730-day reconciliation tests passed; independent live-site browser run could not start because the browser-provider wallet is out of funds, and no private iPhone Safari save was inspected.
+
+
 ## Released v21.4b — Evidence-based leadership growth
 
 - First Team Lead appears after five corporate staff; subsequent leads require three further staff. Promotions depend on genuine tenure/work, career progression and leadership skill, not staff count alone.

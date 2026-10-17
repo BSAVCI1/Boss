@@ -2071,7 +2071,7 @@ S.exec.history.unshift({day:S.day,dept,manager:director.n,priority:S.exec.priori
 logIt(director.n+" trained "+worker.n+" under approved authority for "+biCurrency(cost)+".");
 }else{
 if(!orgSpend(dept,"hiring",cost))return false;
-const worker=createPerson();ensureCareer(worker);ensureRole(worker);worker.role.primary=dept==="commercial"?"sales":"ops";worker.department=dept;ensureDepartment(worker);ensurePerformance(worker,S.day);
+const worker=createPerson();ensureCareer(worker);ensureRole(worker);worker.role.primary=DEPARTMENTS[dept].skills.includes(spec.role)?spec.role:dept==="commercial"?"sales":"ops";worker.department=dept;ensureDepartment(worker);ensurePerformance(worker,S.day);
 S.cash-=cost;biMoney("recruiting",cost,"Director-authorized hire: "+worker.n);S.team.push(worker);
 plan.hires++;plan.payrollAdded+=dailySalary(worker);structural="";
 S.exec.history.unshift({day:S.day,dept,manager:director.n,priority:S.exec.priority,action:"delegated",result:director.n+" hired "+worker.n+" within authorized headcount/payroll and recruiting limits.",proposal:"hire"});

@@ -156,6 +156,18 @@
 
 **Potential next iteration after playtesting:** Richer employee narratives and relationships, meaningful rival rematches, more celebratory results and smoother guided first-session learning — without new administrative dashboards.
 
+
+## Boss v18 — CEO & Leadership Edition (DEVELOPMENT; verify release before marking delivered)
+- Company identity separates service offer (B2B consulting/delivery), customer industries, and competitive positioning.
+- Today starts with reporting structure (Commercial/Delivery directors plus Executive Assistant), 90-day CEO priorities, and executive decision inbox.
+- Weekly management meetings surface director requests for training, hiring, pay and cost optimization with forecast cost/risk. CEO approves or declines; journal and manager review record results, while actual expense postings and recurring salaries only change on approval.
+- Director-first departmental job allocation with Executive Assistant coordination across departments. Existing employee assignments are preserved.
+- Optional $120 new service line: future matching contracts only, shared staff, recorded fees and bounded production effect; no backfilled revenue or duplicate profit.
+- Market events clearly presented in CEO inbox and retained for 45 days; opportunities remain optional.
+- Mature-game specialist status, renewable strategy objectives, completed upgrade archive, ongoing bounded R&D, fixed office task animation icons.
+- Additive boss18 save migration from boss17 and earlier. Preserve signed contracts, employees, customers, project histories, strategy, rivals and experiments. No external APIs.
+- Acceptance: v15-v18 regression suites, 730+ day simulation, financial reconciliation, desktop/mobile interactions, Pages deployment success, live version verified, and existing Notion board updated.
+
 ## Backlog (await owner selection)
 - Office expansions and richer multi-level organizations (first department managers delivered v13)
 - Reactive rival companies

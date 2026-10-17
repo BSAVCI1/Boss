@@ -196,11 +196,11 @@ return factor;}
 function discoverTalent(p,amount){const c=p.career;if(c.revealed)return false;c.observed+=amount;
 if(c.observed<6)return false;c.revealed=true;p.s[c.talent]+=.65;structural="";const message=p.n+" discovered a talent for "+SKILLS[c.talent]+"!";logIt(message);Me(p,"My hidden talent was discovered");return true;}
 function goalProgress(p,task){const c=p.career;
-if(c.goal==="growth"&&(task==="study"||task==="teach"))c.satisfaction=clamp(c.satisfaction+.48);
-else if(c.goal==="creativity"&&task==="exp")c.satisfaction=clamp(c.satisfaction+.45);
+if(c.goal==="growth"&&(task==="study"||task==="teach"||task==="coachteam"))c.satisfaction=clamp(c.satisfaction+.48);
+else if(c.goal==="creativity"&&(task==="exp"||task==="market"))c.satisfaction=clamp(c.satisfaction+.45);
 else if(c.goal==="balance"&&(task==="rest"||task==="idle"))c.satisfaction=clamp(c.satisfaction+.28);
 else if(c.goal==="security"&&S.cash>=S.team.length*9)c.satisfaction=clamp(c.satisfaction+.12);
-else if(c.goal==="impact"&&task.startsWith("d"))c.satisfaction=clamp(c.satisfaction+.18);
+else if(c.goal==="impact"&&(task.startsWith("d")||task==="prospect"))c.satisfaction=clamp(c.satisfaction+.18);
 else if(c.goal==="recognition"&&S.day-c.recognizedAt<9)c.satisfaction=clamp(c.satisfaction+.18);
 else if(S.day%3===0)c.satisfaction=clamp(c.satisfaction-.22);
 if(c.stress>=72)c.satisfaction=clamp(c.satisfaction-.33);
@@ -208,7 +208,7 @@ if(c.satisfaction<25&&S.day%7===0){p.mood=clamp(p.mood-2);p.loy=clamp(p.loy-1);}
 }
 function talentAndCareerDay(p,task,deadline){const c=p.career;
 let shift=task.startsWith("d")?2.25+(deadline<=5?1.15:0):
-task==="exp"?.75:task==="assist"?.10:task==="rest"?-9:
+task==="exp"?.75:task==="prospect"?.9:task==="market"?.7:task==="coachteam"?-.6:task==="assist"?.10:task==="rest"?-9:
 task==="study"?-1.4:task==="teach"?-.9:-3;
 if(c.goal==="balance"&&task.startsWith("d"))shift+=.35;
 c.stress=clamp(c.stress+shift);
@@ -218,6 +218,7 @@ else if(c.stress<=47)c.burnout=clamp(c.burnout-1.4,0,100);
 else c.burnout=clamp(c.burnout-.22,0,100);
 if(task.startsWith("d"))c.xp+=.34;
 else if(task==="study"||task==="teach"||task==="exp")c.xp+=.22;
+else if(["prospect","market","coachteam"].includes(task))c.xp+=.16;
 if(task==="study")discoverTalent(p,.55);
 else if(task==="teach")discoverTalent(p,.42);
 else if(task==="exp")discoverTalent(p,.8);

@@ -232,6 +232,17 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .employee-summary .employee-aside{max-width:43%;min-width:0}.employee-summary .small{overflow-wrap:anywhere}
 @media(max-width:430px){.game-rivals{grid-template-columns:1fr}.game-rival{align-items:center}.game-rival small{font-size:11px}.game-desk{padding:13px}.game-actions{grid-template-columns:1fr 1fr}#view-work h2,#view-team h2,#view-growth h2{font-size:18px;margin:17px 0 9px}}
 @media(prefers-reduced-motion:reduce){.game-goal-track span{transition:none}}
+
+/* v18 executive leadership interface */
+.ceo-office,.ceo-direction,.executive-inbox{margin-bottom:12px}.ceo-office h2{font-size:20px;margin:8px 0}.ceo-office p{font-size:13px;color:var(--muted)}
+.ceo-office-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.ceo-office-grid>div{border:1px solid var(--line);border-radius:12px;padding:11px}.ceo-office-grid b{font-size:13px}
+.ceo-report{padding:7px 0;border-top:1px solid var(--line);font-size:12px}.ceo-report button{padding:3px 7px;min-height:30px;font-size:12px}
+.executive-inbox .exec-proposal{border:1px solid var(--line);border-radius:12px;padding:11px;margin:9px 0}.exec-proposal p{font-size:12px;margin:5px 0}.exec-proposal .buttons{gap:6px;display:flex;flex-wrap:wrap}.exec-proposal button{font-size:12px;min-height:36px;padding:7px 9px}
+.exec-opportunity{border-color:var(--accent);background:var(--accentWash)}.ceo-direction .small,.executive-inbox .small{font-size:12px;color:var(--muted)}
+.ceo-direction select{width:100%;margin:7px 0}.ceo-direction button{width:100%}
+#business-lines .service-line{border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0}
+#upgrades-complete[hidden]{display:none}
+@media(max-width:390px){.ceo-office-grid{grid-template-columns:1fr}.ceo-report button{max-width:100%}}
 </style>
 </head>
 <body>
@@ -241,6 +252,9 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
+<div class="card ceo-office"><div class="eyebrow">CEO · COMPANY IDENTITY</div><h2 id="company-name">Business Services Group</h2><p id="company-identity"></p><div class="ceo-office-grid"><div><b>My direct reports</b><div id="ceo-direct-reports"></div></div><div><b>Executive Assistant</b><div id="ceo-assistant"></div></div></div></div>
+<div class="card ceo-direction"><div class="lead"><b>Your 90-day direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p></div>
+<div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
 <div class="card game-desk" id="game-desk">
 <div class="lead"><span class="eyebrow">YOUR COMPANY STORY</span><span class="game-chapter" id="game-chapter">Founder</span></div>
 <h2 id="brief-headline">Your company at a glance</h2><p class="overview-copy" id="brief-summary">Your team is getting started.</p>
@@ -313,7 +327,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="view-intro"><h2>Team</h2><p>Employees, roles and culture</p></div>
 <section aria-labelledby="team-title"><h2 id="team-title">Your people</h2><p class="small" id="team-wellbeing">Career progress, stress and wellbeing</p><div id="people"></div></section>
 
-<section aria-labelledby="hiring-title"><h2 id="hiring-title">Grow the team</h2><div class="card"><details class="aux-details" id="recruitment-panel"><summary>Search and hire employees</summary><div class="filter-grid"><div><label for="hire-skill">Specialty to find</label><select id="hire-skill"><option value="">Any skill</option><option value="sales">Sales</option><option value="mkt">Marketing</option><option value="prod">Product</option><option value="ops">Operations</option></select></div><div><label for="hire-interest">Personal interest</label><select id="hire-interest"><option value="">Any interest</option><option value="customers">Customer relationships</option><option value="creative">Creative projects</option><option value="technology">Technology</option><option value="learning">Learning and growth</option><option value="people">Helping colleagues</option><option value="systems">Better processes</option></select></div></div><p class="filter-note">Search is free; hiring has a one-time fee. Each teammate adds $1.50 per day in salary costs, before cost breakthroughs.</p><div class="buttons"><button type="button" id="search-talent">Search candidates</button></div><div class="candidate-list" id="candidates"></div></details><div class="team-culture"><b>Office assistant · Delegation desk</b><p class="filter-note" id="assistant-status">No assistant assigned.</p><div class="buttons"><button type="button" id="hire-assistant">Hire office assistant ($20)</button></div>
+<section aria-labelledby="hiring-title"><h2 id="hiring-title">Grow the team</h2><div class="card"><details class="aux-details" id="recruitment-panel"><summary>Search and hire employees</summary><div class="filter-grid"><div><label for="hire-skill">Specialty to find</label><select id="hire-skill"><option value="">Any skill</option><option value="sales">Sales</option><option value="mkt">Marketing</option><option value="prod">Product</option><option value="ops">Operations</option></select></div><div><label for="hire-interest">Personal interest</label><select id="hire-interest"><option value="">Any interest</option><option value="customers">Customer relationships</option><option value="creative">Creative projects</option><option value="technology">Technology</option><option value="learning">Learning and growth</option><option value="people">Helping colleagues</option><option value="systems">Better processes</option></select></div></div><p class="filter-note">Search is free; hiring has a one-time fee. Each teammate adds $1.50 per day in salary costs, before cost breakthroughs.</p><div class="buttons"><button type="button" id="search-talent">Search candidates</button></div><div class="candidate-list" id="candidates"></div></details><div class="team-culture"><b>Executive assistant · CEO support</b><p class="filter-note" id="assistant-status">No executive assistant appointed.</p><div class="buttons"><button type="button" id="hire-assistant">Hire executive assistant ($20)</button></div>
 <p class="filter-note">Hire for $20 or appoint an existing colleague. Configure exactly what the assistant may do; they never displace someone you assigned. Your high-stakes people decisions stay with you.</p>
 <details class="assistant-settings"><summary>Delegation rules — customize your assistant</summary>
 <label class="assistant-toggle"><input type="checkbox" id="policy-assign"> Auto-assign unstaffed deals to idle colleagues</label>
@@ -336,14 +350,15 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <section aria-labelledby="organization-title"><h2 id="organization-title">Managers</h2><div class="card org-overview">
 <div class="lead"><b>Reporting lines</b><span id="org-status" class="small">Flat founder-led structure</span></div>
 
-<div id="org-chart"></div><div id="coach-manager-review"></div><details id="org-settings" class="aux-details"><summary>Department budgets, authority &amp; targets</summary><div id="org-controls"></div><p class="filter-note">Managers need Senior rank or 10 experience points. They stop routine individual delivery to lead their department, earn an extra $0.75/day, and can improve direct reports' output by up to 7% when actively coaching. Check costs against results. The office assistant retains cross-company coordination.</p></details>
+<div id="org-chart"></div><div id="coach-manager-review"></div><details id="org-settings" class="aux-details"><summary>Department budgets, authority &amp; targets</summary><div id="org-controls"></div><p class="filter-note">Managers need Senior rank or 10 experience points. They stop routine individual delivery to lead their department, earn an extra $0.75/day, and can improve direct reports' output by up to 7% when actively coaching. Check costs against results. The executive assistant coordinates across departments; managers own department work.</p></details>
 </div></section>
 </details>
 </section>
 <section id="view-growth" class="app-view" data-page="growth" aria-label="Strategy and capabilities" hidden>
 <div class="view-intro"><h2>Growth</h2><p>Industries, investments and company knowledge</p></div>
-<section aria-labelledby="market-title"><h2 id="market-title">Choose your direction</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><div id="sector-options" class="sector-buttons"></div><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
+<section aria-labelledby="market-title"><h2 id="market-title">Choose your direction</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><div id="sector-options" class="sector-buttons"></div><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
 
+<section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Services are what you sell; industries are the customers you serve. Lines share your company finances and employees.</p><div id="business-lines"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Propose launch · $120</button><p class="small">CEO approval required. Track new work from launch onward; earlier projects are never invented.</p></details></section>
 <section aria-labelledby="world-title"><h2 id="world-title">Your rivals</h2>
 <div class="card"><div id="game-rivals" class="game-rivals"></div><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
 
@@ -381,8 +396,8 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div id="lab-finished" class="lab-result"></div><div id="coach-lab-controls"></div>
 <details class="aux-details" id="lab-history-panel"><summary>Previous experiments <span id="lab-count">0</span></summary><div id="lab-history"></div></details>
 </details></div></section>
-<section aria-labelledby="idea-title"><h2 id="idea-title">Company upgrades</h2><div class="card"><p class="filter-note">Ideas discovered through research, service and daily work fill the map. Related discoveries unlock capabilities automatically—no manual pair matching.</p><div class="lead"><b>Organizational knowledge</b><span class="small" id="idea-summary"></span></div><div id="ideas"></div><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div>
-<details class="aux-details" id="idea-progress-panel"><summary id="idea-progress-summary">Funded idea outcomes</summary><div id="idea-progress-content"></div></details></div></section>
+<section aria-labelledby="idea-title"><h2 id="idea-title">Company upgrades</h2><div class="card"><p class="filter-note">Ideas discovered through research, service and daily work fill the map. Related discoveries unlock capabilities automatically—no manual pair matching.</p><div class="lead"><b>Organizational knowledge</b><span class="small" id="idea-summary"></span></div><p id="upgrades-complete" class="small" hidden></p><details class="aux-details" id="upgrade-archive"><summary>Unlocked capabilities &amp; research history</summary><div id="ideas"></div></details><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div>
+<details class="aux-details" id="idea-progress-panel"><summary id="idea-progress-summary">Innovation portfolio · funded ideas</summary><div id="idea-progress-content"></div></details></div></section>
 
 </section>
 </main>
@@ -391,7 +406,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <script>
 (function(){
 "use strict";
-const KEY="boss17";
+const KEY="boss18";
 let labHistorySignature="";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
@@ -962,7 +977,7 @@ if(brief){const button=$("world-event").querySelector("button[data-world-event=a
 if(button)button.disabled=!!S.ev||(brief.type==="tender"&&S.cash<12)||(brief.type==="referrals"&&S.cash<10)||(brief.type==="slowdown"&&S.cash<10)||(brief.type==="retention"&&!Object.values(S.market.customers).some(c=>c.loyalty>=55))||S.pipeline.leads.length>=12;}
 }
 
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss17")||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 ensurePerformance(p,s.day);
@@ -1774,7 +1789,7 @@ $("focus-hint").textContent=S.flow.focus?"No new project starts or dilemmas; exi
 const waitDays=Math.max(0,S.flow.nextLead-S.day),waitSeconds=S.deals.length===0?0:Math.max(0,Math.ceil((25000-(Date.now()-S.flow.lastLeadAt))/1000));
 $("intake-status").textContent=S.flow.focus?"Intake paused — pipeline can still mature.":"Projects: "+S.deals.length+" active · Leads: "+S.pipeline.leads.length+" · Closed: "+S.pipeline.closed+".";
 const ap=person(S.ops.assistantId);
-$("assistant-status").textContent=ap?ap.n+" manages intake. Assignments: "+S.ops.assigned+" · Routine decisions: "+S.ops.handled+".":"No assistant assigned. Policies can be set now; automation starts when you appoint one.";
+$("assistant-status").textContent=ap?ap.n+" manages intake. Assignments: "+S.ops.assigned+" · Routine decisions: "+S.ops.handled+".":"No executive assistant appointed. Policies can be set now; automation starts when you appoint one.";
 $("hire-assistant").disabled=!!S.ev||!!ap||S.cash<20;
 $("hire-assistant").title=ap?"Only one assistant at a time.":S.cash<20?"Not enough cash.":"Hire an assistant.";
 renderAssistantQueue();

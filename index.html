@@ -260,7 +260,14 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <details class="aux-details" id="lab-panel"><summary>Open experiment lab</summary>
 <div id="lab-active" class="lab-result"></div>
 <div id="lab-setup">
-<label for="lab-topic">Business question</label><select id="lab-topic"></select>
+<label for="lab-topic">Business question</label><select id="lab-topic">
+<option value="demand">Grow new business — lead generation</option>
+<option value="delivery">Improve on-time delivery</option>
+<option value="learning">Invest in employee skills</option>
+<option value="wellbeing">Reduce workload and stress</option>
+<option value="sector">Test a sector specialization</option>
+<option value="custom">Run my own leadership experiment</option>
+</select>
 <label for="lab-sector" id="lab-sector-label" hidden>Industry to focus on</label><select id="lab-sector" hidden></select>
 <label for="lab-duration">Evaluation period</label><select id="lab-duration"><option value="15">15 game days</option><option value="30" selected>30 game days</option><option value="45">45 game days</option></select>
 <label for="lab-forecast">Expected outcome compared with baseline</label><select id="lab-forecast"><option value="-25">25% lower</option><option value="-10">10% lower</option><option value="0">About the same</option><option value="10">10% higher</option><option value="25" selected>25% higher</option><option value="50">50% higher</option></select>

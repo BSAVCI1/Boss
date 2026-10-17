@@ -279,7 +279,7 @@ async function runBrowser(){
   await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await send("Page.navigate",{url:"file://"+file});
   let title="";
-  for(let i=0;i<75;i++){
+  for(let i=0;i<195;i++){
    try{const result=await send("Runtime.evaluate",{expression:"document.title",returnByValue:true});title=result.result?.value||"";if(title.startsWith("BOSS_QA:"))break;}catch{}
    await sleep(150);
   }

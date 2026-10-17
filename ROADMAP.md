@@ -101,6 +101,16 @@
 - Save key `boss141` imports `boss14` and prior versions without reconstructing unmeasured historical transactions, competencies, work or outcomes. Preserves compact mobile accordions and standalone offline index.html.
 - Validation criteria: syntax, UI boot, 400+ simulated days and financial reconciliation; payroll arrears accounting; recurring raise and affordability; legacy save migration; signed-price lock and renegotiation; manager skill and authority; promotion readiness; experiment participation and policy restore; decision history and mobile navigation.
 
+## Delivered: v14.1 — Management Coach & Decision Intelligence
+- Correct accounting and decision semantics: genuine recurring salary raises, available-cash settlement of recorded unpaid wages without double expense, signed/negotiated client fee locks that cannot be changed by later sector focus or reputation changes.
+- Today: Guided / Challenge / Sandbox management coaching and prioritized explanations, 7/14/30-day payroll requirements and estimated (not certain) receipts, immediate outcome snapshot and later decision follow-up journal.
+- Work: Contextual KPI diagnoses and management levers across Finance/Sales/Delivery/People; role-specific staff day allocation alongside traditional billable utilization.
+- Team: Visible promotion eligibility, XP and skill thresholds; manager planning/coaching/communication/delegation competence develops through managerial practice. Department managers can allocate only eligible autonomous departmental staff and spend coaching budgets, escalating structural staffing choices to CEO. 30-day scorecards and manager recommendations remain visible.
+- Growth: Sector focus and expansion guide with investment cost, relevant team skills, actual sector performance and economic trade-offs; experiment preview showing autonomy/manual constraints, actual staff-day participation and optional conflict-aware policy restore.
+- Decision Journal: Expected dilemmas explained before approval; direct payroll/cash/role effects logged immediately; 7- or 30-day observation prompts use historical outcomes without misrepresenting causation.
+- Preserve 4-tab mobile shell, independently expandable sections, save migration to `boss141`, private offline single-file operation; all reports labeled with measurement limitations.
+- Tested with finance reconciliation, actual wage settlements, intervention/manager progression, saved-game migration, price locks, experiments and 400-day gameplay runs.
+
 ## Next: v15 — Advanced Business Economy
 - Distinguish invoicing, collection and accounts receivable from earnings; customer payment terms, overdue amounts and working-capital cycles.
 - Evaluate pricing, discounting, expansion financing and investment ROI; distinguish cash, profit, committed liabilities and capital assets.

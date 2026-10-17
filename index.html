@@ -243,11 +243,11 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <details class="aux-details" id="economy-panel"><summary>Advanced economy · Receivables, cash, credit &amp; investments <span class="small" id="economy-summary"></span></summary>
 <div class="card"><p class="filter-note">Earned profit is not available cash. Client invoices collect on their due dates (some clients may pay 3 days late), while wages remain payable every day. New policies affect future contracts only.</p>
 <div id="economy-stats"></div><div class="filter-grid">
-<div><label for="economy-terms">Default payment terms on future contracts</label><select id="economy-terms"><option value="0">Cash on completion</option><option value="7">7 days</option><option value="14">14 days</option><option value="30">30 days</option></select></div>
+<div><label for="economy-terms">Default payment terms on future contracts</label><select id="economy-terms"><option value="0">Immediate — 4% fee discount</option><option value="7">7 days — base price</option><option value="14">14 days — 4% fee premium</option><option value="30">30 days — 8% fee premium</option></select></div>
 <div><label for="economy-pricing">Price position for future contracts</label><select id="economy-pricing"><option value="standard">Standard — balanced</option><option value="competitive">Competitive — 6% fee reduction</option><option value="premium">Premium — 10% more fee, fewer wins</option></select></div></div>
 <p class="filter-note" id="economy-market"></p><div class="buttons"><button type="button" id="economy-borrow">Draw $50 credit</button><button type="button" id="economy-repay">Repay up to $50</button><button type="button" id="economy-factor">Collect next invoice early (3% fee)</button></div>
 <p class="filter-note">Credit: maximum $150 outstanding; interest 0.1% per game day on principal, expensed as incurred and payable later. Borrowing improves cash but not profit. Repayment never expenses principal or interest twice.</p>
-<details class="aux-details"><summary>Capital investment decisions</summary><div class="buttons"><button type="button" id="economy-invest-operations">Delivery toolkit ($65)</button><button type="button" id="economy-invest-commercial">Sales toolkit ($55)</button></div><p class="small">Investments use cash and create a simulated long-lived capability. No automatic depreciation or claimed causal ROI: compare later project and sales outcomes with baseline.</p></details>
+<details class="aux-details"><summary>Capital investment decisions</summary><div class="buttons"><button type="button" id="economy-invest-operations">Delivery toolkit ($65)</button><button type="button" id="economy-invest-commercial">Sales toolkit ($55)</button></div><p class="small">Investments use cash and create a simulated long-lived capability. No depreciation is modeled. Return on investment would require incremental returns compared with a credible no-investment baseline.</p><div id="economy-assets"></div></details>
 <details class="aux-details"><summary>Outstanding customer invoices</summary><div id="economy-invoices"></div></details>
 </div></details>
 <section aria-labelledby="deals-title"><h2 id="deals-title">Client projects: choose assignments and contracts</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
@@ -289,7 +289,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="assistant-queue"><div class="lead"><b>Project priorities &amp; deadline forecast</b><span class="small" id="assistant-queue-summary"></span></div><div id="assistant-priorities"></div><p class="filter-note">Forecasts estimate remaining game days from the current assignment, skills and mood. Project deadlines still apply in Focus mode. Suggestions remain visible without an assistant.</p></div>
 </div><div class="team-culture"><b>Motivate the whole team</b><div class="filter-note">A team activity lifts mood and loyalty for everyone. Available every 12 days.</div><div class="buttons"><button type="button" id="team-activity">Team activity</button></div><div class="filter-note" id="team-activity-status"></div></div></div></section>
 
-<section aria-labelledby="skills-title"><h2 id="skills-title">Employee skill &amp; mentoring map</h2><div class="card"><p class="filter-note">Role ownership, skill strengths, hidden talents and mentor recommendations evolve with actual work. Managers can guide idle colleagues automatically.</p><div id="skills-map"></div></div></section>
+<section aria-labelledby="skills-title"><h2 id="skills-title">Employee skill &amp; mentoring map</h2><div class="card"><details class="aux-details" id="skills-panel"><summary>Show skills, promotion paths and hiring gaps</summary><p class="filter-note">Role expertise, hidden talents and mentor recommendations evolve through actual work.</p><div id="skills-map"></div></details></div></section>
 
 </section>
 <section id="view-growth" class="app-view" data-page="growth" aria-label="Strategy and capabilities" hidden>
@@ -627,6 +627,7 @@ if(!Number.isFinite(x.loan)||x.loan<0)x.loan=0;
 if(!Number.isFinite(x.interestDue)||x.interestDue<0)x.interestDue=0;
 if(!Number.isFinite(x.creditLimit)||x.creditLimit<150)x.creditLimit=150;
 if(!x.invested||typeof x.invested!=="object")x.invested={operations:false,commercial:false};
+if(!x.assets||typeof x.assets!=="object")x.assets={};
 if(!Number.isFinite(x.since))x.since=state.day;
 }
 function economyPressure(){const cycle=Math.floor(S.day/45)%4;
@@ -669,7 +670,7 @@ const before=coachSnap(),fee=+(inv.amount*.03).toFixed(2),amount=economyCollect(
 coachDecision("Accelerate customer collection",before,"Received "+biCurrency(amount)+" on invoice #"+inv.id+" after a "+biCurrency(fee)+" financing fee (3%). Earned revenue not counted twice.",null,7);
 logIt("Collected invoice #"+inv.id+" early for a 3% fee.");save();refresh();return true;}
 function economyInvest(kind){if(S.ev||!["operations","commercial"].includes(kind)||S.economy.invested[kind])return false;const fee=kind==="operations"?65:55;if(S.cash<fee)return false;
-const before=coachSnap();S.cash-=fee;S.economy.invested[kind]=true;biMoney("investment",fee,kind+" capital asset");
+const before=coachSnap();S.cash-=fee;S.economy.invested[kind]=true;S.economy.assets[kind]={day:S.day,fee,revenue:S.bi.totals.revenue,contribution:S.bi.totals.projectContribution,wins:S.bi.totals.wins};biMoney("investment",fee,kind+" capital asset");
 coachDecision("Invest in "+kind,before,"Paid "+biCurrency(fee)+" capital cash (not an operating expense). "+(kind==="operations"?"Delivery speed +6%":"New prospecting output +8%")+". Track outcomes over time; ROI is not established by correlation.",null,30);
 logIt("Invested "+biCurrency(fee)+" in "+kind+" capacity; cash reduced, no immediate P&L expense.");save();refresh();return true;}
 function economyRender(){
@@ -678,10 +679,11 @@ $("economy-summary").textContent=biCurrency(ar)+" receivable · "+overdue.length
 if(!panel.open)return;
 $("economy-terms").value=String(e.terms);$("economy-pricing").value=e.pricing;
 $("economy-stats").innerHTML='<div class="coach-grid"><div><small>Cash available</small><strong>'+biCurrency(S.cash)+'</strong></div><div><small>Uncollected invoices</small><strong>'+biCurrency(ar)+'</strong></div><div><small>Overdue invoices</small><strong>'+overdue.length+'</strong></div><div><small>Unpaid payroll</small><strong>'+biCurrency(S.bi.unpaidPayroll||0)+'</strong></div><div><small>Loan principal</small><strong>'+biCurrency(e.loan)+'</strong></div><div><small>Accrued interest</small><strong>'+biCurrency(e.interestDue)+'</strong></div></div>';
-$("economy-market").textContent=economyPressure().name+' · next shift in '+(45-S.day%45)+' game days. Premium prices (+10% to newly agreed fees) lower the win probability; competitive pricing (-6%) can increase conversions. Already agreed fees stay locked.';
+$("economy-market").textContent=economyPressure().name+' · next shift in '+(45-S.day%45)+' game days. Premium prices (+10% to newly agreed fees) lower the win probability; competitive pricing (-6%) can increase conversions. Terms also affect price: immediate payment -4%, 14 days +4%, 30 days +8%; longer credit terms modestly increase win odds. Already agreed fees stay locked.';
 $("economy-invoices").innerHTML=open.slice().sort((a,b)=>a.due-b.due).slice(0,12).map(i=>'<div class="bi-micro-row"><span>'+esc(i.client)+' · Invoice #'+i.id+' · Day '+i.day+'</span><span>'+biCurrency(i.amount)+' · '+(S.day>i.due?'Overdue '+(S.day-i.due)+'d':'Due Day '+i.due)+'</span></div>').join("")||'<p class="small">No unpaid customer invoices. Future completed projects will create invoices.</p>';
 $("economy-borrow").disabled=!!S.ev||e.loan>=e.creditLimit;$("economy-repay").disabled=!!S.ev||debt<.01||S.cash<.01;
 $("economy-factor").disabled=!!S.ev||!open.some(i=>i.due>S.day);
+$("economy-assets").innerHTML=["operations","commercial"].map(k=>{const a=e.assets[k];if(!a)return "";const since=S.day-a.day,contribution=S.bi.totals.projectContribution-a.contribution,wins=S.bi.totals.wins-a.wins;return '<div class="coach-mini"><b>'+(k==="operations"?"Delivery toolkit":"Sales toolkit")+'</b> · '+since+' days active · '+biCurrency(a.fee)+' capital invested · '+biCurrency(contribution)+' observed company-wide project contribution and '+wins+' wins since investment. This is <b>not attributable ROI</b>; it includes existing work, market pressure and other changes.</div>';}).join("");
 for(const kind of ["operations","commercial"]){const b=$("economy-invest-"+kind),fee=kind==="operations"?65:55;b.disabled=!!S.ev||e.invested[kind]||S.cash<fee;b.textContent=e.invested[kind]?"Investment active":kind==="operations"?"Invest $65 — Delivery toolkit (+6% speed)":"Invest $55 — Sales toolkit (+8% prospecting)";}
 }
 function economyChangePolicy(type,value){if(S.ev)return false;const e=S.economy,before=coachSnap();
@@ -1085,7 +1087,7 @@ let converted=false;
 for(const lead of [...leads].filter(l=>l.stage==="negotiation")){
 const cap=pipelineCapacity();if(S.flow.focus||S.deals.length>=cap||converted||S.day-S.pipeline.lastWon<8)continue;
 if(lead.age<6)continue;
-if(Math.random()<Math.max(.65,Math.min(.93,.84*economyPressure().factor*({premium:.9,standard:1,competitive:1.07}[S.economy.pricing]||1)))||S.market.customers[lead.client]?.loyalty>72){
+if(Math.random()<Math.max(.65,Math.min(.93,.84*economyPressure().factor*({premium:.9,standard:1,competitive:1.07}[S.economy.pricing]||1)*({0:.94,7:1,14:1.04,30:1.07}[S.economy.terms]||1)))||S.market.customers[lead.client]?.loyalty>72){
 const d=createDeal(lead.client);d.sector=lead.sector;d.sourceLead=lead.id;d.leadSource=lead.source;S.pipeline.closed++;S.pipeline.lastWon=S.day;biFunnel("won",lead);logIt("Sales won "+lead.client+" ("+SECTORS[lead.sector].name+"). Project booked from pipeline.");converted=true;}
 else{biFunnel("lost",lead);logIt("Proposal to "+lead.client+" was declined. Sales will pursue other opportunities.");}
 S.pipeline.leads=S.pipeline.leads.filter(x=>x.id!==lead.id);
@@ -1121,7 +1123,7 @@ function renderPipeline(){const stages=["prospect","qualified","proposal","negot
 $("pipeline-summary").textContent=S.pipeline.closed+" won · "+S.pipeline.leads.length+" open";
 $("pipeline-stages").innerHTML=stages.map((k,i)=>'<div class="pipestage"><strong>'+S.pipeline.leads.filter(l=>l.stage===k).length+'</strong>'+labels[i]+'</div>').join("");
 $("pipeline-details").innerHTML=S.pipeline.leads.slice(0,7).map(l=>'<div class="queue-item">'+esc(l.client)+' · '+SECTORS[l.sector].name+' · '+labels[stages.indexOf(l.stage)]+' · '+(S.day-l.created)+' days in pipeline</div>').join("")||'<div class="empty">No leads yet. A salesperson or marketer can build the next opportunity.</div>';}
-function renderSkillMap(){const rows=KEYS.map(k=>{const sorted=S.team.slice().sort((a,b)=>b.s[k]-a.s[k]),best=sorted[0],learner=sorted[sorted.length-1];
+function renderSkillMap(){if(!$("skills-panel").open)return;const rows=KEYS.map(k=>{const sorted=S.team.slice().sort((a,b)=>b.s[k]-a.s[k]),best=sorted[0],learner=sorted[sorted.length-1];
 const coverage=S.team.filter(p=>p.s[k]>=2.6).length,demand=S.deals.filter(d=>d.need===k).length;
 const guidance=!coverage?(demand?"Capacity gap: develop a specialist or recruit before demand rises.":"No advanced specialist yet: prepare a trainee before expanding."):coverage===1?"Single-person dependency: build a backup.":"Multiple experienced specialists available.";
 return '<div class="skillmap-row"><b>'+SKILLS[k]+'</b> · strongest '+esc(best?.n||"—")+' Lv '+(best?best.s[k].toFixed(2):"—")+' · '+coverage+' at Lv 2.6+ · '+demand+' projects<div class="small">'+esc(guidance)+' '+(learner&&best?.id!==learner.id?"Potential learner: "+esc(learner.n)+".":"")+'</div><button type="button" data-skill-hire="'+k+'">Find '+SKILLS[k]+' talent</button></div>';}).join("");
@@ -1129,7 +1131,7 @@ $("skills-map").innerHTML='<p class="filter-note">Skill coverage map · Lv 1.85 
 function createPerson(){const id=S.pid++;const base=NAMES[(id-1)%NAMES.length];return{id:id,n:base+(id>20?" "+(Math.floor((id-1)/20)+1):""),col:COLORS[(id-1)%COLORS.length],trait:pick(TRAITS),s:Object.fromEntries(KEYS.map(k=>[k,+(1+Math.random()*.6).toFixed(2)])),mood:70,loy:60,t:"idle",mem:[],interest:pick(INTEREST_KEYS),lastCareDay:-99,career:null};}
 function sectorOfClient(client){for(const k of SECTOR_KEYS)if(SECTORS[k].clients.includes(client))return k;return null;}
 function dealTier(){return Math.min(5,1+Math.floor(S.market.completed/5));}
-function estimatedFee(d,game=S){const focusBonus=d.sector===game.market.focus?1.12:1;return Math.floor(d.base*game.mod.reward*(1+game.rep/200)*focusBonus*(SECTORS[d.sector].premium||1)*(d.priceFactor||1));}
+function estimatedFee(d,game=S){const focusBonus=d.sector===game.market.focus?1.12:1;return Math.floor(d.base*game.mod.reward*(1+game.rep/200)*focusBonus*(SECTORS[d.sector].premium||1)*(d.priceFactor||1)*(d.termPriceFactor||1));}
 function feeFor(d){return Number.isFinite(d.agreedFee)?d.agreedFee:estimatedFee(d);}
 function lockDealFee(d){d.agreedFee=estimatedFee(d);if(d.biBooked)biReprice(d);}
 function createDeal(client,extra=0){const tier=dealTier();let sector=client?sectorOfClient(client):null;if(!sector||!S.market.open.includes(sector))sector=S.market.focus;
@@ -1141,7 +1143,7 @@ if(!customer){sector=Math.random()<.62?S.market.focus:pick(S.market.open);custom
 const diff=+(1+(tier-1)*.32+Math.random()*.4).toFixed(2);
 const work=6+Math.round(diff*2.2)+(tier-1);
 const base=66+Math.floor(diff*13)+(tier-1)*17+extra+(returning?10:0);
-const d={id:S.did++,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning,laborCost:0,directCost:0,biBooked:false,bookVal:0,paymentTerms:S.economy?(S.day===0?0:S.economy.terms):0,priceFactor:S.economy?({standard:1,competitive:.94,premium:1.10}[S.economy.pricing]||1):1};
+const d={id:S.did++,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning,laborCost:0,directCost:0,biBooked:false,bookVal:0,paymentTerms:S.economy?(S.day===0?0:S.economy.terms):0,priceFactor:S.economy?({standard:1,competitive:.94,premium:1.10}[S.economy.pricing]||1):1,termPriceFactor:S.day===0?1:({0:.96,7:1,14:1.04,30:1.08}[S.economy.terms]||1)};
 d.agreedFee=estimatedFee(d);S.deals.push(d);if(S.bi)biBook(d);return d;}
 function sectorAction(key){if(S.ev||!SECTORS[key])return;const before=coachSnap();
 if(S.market.open.includes(key)){if(S.market.focus===key)return;S.market.focus=key;logIt("Your company now specializes in "+SECTORS[key].name+".");}
@@ -1320,6 +1322,7 @@ $("hire-interest").addEventListener("change",()=>{S.hr.interest=$("hire-interest
 $("search-talent").addEventListener("click",searchCandidates);
 $("candidates").addEventListener("click",e=>{const b=e.target.closest("button[data-hire]");if(b)hireCandidate(Number(b.dataset.hire));});
 $("team-activity").addEventListener("click",teamActivity);
+$("skills-panel").addEventListener("toggle",()=>{if($("skills-panel").open)renderSkillMap();});
 $("skills-map").addEventListener("click",e=>{const b=e.target.closest("button[data-skill-hire]");if(!b)return;S.hr.skill=b.dataset.skillHire;S.hr.pool=[];const panel=$("recruitment-panel");if(panel)panel.open=true;renderCandidates();save();});
 $("org-settings").addEventListener("toggle",()=>{orgControlsSignature="";if($("org-settings").open)renderOrganization();});
 $("org-controls").addEventListener("change",e=>{const el=e.target;if(el.dataset.orgManager!==undefined)orgChooseManager(el.dataset.orgManager,Number(el.value)||null);

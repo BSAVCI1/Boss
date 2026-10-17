@@ -11,7 +11,7 @@ const el=id=>{if(!elements.has(id))elements.set(id,{id,innerHTML:"",textContent:
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){}},window:{scrollY:0,innerWidth:390,addEventListener(){},scrollTo(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout:()=>{},getComputedStyle:()=>({getPropertyValue:()=>""}),clearInterval:()=>{},Math,Date,Map,Set,JSON,console};
 vm.createContext(sandbox);
 const boot=javascript.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0,"Missing boot");
-vm.runInContext(javascript.slice(0,boot)+"globalThis.G={fresh,load,get:()=>S,set:x=>S=x,save,tick,gameChapter,gamePlan,gameRender,gameAdvanceDays,renderStructure,renderBriefing,refresh,navigate,ensureExecutive,executiveWeek,executiveProposal,executiveDecision,ceoDirection,draftExecutiveDirection,executiveShow,executiveLaunch,ceoLineFinish,createDeal,worldNewEvent,worldDay,worldEventChoice,renderIdeas,ideaProgressDay,delegateWork,orgChooseManager,feeFor,careerRoleSkill,orgChooseSubManager,orgSubManager,orgSubReports,orgDirectReports,orgChangePolicy,orgPlan,orgFunds,orgBudgetPeriod,orgManagerDay,executiveAutonomous,worldOfferTerms,worldOfferEligibility,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,renderOrganization};})();",sandbox,{timeout:3000});
+vm.runInContext(javascript.slice(0,boot)+"globalThis.G={fresh,load,get:()=>S,set:x=>S=x,save,tick,gameChapter,gamePlan,gameRender,gameAdvanceDays,renderStructure,renderBriefing,refresh,navigate,ensureExecutive,executiveWeek,executiveProposal,executiveDecision,ceoDirection,draftExecutiveDirection,executiveShow,executiveLaunch,ceoLineFinish,createDeal,worldNewEvent,worldDay,worldEventChoice,renderIdeas,ideaProgressDay,delegateWork,orgChooseManager,feeFor,careerRoleSkill,orgChooseSubManager,orgSubManager,orgSubReports,orgDirectReports,orgChangePolicy,orgPlan,orgFunds,orgBudgetPeriod,orgRenewPlan,orgManagerDay,executiveAutonomous,worldOfferTerms,worldOfferEligibility,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,renderOrganization};})();",sandbox,{timeout:3000});
 const G=sandbox.G;
 function fresh(){store.clear();G.fresh();el("lab-topic").value="learning";el("lab-duration").value="15";el("lab-forecast").value="25";el("lab-sector").value="hospitality";}
 
@@ -98,9 +98,16 @@ const quote=G.worldOfferTerms(s.world.activeEvent);assert.ok(quote.cost>12);asse
 const cash=s.cash;assert.ok(G.worldEventChoice("act"));assert.equal(s.cash,cash-quote.cost);
 assert.equal(s.world.activeEvent,null);assert.equal(G.feeFor(s.deals[0]),initialFee);accounting(s);
 });
-test("budget expiry resets spending authority, preserves accounting",()=>{
-fresh();const s=G.get(),p=s.org.departments.commercial.plan;p.limits.coaching=40;p.spent.coaching=12;p.hires=1;p.payrollAdded=1.5;p.amendments=1;
-s.day=91;G.orgBudgetPeriod();assert.equal(p.since,91);assert.equal(p.spent.coaching,0);assert.equal(p.hires,0);assert.equal(p.amendments,0);accounting(s);
+test("expired budget stops delegation until explicit CEO renewal",()=>{
+fresh();const s=G.get(),p=s.org.departments.commercial.plan;
+p.limits.coaching=40;p.spent.coaching=12;p.hires=1;p.payrollAdded=1.5;p.amendments=1;
+s.day=91;G.orgBudgetPeriod();
+assert.equal(p.since,0,"Expiry must not silently restart authority");
+assert.equal(p.spent.coaching,12);assert.equal(G.orgFunds("commercial","coaching",4),false);
+assert.ok(G.orgRenewPlan("commercial"));
+assert.equal(p.since,91);assert.equal(p.spent.coaching,0);
+assert.equal(p.hires,0);assert.equal(p.amendments,0);assert.ok(G.orgFunds("commercial","coaching",4));
+accounting(s);
 });
 test("730-day delegated coaching does not exceed budgets or corrupt cash",()=>{
 fresh();const s=G.get(),manager=s.team[0];manager.department="commercial";manager.role.primary="lead";manager.t="coachteam";s.org.departments.commercial.managerId=manager.id;

@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
 fs.writeFileSync(file,html.replace("</body>","<script>"+instrumentation+"</script></body>"));
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),"boss-cdp-"));
-const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--remote-debugging-port=0","--user-data-dir="+profile,"about:blank"];
+const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--remote-debugging-port=0","--user-data-dir="+profile,"file://"+file];
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const http=require("node:http");
 function getJson(url){
@@ -78,8 +78,20 @@ async function runBrowser(){
    });
   }
   await send("Page.enable");await send("Runtime.enable");
-  await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:true});
-  await send("Page.navigate",{url:"file://"+file});
+  // Attach to the existing file:// game renderer first. Emulation applied to
+  // about:blank can disappear during Chrome's cross-process navigation.
+  let loaded=false;
+  for(let i=0;i<75;i++){
+   try{
+    const v=await send("Runtime.evaluate",{expression:"location.protocol+'|'+document.readyState",returnByValue:true});
+    if(v.result?.value==="file:|complete"){loaded=true;break;}
+   }catch{}
+   await sleep(150);
+  }
+  assert.ok(loaded,"Chrome game file did not finish loading before mobile emulation");
+  await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,screenWidth:390,screenHeight:844,deviceScaleFactor:1,mobile:true});
+  await send("Runtime.evaluate",{expression:"document.title='Boss mobile QA reload pending'",returnByValue:true});
+  await send("Page.reload",{ignoreCache:true});
   let title="";
   for(let i=0;i<75;i++){
    try{const result=await send("Runtime.evaluate",{expression:"document.title",returnByValue:true});title=result.result?.value||"";if(title.startsWith("BOSS_QA:"))break;}catch{}

@@ -60,6 +60,10 @@ document.addEventListener("DOMContentLoaded",async()=>{
     snap.lab.hypothesis==="Quality improves with targeted work"&&snap.ui.pendingCEO==="people"&&snap.ui.speed===3&&snap.ui.selectedService==="technology"&&snap.exec.priority==="grow";
    result.checks.visibleSaveStatus=byId("save-state")?.textContent.includes("Saved Day");
    result.errors=(window.__mobileErrors||[]);
+   // Build a synthetic funded company without affecting any real player save.
+   const funded=JSON.parse(localStorage.getItem("boss20"));
+   funded.cash+=500;funded.bi.openingCash+=500;
+   localStorage.setItem("boss20",JSON.stringify(funded));
    sessionStorage.setItem("boss-qa-pre-refresh",JSON.stringify(result));
    sessionStorage.setItem("boss-qa-reload","1");
    location.reload();return;
@@ -92,6 +96,19 @@ document.addEventListener("DOMContentLoaded",async()=>{
     await new Promise(r=>setTimeout(r,100));
    }
    sessionStorage.setItem("boss-qa-indexed-saved",confirmed?"1":"0");
+   let businessCommitted=false;
+   if(confirmed){
+    byId("service-line-select").value="technology";
+    byId("launch-service-line").click();
+    for(let i=0;i<90;i++){
+     const business=byId("business-lines")?.textContent||"";
+     if(business.includes("Technology advisory")&&byId("save-state")?.textContent.startsWith("Saved Day ")){
+      businessCommitted=true;break;
+     }
+     await new Promise(r=>setTimeout(r,100));
+    }
+   }
+   sessionStorage.setItem("boss-qa-indexed-line-saved",businessCommitted?"1":"0");
    location.reload();return;
   }
   const previous=JSON.parse(sessionStorage.getItem("boss-qa-before-idb"));
@@ -100,10 +117,17 @@ document.addEventListener("DOMContentLoaded",async()=>{
   result.checks.visibleSaveStatus=previous.checks.visibleSaveStatus;
   result.checks.bootstrapComplete=previous.checks.bootstrapComplete;
   result.checks.indexedFallbackCommitted=sessionStorage.getItem("boss-qa-indexed-saved")==="1";
+   result.checks.indexedLineCommitted=sessionStorage.getItem("boss-qa-indexed-line-saved")==="1";
   const oldLocal=JSON.parse(localStorage.getItem("boss20"));
   const restoredDay=Number(byId("day").textContent.replace("Day ",""));
   result.checks.indexedFallbackReload=Number.isFinite(restoredDay)&&restoredDay>previous.dayBefore&&restoredDay>oldLocal.day;
   result.checks.indexedDayEvidence={before:previous.dayBefore,local:oldLocal.day,restored:restoredDay,status:byId("save-state")?.textContent};
+   const db=await new Promise(resolve=>{const request=indexedDB.open("BossSafeProgress",1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>resolve(null);});
+   let recovered=null;
+   if(db)recovered=await new Promise(resolve=>{const tx=db.transaction("game","readonly"),request=tx.objectStore("game").get("boss20");request.onsuccess=()=>resolve(JSON.parse(request.result?.payload||"null"));request.onerror=()=>resolve(null);});
+   result.checks.indexedLineNoDoubleCharge=!!recovered&&recovered.exec.lines.filter(x=>x.key==="technology").length===1&&
+    recovered.bi.totals.investments===120&&recovered.exec.lines.find(x=>x.key==="technology").spent===120&&
+    byId("business-lines")?.textContent.includes("Technology advisory");
  }catch(e){result.errors.push(String(e.stack||e));}
  document.title="BOSS_QA:"+btoa(unescape(encodeURIComponent(JSON.stringify(result))));
 });
@@ -172,6 +196,8 @@ async function runBrowser(){
   assert.equal(outcome.checks.visibleSaveStatus,true,"Save confirmation should be visible");
   assert.equal(outcome.checks.indexedFallbackCommitted,true,"Quota failure must save full company to IndexedDB");
   assert.equal(outcome.checks.indexedFallbackReload,true,"After reload Boss must use newer IndexedDB day, not stale local day");
+  assert.equal(outcome.checks.indexedLineCommitted,true,"Business purchase in IndexedDB mode must commit before confirmation");
+  assert.equal(outcome.checks.indexedLineNoDoubleCharge,true,"Paid line must survive reload with one $120 investment and no duplicates");
   assert.deepEqual(outcome.errors,[]);
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}

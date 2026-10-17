@@ -195,7 +195,8 @@ document.addEventListener("DOMContentLoaded",async()=>{
    result.checks.nativeTeammateDropdownStable=workerPicker===byId("unit-employee-technology")&&workerPicker.isConnected&&workerPicker.value===originalWorkerValue;
    const liveDay=Number(JSON.parse(localStorage.getItem("boss20")||"null")?.day);
    result.checks.tickDuringPickerContext={dayBefore:pickerDay,dayAfter:liveDay,pausedControl:byId("pause")?.textContent,saveStatus:byId("save-state")?.textContent,modalOpen:!byId("modal")?.hidden};
-   result.checks.tickContinuesDuringPicker=liveDay>pickerDay;
+   const savedDay=Number((byId("save-state")?.textContent||"").match(/Saved Day (\d+)/)?.[1]);
+   result.checks.tickContinuesDuringPicker=liveDay>pickerDay||savedDay>pickerDay;
    gmPicker.dispatchEvent(new Event("change",{bubbles:true}));
    await new Promise(r=>setTimeout(r,1050)); // UI catches up after mobile picker dismissal.
    result.checks.nativePickerReconciled=!!byId("unit-gm-technology")&&!!byId("unit-employee-technology");
@@ -300,7 +301,7 @@ async function runBrowser(){
    assert.equal(outcome.checks.unitAuthorityReloaded,true,"GM budget and quality goal must survive mobile reload without a new purchase");
   assert.equal(outcome.checks.nativeGMDropdownStable,true,"Opened GM native picker must not be replaced by game ticks");
   assert.equal(outcome.checks.nativeTeammateDropdownStable,true,"Dedicated colleague picker must keep DOM identity");
-  // Active-tick execution is asserted deterministically in v20-portfolio.cjs; browser may be paused by unresolved game events.
+  assert.equal(outcome.checks.tickContinuesDuringPicker,true,"Game must progress and durably save while native selector stays open, including IndexedDB fallback");
   assert.equal(outcome.checks.nativePickerReconciled,true,"UI should refresh after select completes");
   assert.equal(outcome.checks.partialUnitNumericProtected,true,"Partial unit budget edits must not be overwritten mid-typing");
   assert.equal(outcome.checks.teammateDraftSurvivesRepaint,true,"Chosen teammate must remain selected until Transfer is clicked");

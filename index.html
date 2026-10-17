@@ -397,7 +397,7 @@ if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=450
 save();if(dirty||!structural||S.deals.some(d=>(!d.negotiated&&d.prog>=d.work*.2)))renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;}save();renderStructure();refresh();}
 function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1));}
-function bestIdle(d){return S.team.filter(p=>p.id!==S.ops.assistantId&&p.t==="idle"&&p.career.stress<72).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
+function bestIdle(d){return S.team.filter(p=>p.id!==S.ops.assistantId&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
 function forecast(d){const assigned=person(d.w);const candidate=assigned||bestIdle(d);const speed=workerSpeed(candidate,d);const remaining=Math.max(0,d.work-d.prog);const eta=speed?Math.ceil(remaining/speed):null;const slack=eta===null?null:d.dl-eta;const risk=!assigned?"unassigned":slack<0?"critical":slack<=4?"watch":"ok";return{d,assigned,candidate,eta,slack,risk,fit:speed};}
 function rankedProjects(){const priority=S.ops.policy.priority;return S.deals.map(forecast).sort((a,b)=>{
 if(priority==="deadline")return a.d.dl-b.d.dl||b.fit-a.fit;
@@ -405,7 +405,7 @@ if(priority==="skills")return b.fit-a.fit||a.d.dl-b.d.dl;
 const aRisk=a.slack===null?-8:a.slack,bRisk=b.slack===null?-8:b.slack;
 return aRisk-bRisk||a.d.dl-b.d.dl||b.fit-a.fit;});}
 function delegateWork(){const a=person(S.ops.assistantId);if(!a||a.t!=="assist"||a.career.recoveryDays>0||!S.ops.policy.assign)return false;let changed=false;
-for(const f of rankedProjects()){const d=f.d;if(d.w!==null)continue;const p=bestIdle(d);if(!p)break;d.w=p.id;p.t="d"+d.id;S.ops.assigned++;logIt(a.n+" assigned "+p.n+" to "+d.cl+" ("+S.ops.policy.priority+" priority).");changed=true;}return changed;}
+for(const f of rankedProjects()){const d=f.d;if(d.w!==null)continue;const p=bestIdle(d);if(!p)break;d.w=p.id;p.t="d"+d.id;p.role.autoTask=true;S.ops.assigned++;logIt(a.n+" assigned "+p.n+" to "+d.cl+" ("+S.ops.policy.priority+" priority).");changed=true;}return changed;}
 function assistantDecision(ev){const a=person(S.ops.assistantId),policy=S.ops.policy;if(!a||a.t!=="assist"||a.career.recoveryDays>0||ev.a===a.id)return null;
 const cost={praise:0,family:5,mistake:0,idea:10}[ev.k];if(cost===undefined||!policy[ev.k]||cost>policy.budget||S.cash<cost)return null;
 return ev.k==="mistake"?1:0;}

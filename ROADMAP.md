@@ -168,8 +168,8 @@
 - Additive boss18 save migration from boss17 and earlier. Preserve signed contracts, employees, customers, project histories, strategy, rivals and experiments. No external APIs.
 - **Release evidence:** PR #7 merged and PR #8 fixed the CEO direction selector. On commit `0cc7ab7`, all five inherited v15/v16/v16.1/v17/v18 regression suites passed (including 730-day simulations, financial reconciliation, legacy migration, and no artificial service-line income); GitHub Pages build and deploy completed successfully on 2026-10-17. Separate browser/mobile QA remains an ongoing quality gate and should not be confused with automated DOM assertions. Existing Notion project records both releases.
 
-## Proposed next batch: v19 — Organizational Scaling & Executive Delegation (OWNER REVIEW REQUIRED; NOT IMPLEMENTED)
-**Origin:** Owner's 2026-10-17 real iPhone gameplay at about Day 2443, 14 employees, two managers, and mature cash/reputation. This is a proposal and bug investigation queue, not authorization to change the game. Preserve offline one-file architecture, existing saves, economics, customers, people and recorded accounting.
+## Boss v19 — Organizational Scaling & Executive Delegation (IMPLEMENTED ON DEVELOPMENT BRANCH; RELEASE GATED)
+**Origin:** Owner's 2026-10-17 iPhone gameplay at about Day 2443, 14 employees and two managers; implementation authorized in the follow-up. The v19 branch contains a functional implementation covering roles, reporting tree, custom 90/180-day authority with explicit CEO renewal, department objectives, delegated training and hiring, and Today market Act/Pass. Preserve offline one-file architecture, economics, historical accounting and previous browser saves. No valuation, tenure or reputation-rebalance changes in v19.
 
 ### P0 — defects and misleading communication
 1. **Manager vs director title inconsistency:** Today always hardcodes "Director" for the two department managers; Team calls them "Manager". Use actual career/appointment tier and a consistent role label across both views; keep old appointments valid.
@@ -200,7 +200,8 @@
 - Reconcile opening cash + tracked receipts - payments with live cash through at least 730 simulated days, preserving signed fees and historical data. Verify no unapproved $8 auto-training or double-charged expenses.
 - Test each opportunity type when pipeline is full, cash is inadequate, retention customers are missing, or no dilemma can interrupt; act/pass directly on Today with reasoned disabled states and no repeated transaction.
 - Test actual mobile viewport near 390px for fixed bottom navigation, compact expandable structures, controls, no overlaps, preserved focus during day ticks and useful CEO decision summaries.
-- Do not code or release this scope before owner review and prioritization. Stage work on an isolated branch and update Notion when approved.
+- **Branch QA:** seven full regression suites passed on `boss-v19-org-autonomy`, including 730-day reconciliations and migration from legacy saves to forward-only `boss19`. Production remains v18.1 until the PR merges and both main CI and Pages deploy pass; mobile interactive verification remains an explicit follow-up.
+- **Deferred separately:** 2026 company-value simulation, tenure anniversaries and any forward-only reputation pricing recalibration; do not silently change economy or signed fees in this patch.
 
 ## Backlog (await owner selection)
 - Office expansions and richer multi-level organizations (first department managers delivered v13)

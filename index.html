@@ -1204,7 +1204,7 @@ if(!state.team.some(p=>p.id===d.managerId&&p.department===key&&p.role.primary===
 function orgManager(key){const id=S.org.departments[key]?.managerId;const p=person(id);return p&&p.department===key&&p.role.primary==="lead"&&p.id!==S.ops.assistantId?p:null;}
 function orgReports(key){const mgr=orgManager(key);return S.team.filter(p=>p.department===key&&p.id!==mgr?.id&&p.id!==S.ops.assistantId);}
 function orgPeriod(){for(const key of DEPT_KEYS){const d=S.org.departments[key];if(S.day-d.periodStart>=30){
-const v=d.stats,attempts=v.delivered+(v.missed||0),hasEvidence=key==="commercial"?v.leads>0:attempts>=3;
+const v=d.stats,attempts=v.delivered+(v.missed||0),hasEvidence=key==="commercial"?(v.leads>0||v.wins>0):attempts>=3;
 const achieved=key==="commercial"?(v.leads>=d.target.leads||v.wins>=Math.max(2,Math.ceil(d.target.leads/2))):attempts>=3&&Math.round(100*v.onTime/attempts)>=d.target.onTime;
 const reading=key==="commercial"?"New leads "+v.leads+"/"+d.target.leads+" · Wins "+v.wins+" (including existing pipeline)":"On-time "+(attempts?Math.round(100*v.onTime/attempts)+"%":"no deliveries")+" / "+d.target.onTime+"%";
 const result={day:S.day,manager:orgManager(key)?.n||"Founder",result:hasEvidence?(achieved?"Target met":"Below target"):"Insufficient evidence",reading,coached:v.coached,spent:d.spent};

@@ -148,10 +148,10 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="overview-metrics"><span id="brief-projects">0 projects</span><span id="brief-pipeline">0 in pipeline</span><span id="brief-team">Team ready</span></div></div>
 <section class="card bi-headline" aria-labelledby="bi-headline-title"><div class="lead"><b id="bi-headline-title">Business performance</b><span class="small" id="bi-period-note">Tracked since Day 0</span></div>
 <div class="bi-grid">
-<div><span>Revenue earned</span><strong id="bi-revenue">$0</strong></div>
-<div><span>Operating costs</span><strong id="bi-costs">$0</strong></div>
-<div><span>Operating profit</span><strong id="bi-profit">$0</strong></div>
-<div><span>Profit margin</span><strong id="bi-margin">—</strong></div>
+<div id="bi-tile-revenue"><span>Revenue earned</span><strong id="bi-revenue">$0</strong></div>
+<div id="bi-tile-costs"><span>Operating costs</span><strong id="bi-costs">$0</strong></div>
+<div id="bi-tile-profit"><span>Operating profit</span><strong id="bi-profit">$0</strong></div>
+<div id="bi-tile-margin"><span>Profit margin</span><strong id="bi-margin">—</strong></div>
 </div><div class="buttons bi-headline-actions"><button type="button" id="bi-open-details">View full performance →</button></div></section>
 <div id="attention-list" class="attention-list" aria-live="off"></div>
 <div class="card focusrow"><div><strong>Focus on current work</strong><div class="small" id="focus-hint">Pause incoming work when you need space.</div></div><button type="button" id="focus-toggle">Enable Focus</button></div>
@@ -362,15 +362,78 @@ for(const [kind,val]of Object.entries(b.categories||{}))categories[kind]=(catego
 return{values,sources,sectors,categories,from,days:Math.max(1,S.day-from+1),limited:false};}
 function biCurrency(n){return(n<0?"-$":"$")+Math.abs(n||0).toLocaleString("en-US",{maximumFractionDigits:0});}
 function biPercent(n,denom){return denom>0?Math.round(n/denom*100)+"%":"—";}
-function biMetric(label,value,hint){return '<div class="bi-metric"><span>'+esc(label)+'</span><strong>'+esc(String(value))+'</strong><small>'+esc(hint||"")+'</small></div>';}
-function renderBI(force=false){const v=biPeriod().values,profit=v.revenue-v.costs;
+function biRule(level,reason){return{level,reason};}
+let biVisual={};
+function biVisualRules(t,period){
+const out={},section={finance:[],sales:[],delivery:[],people:[]};
+function add(group,label,level,reason){const rule=biRule(level,reason);out[label]=rule;section[group].push({label,...rule});}
+const days=period.days,profit=t.revenue-t.costs;
+const payPerDay=S.team.reduce((sum,p)=>sum+dailySalary(p),0);
+const runway=payPerDay?S.cash/payPerDay:Infinity;
+const fullRevenue=t.revenue>0;
+const addProfit=fullRevenue&&profit>=0?"good":days>=7&&profit<0?"critical":days<7?"neutral":"watch";
+add("finance","Operating profit",addProfit,addProfit==="critical"?"Loss-making: expenses exceed revenue.":"Profit must cover ongoing operating costs.");
+add("finance","Profit margin",!fullRevenue?"neutral":profit/t.revenue<0?"critical":profit/t.revenue<.12?"watch":"good",
+fullRevenue?"Target ≥12% operating margin (indicative).":"Requires revenue before a margin can be calculated.");
+add("finance","Earned revenue",fullRevenue?"good":days>=10&&t.costs>0?"watch":"neutral","Revenue is recognized only when client work is completed.");
+add("finance","Cash runway",runway<7?"critical":runway<15?"watch":"good",
+"Estimated cash / current daily payroll. Below 7 days is critical; 7–14 days is watch.");
+add("finance","Outstanding payroll",S.bi.unpaidPayroll>.01?"critical":"good","Unpaid wages are a liability that needs settling.");
+const leadReady=t.leads>=5,decided=t.wins+t.lost>=3,acqReady=t.wins>=2;
+add("sales","Lead qualification",!leadReady?"neutral":t.qualified/t.leads<.4?"critical":t.qualified/t.leads<.65?"watch":"good",
+"Indicative target ≥65%; requires at least 5 generated leads.");
+add("sales","Sales win rate",!decided?"neutral":t.wins/(t.wins+t.lost)<.3?"critical":t.wins/(t.wins+t.lost)<.5?"watch":"good",
+"Indicative target ≥50% of decided opportunities; requires at least 3.");
+const avgWonValue=t.wins>0?t.booked/Math.max(1,t.wins):0;
+const cac=acqReady?t.acquisitionLabor/t.wins:null;
+add("sales","Estimated acquisition cost",!acqReady||avgWonValue<=0?"neutral":cac>avgWonValue?"critical":cac>avgWonValue*.5?"watch":"good",
+"Commercial payroll per win, compared with booked fee per win (proxy, not full CAC).");
+const deliveredReady=t.delivered>=3;
+add("delivery","On-time delivery",!deliveredReady?"neutral":t.onTime/t.delivered<.7?"critical":t.onTime/t.delivered<.9?"watch":"good",
+"Target ≥90% on-time; requires 3 completed projects.");
+add("delivery","Avg. quality",!deliveredReady?"neutral":t.qualityTotal/t.delivered<60?"critical":t.qualityTotal/t.delivered<75?"watch":"good",
+"Target ≥75% quality; requires 3 completed projects.");
+add("delivery","Contribution margin",t.revenue<=0?"neutral":t.projectContribution<0?"critical":t.projectContribution/t.revenue<.25?"watch":"good",
+"Target ≥25% contribution; excludes company overhead.");
+add("delivery","Projects missed",t.missed>=2&&t.missed>t.delivered*.2?"critical":t.missed>0?"watch":t.delivered>0?"good":"neutral",
+"Any missed client delivery is worth reviewing; repeated failures are critical.");
+const utilization=t.staffDays>=20?t.billableDays/t.staffDays:null;
+add("people","Billable utilization",utilization===null?"neutral":utilization<.1&&S.deals.length>0?"critical":utilization<.25?"watch":utilization>.85?"watch":"good",
+"Indicative target 25–85%; consider sales and learning time. Requires 20 staff-days.");
+const highStress=S.team.filter(p=>p.career.stress>=75||p.career.burnout>=40).length;
+const mediumStress=S.team.filter(p=>p.career.stress>=60||p.career.burnout>=25).length;
+add("people","Team wellbeing",highStress?"critical":mediumStress?"watch":"good",
+"Watch stress ≥60% or burnout ≥25%; critical at stress ≥75% or burnout ≥40%.");
+return{metrics:out,sections:section,runway,payPerDay};
+}
+function biApplyTone(el,tone){if(!el)return;
+for(const level of ["critical","watch","good","neutral"])el.classList.remove("bi-"+level);
+el.classList.add("bi-"+(tone||"neutral"));}
+function biUpdateSectionStatuses(signals){
+for(const section of ["finance","sales","delivery","people"]){const rules=signals.sections[section],critical=rules.filter(r=>r.level==="critical"),watch=rules.filter(r=>r.level==="watch"),good=rules.filter(r=>r.level==="good");
+const tone=critical.length?"critical":watch.length?"watch":good.length?"good":"neutral";
+const label=tone==="critical"?critical.length+" needs attention":tone==="watch"?watch.length+" to watch":tone==="good"?"On track":"Collecting data";
+const indicator=$("bi-"+section+"-state"),hint=$("bi-"+section+"-hint");
+indicator.textContent=label;biApplyTone(indicator,tone);
+hint.textContent=critical.length?critical.slice(0,2).map(r=>r.label).join(" · "):watch.length?watch.slice(0,2).map(r=>r.label).join(" · "):tone==="good"?"Within current guide ranges":"More recorded activity needed before assessment";
+}
+}
+function biMetric(label,value,hint){const rule=biVisual.metrics?.[label]||{level:"neutral",reason:""};
+const detail=rule.reason?'<span class="bi-diagnostic">'+esc(rule.reason)+'</span>':"";
+return '<div class="bi-metric bi-'+rule.level+'"><span>'+esc(label)+'</span><strong>'+esc(String(value))+'</strong><small>'+esc(hint||"")+'</small>'+detail+'</div>';}
+
+function renderBI(force=false){const period=biPeriod(),v=period.values,profit=v.revenue-v.costs;biVisual=biVisualRules(v,period);biUpdateSectionStatuses(biVisual);
 $("bi-revenue").textContent=biCurrency(v.revenue);$("bi-costs").textContent=biCurrency(v.costs);$("bi-profit").textContent=biCurrency(profit);$("bi-margin").textContent=biPercent(profit,v.revenue);
 $("bi-period-note").textContent="Tracked since Day "+S.bi.since;
+biApplyTone($("bi-tile-revenue"),biVisual.metrics["Earned revenue"].level);
+biApplyTone($("bi-tile-costs"),"neutral");
+biApplyTone($("bi-tile-profit"),biVisual.metrics["Operating profit"].level);
+biApplyTone($("bi-tile-margin"),biVisual.metrics["Profit margin"].level);
 if(!$("performance-panel").open&&!force)return;
 $("bi-range").value=S.bi.range;
-const period=biPeriod(),t=period.values;
+const t=period.values;
 $("bi-since").textContent="Day "+S.bi.since+" · "+(S.bi.range==="all"?"All tracked history":"Since Day "+period.from);
-$("bi-finance").innerHTML=biMetric("Earned revenue",biCurrency(t.revenue),"Received immediately")+biMetric("Operating costs",biCurrency(t.costs),"Payroll + other costs")+biMetric("Operating profit",biCurrency(t.revenue-t.costs),"Revenue less expenses")+biMetric("Profit margin",biPercent(t.revenue-t.costs,t.revenue),"Not cash flow")+biMetric("Cash received",biCurrency(t.cashIn),"Collected income")+biMetric("Cash paid",biCurrency(t.cashOut),"Outgoing payments")+biMetric("Net cash flow",biCurrency(t.cashIn-t.cashOut),"Excludes opening cash")+biMetric("Outstanding payroll",biCurrency(S.bi.unpaidPayroll),"Lifetime liability")+biMetric("Capital investments",biCurrency(t.investments),"Cash spend, excluded from operating costs");
+$("bi-finance").innerHTML=biMetric("Earned revenue",biCurrency(t.revenue),"Received immediately")+biMetric("Operating costs",biCurrency(t.costs),"Payroll + other costs")+biMetric("Operating profit",biCurrency(t.revenue-t.costs),"Revenue less expenses")+biMetric("Profit margin",biPercent(t.revenue-t.costs,t.revenue),"Not cash flow")+biMetric("Cash received",biCurrency(t.cashIn),"Collected income")+biMetric("Cash paid",biCurrency(t.cashOut),"Outgoing payments")+biMetric("Net cash flow",biCurrency(t.cashIn-t.cashOut),"Excludes opening cash")+biMetric("Cash runway",Number.isFinite(biVisual.runway)?biVisual.runway.toFixed(1)+" days":"—","Coverage at current daily payroll")+biMetric("Outstanding payroll",biCurrency(S.bi.unpaidPayroll),"Lifetime liability")+biMetric("Capital investments",biCurrency(t.investments),"Cash spend, excluded from operating costs");
 $("bi-cost-breakdown").innerHTML='<div class="lead"><b>Expense categories</b><span class="small">Selected period</span></div>'+Object.entries(period.categories).sort((a,b)=>b[1]-a[1]).map(([kind,amount])=>'<div class="bi-micro-row"><span>'+esc(kind.charAt(0).toUpperCase()+kind.slice(1))+'</span><span>'+biCurrency(amount)+'</span></div>').join("");
 const diff=S.bi.openingCash+S.bi.totals.cashIn-S.bi.totals.cashOut-S.cash;
 $("bi-finance-note").textContent="Opening cash "+biCurrency(S.bi.openingCash)+" · Current cash "+biCurrency(S.cash)+(Math.abs(diff)>.1?" · Unreconciled: "+biCurrency(diff):" · Cash flows reconcile")+". Payroll due may exceed cash actually paid; unpaid wages remain a liability. Early-game history before Day "+S.bi.since+" is not reconstructed.";
@@ -379,7 +442,7 @@ $("bi-sources").innerHTML='<div class="lead"><b>Lead source quality</b><span cla
 $("bi-delivery").innerHTML=biMetric("Booked work",biCurrency(t.booked),"Signed value")+biMetric("Realized revenue",biCurrency(t.revenue),"Delivered and paid")+biMetric("Completed projects",t.delivered,"Deliveries")+biMetric("On-time delivery",biPercent(t.onTime,t.delivered),"On time / completed")+biMetric("Avg. quality",t.delivered?(t.qualityTotal/t.delivered).toFixed(0)+"%":"—","At completion")+biMetric("Projects missed",t.missed,"Deadline breaches")+biMetric("Contribution",biCurrency(t.projectContribution),"After allocated direct labor")+biMetric("Contribution margin",biPercent(t.projectContribution,t.revenue),"Excludes nonproject overhead")+biMetric("Fee realization",biPercent(t.realizedComparable,t.bookedDelivered),"Delivered booked fees only");
 $("bi-sectors").innerHTML='<div class="lead"><b>Sector results</b><span class="small">Delivered · Revenue · Margin</span></div>'+Object.entries(period.sectors).sort((a,b)=>(b[1].revenue||0)-(a[1].revenue||0)).map(([name,x])=>'<div class="bi-micro-row"><span>'+esc(SECTORS[name]?.name||name)+'</span><span>'+Number(x.delivered||0)+' · '+biCurrency(x.revenue||0)+' · '+biCurrency(x.contribution||0)+'</span></div>').join("");
 $("bi-project-history").innerHTML=S.bi.projects.filter(p=>S.bi.range==="all"||p.day>=period.from).slice(0,12).map(p=>'<div class="bi-micro-row"><span>Day '+p.day+' · '+esc(p.client)+' · '+(p.success?'Delivered':'Missed')+'<br><small>'+esc(SECTORS[p.sector]?.name||p.sector)+' · Quality '+p.quality+'% · Booked '+(p.booked===null?'not tracked':biCurrency(p.booked))+'</small></span><span>'+biCurrency(p.fee)+' earned<br><small>Labor '+biCurrency(p.labor)+' · Direct '+biCurrency(p.direct)+'</small><br><strong>'+biCurrency(p.margin)+' contribution</strong></span></div>').join("")||'<div class="empty">No completed projects in this reporting period.</div>';
-$("bi-people").innerHTML=biMetric("Billable utilization",biPercent(t.billableDays,t.staffDays),"Client work / paid staff days")+biMetric("Delivery workdays",t.billableDays,"Allocated to projects")+biMetric("Sales & marketing",t.salesDays+t.marketingDays,"Commercial capacity")+biMetric("Learning/coaching",t.developmentDays,"Skill growth and training")+biMetric("Recovery days",t.restDays,"Rest and wellbeing")+biMetric("Staff-days",t.staffDays,"Total team capacity");
+$("bi-people").innerHTML=biMetric("Billable utilization",biPercent(t.billableDays,t.staffDays),"Client work / paid staff days")+biMetric("Delivery workdays",t.billableDays,"Allocated to projects")+biMetric("Sales & marketing",t.salesDays+t.marketingDays,"Commercial capacity")+biMetric("Learning/coaching",t.developmentDays,"Skill growth and training")+biMetric("Recovery days",t.restDays,"Rest and wellbeing")+biMetric("Staff-days",t.staffDays,"Total team capacity")+biMetric("Team wellbeing",S.team.filter(p=>p.career.stress>=60||p.career.burnout>=25).length+" flagged","High stress and burnout check");
 $("bi-transactions").innerHTML=S.bi.recent.filter(e=>S.bi.range==="all"||e.day>=period.from).slice(0,24).map(e=>'<div class="bi-micro-row"><span>Day '+e.day+' · '+esc(e.info)+'</span><span class="'+(e.kind!=="revenue"?"bi-negative":"")+'">'+(e.kind==="revenue"?"+":"-")+biCurrency(e.cash)+'</span></div>').join("")||'<div class="empty">No financial transactions recorded in this period.</div>';
 const selectedDays=S.bi.range==="all"?Math.min(366,Math.max(1,S.day-S.bi.since+1)):Math.min(Number(S.bi.range),Math.max(1,S.day-S.bi.since+1));
 const width=Math.max(1,Math.ceil(selectedDays/6)),count=Math.min(6,Math.ceil(selectedDays/width));

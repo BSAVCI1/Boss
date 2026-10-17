@@ -1,5 +1,18 @@
 # Boss — simulation development roadmap
 
+## Current release candidate — v21.1 Independent Operating Units
+
+[PR #24](https://github.com/BSAVCI1/Boss/pull/24) implements the **first** operating-unit increment, not the full v21 autonomy architecture:
+- Convert an existing paid portfolio to one internally managed unit without a second launch payment.
+- Appoint a distinct General Manager and assign eligible idle staff; employee IDs are preserved, one primary unit owner per employee, no active-contract disruption, no duplicate department span.
+- Record new contract revenue, direct cost, shared external worker contribution and dedicated unit payroll from unit activation forward only. These analytical unit totals do **not** generate additional group income or corporate ledger entries.
+- On-device `boss20` / IndexedDB persistence remains; any failed conversion or transfer must roll back atomically. No altered historical terms, payroll, purchase receipts or completed jobs.
+- The CEO directs unit formation; GM appointments carry a small transparent additional daily salary. A dedicated unit is not a new legal subsidiary or bank account.
+
+**Unfinished, not implied delivered:** v21.2 unit-specific goals, GM proposals and authority limits; v21.3 realistic dedicated delivery capacity, P&L reconciliation, CEO quarterly unit reviews; v21.4 mobile visual group organization and release polish. v22 premises, v23 capital and acquisitions, and v24 factories remain as sequenced below.
+
+**Release gate:** All previously established financial/save/730-day tests plus manager conflict, no-double-charge, duplicate-name, failed-browser-write rollback, 390px mobile and Safari-style extended-storage reload. Do not merge on a failed branch check. Confirm production Pages and isolated live smoke after merge.
+
 ## Next development program — CEO-first multi-business game (approved direction, not implemented)
 
 **Player-confirmed state:** The original iPhone company now saves reliably beyond Day 2864 using extended device storage; business lines include Product Development and Marketing Studio. No original Safari bytes are copied into the repository. **Design rule:** all subsequent migrations must keep saved staffing, signed contracts, accounting and purchased service-line evidence unchanged.

@@ -1,6 +1,6 @@
 # Boss v21 — Autonomous Operating Units Architecture
 
-> Source of truth: this file, ROADMAP.md, tests and index.html. Status on 2026-10-17: v21.1 and v21.2 released; v21.3 is under PR #26 until regression, Pages and browser gates succeed. Do not infer release from this document alone.
+> Source of truth: this file, ROADMAP.md, tests and index.html. Status on 2026-10-17: v21.1, v21.2 and v21.3 released. Release evidence: [PR #26](https://github.com/BSAVCI1/Boss/pull/26) merged at `05f3aafbd6ea867981c387a2de07b2b5a364830c`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39068721207), [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39068720775) and [isolated live smoke](https://agent.tinyfish.ai/runs/68f10a64-a9c1-4e64-ab8c-7229e2345199) passed. No private iPhone Safari save was opened.
 
 ## Preservation / migration contract
 
@@ -12,7 +12,7 @@ Boss is one standalone, offline `index.html`. Company state remains `boss20` wit
 
 CEO conversion of an already purchased line into a dedicated operating unit with no second purchase; uniquely owned worker transfers and eligible GM appointment. Forward-only unit-tied contract revenue, shared/direct cost and dedicated payroll allocation from the single corporate ledger. v21.2 added zero-default CEO coaching authority, per-action cap, expiry, real $4 coaching with seven-day cooldown, 30-day measured delivery-quality reviews, staffing proposal and one-time CEO-gated $20 recruiting plus recurring wages.
 
-## v21.3 scope — PR #26
+## v21.3 — Released through PR #26
 
 1. **Actual GM delivery dispatch.** Contracts signed after unit activation are tagged `deal.unitKey`. `unitDelegateWork()` assigns unallocated unit contracts to eligible *dedicated* specialists only when an appointed GM is active. `delegateWork()` ignores unit jobs; manual assignment and candidate lists respect `unitAssignmentAllowed()`. Corporate contracts use shared staff only. This creates a real capacity restriction: a vacancy or insufficient specialist headcount can cause delays instead of invisible corporate capacity.
 2. **Strategy choice.** Per-unit `plan.focus` is balanced (default), quality (slower delivery, incremental quality increase) or speed (faster delivery at modest quality risk). It affects ongoing work only, not signed prices, old quality or historical project outcomes. Changing policy has no immediate cash cost and must be durably saved.

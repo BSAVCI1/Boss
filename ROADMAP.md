@@ -1,13 +1,13 @@
 # Boss — simulation development roadmap
 
-## v21.3 — Dedicated GM capacity and measurable operating strategies (release candidate · PR #26)
+## Released v21.3 — Dedicated GM capacity and measurable operating strategies (PR #26)
 
 - Dedicated units assign their customer jobs with an active GM and eligible specialist team; shared corporate dispatch and manual assignment respect unique unit ownership. No silent pooled capacity when a unit is vacant or short staffed.
 - CEO selects Balanced / Quality / Speed strategy, affecting actual future delivery progression and quality; no historical contract repricing or guaranteed customer demand.
 - Track actual newly measured staff-days and billable-days. Unit-level 30-day reviews disclose forward-only revenue, allocated operating cost, contribution and utilization with explicit CEO-defined revenue/utilization/quality objectives.
 - Skill-targeted GM recruiting recommendations still require explicit CEO approval and real recurring wages. The Executive Assistant escalates capacity and outcomes; Today surfaces genuine GM approvals and market opportunities.
 - Mandatory gates: all existing finance/save, 730-day, offline and 390/414px tests plus v21.3 ownership, migrations and accounting. No v22 properties until production and owner private-save safety are maintained.
-- **Implementation and release evidence:** [PR #26](https://github.com/BSAVCI1/Boss/pull/26), [architecture](docs/V21_IMPLEMENTATION.md). Do not mark as released before Pages and regression checks on the merged commit.
+- **Release evidence:** [PR #26](https://github.com/BSAVCI1/Boss/pull/26) merged at `05f3aafbd6ea867981c387a2de07b2b5a364830c`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39068721207), [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39068720775) and [isolated live smoke](https://agent.tinyfish.ai/runs/68f10a64-a9c1-4e64-ab8c-7229e2345199) passed. No private iPhone Safari save was opened. [Architecture](docs/V21_IMPLEMENTATION.md).
 
 ## Released v21.2 — General Manager autonomy with CEO authorization
 

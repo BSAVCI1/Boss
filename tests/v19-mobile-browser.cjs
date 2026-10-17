@@ -13,6 +13,9 @@ document.addEventListener("DOMContentLoaded",async()=>{
   const nav=document.querySelector(".bottom-nav");
   result.checks.bootstrapComplete=document.documentElement.dataset.bossReady==="true";
   result.checks.navPresent=!!nav;
+   const officeGrid=document.querySelector(".ceo-office-grid");
+   const officeCards=officeGrid?[...officeGrid.children]:[];
+   result.checks.ceoHierarchyStacked=officeCards.length===2&&officeCards[1].getBoundingClientRect().top>=officeCards[0].getBoundingClientRect().bottom-1;
   const navRect=nav?.getBoundingClientRect();
   result.checks.navInViewport=!!navRect&&navRect.top>=0&&navRect.bottom<=window.innerHeight+3;
   for(const view of ["today","team","growth","work"]){
@@ -185,6 +188,7 @@ async function runBrowser(){
   assert.equal(outcome.checks.bootstrapComplete,true,"Boss asynchronous save recovery bootstrap must complete");
   assert.equal(outcome.checks.navPresent,true);
   assert.equal(outcome.checks.navInViewport,true);
+  assert.equal(outcome.checks.ceoHierarchyStacked,true,"CEO hierarchy must stack as full-width mobile rows");
   assert.equal(outcome.checks.customBudgets,true);
   assert.equal(outcome.checks.optionalManagers,true);
   assert.equal(outcome.checks.noVisibleUndefined,true);
@@ -199,6 +203,13 @@ async function runBrowser(){
   assert.equal(outcome.checks.indexedLineCommitted,true,"Business purchase in IndexedDB mode must commit before confirmation");
   assert.equal(outcome.checks.indexedLineNoDoubleCharge,true,"Paid line must survive reload with one $120 investment and no duplicates");
   assert.deepEqual(outcome.errors,[]);
+  await send("Emulation.setDeviceMetricsOverride",{width:414,height:896,deviceScaleFactor:1,mobile:true});
+  await sleep(150);
+  const layout=await send("Runtime.evaluate",{expression:"(()=>{const c=[...document.querySelector('.ceo-office-grid').children];return{width:innerWidth,stacked:c.length===2&&c[1].getBoundingClientRect().top>=c[0].getBoundingClientRect().bottom-1,overflow:document.documentElement.scrollWidth>innerWidth+6}})()",returnByValue:true});
+  assert.equal(layout.result.value.width,414);
+  assert.equal(layout.result.value.stacked,true,"CEO reporting cards must remain stacked at 414px");
+  assert.equal(layout.result.value.overflow,false,"No horizontal overflow at 414px");
+  console.log("Boss 414px mobile layout verification:",JSON.stringify(layout.result.value));
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }

@@ -5,7 +5,7 @@ assert.ok(browser,"A real Chromium browser is required for viewport smoke (not a
 const html=fs.readFileSync("index.html","utf8");
 const instrumentation=String.raw`
 window.addEventListener("error",e=>{window.__mobileErrors=(window.__mobileErrors||[]).concat(String(e.message||"unknown error"))});
-document.addEventListener("DOMContentLoaded",()=>{
+window.__runBossMobileSmoke=()=>{
  const result={width:window.innerWidth,views:[],errors:[],checks:{}};
  try{
   const byId=id=>document.getElementById(id);
@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   result.errors=(window.__mobileErrors||[]);
  }catch(e){result.errors.push(String(e.stack||e));}
  document.title="BOSS_QA:"+btoa(unescape(encodeURIComponent(JSON.stringify(result))));
-});
+};
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
 fs.writeFileSync(file,html.replace("</body>","<script>"+instrumentation+"</script></body>"));
@@ -74,36 +74,34 @@ async function runBrowser(){
    });
   }
   await send("Page.enable");await send("Runtime.enable");
-  // Verify a true 390px CSS layout in Chrome without OS-specific mobile device scaling.
-  // Retry a clean navigation only if the *measured* CSS viewport is incorrect;
-  // every acceptance assertion remains mandatory after a true 390px render.
-  // Warm the file:// renderer before applying emulation. Chrome may discard
-  // an override placed on about:blank during its first cross-process navigation.
-  await send("Page.navigate",{url:"file://"+file+"?warmup=1"});
-  for(let i=0;i<50;i++){
-   try{const result=await send("Runtime.evaluate",{expression:"document.readyState+'|'+location.search",returnByValue:true});
-    if(result.result?.value==="complete|?warmup=1")break;}catch{}
+  // Navigate to the actual file renderer first, then apply device emulation.
+  // A fresh about:blank -> file process swap can discard Chrome's first override.
+  await send("Page.navigate",{url:"file://"+file});
+  let isReady=false;
+  for(let i=0;i<90;i++){
+   try{
+    const v=await send("Runtime.evaluate",{expression:"document.readyState==='complete'&&typeof window.__runBossMobileSmoke==='function'",returnByValue:true});
+    if(v.result?.value===true){isReady=true;break;}
+   }catch{}
    await sleep(150);
   }
-  let outcome=null;
+  assert.ok(isReady,"Browser game and mobile QA instrumentation did not load");
+  let width=0;
   for(let attempt=0;attempt<3;attempt++){
-   await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:false});
-   await sleep(150);
-   await send("Page.navigate",{url:"file://"+file+"?qa="+attempt});
-   let title="";
-   for(let i=0;i<75;i++){
-    try{
-     const result=await send("Runtime.evaluate",{expression:"JSON.stringify({title:document.title,query:location.search})",returnByValue:true});
-     const page=JSON.parse(result.result?.value||"{}");
-     if(page.query==="?qa="+attempt&&page.title?.startsWith("BOSS_QA:")){title=page.title;break;}
-    }catch{}
-    await sleep(150);
-   }
-   assert.ok(title.startsWith("BOSS_QA:"),"UI smoke script did not finish");
-   outcome=JSON.parse(Buffer.from(title.slice(8),"base64").toString("utf8"));
-   if(outcome.width>=385&&outcome.width<=395)break;
-   console.warn("Chrome CSS viewport not settled: "+outcome.width+"; retrying full page at 390px");
+   await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,screenWidth:390,screenHeight:844,deviceScaleFactor:1,scale:1,mobile:true});
+   await sleep(200);
+   const v=await send("Runtime.evaluate",{expression:"window.innerWidth",returnByValue:true});
+   width=v.result?.value||0;
+   if(width>=385&&width<=395)break;
+   console.warn("CDP mobile viewport not yet 390px ("+width+"); reloading file renderer before retry");
+   await send("Page.reload",{ignoreCache:true});
+   await sleep(200);
   }
+  assert.ok(width>=385&&width<=395,"Mobile CSS viewport could not be set to 390px: "+width);
+  await send("Runtime.evaluate",{expression:"window.__runBossMobileSmoke()",returnByValue:true});
+  const title=(await send("Runtime.evaluate",{expression:"document.title",returnByValue:true})).result?.value||"";
+  assert.ok(title.startsWith("BOSS_QA:"),"UI smoke script did not finish");
+  const outcome=JSON.parse(Buffer.from(title.slice(8),"base64").toString("utf8"));
   console.log("Mobile browser verification:",JSON.stringify(outcome));
   assert.ok(outcome.width>=385&&outcome.width<=395,"Unexpected viewport, no mobile acceptance: "+outcome.width);
   assert.equal(outcome.views.length,4,"All four tabs must navigate");
@@ -114,7 +112,7 @@ async function runBrowser(){
   assert.equal(outcome.checks.noVisibleUndefined,true);
   assert.equal(outcome.checks.promotionPriceRendered,true,"Promotion buttons must display a numeric cost, not raw source text");
   assert.deepEqual(outcome.errors,[]);
-  console.log("PASS real Chromium near-390px Boss responsive UI smoke");
+  console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }
 runBrowser().catch(err=>{console.error(err);process.exitCode=1});

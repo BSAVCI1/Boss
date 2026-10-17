@@ -147,6 +147,30 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .bi-metric .bi-diagnostic{display:block;font-size:11px;margin-top:5px;line-height:1.4;color:var(--muted)}
 .bi-accordion .bi-section{border:0;padding:0;margin:0}
 @media(prefers-reduced-motion:reduce){.bi-metric,.bi-grid>div{transition:none}}
+
+/* v14 experiment notebook */
+.lab-card{padding:12px}.lab-card label{display:block;font-size:13px;font-weight:650;margin:12px 0 5px}
+.lab-card select,.lab-card textarea{width:100%;min-height:44px}
+.lab-card textarea{resize:vertical;max-width:100%;min-height:65px;padding:9px}
+.lab-card button{min-height:44px}
+.lab-result{margin-top:8px}.lab-insight{border:1px solid var(--line);border-radius:10px;padding:11px;margin:8px 0}
+.lab-insight h3{font-size:15px;margin:0 0 8px}.lab-meta{font-size:12px;color:var(--muted);line-height:1.5}
+.lab-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0}
+.lab-grid>div{padding:9px;border:1px solid var(--line);border-radius:9px;background:var(--accentWash)}
+.lab-grid small{display:block;font-size:11px;color:var(--muted)}
+.lab-grid strong{display:block;font-size:16px}
+.lab-signal{font-size:12px;font-weight:650;padding:4px 8px;border-radius:7px;display:inline-block}
+.lab-signal.met{background:rgba(37,149,98,.11)}
+.lab-signal.missed{background:rgba(210,90,95,.10)}
+.lab-signal.unknown{background:var(--accentWash)}
+.lab-today{border:1px solid var(--line);border-radius:11px;padding:11px;margin:9px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px}
+.lab-today[hidden]{display:none}.lab-today button{font-size:12px;min-height:44px}
+.lab-history-row{padding:10px 0;border-top:1px solid var(--line)}
+.lab-history-row summary{min-height:44px;cursor:pointer;font-size:13px;font-weight:650}
+.lab-history-row textarea{width:100%;margin-top:7px}
+.lab-note{font-size:12px;color:var(--muted);margin-top:8px}
+.lab-disabled{opacity:.65}
+@media(min-width:700px){.lab-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -165,7 +189,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div id="bi-tile-profit"><span>Operating profit</span><strong id="bi-profit">$0</strong></div>
 <div id="bi-tile-margin"><span>Profit margin</span><strong id="bi-margin">—</strong></div>
 </div><div class="buttons bi-headline-actions"><button type="button" id="bi-open-details">View full performance →</button></div></section>
-<div id="attention-list" class="attention-list" aria-live="off"></div>
+<div class="lab-today" id="lab-today" hidden><span id="lab-today-text"></span><button type="button" id="lab-today-open">Review experiment →</button></div><div id="attention-list" class="attention-list" aria-live="off"></div>
 <div class="card focusrow"><div><strong>Focus on current work</strong><div class="small" id="focus-hint">Pause incoming work when you need space.</div></div><button type="button" id="focus-toggle">Enable Focus</button></div>
 <details class="aux-details" id="office-panel"><summary>Office animation &amp; game settings</summary><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div><button type="button" id="restart" class="danger-secondary">Restart company</button></details>
 <details class="aux-details"><summary>Company activity <span class="small" id="log-recent"></span></summary><div class="card" id="log" aria-live="off"></div></details>
@@ -230,6 +254,23 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="view-intro"><h2>Growth</h2><p>Industries, investments and company knowledge</p></div>
 <section aria-labelledby="market-title"><h2 id="market-title">Market strategy &amp; expansion</h2><div class="card"><p class="small">Build a reputation in your specialist sector, then unlock new industries. Focus improves delivery speed and client value for matching work.</p><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><div id="sector-options" class="sector-buttons"></div><p id="sector-status" class="filter-note"></p></div></section>
 
+<section aria-labelledby="lab-title"><h2 id="lab-title">Entrepreneurship &amp; Leadership Lab</h2>
+<div class="card lab-card"><div class="lead"><b>Experiment notebook</b><span id="lab-summary" class="small">Plan a measurable business experiment</span></div>
+<p class="filter-note">Make a prediction, adjust one business policy, then compare financial, customer and employee outcomes. Lessons are saved privately in this browser. Results are simulated evidence, not proof of cause.</p>
+<details class="aux-details" id="lab-panel"><summary>Open experiment lab</summary>
+<div id="lab-active" class="lab-result"></div>
+<div id="lab-setup">
+<label for="lab-topic">Business question</label><select id="lab-topic"></select>
+<label for="lab-sector" id="lab-sector-label" hidden>Industry to focus on</label><select id="lab-sector" hidden></select>
+<label for="lab-duration">Evaluation period</label><select id="lab-duration"><option value="15">15 game days</option><option value="30" selected>30 game days</option><option value="45">45 game days</option></select>
+<label for="lab-forecast">Expected outcome compared with baseline</label><select id="lab-forecast"><option value="-25">25% lower</option><option value="-10">10% lower</option><option value="0">About the same</option><option value="10">10% higher</option><option value="25" selected>25% higher</option><option value="50">50% higher</option></select>
+<label for="lab-hypothesis">Why do you expect this? (optional)</label><textarea id="lab-hypothesis" rows="2" maxlength="250" placeholder="Example: More qualified leads should translate to more contracts if delivery can keep up."></textarea>
+<div id="lab-preview" class="filter-note"></div>
+<button type="button" id="lab-start">Start experiment</button>
+</div>
+<div id="lab-finished" class="lab-result"></div>
+<details class="aux-details" id="lab-history-panel"><summary>Previous experiments <span id="lab-count">0</span></summary><div id="lab-history"></div></details>
+</details></div></section>
 <section aria-labelledby="idea-title"><h2 id="idea-title">Company capability map</h2><div class="card"><p class="filter-note">Ideas discovered through research, service and daily work fill the map. Related discoveries unlock capabilities automatically—no manual pair matching.</p><div class="lead"><b>Organizational knowledge</b><span class="small" id="idea-summary"></span></div><div id="ideas"></div><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div></div></section>
 
 </section>
@@ -239,7 +280,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <script>
 (function(){
 "use strict";
-const KEY="boss13";
+const KEY="boss14";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
 const TRAITS=["Curious","Social","Diligent","Creative"];
@@ -280,7 +321,7 @@ const projectExpanded=new Set(),employeeExpanded=new Set(),careerExpanded=new Se
 let orgControlsSignature="";let activeView="today";const viewScroll={today:0,work:0,team:0,growth:0};let attentionSignature="";
 let canvas=$("office"),ctx=canvas.getContext("2d");
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* Storage may be unavailable; play continues in memory. */}}
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 if(!INTERESTS[p.interest])p.interest=INTEREST_KEYS[(p.id-1)%INTEREST_KEYS.length];
@@ -338,7 +379,7 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
-ensureOrganization(s);ensureBI(s);
+ensureOrganization(s);ensureBI(s);ensureLab(s);
 return s;}catch(e){return null;}}
 const BI_FIELDS=["revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
 function biZero(){return Object.fromEntries(BI_FIELDS.map(k=>[k,0]));}
@@ -751,7 +792,7 @@ function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null};ensureBI(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null};ensureBI(S);ensureLab(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}

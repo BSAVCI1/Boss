@@ -350,7 +350,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <section aria-labelledby="organization-title"><h2 id="organization-title">Managers</h2><div class="card org-overview">
 <div class="lead"><b>Reporting lines</b><span id="org-status" class="small">Flat founder-led structure</span></div>
 
-<div id="org-chart"></div><div id="coach-manager-review"></div><details id="org-settings" class="aux-details"><summary>Department budgets, authority &amp; targets</summary><div id="org-controls"></div><p class="filter-note">Managers need Senior rank or 10 experience points. They stop routine individual delivery to lead their department, earn an extra $0.75/day, and can improve direct reports' output by up to 7% when actively coaching. Check costs against results. The executive assistant coordinates across departments; managers own department work.</p></details>
+<div id="org-chart"></div><div id="coach-manager-review"></div><details id="org-settings" class="aux-details"><summary>Leadership hierarchy, budgets &amp; delegated authority</summary><div id="org-controls"></div><p class="filter-note">Managers need Senior rank or 10 experience points. They stop routine individual delivery to lead their department, earn an extra $0.75/day, and can improve direct reports' output by up to 7% when actively coaching. Check costs against results. The executive assistant coordinates across departments; managers own department work.</p></details>
 </div></section>
 </details>
 </section>
@@ -1315,7 +1315,7 @@ function orgPlan(dept){return S.org.departments[dept]?.plan;}
 function orgFunds(dept,cat,amount,personnel=false){
 const p=orgPlan(dept);if(!p||!Number.isFinite(amount)||amount<0||amount>p.perAction||S.cash<amount||S.day>=p.since+p.days)return false;
 if((p.spent[cat]||0)+amount>(p.limits[cat]||0))return false;
-if(personnel&&(p.hires>=p.hireSlots||p.payrollAdded+1.5>S.mod.cost*p.payrollLimit))return false;
+if(personnel&&(p.hires>=p.hireSlots||p.payrollAdded+1.5*S.mod.cost>p.payrollLimit))return false;
 return true;
 }
 function orgSpend(dept,cat,amount){if(!orgFunds(dept,cat,amount))return false;orgPlan(dept).spent[cat]+=amount;return true;}
@@ -1391,37 +1391,76 @@ else return false;
 coachDecision(DEPARTMENTS[dept].name+" delegation authority",old,"CEO authorized "+type+" = "+value+" until Day "+(p.since+p.days)+". Automatic spend requires cash, category capacity and per-action approval.",null,30);
 orgControlsSignature="";save();renderOrganization();refresh();return true;
 }
-function orgManagerDay(p){const dept=p.department,d=S.org.departments[dept];if(!d||orgManager(dept)?.id!==p.id)return;
-ensureManagement(p);if(p.t!=="coachteam"&&p.t!=="teach")return;
-p.management.planning=clamp(p.management.planning+.035);
-if(S.day%7!==0||d.spent+4>d.budget||S.cash<4)return;
-const candidates=orgReports(dept).filter(x=>x.career.recoveryDays===0);
+function orgManagerDay(p){
+const dept=p.department,d=S.org.departments[dept],director=orgManager(dept);
+const role=DEPARTMENTS[dept]?.skills.find(k=>orgSubManager(dept,k)?.id===p.id);
+if(!d||director?.id!==p.id&&!role)return;
+if(p.t!=="coachteam"&&p.t!=="teach")return;
+ensureManagement(p);p.management.planning=clamp(p.management.planning+.035);
+if(S.day%7!==0||!orgFunds(dept,"coaching",4))return;
+const candidates=(role?orgSubReports(dept,role):orgDirectReports(dept)).filter(x=>x.id!==p.id&&x.career.recoveryDays===0);
 if(!candidates.length)return;
 const target=candidates.sort((a,b)=>b.career.stress-a.career.stress)[0];
-S.cash-=4;biMoney("development",4,DEPARTMENTS[dept].name+" coaching: "+target.n);d.spent+=4;d.stats.coached++;
-target.career.stress=clamp(target.career.stress-4);target.career.satisfaction=clamp(target.career.satisfaction+3);
-const weak=DEPARTMENTS[dept].skills.reduce((a,b)=>target.s[a]<target.s[b]?a:b);target.s[weak]+=.14*S.mod.learn*(.8+p.management.coaching/300);p.management.coaching=clamp(p.management.coaching+.25);p.management.communication=clamp(p.management.communication+.2);
-logIt(p.n+" coached "+target.n+" in "+DEPARTMENTS[dept].name+" ($4 from department budget).");}
-
-function renderOrganization(){const chart=$("org-chart");if(!chart)return;
-$("org-status").textContent=DEPT_KEYS.filter(k=>orgManager(k)).length+" of 2 managers appointed";
-chart.innerHTML='<div class="org-grid">'+DEPT_KEYS.map(key=>{const d=S.org.departments[key],m=orgManager(key),people=orgReports(key),x=d.stats;
-const period=Math.max(1,S.day-d.periodStart),attempts=x.delivered+x.missed;const state=key==="commercial"?(x.leads>=d.target.leads?"Target met":period>=10&&x.leads/period<d.target.leads/30*.65?"Behind target":"Building pipeline"):(attempts<3?"Collecting evidence":x.onTime/attempts*100>=d.target.onTime?"Target met":"Behind target");
-const score=key==="commercial"?"Leads "+x.leads+"/"+d.target.leads+" · Wins "+x.wins:
-"On-time "+(x.delivered+x.missed?Math.round(x.onTime/(x.delivered+x.missed)*100)+"%":"—")+"/"+d.target.onTime+"% · Delivered "+x.delivered+" · Missed "+x.missed;
-return '<div class="org-dept"><h3>'+DEPARTMENTS[key].name+'</h3><div class="small">'+DEPARTMENTS[key].roles+'</div><div class="org-manager">'+(m?orgLeaderTitle(m)+": "+esc(m.n):"Founder-led · No manager")+'</div>'+people.map(p=>'<div class="org-report">'+esc(p.n)+' · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'<div class="org-metric">'+score+'</div><div class="org-metric '+(state==='Behind target'?'risk-watch':'')+'">'+state+' · '+people.length+' direct reports'+(m?' · Manager premium $0.75/day':'')+'</div><div class="org-metric">Coaching '+d.stats.coached+' · Budget '+biCurrency(d.spent)+' / '+biCurrency(d.budget)+' · Day '+(S.day-d.periodStart)+'/30</div>'+(d.reviews.length?'<div class="org-metric"><b>Previous review:</b> '+esc(d.reviews[d.reviews.length-1].result)+' · '+esc(d.reviews[d.reviews.length-1].reading)+' · '+esc(d.reviews[d.reviews.length-1].manager)+'</div>':'')+(m&&people.length>5?'<div class="risk-watch small">Wide span of control reduces effectiveness.</div>':'')+'</div>';
-}).join("")+'</div>';
-if($("org-settings").open){const sig=JSON.stringify(DEPT_KEYS.map(k=>{const d=S.org.departments[k];return[k,d.managerId,d.budget,d.target.leads,d.target.onTime]}))+"|"+S.team.map(p=>p.id+":"+p.department+":"+p.career.rank+":"+Math.floor(p.career.xp/10)+":"+S.ops.assistantId).join(",");if(sig!==orgControlsSignature){orgControlsSignature=sig;renderOrgControls();}}
+if(!orgSpend(dept,"coaching",4))return;
+S.cash-=4;biMoney("development",4,DEPARTMENTS[dept].name+" coaching: "+target.n);
+d.spent+=4;d.stats.coached++;target.career.stress=clamp(target.career.stress-4);target.career.satisfaction=clamp(target.career.satisfaction+3);
+const skills=role?[role]:DEPARTMENTS[dept].skills,weak=skills.reduce((a,b)=>target.s[a]<target.s[b]?a:b);
+target.s[weak]+=.14*S.mod.learn*(.8+p.management.coaching/300);
+p.management.coaching=clamp(p.management.coaching+.25);p.management.communication=clamp(p.management.communication+.2);
+logIt(p.n+" coached "+target.n+" in "+DEPARTMENTS[dept].name+" ($4 from approved delegation budget).");
 }
-
+function orgAutonomousTeamDay(){
+for(const dept of DEPT_KEYS){const director=orgManager(dept),plan=orgPlan(dept),people=orgReports(dept).filter(x=>x.role.primary!=="lead");
+if(!director||!people.length||!plan||S.day-(plan.lastTeam??-99)<30)continue;
+const avg=people.reduce((sum,p)=>sum+p.career.stress,0)/people.length,cost=5*people.length;
+if(avg<55||!orgFunds(dept,"team",cost))continue;
+if(!orgSpend(dept,"team",cost))continue;
+S.cash-=cost;biMoney("people",cost,"Director-approved team wellbeing: "+DEPARTMENTS[dept].name);
+for(const member of people){member.career.stress=clamp(member.career.stress-7);member.career.satisfaction=clamp(member.career.satisfaction+3);Mo(member,8);L(member,2);}
+plan.lastTeam=S.day;logIt(director.n+" arranged a "+DEPARTMENTS[dept].name+" wellbeing session within approved budget ("+biCurrency(cost)+").");
+}
+}
+function renderOrganization(){
+const chart=$("org-chart");if(!chart)return;
+const open=new Set([...chart.querySelectorAll("details[data-org-view]")].filter(x=>x.open).map(x=>x.dataset.orgView));
+$("org-status").textContent=DEPT_KEYS.filter(k=>orgManager(k)).length+" of 2 department heads appointed";
+chart.innerHTML='<div class="org-grid">'+DEPT_KEYS.map(key=>{
+const d=S.org.departments[key],director=orgManager(key),people=orgReports(key),direct=orgDirectReports(key),x=d.stats,p=d.plan;
+const period=Math.max(1,S.day-d.periodStart),attempts=x.delivered+x.missed;
+const state=key==="commercial"?(x.leads>=d.target.leads?"Target met":period>=10&&x.leads/period<d.target.leads/30*.65?"Behind target":"Building pipeline"):(attempts<3?"Collecting evidence":x.onTime/attempts*100>=d.target.onTime?"Target met":"Behind target");
+const score=key==="commercial"?"Leads "+x.leads+"/"+d.target.leads+" · Wins "+x.wins:"On-time "+(attempts?Math.round(x.onTime/attempts*100)+"%":"—")+"/"+d.target.onTime+"% · Delivered "+x.delivered;
+const teamHTML=DEPARTMENTS[key].skills.map(role=>{const boss=orgSubManager(key,role),reports=orgSubReports(key,role);
+return boss?'<div class="org-report"><b>'+esc(ROLE_NAMES[role])+' Manager: '+esc(boss.n)+' · #'+boss.id+'</b><div class="small">'+reports.length+' reports · premium $0.50/day</div>'+reports.map(p=>'<div class="org-report">'+esc(p.n)+' · #'+p.id+' · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'</div>':"";}).join("");
+const directStaff=direct.filter(x=>DEPARTMENTS[key].skills.every(role=>x.id!==orgSubManager(key,role)?.id));
+return '<details class="aux-details org-dept" data-org-view="'+key+'" '+(open.has(key)?'open':'')+'><summary>'+DEPARTMENTS[key].name+' · '+people.length+' people · '+(director?esc(director.n):"Founder-led")+'</summary>'+
+'<div class="org-manager">'+(director?orgLeaderTitle(director)+': '+esc(director.n)+' · #'+director.id:"Founder-led")+'</div>'+
+'<div class="org-metric">'+score+' · '+state+'</div><div class="org-metric">Direct reports '+direct.length+' · Coaching '+x.coached+'</div>'+
+teamHTML+directStaff.map(member=>'<div class="org-report">'+esc(member.n)+' · #'+member.id+' · '+esc(ROLE_NAMES[member.role.primary])+'</div>').join("")+
+'<div class="org-metric">Coaching budget '+biCurrency(p.spent.coaching)+' / '+biCurrency(p.limits.coaching)+' · expires Day '+(p.since+p.days)+'</div>'+
+(director&&direct.length>5?'<div class="risk-watch small">Wide span of control reduces effectiveness. Appoint role managers below.</div>':"")+
+(d.reviews.length?'<div class="small"><b>Previous review:</b> '+esc(d.reviews.at(-1).result)+' · '+esc(d.reviews.at(-1).reading)+'</div>':"")+
+'</details>';
+}).join("")+'</div>';
+if($("org-settings").open){const sig=JSON.stringify(DEPT_KEYS.map(k=>{const d=S.org.departments[k];return[d.managerId,d.subManagers,d.plan,d.target]}))+"|"+S.team.map(p=>p.id+":"+p.department+":"+p.career.rank+":"+Math.floor(p.career.xp/10)+":"+S.ops.assistantId).join(",");
+if(sig!==orgControlsSignature){orgControlsSignature=sig;renderOrgControls();}}
+}
 function renderOrgControls(){
 $("org-controls").innerHTML=DEPT_KEYS.map(key=>{
-const d=S.org.departments[key],manager=orgManager(key);
-const qualified=S.team.filter(p=>p.department===key&&p.id!==S.ops.assistantId&&(p.career.rank>=1||p.career.xp>=10));
-const dropdown=(type,values,current,suffix)=>'<select data-org-policy="'+type+'" data-org-dept="'+key+'">'+values.map(v=>'<option value="'+v+'" '+(v===current?'selected':'')+'>'+v+suffix+'</option>').join("")+'</select>';
-return '<div class="org-settings-row"><b>'+DEPARTMENTS[key].name+'</b><label>Appoint a manager</label><select data-org-manager="'+key+'"><option value="">Founder manages directly</option>'+qualified.map(p=>'<option value="'+p.id+'" '+(manager?.id===p.id?'selected':'')+'>'+esc(p.n)+'</option>').join("")+'</select>'+(qualified.length?'':'<div class="small">Requires Senior rank or 10 experience points.</div>')+
-'<label>Manager coaching budget / 30 game days</label>'+dropdown("budget",[0,8,16,30],d.budget," dollars")+
-'<label>Department objective</label>'+(key==="commercial"?dropdown("leads",[3,5,8],d.target.leads," new leads"):dropdown("onTime",[70,85,95],d.target.onTime,"% on time"))+'</div>';
+const d=S.org.departments[key],director=orgManager(key),p=d.plan;
+const qualified=S.team.filter(x=>x.department===key&&x.id!==S.ops.assistantId&&(x.career.rank>=1||x.career.xp>=10));
+const number=(type,label,value,min=0,max=10000000)=>'<label>'+label+'</label><input type="number" inputmode="decimal" min="'+min+'" max="'+max+'" step="1" data-org-policy="'+type+'" data-org-dept="'+key+'" value="'+value+'">';
+const opts=qualified.map(x=>'<option value="'+x.id+'" '+(director?.id===x.id?'selected':'')+'>'+esc(x.n)+' · #'+x.id+'</option>').join("");
+const roles=DEPARTMENTS[key].skills.map(role=>{
+const manager=orgSubManager(key,role),people=qualified.filter(x=>x.id!==director?.id&&(orgWorkRole(x)===role||x.id===manager?.id));
+return '<label>'+esc(ROLE_NAMES[role])+' team manager (optional)</label><select data-org-subrole="'+role+'" data-org-dept="'+key+'"><option value="">Director manages directly</option>'+people.map(x=>'<option value="'+x.id+'" '+(manager?.id===x.id?'selected':'')+'>'+esc(x.n)+' · #'+x.id+'</option>').join("")+'</select>';
+}).join("");
+return '<div class="org-settings-row"><b>'+DEPARTMENTS[key].name+'</b><label>Department head</label><select data-org-manager="'+key+'"><option value="">Founder manages directly</option>'+opts+'</select>'+roles+
+'<p class="small">Delegated budget until Day '+(p.since+p.days)+' · Unused authority does not spend cash.</p><label>Budget period</label><select data-org-policy="days" data-org-dept="'+key+'"><option value="90" '+(p.days===90?'selected':'')+'>90 days</option><option value="180" '+(p.days===180?'selected':'')+'>180 days</option></select>'+
+number("coaching","Coaching budget ($)",p.limits.coaching)+number("training","Training budget ($)",p.limits.training)+number("team","Team-building budget ($)",p.limits.team)+number("hiring","Recruiting budget ($)",p.limits.hiring)+
+number("perAction","Maximum delegated cost per decision ($)",p.perAction)+number("hireSlots","Maximum delegated hires this period",p.hireSlots)+number("payrollLimit","Maximum new recurring payroll ($/day)",p.payrollLimit)+
+'<p class="small">Spent: coaching '+biCurrency(p.spent.coaching)+' / '+biCurrency(p.limits.coaching)+'; training '+biCurrency(p.spent.training)+' / '+biCurrency(p.limits.training)+'; team '+biCurrency(p.spent.team)+' / '+biCurrency(p.limits.team)+'; recruiting '+biCurrency(p.spent.hiring)+' / '+biCurrency(p.limits.hiring)+'. Hires '+p.hires+'/'+p.hireSlots+' · additional payroll '+biCurrency(p.payrollAdded)+' / '+biCurrency(p.payrollLimit)+'/day.</p>'+
+(key==="commercial"?number("leads","New leads target per 30 game days",d.target.leads,1,100000):number("onTime","On-time delivery target (%)",d.target.onTime,1,100))+
+'</div>';
 }).join("");
 }
 function roleAction(id,action){if(S.ev)return;const p=person(id);if(!p)return;const before=coachSnap(id);const r=p.role;
@@ -1429,7 +1468,7 @@ if(action==="resume"){if(p.id===S.ops.assistantId)return;r.auto=true;if(!p.t.sta
 else if(action==="manual"){r.auto=false;r.autoTask=false;logIt("Manual task control enabled for "+p.n+".");}
 else if(ROLE_KEYS.includes(action)){if(action==="lead"&&p.career.rank<1&&p.career.xp<10)return;
 if(p.id===S.ops.assistantId){S.ops.assistantId=null;}
-if(action!=="lead"){for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===id)S.org.departments[k].managerId=null;delete r.previousPrimary;}
+if(action!=="lead"){for(const k of DEPT_KEYS){if(S.org.departments[k].managerId===id)S.org.departments[k].managerId=null;for(const role of DEPARTMENTS[k].skills)if(S.org.departments[k].subManagers?.[role]===id)S.org.departments[k].subManagers[role]=null;}delete r.previousPrimary;}
 if(action!=="lead")p.department=["sales","mkt"].includes(action)?"commercial":"delivery";r.primary=action;r.auto=true;r.autoTask=false;if(!p.t.startsWith("d"))p.t="idle";
 logIt(p.n+" owns "+ROLE_NAMES[action]+" responsibilities.");}
 else return;coachDecision("Work role: "+p.n,before,"Changed to "+action+". Role-based work, development and staffing will respond.",id,7);save();structural="";renderStructure();renderSkillMap();refresh();}
@@ -1570,7 +1609,7 @@ function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
-function tick(){if(paused||S.ev)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();worldDay();let dirty=false,ideaDirty=false;
+function tick(){if(paused||S.ev)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
 if(delegateWork())dirty=true;
 if(autonomousWork())dirty=true;
@@ -1728,7 +1767,7 @@ $("skills-panel").addEventListener("toggle",()=>{if($("skills-panel").open)rende
 $("skills-map").addEventListener("click",e=>{const b=e.target.closest("button[data-skill-hire]");if(!b)return;S.hr.skill=b.dataset.skillHire;S.hr.pool=[];const panel=$("recruitment-panel");if(panel)panel.open=true;renderCandidates();save();});
 $("org-settings").addEventListener("toggle",()=>{orgControlsSignature="";if($("org-settings").open)renderOrganization();});
 $("org-controls").addEventListener("change",e=>{const el=e.target;if(el.dataset.orgManager!==undefined)orgChooseManager(el.dataset.orgManager,Number(el.value)||null);
-else if(el.dataset.orgPolicy)orgChangePolicy(el.dataset.orgDept,el.dataset.orgPolicy,Number(el.value));});
+else if(el.dataset.orgSubrole)orgChooseSubManager(el.dataset.orgDept,el.dataset.orgSubrole,Number(el.value)||null);else if(el.dataset.orgPolicy)orgChangePolicy(el.dataset.orgDept,el.dataset.orgPolicy,Number(el.value));});
 $("economy-terms").addEventListener("change",()=>economyChangePolicy("terms",$("economy-terms").value));
 $("economy-pricing").addEventListener("change",()=>economyChangePolicy("pricing",$("economy-pricing").value));
 $("economy-borrow").addEventListener("click",economyBorrow);

@@ -610,6 +610,17 @@ return '<div class="org-dept"><h3>'+DEPARTMENTS[key].name+'</h3><div class="smal
 }).join("")+'</div>';
 if($("org-settings").open)renderOrgControls();
 }
+
+function renderOrgControls(){
+$("org-controls").innerHTML=DEPT_KEYS.map(key=>{
+const d=S.org.departments[key],manager=orgManager(key);
+const qualified=S.team.filter(p=>p.department===key&&p.id!==S.ops.assistantId&&(p.career.rank>=1||p.career.xp>=10));
+const dropdown=(type,values,current,suffix)=>'<select data-org-policy="'+type+'" data-org-dept="'+key+'">'+values.map(v=>'<option value="'+v+'" '+(v===current?'selected':'')+'>'+v+suffix+'</option>').join("")+'</select>';
+return '<div class="org-settings-row"><b>'+DEPARTMENTS[key].name+'</b><label>Appoint a manager</label><select data-org-manager="'+key+'"><option value="">Founder manages directly</option>'+qualified.map(p=>'<option value="'+p.id+'" '+(manager?.id===p.id?'selected':'')+'>'+esc(p.n)+'</option>').join("")+'</select>'+(qualified.length?'':'<div class="small">Requires Senior rank or 10 experience points.</div>')+
+'<label>Manager coaching budget / 30 game days</label>'+dropdown("budget",[0,8,16,30],d.budget," dollars")+
+'<label>Department objective</label>'+(key==="commercial"?dropdown("leads",[3,5,8],d.target.leads," new leads"):dropdown("onTime",[70,85,95],d.target.onTime,"% on time"))+'</div>';
+}).join("");
+}
 function roleAction(id,action){if(S.ev)return;const p=person(id);if(!p)return;const r=p.role;
 if(action==="resume"){if(p.id===S.ops.assistantId)return;r.auto=true;if(!p.t.startsWith("d")){p.t="idle";r.autoTask=false;}logIt(p.n+" returned to the team work plan.");}
 else if(action==="manual"){r.auto=false;r.autoTask=false;logIt("Manual task control enabled for "+p.n+".");}

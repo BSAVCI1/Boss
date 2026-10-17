@@ -197,6 +197,41 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .coach-grid strong{display:block;font-size:15px}
 .coach-grid small{font-size:11px;color:var(--muted)}
 #coach-pay-wages{margin:8px 0;min-height:44px}
+
+/* v17 game-first UI */
+.game-desk{padding:16px;overflow:hidden}.game-desk>.lead{align-items:center}
+.game-desk h2{font-size:22px;line-height:1.2;margin:10px 0 5px}.game-desk .overview-copy{color:var(--muted);font-size:13px;margin:5px 0 9px}
+.game-chapter{border:1px solid var(--line);border-radius:30px;padding:5px 9px;background:var(--accentWash);font-size:12px;font-weight:750;color:var(--accent)}
+.game-desk .overview-metrics{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0}
+.game-desk .overview-metrics span{border-radius:20px;background:var(--accentWash);font-size:12px;padding:5px 9px}
+.game-mission{border:1px solid var(--line);background:var(--accentWash);border-radius:14px;padding:14px;margin-top:12px}
+.game-mission .eyebrow{letter-spacing:.08em;font-size:10px;color:var(--muted)}
+.game-mission strong{font-size:18px;display:block;line-height:1.28;margin:5px 0}
+.game-mission p{font-size:13px;color:var(--muted);margin:7px 0;line-height:1.45}
+.game-goal-track{height:8px;border-radius:10px;background:var(--bar);overflow:hidden;margin:11px 0 5px}
+.game-goal-track span{display:block;height:100%;background:var(--accent);border-radius:10px;transition:width .3s}
+.game-goal-progress{text-align:right;color:var(--muted);font-size:11px}
+.game-actions{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:7px;margin:12px 0}
+.game-actions button{white-space:normal;font-size:13px;min-height:49px}
+.game-actions .game-primary{background:var(--accent);color:white;border-color:var(--accent);font-weight:750}
+.game-scene .office{border:0;background:var(--accentWash);margin:7px 0;padding:6px}
+.game-scene canvas{max-height:125px;object-fit:contain}
+.game-story-item{padding:7px 0;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px}
+.game-story-item:before{content:"★";color:var(--good);margin-right:7px}
+.game-toast[hidden]{display:none}.game-toast{position:fixed;z-index:18;bottom:calc(84px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);max-width:90vw;width:max-content;padding:10px 14px;border-radius:12px;background:var(--ink);color:var(--panel);font-size:13px;text-align:center;pointer-events:none}
+.game-journey-stage{display:block;padding:8px 10px;border-radius:9px;margin:7px 0;font-size:13px}
+.game-journey-stage.unlocked{background:rgba(58,165,113,.10);color:var(--good)}.game-journey-stage.locked{color:var(--muted);border:1px dashed var(--line)}
+.game-advanced{margin:12px 0!important}.game-advanced>summary{padding:12px 9px;font-weight:650;color:var(--muted);font-size:13px}
+.game-advanced[open]>summary{color:var(--accent)}
+.game-rivals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:2px 0 15px}
+.game-rival{border:1px solid var(--line);border-radius:12px;padding:8px;min-width:0;display:flex;gap:6px;align-items:flex-start}
+.game-rival b{font-size:12px;display:block;overflow-wrap:anywhere}.game-rival small{font-size:10px;color:var(--muted);display:block;overflow-wrap:anywhere}
+.game-rival-icon{background:var(--accentWash);color:var(--accent);border-radius:50%;padding:3px 6px}
+.knowledge-row{padding:10px;border:1px solid var(--line);border-radius:10px;margin:8px 0}
+.knowledge-row.is-locked{opacity:.65}.knowledge-row.is-unlocked{border-color:var(--good);background:rgba(58,165,113,.06)}
+.employee-summary .employee-aside{max-width:43%;min-width:0}.employee-summary .small{overflow-wrap:anywhere}
+@media(max-width:430px){.game-rivals{grid-template-columns:1fr}.game-rival{align-items:center}.game-rival small{font-size:11px}.game-desk{padding:13px}.game-actions{grid-template-columns:1fr 1fr}#view-work h2,#view-team h2,#view-growth h2{font-size:18px;margin:17px 0 9px}}
+@media(prefers-reduced-motion:reduce){.game-goal-track span{transition:none}}
 </style>
 </head>
 <body>
@@ -1662,7 +1697,7 @@ $("candidates").innerHTML=S.hr.pool.length?'<div class="filter-note">Candidates 
 function renderIdeas(){const all=S.seeds.filter(k=>IDEAS[k]);
 $("idea-summary").textContent=all.length+"/"+Object.keys(IDEAS).length+" discoveries · "+S.built.length+"/"+RECIPES.length+" capabilities";
 $("ideas").innerHTML=RECIPES.map(r=>{const done=S.built.some(b=>b[0]===r[2]),have=Number(S.seeds.includes(r[0]))+Number(S.seeds.includes(r[1]));
-return '<div class="knowledge-row"><div class="lead"><b>'+esc(r[2])+'</b><span class="small">'+(done?'✓ Active':have+'/2 discoveries')+'</span></div><div class="small">'+esc(IDEAS[r[0]])+' '+(S.seeds.includes(r[0])?'✓':'○')+' · '+esc(IDEAS[r[1]])+' '+(S.seeds.includes(r[1])?'✓':'○')+' · '+esc(r[3])+'</div><div class="progress"><i style="width:'+(done?100:have*45)+'%"></i></div></div>';}).join("");
+return '<div class="knowledge-row '+(done?"is-unlocked":"is-locked")+'"><div class="lead"><b>'+(done?"✓ ":"◇ ")+esc(r[2])+'</b><span class="small">'+(done?'Unlocked':have+'/2 found')+'</span></div><div class="small">'+esc(IDEAS[r[0]])+' '+(S.seeds.includes(r[0])?'✓':'○')+' · '+esc(IDEAS[r[1]])+' '+(S.seeds.includes(r[1])?'✓':'○')+' · '+esc(r[3])+'</div><div class="progress"><i style="width:'+(done?100:have*45)+'%"></i></div></div>';}).join("");
 $("built").innerHTML=all.length?'<div class="filter-note">Discovered: '+all.map(k=>esc(IDEAS[k])).join(" · ")+'</div>':'<div class="empty">Employees will discover capabilities through work, research and experimentation.</div>';
 $("idea-message").textContent=ideaMessage||"Ideas now have different funding requirements and measured participation. Unlocks depend on results; past discoveries remain intact.";
 renderIdeaProgress();}

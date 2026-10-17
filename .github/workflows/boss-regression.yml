@@ -1,7 +1,7 @@
 name: Boss offline regression checks
 on:
   push:
-    branches: [main, boss-v15-advanced-economy, boss-v15-1-career-pathways, boss-v16-living-business-world, boss-v16-1-balance-and-people]
+    branches: [main, boss-v15-advanced-economy, boss-v15-1-career-pathways, boss-v16-living-business-world, boss-v16-1-balance-and-people, boss-v17-game-first]
   pull_request:
     branches: [main]
 jobs:
@@ -13,4 +13,4 @@ jobs:
         with:
           node-version: '20'
       - name: Run standalone game regression checks
-        run: node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs
+        run: node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs && node tests/v17-game.cjs

@@ -171,6 +171,32 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .lab-note{font-size:12px;color:var(--muted);margin-top:8px}
 .lab-disabled{opacity:.65}
 @media(min-width:700px){.lab-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* v14.1 context-first management coaching and decision feedback */
+.coach-hub{margin:10px 0;padding:12px}
+.coach-mode{display:flex;gap:8px;align-items:center;margin:10px 0}
+.coach-mode label{font-size:12px;flex:1}
+.coach-mode select{font-size:13px;min-height:44px;flex:2;max-width:70%}
+.coach-row{border:1px solid var(--line);border-radius:10px;margin:7px 0;padding:10px}
+.coach-row h3{font-size:14px;margin:0 0 5px}
+.coach-row p{font-size:12px;margin:4px 0;color:var(--muted)}
+.coach-row button{min-height:44px;font-size:12px}
+.coach-red{background:rgba(210,65,75,.08);border-color:rgba(210,65,75,.28)}
+.coach-amber{background:rgba(210,143,40,.10);border-color:rgba(210,143,40,.27)}
+.coach-green{background:rgba(35,141,90,.07);border-color:rgba(35,141,90,.25)}
+.coach-help{font-size:12px;line-height:1.5;margin:9px 0}
+.coach-help b{display:block;margin-bottom:3px}
+.coach-mini{font-size:12px;color:var(--muted);line-height:1.5}
+.coach-decision{margin:9px 0;padding:10px;border:1px solid var(--line);border-radius:9px}
+.coach-decision strong{font-size:13px}
+.coach-decision p{font-size:12px;color:var(--muted)}
+.coach-manager-profile{font-size:12px;border-top:1px solid var(--line);padding:8px 0}
+.coach-status-pill{font-size:11px;border-radius:7px;padding:3px 7px;background:var(--accentWash)}
+.coach-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:8px 0}
+.coach-grid>div{padding:8px;border:1px solid var(--line);border-radius:7px}
+.coach-grid strong{display:block;font-size:15px}
+.coach-grid small{font-size:11px;color:var(--muted)}
+#coach-pay-wages{margin:8px 0;min-height:44px}
 </style>
 </head>
 <body>
@@ -189,7 +215,13 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div id="bi-tile-profit"><span>Operating profit</span><strong id="bi-profit">$0</strong></div>
 <div id="bi-tile-margin"><span>Profit margin</span><strong id="bi-margin">—</strong></div>
 </div><div class="buttons bi-headline-actions"><button type="button" id="bi-open-details">View full performance →</button></div></section>
-<div class="lab-today" id="lab-today" hidden><span id="lab-today-text"></span><button type="button" id="lab-today-open">Review experiment →</button></div><div id="attention-list" class="attention-list" aria-live="off"></div>
+
+<section aria-labelledby="coach-title" class="card coach-hub"><div class="lead"><b id="coach-title">Management Coach</b><span class="small" id="coach-status">Reviewing priorities</span></div>
+<div class="coach-mode"><label for="coach-mode">Learning style</label><select id="coach-mode"><option value="guided">Guided · explain and recommend</option><option value="challenge">Challenge · decide, then learn</option><option value="sandbox">Sandbox · minimal assistance</option></select></div>
+<div id="coach-priorities"></div>
+<details class="aux-details"><summary>Cash and capacity plan</summary><div id="coach-forecast"></div><button type="button" id="coach-pay-wages">Settle available unpaid wages</button></details>
+<details class="aux-details"><summary>Recent decisions and follow-ups</summary><div id="coach-decisions"></div></details>
+</section><div class="lab-today" id="lab-today" hidden><span id="lab-today-text"></span><button type="button" id="lab-today-open">Review experiment →</button></div><div id="attention-list" class="attention-list" aria-live="off"></div>
 <div class="card focusrow"><div><strong>Focus on current work</strong><div class="small" id="focus-hint">Pause incoming work when you need space.</div></div><button type="button" id="focus-toggle">Enable Focus</button></div>
 <details class="aux-details" id="office-panel"><summary>Office animation &amp; game settings</summary><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div><button type="button" id="restart" class="danger-secondary">Restart company</button></details>
 <details class="aux-details"><summary>Company activity <span class="small" id="log-recent"></span></summary><div class="card" id="log" aria-live="off"></div></details>
@@ -201,12 +233,12 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="bi-report">
 <p class="bi-legend"><span class="dot dot-critical"></span>Needs attention <span class="dot dot-watch"></span>Watch <span class="dot dot-good"></span>Healthy <span class="dot dot-neutral"></span>Not enough data</p>
 <div class="filter-grid"><div><label for="bi-range">Reporting period</label><select id="bi-range"><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="all">All tracked days</option></select></div><div><label>Measurement started</label><p id="bi-since" class="small"></p></div></div>
-<details class="bi-accordion bi-finance" id="bi-finance-panel"><summary><span class="bi-section-title">Finance · Profit &amp; loss</span><span class="bi-section-state" id="bi-finance-state">Not assessed</span><span class="bi-section-hint" id="bi-finance-hint">Tap to inspect</span></summary><div class="bi-accordion-body"><div id="bi-finance" class="bi-metric-grid"></div><p id="bi-finance-note" class="filter-note"></p>
+<details class="bi-accordion bi-finance" id="bi-finance-panel"><summary><span class="bi-section-title">Finance · Profit &amp; loss</span><span class="bi-section-state" id="bi-finance-state">Not assessed</span><span class="bi-section-hint" id="bi-finance-hint">Tap to inspect</span></summary><div class="bi-accordion-body"><div id="bi-finance" class="bi-metric-grid"></div><div id="coach-kpi-guide"></div><p id="bi-finance-note" class="filter-note"></p>
 <div class="lead"><b>Revenue and costs by period</b><span class="small" id="bi-chart-period">Recent periods</span></div><div id="bi-chart" class="bi-chart" aria-label="Revenue and costs trend"></div><div class="bi-chart-legend">Revenue = colored bars · Operating costs = grey bars</div><div id="bi-cost-breakdown"></div>
 <details class="aux-details"><summary>Recent cash transactions</summary><div id="bi-transactions" class="bi-transactions"></div></details></div></details>
 <details class="bi-accordion bi-sales" id="bi-sales-panel"><summary><span class="bi-section-title">Sales · Lead quality &amp; conversion</span><span class="bi-section-state" id="bi-sales-state">Not assessed</span><span class="bi-section-hint" id="bi-sales-hint">Tap to inspect</span></summary><div class="bi-accordion-body"><div id="bi-sales" class="bi-metric-grid"></div><div id="bi-sources"></div><p class="filter-note">Qualification rate is qualified leads divided by generated leads. Win rate uses decisions on closed opportunities; leads still in progress are excluded.</p></div></details>
 <details class="bi-accordion bi-delivery" id="bi-delivery-panel"><summary><span class="bi-section-title">Delivery · Realization &amp; quality</span><span class="bi-section-state" id="bi-delivery-state">Not assessed</span><span class="bi-section-hint" id="bi-delivery-hint">Tap to inspect</span></summary><div class="bi-accordion-body"><div id="bi-delivery" class="bi-metric-grid"></div><div id="bi-sectors"></div><details class="aux-details"><summary>Completed project profitability</summary><div id="bi-project-history"></div></details><p class="filter-note">Booked value is estimated at contract award and adjusted for contract changes. Realized revenue is recognized and paid upon completion; invoicing and receivables are not simulated yet. Project contribution margin allocates delivery labor plus direct project expenses, not general overhead.</p></div></details>
-<details class="bi-accordion bi-people" id="bi-people-panel"><summary><span class="bi-section-title">People · Capacity &amp; productivity</span><span class="bi-section-state" id="bi-people-state">Not assessed</span><span class="bi-section-hint" id="bi-people-hint">Tap to inspect</span></summary><div class="bi-accordion-body"><div id="bi-people" class="bi-metric-grid"></div><p class="filter-note">Billable utilization = delivery workdays / staffed workdays. Remaining capacity can support prospecting, training, rest or leadership.</p></div></details>
+<details class="bi-accordion bi-people" id="bi-people-panel"><summary><span class="bi-section-title">People · Capacity &amp; productivity</span><span class="bi-section-state" id="bi-people-state">Not assessed</span><span class="bi-section-hint" id="bi-people-hint">Tap to inspect</span></summary><div class="bi-accordion-body"><div id="bi-people" class="bi-metric-grid"></div><div id="coach-role-performance"></div><p class="filter-note">Billable utilization = delivery workdays / staffed workdays. Remaining capacity can support prospecting, training, rest or leadership.</p></div></details>
 </div></details>
 <section aria-labelledby="deals-title"><h2 id="deals-title">Client projects: choose assignments and contracts</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
 
@@ -226,7 +258,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <section aria-labelledby="organization-title"><h2 id="organization-title">Organization &amp; management</h2><div class="card org-overview">
 <div class="lead"><b>Reporting lines</b><span id="org-status" class="small">Flat founder-led structure</span></div>
 <p class="filter-note">Choose who reports to whom. A specialist team lead manages only their department, not everyone in the company. Managers coach, coordinate client work and own targets within an approved budget.</p>
-<div id="org-chart"></div><details id="org-settings" class="aux-details"><summary>Department budgets, authority &amp; targets</summary><div id="org-controls"></div><p class="filter-note">Managers need Senior rank or 10 experience points. They stop routine individual delivery to lead their department, earn an extra $0.75/day, and can improve direct reports' output by up to 7% when actively coaching. Check costs against results. The office assistant retains cross-company coordination.</p></details>
+<div id="org-chart"></div><div id="coach-manager-review"></div><details id="org-settings" class="aux-details"><summary>Department budgets, authority &amp; targets</summary><div id="org-controls"></div><p class="filter-note">Managers need Senior rank or 10 experience points. They stop routine individual delivery to lead their department, earn an extra $0.75/day, and can improve direct reports' output by up to 7% when actively coaching. Check costs against results. The office assistant retains cross-company coordination.</p></details>
 </div></section>
 <section aria-labelledby="team-title"><h2 id="team-title">Your team</h2><p class="small" id="team-wellbeing">Career progress, stress and wellbeing</p><div id="people"></div></section>
 
@@ -252,7 +284,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </section>
 <section id="view-growth" class="app-view" data-page="growth" aria-label="Strategy and capabilities" hidden>
 <div class="view-intro"><h2>Growth</h2><p>Industries, investments and company knowledge</p></div>
-<section aria-labelledby="market-title"><h2 id="market-title">Market strategy &amp; expansion</h2><div class="card"><p class="small">Build a reputation in your specialist sector, then unlock new industries. Focus improves delivery speed and client value for matching work.</p><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><div id="sector-options" class="sector-buttons"></div><p id="sector-status" class="filter-note"></p></div></section>
+<section aria-labelledby="market-title"><h2 id="market-title">Market strategy &amp; expansion</h2><div class="card"><p class="small">Build a reputation in your specialist sector, then unlock new industries. Focus improves delivery speed and client value for matching work.</p><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><div id="sector-options" class="sector-buttons"></div><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
 
 <section aria-labelledby="lab-title"><h2 id="lab-title">Entrepreneurship &amp; Leadership Lab</h2>
 <div class="card lab-card"><div class="lead"><b>Experiment notebook</b><span id="lab-summary" class="small">Plan a measurable business experiment</span></div>
@@ -272,10 +304,10 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <label for="lab-duration">Evaluation period</label><select id="lab-duration"><option value="15">15 game days</option><option value="30" selected>30 game days</option><option value="45">45 game days</option></select>
 <label for="lab-forecast">Expected outcome compared with baseline</label><select id="lab-forecast"><option value="-25">25% lower</option><option value="-10">10% lower</option><option value="0">About the same</option><option value="10">10% higher</option><option value="25" selected>25% higher</option><option value="50">50% higher</option></select>
 <label for="lab-hypothesis">Why do you expect this? (optional)</label><textarea id="lab-hypothesis" rows="2" maxlength="250" placeholder="Example: More qualified leads should translate to more contracts if delivery can keep up."></textarea>
-<div id="lab-preview" class="filter-note"></div>
+<div id="lab-preview" class="filter-note"></div><div id="coach-lab-impact"></div>
 <button type="button" id="lab-start">Start experiment</button>
 </div>
-<div id="lab-finished" class="lab-result"></div>
+<div id="lab-finished" class="lab-result"></div><div id="coach-lab-controls"></div>
 <details class="aux-details" id="lab-history-panel"><summary>Previous experiments <span id="lab-count">0</span></summary><div id="lab-history"></div></details>
 </details></div></section>
 <section aria-labelledby="idea-title"><h2 id="idea-title">Company capability map</h2><div class="card"><p class="filter-note">Ideas discovered through research, service and daily work fill the map. Related discoveries unlock capabilities automatically—no manual pair matching.</p><div class="lead"><b>Organizational knowledge</b><span class="small" id="idea-summary"></span></div><div id="ideas"></div><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div></div></section>
@@ -496,7 +528,8 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
-ensureOrganization(s);ensureBI(s);ensureLab(s);
+ensureOrganization(s);ensureBI(s);ensureLab(s);ensureCoach(s);
+for(const d of s.deals)if(!Number.isFinite(d.agreedFee))d.agreedFee=d.biBooked&&Number.isFinite(d.bookVal)?d.bookVal:estimatedFee(d);
 return s;}catch(e){return null;}}
 const BI_FIELDS=["revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
 function biZero(){return Object.fromEntries(BI_FIELDS.map(k=>[k,0]));}
@@ -911,7 +944,7 @@ function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:
 if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null};ensureBI(S);ensureLab(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null};ensureBI(S);ensureLab(S);ensureCoach(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Office assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -1179,7 +1212,7 @@ function Mo(p,v){if(p)p.mood=clamp(p.mood+v);}
 function Me(p,s){if(p){p.mem.unshift(s);p.mem=p.mem.slice(0,3);}}
 function pay(v){const paid=Math.min(S.cash,v);S.cash-=paid;if(paid>0)biMoney("decision",paid,"Leadership decision: "+(S.ev?.k||"other"));}
 function dilemmaInfo(ev){const a=person(ev.a),b=person(ev.b);if(!a||!b)return null;const n=a.n,m=b.n;switch(ev.k){
-case"raise":return["A raise request",n+" asks for a raise. How do you respond?",["Give a raise (-$20)","Refuse","Maybe later"]];
+case"raise":return["A raise request",n+" asks for a recurring raise. It would add $0.25/day to payroll (about $7.50 per 30 days).",["Approve +$0.25/day","Refuse","Maybe later"]];
 case"leave":return["An entrepreneurial dream",n+" wants to leave and start a company.",["Counter-offer (-$30)","Wish them luck","Hold them back"]];
 case"fight":return["Team conflict",n+" and "+m+" are arguing. They both want you to intervene.",["Side with "+n,"Side with "+m,"Team meeting (-$10)"]];
 case"mistake":return["A costly mistake",n+" made a costly mistake at work.",["Blame them","Teach them","Cover it up (-$15)"]];

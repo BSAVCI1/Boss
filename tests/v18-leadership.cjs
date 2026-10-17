@@ -97,4 +97,19 @@ assert.equal(s.day,730);assert.ok(s.team.length<=count,"CEO layer must never sil
 assert.equal(s.exec.history.length,0);assert.ok(Number.isFinite(s.cash));accounting(s);
 G.save();assert.equal(JSON.parse(store.get("boss18")).day,730);
 });
+test("CEO approval makes director-suggested salary increase recurring, never immediate cash",()=>{
+fresh();const s=G.get(),manager=s.team[0],worker=s.team[1];appoint(s,"commercial",manager);worker.department="commercial";worker.career.satisfaction=30;
+s.exec.priority="people";s.day=7;G.executiveWeek();
+const req=s.exec.proposals.find(p=>p.dept==="commercial");assert.equal(req.type,"raise");
+const old=s.cash,oldRaise=worker.career.raise||0;assert.ok(G.executiveDecision(req.id,"approve"));
+assert.equal(worker.career.raise,oldRaise+.25);assert.equal(s.cash,old);accounting(s);
+});
+test("new-business strategic direction yields real CEO-gated launch request",()=>{
+fresh();const s=G.get();const director=s.team[1];appoint(s,"delivery",director);s.exec.priority="newline";s.day=7;
+G.executiveWeek();const req=s.exec.proposals.find(x=>x.dept==="delivery");
+assert.equal(req.type,"line");assert.equal(req.cost,120);
+assert.equal(s.exec.lines.length,0);assert.equal(s.cash,90);assert.equal(G.executiveDecision(req.id,"approve"),false);
+const injected=300-s.cash;s.cash+=injected;s.bi.openingCash+=injected;
+assert.ok(G.executiveDecision(req.id,"approve"));assert.equal(s.exec.lines.length,1);assert.equal(s.cash,180);accounting(s);
+});
 console.log("Boss v18 CEO leadership regressions passed.");

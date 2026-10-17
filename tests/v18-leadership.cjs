@@ -25,7 +25,7 @@ store.set("boss17",JSON.stringify(s));const original=store.get("boss17");
 const restored=G.load();assert.equal(restored.market.completed,305);assert.equal(restored.deals[0].agreedFee,314);
 assert.equal(restored.team[0].career.rank,2);assert.equal(restored.exec.since,2252);
 assert.equal(restored.exec.history.length,0);assert.equal(restored.exec.lines.length,0);
-G.set(restored);G.save();assert.ok(store.get("boss19"));assert.equal(store.get("boss17"),original);
+G.set(restored);G.save();assert.ok(store.get("boss20"));assert.equal(store.get("boss17"),original);
 });
 test("CEO office describes actual company identity, reports and assistant",()=>{
 fresh();const s=G.get();G.executiveShow();
@@ -114,7 +114,7 @@ s.nextEv=999999;s.flow.focus=true;
 for(let n=0;n<730;n++){if(s.ev)s.ev=null;G.tick();}
 assert.equal(s.day,730);assert.ok(s.team.length<=count,"CEO layer must never silently hire; employees may still voluntarily leave");assert.equal(s.exec.lines.length,0);
 assert.equal(s.exec.history.length,0);assert.ok(Number.isFinite(s.cash));accounting(s);
-G.save();assert.equal(JSON.parse(store.get("boss19")).day,730);
+G.save();assert.equal(JSON.parse(store.get("boss20")).day,730);
 });
 test("CEO approval makes director-suggested salary increase recurring, never immediate cash",()=>{
 fresh();const s=G.get(),manager=s.team[0],worker=s.team[1];appoint(s,"commercial",manager);worker.department="commercial";worker.career.satisfaction=30;

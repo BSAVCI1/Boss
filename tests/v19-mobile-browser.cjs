@@ -30,6 +30,11 @@ document.addEventListener("DOMContentLoaded",()=>{
   result.checks.customBudgets=!!document.querySelector('[data-org-policy="training"]')&&!!document.querySelector('[data-org-policy="hiring"]');
   result.checks.optionalManagers=!!document.querySelector('[data-org-subrole="sales"]')&&!!document.querySelector('[data-org-subrole="ops"]');
   result.checks.noVisibleUndefined=!document.body.innerText.includes("undefined");
+  result.checks.groupedPeople=document.querySelectorAll('#people details[data-team-group]').length>0;
+  const weekly=document.querySelector('#ea-weekly-report');
+  if(weekly){weekly.open=true;weekly.dispatchEvent(new Event('toggle'));}
+  result.checks.executiveBriefing=!!weekly&&document.querySelector('#ea-weekly-body')?.textContent.includes('Direct-report briefing');
+  result.checks.serviceBoard=!!document.querySelector('#business-lines')&&document.querySelector('#business-lines').textContent.includes('General business services');
   result.errors=(window.__mobileErrors||[]);
  }catch(e){result.errors.push(String(e.stack||e));}
  document.title="BOSS_QA:"+btoa(unescape(encodeURIComponent(JSON.stringify(result))));
@@ -90,6 +95,9 @@ async function runBrowser(){
   assert.equal(outcome.checks.customBudgets,true);
   assert.equal(outcome.checks.optionalManagers,true);
   assert.equal(outcome.checks.noVisibleUndefined,true);
+  assert.equal(outcome.checks.groupedPeople,true,"Team must show reporting-line groups at 390px");
+  assert.equal(outcome.checks.executiveBriefing,true,"EA weekly report must provide actual content");
+  assert.equal(outcome.checks.serviceBoard,true,"Portfolio page must show consolidated services");
   assert.deepEqual(outcome.errors,[]);
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}

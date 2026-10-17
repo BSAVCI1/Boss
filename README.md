@@ -4,6 +4,16 @@ Boss is a free, ad-free, offline-capable, mobile-first, endless leader simulatio
 
 **Play:** https://bsavci1.github.io/Boss/.
 
+## Boss v20 — Service Portfolio & CEO Office (development branch, not released)
+**v20 is under review** on `boss-v20-service-portfolio`. The live game remains v19.1 until complete testing, save migration, Pages and browser checks succeed.
+
+- **Real service offerings:** Launch Marketing, Product, Operations or Technology lines. Subsequent contracts sell named offerings with tier-specific fees, workload and quality targets. Successful deliveries unlock higher service tiers. Attribution records each line's actual revenue, delivery quality and contribution; the company ledger remains consolidated, never counted twice. Previously agreed fees and historic customers are unchanged.
+- **A recoverable business launch:** `boss20` imports `boss19` and older saves forward-only. Each new line is saved immediately, with an independent local receipt. Disappeared lines can be reconstructed only when the current financial ledger confirms that exact paid investment; no refund, duplicate charge or fabricated revenue. A running older browser tab pauses rather than overwrite a newer `boss20` state.
+- **People grouped by reporting line:** In Team, a compact expandable CEO → Commercial / Delivery heads → Sales, Marketing, Product and Operations managers and their direct-report groups replaces a flat 14-person list. Assignments and employment history are preserved.
+- **Executive Assistant briefing:** Today's mature-company button opens a weekly, read-only business briefing with actual tracked wins, deliveries, cash receipts/payments, manager spans, deadline risks, staff stress, executive exceptions and stalled service investments. It no longer merely scrolls upward.
+- **Specialized staffing:** Team managers with an active service and an empty specialist team can recommend role-specific recruiting. Directors can hire within CEO-approved per-action, headcount, budget and payroll limits; the CEO approves exceptions.
+- **Safety gates:** Seven inherited suites plus new v20 portfolio, migration, 730-day and 390px Chromium tests. Do not declare deployment until GitHub Pages and live verification succeed. Use the same Safari tab and do not clear stored site data.
+
 ## Boss v19.1 — Mobile and leadership corrections
 The Today action **Review leadership meeting** now scrolls to the executive inbox instead of reopening Today at the current position. Team delegation amount fields stay mounted while actively being edited, so simulation updates do not steal focus. Employee promotions show evaluated dollar amounts, team-manager titles cannot be mistaken for directors, and an appointed Executive Assistant no longer appears as an Office Assistant in the employee task label. Work includes concise explanation of pipeline mode, target and independent capacity limits. **No economic parameters or save schema changed**; existing `boss19` saves remain compatible. Save/reload QA covers manager hierarchy; test real iOS Safari after publishing.
 

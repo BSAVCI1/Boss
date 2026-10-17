@@ -8,7 +8,7 @@
 <style>
 :root{color-scheme:light;--bg:#f6f7fb;--panel:#fff;--ink:#1a2740;--muted:#637188;--line:#dfe5ef;--accent:#315fc7;--accentWash:#eaf0ff;--bar:#e6ebf3;--good:#3aa571;--warn:#b74646;--shadow:0 4px 20px rgba(22,41,72,.055)}
 @media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#101827;--panel:#1c2939;--ink:#f0f4ff;--muted:#a5b2c6;--line:#344358;--accent:#97b7ff;--accentWash:#253858;--bar:#303d4e;--good:#61c78a;--warn:#ff9696;--shadow:0 4px 18px rgba(0,0,0,.12)}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.48 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-tap-highlight-color:transparent}main{max-width:770px;margin:auto;padding:calc(18px + env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}h1{font-size:34px;margin:0 0 13px;letter-spacing:-1.1px}h2{font-size:18px;line-height:1.25;margin:24px 0 11px}button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;min-height:36px;padding:8px 11px;cursor:pointer;touch-action:manipulation}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}button:disabled{cursor:not-allowed;opacity:.4}button.selected{border-color:var(--accent);background:var(--accentWash);color:var(--accent);font-weight:700}.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.stat,.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}.stat{padding:10px 6px;text-align:center}.stat small{display:block;font-size:11px;color:var(--muted)}.stat strong{display:block;font-size:18px;line-height:1.35;font-variant-numeric:tabular-nums;white-space:nowrap}.card{padding:14px;margin-bottom:10px}.office{margin-top:13px;overflow:hidden;padding:7px}.office canvas{width:100%;height:auto;display:block;border-radius:9px;background:var(--bar)}.controls{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}.controls button{flex:1;min-width:56px}.controls .restart{flex:1.2}.small{font-size:12px;color:var(--muted)}.lead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.lead b{font-size:16px}.meta{color:var(--muted);margin-top:4px}.progress{height:8px;border-radius:20px;background:var(--bar);overflow:hidden;margin:8px 0}.progress>i{display:block;height:100%;width:0;background:var(--accent);border-radius:20px;transition:width .2s}.progress.good>i{background:var(--good)}.buttons{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.buttons button{min-height:36px;flex:1 1 auto}.person-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.person-head b{font-size:16px}.color-dot{width:11px;height:11px;border-radius:50%;display:inline-block;margin-right:7px}.skills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;margin:12px 0}.skill-name{font-size:12px;display:flex;justify-content:space-between;gap:6px}.skill-name span{color:var(--muted)}.skill .progress{height:6px;margin:5px 0 0}.memories{color:var(--accent);font-size:12px;margin-top:11px}.memories div{margin-top:5px}.empty{color:var(--muted);padding:17px;text-align:center}.built{margin-top:12px}.built>div{margin-top:8px;font-size:13px}.log-entry{padding:8px 0;border-bottom:1px solid var(--line)}.log-entry:last-child{border:0}.warning{color:var(--warn);font-weight:600}.win{color:var(--good);font-weight:650}.message{margin:11px 0;color:var(--muted);font-size:13px}.overlay{position:fixed;inset:0;background:rgba(7,11,20,.78);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}.overlay[hidden]{display:none}.dialog{max-width:460px;width:100%;background:var(--panel);border-radius:18px;border:1px solid var(--line);padding:20px;box-shadow:0 22px 60px rgba(0,0,0,.3)}.dialog h2{margin:0 0 8px}.dialog p{font-size:15px;margin:0 0 18px}.dialog .buttons{display:grid;grid-template-columns:1fr}.dialog button{text-align:left;padding:12px;min-height:44px}body.modal-open{overflow:hidden}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.48 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-tap-highlight-color:transparent}.team-report-group{border:1px solid var(--line);border-radius:14px;margin:10px 0;background:var(--panel);overflow:hidden}.team-report-group>summary{cursor:pointer;padding:13px 15px;font-weight:750;list-style-position:inside}.team-report-members{padding:0 9px 10px}.team-report-members>.employee-card{margin-top:7px}main{max-width:770px;margin:auto;padding:calc(18px + env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}h1{font-size:34px;margin:0 0 13px;letter-spacing:-1.1px}h2{font-size:18px;line-height:1.25;margin:24px 0 11px}button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;min-height:36px;padding:8px 11px;cursor:pointer;touch-action:manipulation}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}button:disabled{cursor:not-allowed;opacity:.4}button.selected{border-color:var(--accent);background:var(--accentWash);color:var(--accent);font-weight:700}.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.stat,.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}.stat{padding:10px 6px;text-align:center}.stat small{display:block;font-size:11px;color:var(--muted)}.stat strong{display:block;font-size:18px;line-height:1.35;font-variant-numeric:tabular-nums;white-space:nowrap}.card{padding:14px;margin-bottom:10px}.office{margin-top:13px;overflow:hidden;padding:7px}.office canvas{width:100%;height:auto;display:block;border-radius:9px;background:var(--bar)}.controls{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}.controls button{flex:1;min-width:56px}.controls .restart{flex:1.2}.small{font-size:12px;color:var(--muted)}.lead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.lead b{font-size:16px}.meta{color:var(--muted);margin-top:4px}.progress{height:8px;border-radius:20px;background:var(--bar);overflow:hidden;margin:8px 0}.progress>i{display:block;height:100%;width:0;background:var(--accent);border-radius:20px;transition:width .2s}.progress.good>i{background:var(--good)}.buttons{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.buttons button{min-height:36px;flex:1 1 auto}.person-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.person-head b{font-size:16px}.color-dot{width:11px;height:11px;border-radius:50%;display:inline-block;margin-right:7px}.skills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;margin:12px 0}.skill-name{font-size:12px;display:flex;justify-content:space-between;gap:6px}.skill-name span{color:var(--muted)}.skill .progress{height:6px;margin:5px 0 0}.memories{color:var(--accent);font-size:12px;margin-top:11px}.memories div{margin-top:5px}.empty{color:var(--muted);padding:17px;text-align:center}.built{margin-top:12px}.built>div{margin-top:8px;font-size:13px}.log-entry{padding:8px 0;border-bottom:1px solid var(--line)}.log-entry:last-child{border:0}.warning{color:var(--warn);font-weight:600}.win{color:var(--good);font-weight:650}.message{margin:11px 0;color:var(--muted);font-size:13px}.overlay{position:fixed;inset:0;background:rgba(7,11,20,.78);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}.overlay[hidden]{display:none}.dialog{max-width:460px;width:100%;background:var(--panel);border-radius:18px;border:1px solid var(--line);padding:20px;box-shadow:0 22px 60px rgba(0,0,0,.3)}.dialog h2{margin:0 0 8px}.dialog p{font-size:15px;margin:0 0 18px}.dialog .buttons{display:grid;grid-template-columns:1fr}.dialog button{text-align:left;padding:12px;min-height:44px}body.modal-open{overflow:hidden}
 .focusrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:11px;margin-bottom:0}.focusrow button{flex-shrink:0}.focusrow .small{max-width:460px}#intake-status{margin:-2px 0 10px}.sector-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.sector-buttons button{min-height:54px;text-align:left}.sector-buttons button small{display:block;color:var(--muted);font-size:11px;margin-top:2px}.contract-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.contract-actions button{font-size:12px;flex:1 1 90px}.phase-meta{margin-top:8px;font-size:12px;color:var(--muted)}@media(max-width:420px){.sector-buttons{grid-template-columns:1fr}}.career-panel{margin-top:12px;padding:10px 0;border-top:1px solid var(--line)}.career-panel summary{cursor:pointer;min-height:38px;font-size:13px;font-weight:650}.career-data{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px;margin:8px 0}.career-data .small{overflow-wrap:anywhere}.career-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.career-actions button{flex:1 1 100px;min-height:40px}.career-step{border-inline-start:2px solid var(--line);padding:8px 10px;margin:7px 0;font-size:12px}.career-roadmap>summary{font-size:13px!important}.career-alert{color:var(--warn)}.career-calm{color:var(--good)}@media(max-width:390px){.career-data{grid-template-columns:1fr}}.pipeline-stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:12px}.pipeline-stages .pipestage{text-align:center;background:var(--accentWash);padding:8px 4px;border-radius:9px;font-size:11px}.pipeline-stages .pipestage strong{display:block;font-size:18px}.role-panel{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:9px 0}.role-panel label{font-size:12px;color:var(--muted)}.role-panel select{width:auto;flex:1 1 140px;min-width:145px}.knowledge-row{padding:10px 0;border-top:1px solid var(--line)}.knowledge-row .small{line-height:1.55}.skillmap-row{padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}.skillmap-row:last-child{border-bottom:0}@media(max-width:400px){.pipeline-stages{grid-template-columns:repeat(2,minmax(0,1fr))}}.assistant-settings{padding:12px 0;border-top:1px solid var(--line)}.assistant-settings input[type="number"]{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;min-height:40px;padding:8px;width:100%;font:inherit}.assistant-settings summary{cursor:pointer;min-height:36px;font-weight:650;display:list-item;margin:0 0 6px 15px}.assistant-settings[open] summary{color:var(--accent)}.assistant-toggle{display:flex;align-items:center;gap:9px;font-size:13px;min-height:35px;cursor:pointer}.assistant-toggle input{width:18px;height:18px;flex-shrink:0;accent-color:var(--accent)}.assistant-checkboxes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px;row-gap:2px}.assistant-queue{padding-top:12px;border-top:1px solid var(--line)}.queue-item{padding:11px 0;border-bottom:1px solid var(--line)}.queue-item:last-child{border-bottom:0}.queue-item .lead b{font-size:14px}.risk-note{font-size:12px}.risk-watch{color:var(--warn)}.risk-ok{color:var(--good)}@media(max-width:420px){.assistant-checkboxes{grid-template-columns:1fr}.filter-grid{grid-template-columns:1fr}}select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;min-height:40px;padding:8px;width:100%;font:inherit}.filter-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.filter-grid label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.filter-note{font-size:12px;color:var(--muted);margin:9px 0}.candidate-list{margin-top:12px}.candidate-list .card{margin:8px 0}.candidate-list .buttons button{flex:1}.help-buttons{padding-top:7px;border-top:1px solid var(--line);margin-top:13px}.help-buttons button[data-fire]{color:var(--warn)}.team-culture{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
 @media(max-width:390px){main{padding-left:10px;padding-right:10px}.stat strong{font-size:17px}.stat{padding:9px 3px}.card{padding:12px}.skills{column-gap:8px}}
 
@@ -254,7 +254,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
 <div class="card ceo-office"><div class="eyebrow">CEO · COMPANY IDENTITY</div><h2 id="company-name">Business Services Group</h2><p id="company-identity"></p><div class="ceo-office-grid"><div><b>My direct reports</b><div id="ceo-direct-reports"></div></div><div><b>Executive Assistant</b><div id="ceo-assistant"></div></div></div></div>
 <div class="card ceo-direction"><div class="lead"><b>Your 90-day direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p><p id="ceo-direction-confirm" class="small" role="status" aria-live="polite"></p></div>
-<div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
+<div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><details class="aux-details" id="ea-weekly-report"><summary>Executive Assistant · weekly business briefing</summary><div id="ea-weekly-body"></div></details><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
 <div class="card game-desk" id="game-desk">
 <div class="lead"><span class="eyebrow">YOUR COMPANY STORY</span><span class="game-chapter" id="game-chapter">Founder</span></div>
 <h2 id="brief-headline">Your company at a glance</h2><p class="overview-copy" id="brief-summary">Your team is getting started.</p>
@@ -263,7 +263,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="game-actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
 <div class="game-scene"><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div></div><div class="game-story" id="game-story" aria-live="polite"></div>
 <details class="aux-details" id="game-journey"><summary>My company journey</summary><div id="game-journey-map"></div></details>
-</div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div>
+</div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div><p id="save-warning" class="risk-watch" role="alert" hidden></p>
 <details class="aux-details game-advanced" id="ceo-records"><summary>Coach &amp; company records</summary>
 <section class="card bi-headline" aria-labelledby="bi-headline-title"><div class="lead"><b id="bi-headline-title">Business performance</b><span class="small" id="bi-period-note">Tracked since Day 0</span></div>
 <div class="bi-grid">
@@ -406,7 +406,10 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <script>
 (function(){
 "use strict";
-const KEY="boss19";
+const KEY="boss20";
+const LEGACY_KEY="boss19";
+let persistedRevision=0,saveConflict=false;
+const LAUNCH_JOURNAL_KEY="boss20_service_line_journal";
 let labHistorySignature="";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
@@ -444,7 +447,7 @@ const pick=a=>a[R(a.length)];
 const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let S,spd=1,paused=false,selected=[],ideaMessage="",avatars=new Map(),clock,structural="",lastIdeas="",logSignature="",sectorSignature="",customerSignature="";
-const projectExpanded=new Set(),employeeExpanded=new Set(),careerExpanded=new Set(),roadmapExpanded=new Set();
+const projectExpanded=new Set(),employeeExpanded=new Set(),careerExpanded=new Set(),roadmapExpanded=new Set(),peopleGroupExpanded=new Set(["ceo"]);
 function ensureViewState(s){if(!s.ui||typeof s.ui!=="object")s.ui={};for(const k of ["employees","careers","roadmaps"])if(!Array.isArray(s.ui[k]))s.ui[k]=[];s.ui.productivityOpen=!!s.ui.productivityOpen;}
 let orgControlsSignature="";let activeView="today";const viewScroll={today:0,work:0,team:0,growth:0};let attentionSignature="";
 let canvas=$("office"),ctx=canvas.getContext("2d");
@@ -773,7 +776,57 @@ if([0,7,14,30].includes(b.terms))S.economy.terms=b.terms;
 if(["standard","competitive","premium"].includes(b.pricing))S.economy.pricing=b.pricing;
 last.restored=true;coachDecision("Restore settings after experiment #"+id,before,"Returned the controllable policies to their pre-experiment settings.");save();renderAssistantPolicy();renderSectorChoices();refresh();return true;
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){/* Storage may be unavailable; play continues in memory. */}}
+function save(){
+try{
+ const current=localStorage.getItem(KEY);
+ if(current){
+  let existing=null;try{existing=JSON.parse(current);}catch{}
+  const remoteRev=Number(existing?._saveRevision)||0;
+  if(remoteRev>persistedRevision){
+   saveConflict=true;paused=true;
+   const warning=$("save-warning");
+   if(warning){warning.hidden=false;warning.textContent="Another Boss tab saved newer progress. This tab has paused to protect your company. Reload this tab to continue from the latest save.";}
+   return false;
+  }
+ }
+ if(saveConflict)return false;
+ S._saveRevision=Math.max(persistedRevision,Number(S._saveRevision)||0)+1;
+ localStorage.setItem(KEY,JSON.stringify(S));persistedRevision=S._saveRevision;
+ return true;
+}catch(e){return false;}
+}
+function launchJournal(){
+ try{const x=JSON.parse(localStorage.getItem(LAUNCH_JOURNAL_KEY)||"[]");return Array.isArray(x)?x.filter(t=>t&&SERVICE_LINES[t.key]&&Number.isFinite(t.since)):[];}catch{return [];}
+}
+function recordLineLaunch(line){
+ try{
+  const log=launchJournal();if(!log.some(x=>x.key===line.key))log.push({key:line.key,since:line.since,investment:120});
+  localStorage.setItem(LAUNCH_JOURNAL_KEY,JSON.stringify(log));
+ }catch{}
+}
+function restoreRecordedLines(state){
+ if(!state.exec||!Array.isArray(state.exec.lines))return;
+ const seen=new Set(state.exec.lines.map(x=>x.key));
+ const receipts=state.bi?.recent||[];
+ // Recover a previously purchased v19 business line only from an independent
+ // financial receipt already present in the current save; do not charge twice.
+ for(const receipt of receipts){
+  if(receipt.kind!=="investment")continue;
+  const key=Object.keys(SERVICE_LINES).find(k=>receipt.info==="New business line: "+SERVICE_LINES[k].name);
+  if(!key||seen.has(key)||!Number.isFinite(receipt.day))continue;
+  state.exec.lines.push({key,since:receipt.day,spent:receipt.amount||120,delivered:0,missed:0,revenue:0,recovered:true});
+  seen.add(key);
+ }
+ for(const entry of launchJournal()){
+  if(seen.has(entry.key))continue;
+  // Never reconstruct an investment from an unverified journal alone.
+  // The current save must independently contain a matching accounting receipt.
+  const receipt=receipts.find(x=>x.kind==="investment"&&x.info==="New business line: "+SERVICE_LINES[entry.key].name&&x.day===entry.since);
+  if(!receipt)continue;
+  state.exec.lines.push({key:entry.key,since:entry.since,spent:120,delivered:0,missed:0,revenue:0,recovered:true});
+  seen.add(entry.key);
+ }
+}
 
 /* v15 advanced economy: forward-only invoicing, credit and demand. No invented historical events. */
 function ensureEconomy(state){
@@ -995,7 +1048,7 @@ const brief=w.activeEvent,labels={tender:"A major customer is accepting bids",re
 $("world-event").innerHTML=brief?'<div class="coach-row coach-amber"><b>'+labels[brief.type]+'</b><div class="coach-mini">Decision window: through Day '+brief.until+'. '+esc(worldOfferTerms(brief).description)+'</div>'+(worldOfferEligibility(brief).allowed?'':'<div class="risk-watch small">Unavailable: '+esc(worldOfferEligibility(brief).reason)+'</div>')+'<div class="buttons"><button type="button" data-world-event="act" '+(worldOfferEligibility(brief).allowed?'':'disabled')+'>Take opportunity</button><button type="button" data-world-event="pass">Pass</button></div></div>':'<p class="small">No action required. Next optional market brief around Day '+w.nextEvent+'.</p>';
 }
 
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17")||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17")||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 ensurePerformance(p,s.day);
@@ -1058,9 +1111,9 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
-ensureOrganization(s);ensureExecutive(s);ensureBI(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureWorld(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
+ensureOrganization(s);ensureExecutive(s);ensureBI(s);restoreRecordedLines(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureWorld(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
 for(const d of s.deals)if(!Number.isFinite(d.agreedFee))d.agreedFee=d.biBooked&&Number.isFinite(d.bookVal)?d.bookVal:estimatedFee(d,s);
-return s;}catch(e){return null;}}
+persistedRevision=Number(s._saveRevision)||0;return s;}catch(e){return null;}}
 const BI_FIELDS=["deliveryEligibleDays","deliveryRoleWorkDays","revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
 function biZero(){return Object.fromEntries(BI_FIELDS.map(k=>[k,0]));}
 function ensureBI(state){if(state.bi&&state.bi.version===12&&Array.isArray(state.bi.daily)){for(const k of ["deliveryEligibleDays","deliveryRoleWorkDays"])if(!Number.isFinite(state.bi.totals[k]))state.bi.totals[k]=0;return;}
@@ -1588,7 +1641,7 @@ const strategy=S.day===0?WORLD_STRATEGIES.balanced:worldStrategy();
 const work=Math.max(4,Math.ceil((6+Math.round(diff*2.2)+(tier-1))*strategy.scope));
 const base=66+Math.floor(diff*13)+(tier-1)*17+extra+(returning?10:0);
 const d={id:S.did++,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78+strategy.quality,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning,laborCost:0,directCost:0,biBooked:false,bookVal:0,paymentTerms:S.economy?(S.day===0?0:S.economy.terms):0,priceFactor:S.economy?({standard:1,competitive:.94,premium:1.10}[S.economy.pricing]||1):1,termPriceFactor:S.day===0?1:({0:.96,7:1,14:1.04,30:1.08}[S.economy.terms]||1),worldStrategy:S.day===0?"balanced":S.world.strategy,worldPriceFactor:strategy.price};
-d.agreedFee=estimatedFee(d);const line=executiveLineForDeal(d);if(line){d.serviceLine=line.key;d.bookedAt=S.day;}S.deals.push(d);if(S.bi)biBook(d);return d;}
+d.agreedFee=estimatedFee(d);chooseServiceOffer(d);if(d.serviceLine)d.agreedFee=estimatedFee(d);S.deals.push(d);if(S.bi)biBook(d);return d;}
 function sectorAction(key){if(S.ev||!SECTORS[key])return;const before=coachSnap();
 if(S.market.open.includes(key)){if(S.market.focus===key)return;S.market.focus=key;logIt("Your company now specializes in "+SECTORS[key].name+".");}
 else{const sec=SECTORS[key];if(S.rep<sec.rep||S.cash<sec.cost)return;S.cash-=sec.cost;biMoney("investment",sec.cost,"Enter "+sec.name+" sector");S.market.open.push(key);S.market.focus=key;logIt("Expanded into "+sec.name+" for $"+sec.cost+". New clients can now request work.");}
@@ -1618,10 +1671,13 @@ if(action==="extend"&&!d.extended&&d.prog<d.work){d.extended=true;d.dl+=8;d.base
 else if(action==="review"&&!d.reviewed&&d.prog<d.work&&S.cash>=8){d.reviewed=true;S.cash-=8;d.directCost=(d.directCost||0)+8;biMoney("quality",8,"Quality review: "+d.cl);d.quality=clamp(d.quality+12);logIt("A quality review improved "+d.cl+"'s project for $8.");}
 else return;coachDecision("Project: "+action+" for "+d.cl,before,"Review changed cost, agreed fee, deadline and final delivery quality.",null,7);save();structural="";renderStructure();refresh();}
 function recordCustomer(d,success){const prev=S.market.customers[d.cl]||{sector:d.sector,loyalty:48,orders:0,quality:0};prev.sector=d.sector;
-if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4)+(d.worldStrategy==="relationships"?3:0));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
+if(success){prev.orders++;prev.quality=Math.round(d.quality);prev.loyalty=clamp(prev.loyalty+Math.round((d.quality-45)/4)+(d.dl>=0?4:-4)+(d.worldStrategy==="relationships"?3:0)-(Number.isFinite(d.serviceQualityTarget)&&d.quality<d.serviceQualityTarget?8:0));S.market.completed++;S.market.sectorWins[d.sector]=(S.market.sectorWins[d.sector]||0)+1;}
 else prev.loyalty=clamp(prev.loyalty-22);
 S.market.customers[d.cl]=prev;}
-function fresh(){ceoDraftPriority=null;S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+function fresh(){
+ ceoDraftPriority=null;saveConflict=false;
+ try{persistedRevision=Number(JSON.parse(localStorage.getItem(KEY)||"null")?._saveRevision)||0;}catch{persistedRevision=0;}
+ S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -1753,8 +1809,9 @@ $("launch-service-line").addEventListener("click",()=>{if(executiveLaunch($("ser
 $("service-line-select").addEventListener("change",()=>executiveShow());
 $("game-primary").addEventListener("click",()=>{const b=$("game-primary"),view=b.dataset.go||"work";
 navigate(view,b.dataset.project?Number(b.dataset.project):undefined);
-if(view==="today")requestAnimationFrame(()=>{const panel=$("executive-inbox-panel");if(panel&&typeof panel.scrollIntoView==="function")panel.scrollIntoView({behavior:"smooth",block:"start"});});
+if(view==="today")requestAnimationFrame(()=>{const panel=$("ea-weekly-report");if(panel){panel.open=true;renderExecutiveWeekly();if(typeof panel.scrollIntoView==="function")panel.scrollIntoView({behavior:"smooth",block:"start"});}});
 });
+$("ea-weekly-report").addEventListener("toggle",()=>renderExecutiveWeekly());
 $("game-forward").addEventListener("click",gameAdvanceDays);
 $("game-journey").addEventListener("toggle",()=>{if($("game-journey").open)gameRender();});
 $("attention-list").addEventListener("click",e=>{const b=e.target.closest("button[data-go]");if(b)navigate(b.dataset.go,b.dataset.project?Number(b.dataset.project):undefined);});
@@ -1811,10 +1868,33 @@ $("economy-invest-commercial").addEventListener("click",()=>economyInvest("comme
 $("work-mode").addEventListener("change",()=>{S.pipeline.mode=$("work-mode").value;save();refresh();});
 $("pipeline-target").addEventListener("change",()=>{S.pipeline.target=Number($("pipeline-target").value);save();refresh();});
 $("auto-work").addEventListener("change",()=>{S.pipeline.auto=$("auto-work").checked;save();refresh();});
+function teamReportingGroups(){
+ const groups=[],used=new Set(),add=(id,title,people)=>{
+  const entries=people.filter(p=>p&&!used.has(p.id));
+  if(!entries.length)return;
+  for(const p of entries)used.add(p.id);
+  groups.push({id,title,people:entries});
+ };
+ add("ceo","CEO · direct reports",[
+ ...DEPT_KEYS.map(key=>orgManager(key)),person(S.ops.assistantId)]);
+ for(const dept of DEPT_KEYS){
+  const chief=orgManager(dept),label=DEPARTMENTS[dept].name;
+  for(const role of DEPARTMENTS[dept].skills){
+   const manager=orgSubManager(dept,role),reports=orgSubReports(dept,role);
+   add(dept+"-"+role,label+" → "+ROLE_NAMES[role]+
+    (manager?" · "+manager.n+" (Manager)":chief?" · reports to "+chief.n:" · founder-led"),
+    [manager,...reports]);
+  }
+  add(dept+"-other",label+" · other direct reports",orgReports(dept).filter(p=>!used.has(p.id)));
+ }
+ add("other","Other colleagues",S.team);
+ return groups;
+}
 function renderStructure(){
-const dSig=S.deals.map(d=>d.id+":"+d.w+":"+d.negotiated+":"+d.extended+":"+d.reviewed+":"+(d.prog>=d.work*.2)).join(",")+"|"+S.team.map(p=>p.id+":"+p.t+":"+p.role.primary+":"+p.role.auto+":"+p.department).join(",");
+const dSig=S.deals.map(d=>d.id+":"+d.w+":"+d.negotiated+":"+d.extended+":"+d.reviewed+":"+(d.prog>=d.work*.2)).join(",")+"|"+S.team.map(p=>p.id+":"+p.t+":"+p.role.primary+":"+p.role.auto+":"+p.department).join(",")+"|"+DEPT_KEYS.map(k=>[S.org.departments[k].managerId,...DEPARTMENTS[k].skills.map(role=>S.org.departments[k].subManagers?.[role])].join(":")).join(",")+"|"+S.ops.assistantId;
 if(structural===dSig)return;
 for(const el of $("deals").querySelectorAll("details[data-project-id]")){const id=Number(el.dataset.projectId);if(el.open)projectExpanded.add(id);else projectExpanded.delete(id);}
+for(const el of $("people").querySelectorAll("details[data-team-group]")){if(el.open)peopleGroupExpanded.add(el.dataset.teamGroup);else peopleGroupExpanded.delete(el.dataset.teamGroup);}
 for(const el of $("people").querySelectorAll("details[data-employee-id]")){const id=Number(el.dataset.employeeId);if(el.open)employeeExpanded.add(id);else employeeExpanded.delete(id);}
 for(const el of $("people").querySelectorAll("details[data-career-id]")){const id=Number(el.dataset.careerId);if(el.open)careerExpanded.add(id);else careerExpanded.delete(id);}
 for(const el of $("people").querySelectorAll("details[data-roadmap-id]")){const id=Number(el.dataset.roadmapId);if(el.open)roadmapExpanded.add(id);else roadmapExpanded.delete(id);}
@@ -1826,11 +1906,14 @@ const extension=!d.extended&&d.prog<d.work?'<button type="button" data-project="
 const review=!d.reviewed&&d.prog<d.work?'<button type="button" data-project="'+d.id+'" data-action="review">Quality review ($8)</button>':'';
 const known=S.market.customers[d.cl],customerInfo=d.returning?' · Returning client':known&&known.orders?' · Existing customer':' · New customer';
 const worker=person(d.w),owner=worker?worker.n:"Unassigned",late=d.dl<=5;
-return '<details class="card project-card" data-project-id="'+d.id+'" '+(projectExpanded.has(d.id)?'open':'')+'><summary><div class="project-summary-top"><div><b>'+esc(d.cl)+'</b><div class="small">'+esc(SECTORS[d.sector].name)+' · '+SKILLS[d.need]+' · '+phase+'</div></div><div class="summary-right"><b id="deal-fee-'+d.id+'">$'+feeFor(d)+'</b><div class="small '+(late?'risk-watch':'')+'" id="dl-'+d.id+'">'+d.dl+' days left</div></div></div><div class="progress"><i id="deal-bar-'+d.id+'" style="width:'+clamp(d.prog/d.work*100)+'%"></i></div><div class="summary-bottom"><span>'+esc(owner)+'</span><span id="prog-'+d.id+'">'+Math.floor(clamp(d.prog/d.work*100))+'%</span><span>Details ▾</span></div></summary><div class="project-expanded"><div class="meta">Stage '+tier+customerInfo+'</div><div class="meta"><span id="quality-'+d.id+'">Quality '+quality+'%</span> · <span id="phase-'+d.id+'">'+phase+'</span> · Plan → Build → Review</div>'+negotiation+(extension||review?'<div class="contract-actions">'+extension+review+'</div>':'')+'<div class="small">Assign a teammate</div><div class="buttons">'+S.team.map(p=>'<button type="button" data-deal="'+d.id+'" data-person="'+p.id+'" '+(d.w===p.id?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+esc(p.n)+' (<span id="bid-'+d.id+'-'+p.id+'">'+p.s[d.need].toFixed(1)+'</span>)</button>').join("")+'</div></div></details>';
+return '<details class="card project-card" data-project-id="'+d.id+'" '+(projectExpanded.has(d.id)?'open':'')+'><summary><div class="project-summary-top"><div><b>'+esc(d.cl)+'</b><div class="small">'+esc(SECTORS[d.sector].name)+' · '+esc(d.serviceOffer||SKILLS[d.need])+' · '+phase+'</div></div><div class="summary-right"><b id="deal-fee-'+d.id+'">$'+feeFor(d)+'</b><div class="small '+(late?'risk-watch':'')+'" id="dl-'+d.id+'">'+d.dl+' days left</div></div></div><div class="progress"><i id="deal-bar-'+d.id+'" style="width:'+clamp(d.prog/d.work*100)+'%"></i></div><div class="summary-bottom"><span>'+esc(owner)+'</span><span id="prog-'+d.id+'">'+Math.floor(clamp(d.prog/d.work*100))+'%</span><span>Details ▾</span></div></summary><div class="project-expanded"><div class="meta">Stage '+tier+customerInfo+'</div><div class="meta"><span id="quality-'+d.id+'">Quality '+quality+'%</span> · <span id="phase-'+d.id+'">'+phase+'</span> · Plan → Build → Review</div>'+negotiation+(extension||review?'<div class="contract-actions">'+extension+review+'</div>':'')+'<div class="small">Assign a teammate</div><div class="buttons">'+S.team.map(p=>'<button type="button" data-deal="'+d.id+'" data-person="'+p.id+'" '+(d.w===p.id?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+esc(p.n)+' (<span id="bid-'+d.id+'-'+p.id+'">'+p.s[d.need].toFixed(1)+'</span>)</button>').join("")+'</div></div></details>';
 }).join(""):'<div class="card empty">No active projects. Sales and Marketing are building the next opportunity.</div>';
-$("people").innerHTML=S.team.map(p=>{
+$("people").innerHTML=teamReportingGroups().map(group=>{
+const body=group.people.map(p=>{
 const role=ROLE_NAMES[p.role.primary],risk=p.career.stress>=70||p.career.burnout>=35;
 return '<details class="card employee-card" data-employee-id="'+p.id+'" '+(employeeExpanded.has(p.id)||S.ui.employees.includes(p.id)?'open':'')+'><summary class="employee-summary"><span class="employee-primary"><b><i class="color-dot" style="background:'+p.col+'"></i>'+esc(p.n)+'</b><span class="small">'+esc(role)+' · '+rankName(p)+' · '+DEPARTMENTS[p.department].name+'</span><span class="small '+(risk?'risk-watch':'')+'">'+(risk?'⚠ Needs support':p.career.stress>=45?'◷ Busy':'✓ Doing well')+'</span></span><span class="employee-aside"><span class="small">'+esc(taskText(p))+'</span><span class="small" id="person-v-'+p.id+'">'+(p.mood>=65?'😊 Motivated':p.mood>=35?'😐 Steady':'😟 Discouraged')+'</span><span class="small">Manage ▾</span></span></summary><div class="employee-expanded"><div class="small">'+esc(p.trait)+' · '+esc(INTERESTS[p.interest]||"Learning and growth")+'</div><div class="progress good"><i id="mood-bar-'+p.id+'"></i></div><div class="skills">'+KEYS.map(k=>'<div class="skill"><div class="skill-name"><b>'+SKILLS[k]+'</b><span id="skill-'+p.id+'-'+k+'"></span></div><div class="progress"><i id="skill-bar-'+p.id+'-'+k+'"></i></div></div>').join("")+'</div><div class="role-panel"><label>Department</label><select class="org-dept-select" data-org-employee="'+p.id+'">'+DEPT_KEYS.map(k=>'<option value="'+k+'" '+(p.department===k?'selected':'')+'>'+DEPARTMENTS[k].name+'</option>').join("")+'</select><label>Primary responsibility</label><div class="buttons">'+ROLE_KEYS.map(k=>'<button type="button" data-role="'+k+'" data-person="'+p.id+'" '+(p.role.primary===k?'class="selected" aria-pressed="true"':'aria-pressed="false"')+' '+(k==="lead"&&p.career.rank<1&&p.career.xp<10?'disabled title="Requires seniority or 10 experience"':'')+'>'+ROLE_NAMES[k]+'</button>').join("")+'</div><button type="button" data-role="'+(p.role.auto?'manual':'resume')+'" data-person="'+p.id+'">'+(p.role.auto?'Manual orders':'Resume autonomous plan')+'</button></div><div class="small">Give a direct task</div><div class="buttons">'+[["study","Study"],["teach","Teach"],["exp","Experiment"],["rest","Rest"],...(p.role.primary==="prod"?[["improve","Product QA"]]:[]),...(p.role.primary==="ops"?[["streamline","Process improvement"]]:[]),...(p.role.primary==="sales"?[["prospect","Prospect clients"]]:[]),...(p.role.primary==="mkt"?[["market","Market demand"]]:[])].map(pair=>'<button type="button" data-order="'+pair[0]+'" data-person="'+p.id+'" '+(p.t===pair[0]?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+pair[1]+'</button>').join("")+'</div><div class="buttons"><button type="button" data-assistant="'+p.id+'" '+(S.ops.assistantId===p.id?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+(S.ops.assistantId===p.id?'Stop assisting':'Appoint as assistant')+'</button></div><div class="buttons help-buttons">'+[["praise","Recognize"],["bonus","Bonus (-$12)"],["coach","Coach (-$8)"]].map(pair=>'<button type="button" data-care="'+pair[0]+'" data-person="'+p.id+'">'+pair[1]+'</button>').join("")+'<button type="button" data-fire="'+p.id+'" '+(S.team.length===1?'disabled title="The last employee must stay."':'')+'>Fire</button></div><details class="career-panel" data-career-id="'+p.id+'" '+(careerExpanded.has(p.id)||S.ui.careers.includes(p.id)?'open':'')+'><summary>Career &amp; wellbeing · <span id="career-short-'+p.id+'">Stress '+Math.floor(p.career.stress)+'%</span></summary><div class="career-data"><span class="small"><b>Goal:</b> '+esc(GOALS[p.career.goal])+'</span><span class="small"><b>Pay:</b> $'+dailySalary(p).toFixed(2)+'/day</span><span class="small" id="career-stats-'+p.id+'">Satisfaction '+Math.floor(p.career.satisfaction)+' · stress '+Math.floor(p.career.stress)+' · burnout '+Math.floor(p.career.burnout)+'</span><span class="small" id="career-experience-'+p.id+'">Experience '+p.career.xp.toFixed(1)+'</span><span class="small"><b>Talent:</b> '+(p.career.revealed?'Discovered '+SKILLS[p.career.talent]:'Clue: '+esc(talentHint(p)))+'</span><span class="small" id="career-promotion-'+p.id+'">Career path: '+esc(coachCareerStatus(p).text)+'</span><span class="small" id="career-readiness-'+p.id+'">'+esc(coachCareerStatus(p).reason)+'</span></div><label class="small" for="career-path-'+p.id+'">Long-term career route</label><select data-path="'+p.id+'" id="career-path-'+p.id+'" '+(p.career.rank<2||p.career.rank>=3?'disabled title="Choose a pathway when at Lead"':'')+'><option value="specialist" '+(p.career.path==="specialist"?"selected":"")+'>Specialist expertise</option><option value="leadership" '+(p.career.path==="leadership"?"selected":"")+'>People leadership (requires appointment)</option></select><details class="aux-details career-roadmap" data-roadmap-id="'+p.id+'" '+(roadmapExpanded.has(p.id)||S.ui.roadmaps.includes(p.id)?'open':'')+'><summary>See the complete career roadmap</summary>'+careerPathHTML(p)+'</details><label class="small" for="train-'+p.id+'">Targeted skill growth</label><select id="train-'+p.id+'" data-training="'+p.id+'"><option value="balanced" '+(p.career.trainingFocus==="balanced"?"selected":"")+'>Balanced — lowest skill</option>'+KEYS.map(k=>'<option value="'+k+'" '+(p.career.trainingFocus===k?"selected":"")+'>'+SKILLS[k]+'</option>').join("")+'</select><p class="small">Study improves skill, but employees also need real-role practice to advance. Sales prospecting, marketing, delivery, teaching and department leadership are counted separately.</p><div class="small" id="career-impact-'+p.id+'">Actual contribution: '+careerRoleDays(p)+' role days · '+p.career.practice.coaching+' teaching days · '+p.career.practice.managing+' management days · '+p.career.completions+' delivered projects</div><div class="career-actions"><button type="button" data-career="checkin" data-person="'+p.id+'">Check-in</button><button type="button" data-career="plan" data-person="'+p.id+'">Growth plan ($10)</button><button type="button" data-career="promote" data-person="'+p.id+'">Promote · $'+careerPromotionPrice(p)+'</button></div></details><div class="memories" id="mem-'+p.id+'"></div></div></details>';
+}).join("");
+return '<details class="team-report-group" data-team-group="'+group.id+'" '+(peopleGroupExpanded.has(group.id)?'open':'')+'><summary>'+esc(group.title)+' · '+group.people.length+' people</summary><div class="team-report-members">'+body+'</div></details>';
 }).join("");
 }function candidateName(){let name=NAMES[(S.pid+S.hr.searchNumber-1)%NAMES.length];const used=new Set(S.team.map(p=>p.n).concat(S.hr.pool.map(p=>p.n)));if(used.has(name)){let i=2;while(used.has(name+" "+i))i++;name=name+" "+i;}return name;}
 function searchCandidates(){if(S.ev)return;S.hr.skill=$("hire-skill").value;S.hr.interest=$("hire-interest").value;S.hr.pool=[];
@@ -1894,6 +1977,12 @@ profit:{name:"Strengthen profitability",explain:"Protect cash, eliminate avoidab
 people:{name:"Develop leaders",explain:"Build managers, coaching and internal successors before increasing headcount."}
 };
 const SERVICE_LINES={marketing:{name:"Marketing studio",need:"mkt"},product:{name:"Product development",need:"prod"},operations:{name:"Operations consulting",need:"ops"},technology:{name:"Technology advisory",need:"prod"}};
+const SERVICE_OFFERS={
+ marketing:[["Campaign setup",1.10,1,76],["Brand growth program",1.45,1.25,85],["Premium growth partnership",1.8,1.5,90]],
+ product:[["Website build",1.15,1.1,76],["Ecommerce development",1.5,1.4,85],["Enterprise application",2,1.85,90]],
+ operations:[["Process audit",1.12,1.05,76],["Workflow redesign",1.42,1.28,85],["Operational transformation",1.8,1.55,90]],
+ technology:[["Automation assessment",1.2,1.1,77],["Workflow automation",1.6,1.35,85],["AI integration",2.05,1.75,91]]
+};
 let ceoDraftPriority=null;
 function draftExecutiveDirection(priority){
 if(!CEO_PRIORITIES[priority])return false;
@@ -1913,6 +2002,8 @@ if(!Array.isArray(e.proposals))e.proposals=[];
 if(!Array.isArray(e.history))e.history=[];
 if(!Array.isArray(e.lines))e.lines=[];
 if(!Number.isFinite(e.sequence))e.sequence=1;
+if(!Array.isArray(e.weeklyReports))e.weeklyReports=[];
+e.weeklyReports=e.weeklyReports.filter(x=>x&&Number.isFinite(x.day)).slice(0,12);
 e.proposals=e.proposals.filter(p=>p&&p.type&&p.id).slice(-12);
 e.history=e.history.slice(-40);
 e.lines=e.lines.filter(x=>x&&SERVICE_LINES[x.key]&&Number.isFinite(x.since));
@@ -1931,15 +2022,36 @@ logIt("CEO set the strategic direction to "+CEO_PRIORITIES[priority].name+".");s
 }
 function ceoProjectValue(line,d){return line&&d&&d.need===SERVICE_LINES[line.key]?.need&&S.day>=line.since;}
 function executiveLineForDeal(d){return S.exec.lines.find(x=>x&&x.since<=S.day&&SERVICE_LINES[x.key]?.need===d.need)||null;}
-function ceoLineFinish(d,success,payout=0){const line=S.exec.lines.find(x=>x.key===d.serviceLine&&x.since<=(d.bookedAt??S.day));if(!line)return;
-if(success){line.delivered=(line.delivered||0)+1;line.revenue=(line.revenue||0)+payout;}else line.missed=(line.missed||0)+1;
+function ceoLineFinish(d,success,payout=0){
+ const line=S.exec.lines.find(x=>x.key===d.serviceLine&&x.since<=(d.bookedAt??S.day));if(!line)return;
+ const cost=(d.laborCost||0)+(d.directCost||0);
+ line.contribution=(line.contribution||0)+(success?payout:0)-cost;
+ if(success){line.delivered=(line.delivered||0)+1;line.revenue=(line.revenue||0)+payout;line.qualityTotal=(line.qualityTotal||0)+(Number(d.quality)||75);}
+ else line.missed=(line.missed||0)+1;
+ line.lastDeliveryDay=S.day;
+}
+function chooseServiceOffer(d){
+ const lines=S.exec.lines.filter(x=>x&&SERVICE_OFFERS[x.key]&&x.since<=S.day);
+ if(!lines.length)return;
+ const best=[...lines].sort((a,b)=>{
+  const aa=(a.delivered||0)+S.deals.filter(z=>z.serviceLine===a.key).length;
+  const bb=(b.delivered||0)+S.deals.filter(z=>z.serviceLine===b.key).length;
+  return aa-bb||a.since-b.since;
+ })[0];
+ const level=best.delivered>=10?2:best.delivered>=3?1:0;
+ const [name,price,scope,target]=SERVICE_OFFERS[best.key][level];
+ d.serviceLine=best.key;d.serviceOffer=name;d.serviceTier=level+1;d.need=SERVICE_LINES[best.key].need;d.bookedAt=S.day;
+ d.serviceQualityTarget=target;d.base=Math.round(d.base*price);d.work=Math.ceil(d.work*scope);d.dl=Math.ceil(d.dl*scope);
 }
 function executiveLaunch(key){
 if(!SERVICE_LINES[key]||S.exec.lines.some(x=>x.key===key)||S.cash<120||S.ev)return false;
+if(saveConflict)return false;
+const old=localStorage.getItem(KEY);if(old){try{const r=JSON.parse(old);if((Number(r._saveRevision)||0)>persistedRevision){save();return false;}}catch{}}
 const before=coachSnap();S.cash-=120;biMoney("investment",120,"New business line: "+SERVICE_LINES[key].name);
-S.exec.lines.push({key,since:S.day,spent:120,delivered:0,missed:0,revenue:0});
+const launch={key,since:S.day,spent:120,delivered:0,missed:0,revenue:0};
+S.exec.lines.push(launch);recordLineLaunch(launch);
 coachDecision("Launched "+SERVICE_LINES[key].name,before,"$120 launch investment. Matching future contracts receive a small delivery-readiness benefit; income is measured only on new line-attributed deals, no guaranteed demand.",null,30);
-logIt("Launched "+SERVICE_LINES[key].name+"; the team can now build its first trackable service-line results.");return true;
+logIt("Launched "+SERVICE_LINES[key].name+"; the team can now build its first trackable service-line results.");save();return true;
 }
 function executiveAutonomous(dept,spec){
 const director=orgManager(dept),plan=orgPlan(dept);
@@ -1959,7 +2071,7 @@ S.exec.history.unshift({day:S.day,dept,manager:director.n,priority:S.exec.priori
 logIt(director.n+" trained "+worker.n+" under approved authority for "+biCurrency(cost)+".");
 }else{
 if(!orgSpend(dept,"hiring",cost))return false;
-const worker=createPerson();ensureCareer(worker);ensureRole(worker);worker.role.primary=dept==="commercial"?"sales":"ops";worker.department=dept;ensureDepartment(worker);ensurePerformance(worker,S.day);
+const worker=createPerson();ensureCareer(worker);ensureRole(worker);worker.role.primary=DEPARTMENTS[dept].skills.includes(spec.role)?spec.role:dept==="commercial"?"sales":"ops";worker.s[worker.role.primary]=Math.max(2,worker.s[worker.role.primary]);worker.department=dept;ensureDepartment(worker);ensurePerformance(worker,S.day);
 S.cash-=cost;biMoney("recruiting",cost,"Director-authorized hire: "+worker.n);S.team.push(worker);
 plan.hires++;plan.payrollAdded+=dailySalary(worker);structural="";
 S.exec.history.unshift({day:S.day,dept,manager:director.n,priority:S.exec.priority,action:"delegated",result:director.n+" hired "+worker.n+" within authorized headcount/payroll and recruiting limits.",proposal:"hire"});
@@ -1970,6 +2082,12 @@ S.exec.history=S.exec.history.slice(0,40);return true;
 function executiveProposal(dept){
 const manager=orgManager(dept);if(!manager)return null;
 const people=orgReports(dept),burden=dept==="commercial"?S.pipeline.leads.length:S.deals.filter(x=>["prod","ops"].includes(x.need)).length,plan=orgPlan(dept);
+const needed=new Set(S.exec.lines.map(x=>SERVICE_LINES[x.key]?.need));
+const gaps=DEPARTMENTS[dept].skills.filter(role=>orgSubManager(dept,role)&&!orgSubReports(dept,role).length&&needed.has(role));
+if(gaps.length&&S.cash>=20&&S.exec.priority!=="profit"){
+ const role=gaps[0],head=orgSubManager(dept,role);
+ return{type:"hire",dept,role,cost:20,benefit:head.n+" proposes "+ROLE_NAMES[role]+" specialist recruitment: the new service line needs staffing",risk:"$20 recruiting fee and recurring salary $1.50/day (plus modifiers)"};
+}
 if(orgDirectReports(dept).length>5){
 const candidates=DEPARTMENTS[dept].skills.flatMap(role=>orgSubManager(dept,role)?[]:people.filter(p=>orgWorkRole(p)===role&&p.role.primary!=="lead"&&(p.career.rank>=1||p.career.xp>=10)).map(p=>({p,role})));
 if(candidates.length){const chosen=candidates.sort((a,b)=>b.p.career.xp-a.p.career.xp)[0];
@@ -1997,6 +2115,40 @@ if(burden>Math.max(4,people.length+2)&&S.cash>=120&&people.length<9)return{type:
 if(S.day-S.exec.since>21)return null;
 return{type:"training",dept,cost:8,benefit:"Build a key colleague's skill and reduce workload strain",risk:"Training costs cash without guaranteed results"};
 }
+function executiveWeeklySnapshot(){
+ const weekly=S.bi.daily.filter(b=>b.day>S.day-7&&b.day<=S.day);
+ const sum=k=>weekly.reduce((n,b)=>n+(b.values?.[k]||0),0);
+ const risks=S.deals.filter(d=>d.dl<=5&&d.prog<d.work).length;
+ const staff=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35).length;
+ const dept=DEPT_KEYS.map(key=>{const head=orgManager(key),d=S.org.departments[key],staff=orgReports(key);return{key,head:head?.n||"Founder",staff:staff.length,review:d.reviews[d.reviews.length-1]?.result||null};});
+ const services=S.exec.lines.map(x=>({key:x.key,delivered:x.delivered||0,days:S.day-x.since}));
+ return{day:S.day,periodDays:Math.min(7,weekly.length),revenue:sum("revenue"),cashIn:sum("cashIn"),cashOut:sum("cashOut"),wins:sum("wins"),delivered:sum("delivered"),missed:sum("missed"),active:S.deals.length,pipeline:S.pipeline.leads.length,proposals:S.exec.proposals.length,risks,staff,dept,services};
+}
+function updateExecutiveWeekly(){
+ const latest=executiveWeeklySnapshot();
+ if(S.exec.weeklyReports[0]?.day!==S.day){
+  S.exec.weeklyReports.unshift(latest);S.exec.weeklyReports=S.exec.weeklyReports.slice(0,12);
+ }else S.exec.weeklyReports[0]=latest;
+}
+function renderExecutiveWeekly(){
+ const panel=$("ea-weekly-report");if(!panel||!panel.open)return;
+ const report=S.exec.weeklyReports[0],live=executiveWeeklySnapshot(),a=person(S.ops.assistantId),since=report?.day;
+ const warnings=[];
+ if(live.risks)warnings.push(live.risks+" projects need a deadline review");
+ if(live.staff)warnings.push(live.staff+" colleagues have elevated stress or burnout");
+ for(const d of live.dept)if(d.staff>5&&!DEPARTMENTS[d.key].skills.some(role=>orgSubManager(d.key,role)))warnings.push(DEPARTMENTS[d.key].name+" has a wide reporting span");
+ for(const line of live.services)if(line.days>=30&&!line.delivered)warnings.push(SERVICE_LINES[line.key].name+" has not completed any attributed engagements since launch");
+ if(S.exec.proposals.length)warnings.push(S.exec.proposals.length+" management proposals awaiting a CEO response");
+ if(!warnings.length)warnings.push("No urgent cross-department escalation identified");
+ const dept=live.dept.map(d=>'<p class="small"><b>'+esc(DEPARTMENTS[d.key].name)+'</b> · '+esc(d.head)+' · '+d.staff+' staff'+(d.review?' · last review: '+esc(String(d.review)):'')+'</p>').join("");
+ const lines=live.services.map(x=>'<p class="small">'+esc(SERVICE_LINES[x.key].name)+' · '+x.delivered+' delivered · '+x.days+' days since launch</p>').join("");
+ $("ea-weekly-body").innerHTML='<p class="small"><b>'+esc(a?.n||"Founder")+'</b> · Current assessment at Day '+S.day+(since?' · last scheduled meeting Day '+since:' · no scheduled meeting recorded yet')+'</p>'+
+ '<p class="small">Previous '+live.periodDays+' tracked days: '+live.wins+' won · '+live.delivered+' delivered · '+live.missed+' missed · cash received '+biCurrency(live.cashIn)+' · cash paid '+biCurrency(live.cashOut)+'. Current cash '+biCurrency(S.cash)+'.</p>'+
+ '<p class="small">Today: '+live.active+' active jobs · '+live.pipeline+' open leads · '+S.team.length+' employees. Company priority: '+esc(CEO_PRIORITIES[S.exec.priority].name)+'.</p><b>Direct-report briefing</b>'+dept+
+ '<b>Exceptions &amp; recommendations</b><ul>'+warnings.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>'+
+ (lines?'<b>Business development</b>'+lines:"")+
+ '<p class="small">This is a read-only report. Managers continue delegated work. Approvals remain in the executive inbox below.</p>';
+}
 function executiveWeek(){
 const e=S.exec;if(S.day<e.nextMeeting)return;
 e.lastMeeting=S.day;e.nextMeeting=S.day+7;
@@ -2011,6 +2163,7 @@ if(e.history.some(x=>x.dept===dept&&x.proposal===spec.type&&x.action!=="delegate
 if(executiveAutonomous(dept,spec)){delegated++;continue;}
 e.proposals.push({...spec,id:e.sequence++,day:S.day,managerId:orgManager(dept).id,priority:e.priority});proposed++;
 }
+updateExecutiveWeekly();
 if(proposed||delegated)logIt("Executive meeting on Day "+S.day+": "+proposed+" CEO requests; "+delegated+" actions completed within delegated authority.");
 }
 function executiveDecision(id,action){
@@ -2038,7 +2191,7 @@ message="Approved $0.25/day recurring raise for "+who.n+" after director recomme
 }else if(p.type==="hire"){
 if(S.cash<p.cost)return false;
 const personNew=createPerson();ensureCareer(personNew);ensureRole(personNew);
-personNew.role.primary=p.dept==="commercial"?"sales":"ops";personNew.department=p.dept;ensureDepartment(personNew);ensurePerformance(personNew,S.day);
+personNew.role.primary=DEPARTMENTS[p.dept].skills.includes(p.role)?p.role:p.dept==="commercial"?"sales":"ops";personNew.department=p.dept;ensureDepartment(personNew);ensurePerformance(personNew,S.day);
 S.cash-=p.cost;biMoney("recruiting",p.cost,"CEO-approved department hire: "+personNew.n);
 S.team.push(personNew);structural="";
 message="Hired "+personNew.n+" for "+DEPARTMENTS[p.dept].name+"; $20 paid and recurring salary added.";
@@ -2086,10 +2239,17 @@ const brief=ev?'<div class="exec-proposal exec-opportunity"><b>Market opportunit
 $("exec-inbox").innerHTML=brief+(inbox.map(p=>{
 const chief=person(p.managerId),cost=biCurrency(p.cost),affordable=S.cash>=p.cost;
 return '<div class="exec-proposal"><b>'+esc(chief?.n||"Director")+' · '+esc(DEPARTMENTS[p.dept].name)+'</b><p>'+esc(p.benefit)+' · '+cost+' one-time'+(p.type==="hire"?" + salary $1.50/day":p.type==="raise"?" · salary +$0.25/day":p.type==="line"?" · new service-line investment":"")+'</p><p><b>Risk:</b> '+esc(p.risk)+'</p><div class="buttons"><button data-exec-action="approve" data-exec-id="'+p.id+'" '+(affordable?"":"disabled")+' type="button">Approve</button><button data-exec-action="decline" data-exec-id="'+p.id+'" type="button">Decline</button></div></div>';}).join("")||(!ev?'<p class="small">No CEO approvals needed. Your managers continue running their departments.</p>':""));
+renderExecutiveWeekly();
 if($("exec-history").parentNode.open)$("exec-history").innerHTML=S.exec.history.slice(0,12).map(x=>'<p class="small">Day '+x.day+' · '+esc(x.manager)+' · '+esc(x.action)+' — '+esc(x.result)+'</p>').join("")||'<p class="small">No executive decisions yet.</p>';
 const lines=[{key:"core",since:0,delivered:S.market.completed,baseline:true},...S.exec.lines];
 $("business-lines-summary").textContent=lines.length+" operating";
-$("business-lines").innerHTML=lines.map(x=>'<div class="service-line"><b>'+esc(x.key==="core"?"General business services":SERVICE_LINES[x.key].name)+'</b><div class="small">'+(x.baseline?"Core company; lifetime projects "+x.delivered:"Opened Day "+x.since+" · "+(x.delivered||0)+" completed · "+biCurrency(x.revenue||0)+" earned since opening")+'</div></div>').join("");
+$("business-lines").innerHTML=lines.map(x=>{
+ if(x.baseline)return '<div class="service-line"><b>General business services</b><div class="small">Consolidated company history: '+x.delivered+' completed (including service lines, not additional revenue)</div></div>';
+ const offers=SERVICE_OFFERS[x.key],level=(x.delivered||0)>=10?2:(x.delivered||0)>=3?1:0;
+ const specialists=S.team.filter(p=>p.role.primary===SERVICE_LINES[x.key].need&&p.id!==S.ops.assistantId).length;
+ const quality=x.delivered?Math.round((x.qualityTotal||0)/x.delivered)+'%':'Not yet measured';
+ return '<div class="service-line"><b>'+esc(SERVICE_LINES[x.key].name)+'</b><div class="small">Opened Day '+x.since+' · '+(x.delivered||0)+' delivered · '+(x.missed||0)+' missed · Revenue '+biCurrency(x.revenue||0)+' · Contribution '+biCurrency(x.contribution||0)+'</div><div class="small">Offering: '+esc(offers[level][0])+' · Tier '+(level+1)+'/3 · Quality '+quality+' · '+specialists+' specialist(s)</div>'+(level<2?'<div class="small">'+((level===0?3:10)-(x.delivered||0))+' further deliveries unlock '+esc(offers[level+1][0])+'</div>':'')+(!x.delivered&&S.day-x.since>=30?'<p class="small risk-watch">No deliveries since launch. Review demand, staffing and active opportunities.</p>':'')+'</div>';
+}).join("");
 $("launch-service-line").disabled=!!S.ev||S.cash<120||S.exec.lines.some(x=>x.key===$("service-line-select").value);
 }
 
@@ -2114,7 +2274,7 @@ const [title,hint,value,max,view,project]=gamePlan(),event={delivered:S.market.c
 if(lastGameEvent){if(event.delivered>lastGameEvent.delivered)gameToast("Client project completed — great work!");else if(event.built>lastGameEvent.built)gameToast("You unlocked a company capability!");else if(event.wins>lastGameEvent.wins)gameToast("Competitive contract won!");}lastGameEvent=event;
 $("game-chapter").textContent=gameChapter()+" · Day "+S.day;
 $("game-goal").textContent=title;$("game-goal-hint").textContent=hint;$("game-goal-progress").textContent=value+" / "+max;$("game-goal-bar").style.width=Math.min(100,Math.max(0,value/Math.max(1,max)*100))+"%";
-$("game-primary").textContent=(project?"Open this project":view==="work"?"See client work":view==="team"?"Meet your team":view==="today"?"Review leadership meeting":"Explore Growth")+" →";
+$("game-primary").textContent=(project?"Open this project":view==="work"?"See client work":view==="team"?"Meet your team":view==="today"?"Read executive briefing":"Explore Growth")+" →";
 $("game-primary").dataset.go=view;if(project)$("game-primary").dataset.project=String(project);else delete $("game-primary").dataset.project;
 const stories=S.log.map(x=>String(x).replace(/<[^>]+>/g,"")).filter(x=>/completed|hired|joined|promot|won|missed|quit|unlocked|founded|discovered/i.test(x)).slice(0,2);
 const html=(stories.length?stories:["Your team's next achievement is waiting."]).map(x=>'<div class="game-story-item">'+esc(x)+'</div>').join("");if($("game-story").innerHTML!==html)$("game-story").innerHTML=html;
@@ -2271,7 +2431,8 @@ a.x+=(a.tx-a.x)*.03;a.y+=(a.ty-a.y)*.03;if(Math.random()<.004){const e=p.mood<30
 ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(a.x,a.y,11,0,Math.PI*2);ctx.fill();ctx.fillStyle="#192435";ctx.beginPath();ctx.arc(a.x-3,a.y-2,1.1,0,Math.PI*2);ctx.arc(a.x+3,a.y-2,1.1,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#192435";ctx.lineWidth=1.1;ctx.beginPath();if(p.mood>50)ctx.arc(a.x,a.y+1,4,0,Math.PI);else if(p.mood>25){ctx.moveTo(a.x-4,a.y+5);ctx.lineTo(a.x+4,a.y+5);}else ctx.arc(a.x,a.y+8,4,Math.PI,2*Math.PI);ctx.stroke();ctx.textAlign="center";ctx.fillStyle=ink;ctx.font="12px system-ui";ctx.fillText(p.n,a.x,a.y+25);
 if(a.frames>0){ctx.font="19px system-ui";ctx.fillText(a.emoji,a.x,a.y-17);a.frames--;}
 });requestAnimationFrame(avatarDraw);}
-S=load();if(!S)fresh();if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;labPreview();capabilityProgress();save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
+S=load();if(!S)fresh();
+window.addEventListener("storage",event=>{if(event.key===KEY&&event.newValue){let rev=0;try{rev=Number(JSON.parse(event.newValue)._saveRevision)||0;}catch{}if(rev>persistedRevision){saveConflict=true;paused=true;const warning=$("save-warning");if(warning){warning.hidden=false;warning.textContent="Another Boss tab saved this company. Reload this tab to protect the latest progress.";}}}});if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;labPreview();capabilityProgress();save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
 })();
 </script>
 </body>

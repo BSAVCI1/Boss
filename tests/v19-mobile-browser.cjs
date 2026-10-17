@@ -199,6 +199,14 @@ document.addEventListener("DOMContentLoaded",async()=>{
    gmPicker.dispatchEvent(new Event("change",{bubbles:true}));
    await new Promise(r=>setTimeout(r,1050)); // UI catches up after mobile picker dismissal.
    result.checks.nativePickerReconciled=!!byId("unit-gm-technology")&&!!byId("unit-employee-technology");
+   const selectTeammate=byId("unit-employee-technology");
+   const eligible=[...selectTeammate.options].find(option=>option.value!=="");
+   if(!eligible)throw Error("QA company requires one eligible available teammate");
+   selectTeammate.focus();selectTeammate.value=eligible.value;
+   selectTeammate.dispatchEvent(new Event("change",{bubbles:true}));
+   await new Promise(r=>setTimeout(r,1100));
+   result.checks.teammateDraftSurvivesRepaint=byId("unit-employee-technology")?.value===eligible.value;
+
    const qualityField=byId("unit-quality-technology"),authorityDetails=qualityField?.closest("details.aux-details");
    if(!qualityField)throw Error("Unit quality field missing");
    if(authorityDetails)authorityDetails.open=true;
@@ -207,6 +215,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
    result.checks.partialUnitNumericProtected=qualityField.isConnected&&byId("unit-quality-technology")===qualityField&&qualityField.value==="8";
    qualityField.value="88";qualityField.dispatchEvent(new Event("input",{bubbles:true}));qualityField.blur();
    await new Promise(r=>setTimeout(r,1000));
+   result.checks.unitAuthorityDisclosureRetained=byId("unit-quality-technology")?.closest("details.aux-details")?.open===true;
    const restoredUnit=recovered?.exec?.units.find(u=>u.key==="technology");
    result.checks.unitAuthorityReloaded=restoredUnit?.plan?.coachingLimit===12&&
     restoredUnit.plan.perAction===4&&restoredUnit.plan.qualityTarget===88&&
@@ -294,6 +303,8 @@ async function runBrowser(){
   // Active-tick execution is asserted deterministically in v20-portfolio.cjs; browser may be paused by unresolved game events.
   assert.equal(outcome.checks.nativePickerReconciled,true,"UI should refresh after select completes");
   assert.equal(outcome.checks.partialUnitNumericProtected,true,"Partial unit budget edits must not be overwritten mid-typing");
+  assert.equal(outcome.checks.teammateDraftSurvivesRepaint,true,"Chosen teammate must remain selected until Transfer is clicked");
+  assert.equal(outcome.checks.unitAuthorityDisclosureRetained,true,"Editing must not collapse the authority panel");
   assert.deepEqual(outcome.errors,[]);
   await send("Emulation.setDeviceMetricsOverride",{width:414,height:896,deviceScaleFactor:1,mobile:true});
   await sleep(150);

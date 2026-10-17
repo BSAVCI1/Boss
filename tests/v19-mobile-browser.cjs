@@ -55,7 +55,7 @@ async function runBrowser(){
   let tabs,port=0;
   const portFile=path.join(profile,"DevToolsActivePort");
   for(let i=0;i<130;i++){
-   if(fs.existsSync(portFile)){const candidate=Number(fs.readFileSync(portFile,"utf8").split("\\n")[0]);if(candidate>0)port=candidate;}
+   if(fs.existsSync(portFile)){const candidate=Number(fs.readFileSync(portFile,"utf8").split(String.fromCharCode(10))[0]);if(candidate>0)port=candidate;}
    if(port){try{tabs=await getJson("http://127.0.0.1:"+port+"/json");if(tabs?.length)break;}catch{}}
    if(chrome.exitCode!==null)break;
    await sleep(150);

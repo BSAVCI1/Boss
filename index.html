@@ -187,7 +187,8 @@ function refresh(){
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);
 $("focus-hint").textContent=S.flow.focus?"No new deals or dilemmas; existing deadlines still count.":"New leads at least 25 real seconds apart; dilemmas at least 45 seconds apart.";
-$("intake-status").textContent=S.flow.focus?"Intake paused — complete existing projects.":"Next potential client in "+Math.max(0,S.flow.nextLead-S.day)+" days · "+S.deals.length+" active projects.";
+const waitDays=Math.max(0,S.flow.nextLead-S.day),waitSeconds=Math.max(0,Math.ceil((25000-(Date.now()-S.flow.lastLeadAt))/1000));
+$("intake-status").textContent=S.flow.focus?"Intake paused — complete existing projects.":"Next potential client: "+(waitDays?waitDays+" game days":waitSeconds?waitSeconds+" real seconds":"ready when capacity allows")+" · "+S.deals.length+" active projects.";
 const ap=person(S.ops.assistantId);
 $("assistant-status").textContent=ap?ap.n+" is organizing work. Routine matters handled: "+S.ops.handled+".":"No assistant assigned. Hire one or appoint a teammate.";
 $("hire-assistant").disabled=!!S.ev||!!ap||S.cash<20;

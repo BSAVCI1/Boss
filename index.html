@@ -299,6 +299,59 @@ if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
 ensureBI(s);
 return s;}catch(e){return null;}}
+const BI_FIELDS=["revenue","costs","cashIn","cashOut","booked","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
+function biZero(){return Object.fromEntries(BI_FIELDS.map(k=>[k,0]));}
+function ensureBI(state){if(state.bi&&state.bi.version===12&&Array.isArray(state.bi.daily))return;
+state.bi={version:12,since:state.day,openingCash:state.cash,totals:biZero(),daily:[],recent:[],projects:[],sourceTotals:{},sectorTotals:{},unpaidPayroll:0,range:"30"};
+for(const d of state.deals){if(!Number.isFinite(d.laborCost))d.laborCost=0;if(!Number.isFinite(d.directCost))d.directCost=0;d.biBooked=false;d.bookVal=0;}
+}
+function biBucket(){const all=S.bi.daily;let b=all[all.length-1];if(!b||b.day!==S.day){b={day:S.day,values:biZero(),sources:{},sectors:{}};all.push(b);if(all.length>366)all.shift();}return b;}
+function biAdd(field,amount){if(!Number.isFinite(amount)||!BI_FIELDS.includes(field))return;S.bi.totals[field]+=amount;biBucket().values[field]+=amount;}
+function biEvent(kind,amount,info,cashPaid=amount){const event={day:S.day,kind,amount:+amount.toFixed(2),cash:+cashPaid.toFixed(2),info:String(info||"")};S.bi.recent.unshift(event);if(S.bi.recent.length>80)S.bi.recent.length=80;}
+function biMoney(kind,amount,info,actualCash=null){if(!Number.isFinite(amount)||amount<=0)return;const cashPaid=actualCash===null?amount:Math.max(0,Math.min(amount,actualCash));
+if(kind==="revenue"){biAdd("revenue",amount);biAdd("cashIn",cashPaid);}else{biAdd("costs",amount);biAdd("cashOut",cashPaid);if(kind==="payroll"&&cashPaid<amount)S.bi.unpaidPayroll+=amount-cashPaid;}
+biEvent(kind,amount,info,cashPaid);
+}
+function biBook(d){if(d.biBooked)return;d.biBooked=true;d.bookVal=feeFor(d);biAdd("booked",d.bookVal);}
+function biReprice(d){if(!d.biBooked)return;const newPrice=feeFor(d);biAdd("booked",newPrice-d.bookVal);d.bookVal=newPrice;}
+function biFunnel(stage,lead){if(!S.bi)return;const f=({lead:"leads",qualified:"qualified",proposal:"proposals",negotiation:"negotiations",won:"wins",lost:"lost"})[stage];if(!f)return;biAdd(f,1);
+const source=lead.source||"unknown",total=S.bi.sourceTotals[source]||(S.bi.sourceTotals[source]={});total[f]=(total[f]||0)+1;
+const bucket=biBucket().sources;const day=bucket[source]||(bucket[source]={});day[f]=(day[f]||0)+1;}
+function biSector(sector,values){const all=S.bi.sectorTotals[sector]||(S.bi.sectorTotals[sector]={});const day=biBucket().sectors[sector]||(biBucket().sectors[sector]={});for(const [k,v]of Object.entries(values)){all[k]=(all[k]||0)+v;day[k]=(day[k]||0)+v;}}
+function biTeamDay(p){biAdd("staffDays",1);const task=p.t;if(task.startsWith("d"))biAdd("billableDays",1);else if(task==="prospect")biAdd("salesDays",1);else if(task==="market")biAdd("marketingDays",1);else if(["study","teach","exp","coachteam"].includes(task))biAdd("developmentDays",1);else if(task==="rest"||p.career.recoveryDays>0)biAdd("restDays",1);}
+function biProjectEnd(d,success,payout=0){const quality=Number.isFinite(d.quality)?d.quality:75;const labor=d.laborCost||0,direct=d.directCost||0;
+if(success){biMoney("revenue",payout,"Payment from "+d.cl,payout);biAdd("delivered",1);if(d.dl>=0)biAdd("onTime",1);biAdd("qualityTotal",quality);biAdd("projectContribution",payout-labor-direct);biSector(d.sector,{delivered:1,revenue:payout,qualityTotal:quality,contribution:payout-labor-direct});}
+else{biAdd("missed",1);biAdd("projectContribution",-labor-direct);biSector(d.sector,{missed:1,contribution:-labor-direct});}
+const item={day:S.day,client:d.cl,sector:d.sector,fee:payout,booked:d.biBooked?d.bookVal:null,quality:Math.round(quality),labor:+labor.toFixed(2),direct:+direct.toFixed(2),margin:+(payout-labor-direct).toFixed(2),success,onTime:success&&d.dl>=0,source:d.leadSource||"untracked"};
+S.bi.projects.unshift(item);if(S.bi.projects.length>120)S.bi.projects.length=120;}
+function biPeriod(){if(S.bi.range==="all")return{values:S.bi.totals,sources:S.bi.sourceTotals,sectors:S.bi.sectorTotals,from:S.bi.since,days:Math.max(1,S.day-S.bi.since),limited:false};
+const days=Number(S.bi.range)||30,from=Math.max(S.bi.since,S.day-days+1),selected=S.bi.daily.filter(b=>b.day>=from);
+const values=biZero(),sources={},sectors={};for(const b of selected){for(const key of BI_FIELDS)values[key]+=(b.values[key]||0);
+for(const [source,fields]of Object.entries(b.sources||{})){const cur=sources[source]||(sources[source]={});for(const [k,v]of Object.entries(fields))cur[k]=(cur[k]||0)+v;}
+for(const [sector,fields]of Object.entries(b.sectors||{})){const cur=sectors[sector]||(sectors[sector]={});for(const [k,v]of Object.entries(fields))cur[k]=(cur[k]||0)+v;}}
+return{values,sources,sectors,from,days:Math.max(1,S.day-from+1),limited:false};}
+function biCurrency(n){return(n<0?"-$":"$")+Math.abs(n||0).toLocaleString("en-US",{maximumFractionDigits:0});}
+function biPercent(n,denom){return denom>0?Math.round(n/denom*100)+"%":"—";}
+function biMetric(label,value,hint){return '<div class="bi-metric"><span>'+esc(label)+'</span><strong>'+esc(String(value))+'</strong><small>'+esc(hint||"")+'</small></div>';}
+function renderBI(force=false){const v=biPeriod().values,profit=v.revenue-v.costs;
+$("bi-revenue").textContent=biCurrency(v.revenue);$("bi-costs").textContent=biCurrency(v.costs);$("bi-profit").textContent=biCurrency(profit);$("bi-margin").textContent=biPercent(profit,v.revenue);
+$("bi-period-note").textContent="Tracked since Day "+S.bi.since;
+if(!$("performance-panel").open&&!force)return;
+$("bi-range").value=S.bi.range;
+const period=biPeriod(),t=period.values;
+$("bi-since").textContent="Day "+S.bi.since+" · "+(S.bi.range==="all"?"All tracked history":"Since Day "+period.from);
+$("bi-finance").innerHTML=biMetric("Earned revenue",biCurrency(t.revenue),"Received immediately")+biMetric("Operating costs",biCurrency(t.costs),"Payroll + other costs")+biMetric("Operating profit",biCurrency(t.revenue-t.costs),"Revenue less expenses")+biMetric("Profit margin",biPercent(t.revenue-t.costs,t.revenue),"Not cash flow")+biMetric("Cash received",biCurrency(t.cashIn),"Collected income")+biMetric("Cash paid",biCurrency(t.cashOut),"Outgoing payments")+biMetric("Net cash flow",biCurrency(t.cashIn-t.cashOut),"Excludes opening cash")+biMetric("Outstanding payroll",biCurrency(S.bi.unpaidPayroll),"Lifetime liability");
+const diff=S.bi.openingCash+S.bi.totals.cashIn-S.bi.totals.cashOut-S.cash;
+$("bi-finance-note").textContent="Opening cash "+biCurrency(S.bi.openingCash)+" · Current cash "+biCurrency(S.cash)+(Math.abs(diff)>.1?" · Unreconciled: "+biCurrency(diff):" · Cash flows reconcile")+". Payroll due may exceed cash actually paid; unpaid wages remain a liability. Early-game history before Day "+S.bi.since+" is not reconstructed.";
+$("bi-sales").innerHTML=biMetric("Leads generated",t.leads,"Tracked new prospects")+biMetric("Lead qualification",biPercent(t.qualified,t.leads),"Stage entry / leads")+biMetric("Sales win rate",biPercent(t.wins,t.wins+t.lost),"Won / decided leads")+biMetric("Lead to won",biPercent(t.wins,t.leads),"Period events (not cohorts)")+biMetric("Negotiations",t.negotiations,"Entered negotiation")+biMetric("Won contracts",t.wins,"Converted opportunities")+biMetric("Lost prospects",t.lost,"Closed lost")+biMetric("Booked value",biCurrency(t.booked),"Signed estimated value");
+$("bi-sources").innerHTML='<div class="lead"><b>Lead source quality</b><span class="small">Created · Qualified · Won</span></div>'+Object.entries(period.sources).sort((a,b)=>(b[1].leads||0)-(a[1].leads||0)).map(([name,x])=>'<div class="bi-micro-row"><span>'+esc(name)+'</span><span>'+Number(x.leads||0)+' · '+Number(x.qualified||0)+' · '+Number(x.wins||0)+'</span></div>').join("")||"";
+$("bi-delivery").innerHTML=biMetric("Booked work",biCurrency(t.booked),"Signed value")+biMetric("Realized revenue",biCurrency(t.revenue),"Delivered and paid")+biMetric("Completed projects",t.delivered,"Deliveries")+biMetric("On-time delivery",biPercent(t.onTime,t.delivered),"On time / completed")+biMetric("Avg. quality",t.delivered?(t.qualityTotal/t.delivered).toFixed(0)+"%":"—","At completion")+biMetric("Projects missed",t.missed,"Deadline breaches")+biMetric("Contribution",biCurrency(t.projectContribution),"After allocated direct labor")+biMetric("Contribution margin",biPercent(t.projectContribution,t.revenue),"Excludes nonproject overhead");
+$("bi-sectors").innerHTML='<div class="lead"><b>Sector results</b><span class="small">Delivered · Revenue · Margin</span></div>'+Object.entries(period.sectors).sort((a,b)=>(b[1].revenue||0)-(a[1].revenue||0)).map(([name,x])=>'<div class="bi-micro-row"><span>'+esc(SECTORS[name]?.name||name)+'</span><span>'+Number(x.delivered||0)+' · '+biCurrency(x.revenue||0)+' · '+biCurrency(x.contribution||0)+'</span></div>').join("");
+$("bi-people").innerHTML=biMetric("Billable utilization",biPercent(t.billableDays,t.staffDays),"Client work / paid staff days")+biMetric("Delivery workdays",t.billableDays,"Allocated to projects")+biMetric("Sales & marketing",t.salesDays+t.marketingDays,"Commercial capacity")+biMetric("Learning/coaching",t.developmentDays,"Skill growth and training")+biMetric("Recovery days",t.restDays,"Rest and wellbeing")+biMetric("Staff-days",t.staffDays,"Total team capacity");
+$("bi-transactions").innerHTML=S.bi.recent.filter(e=>S.bi.range==="all"||e.day>=period.from).slice(0,24).map(e=>'<div class="bi-micro-row"><span>Day '+e.day+' · '+esc(e.info)+'</span><span class="'+(e.kind!=="revenue"?"bi-negative":"")+'">'+(e.kind==="revenue"?"+":"-")+biCurrency(e.cash)+'</span></div>').join("")||'<div class="empty">No financial transactions recorded in this period.</div>';
+const buckets=[];for(let i=5;i>=0;i--){const high=S.day-i*15,low=high-14;const rows=S.bi.daily.filter(b=>b.day>=low&&b.day<=high);buckets.push({end:high,revenue:rows.reduce((a,b)=>a+b.values.revenue,0),costs:rows.reduce((a,b)=>a+b.values.costs,0)});}
+const max=Math.max(1,...buckets.flatMap(b=>[b.revenue,b.costs]));$("bi-chart").innerHTML=buckets.map(b=>'<div class="bi-chart-col"><div class="bi-chart-pair"><span class="bi-chart-bar" style="height:'+Math.max(1,Math.round(b.revenue/max*100))+'%" title="Revenue '+biCurrency(b.revenue)+'"></span><span class="bi-chart-bar cost" style="height:'+Math.max(1,Math.round(b.costs/max*100))+'%" title="Costs '+biCurrency(b.costs)+'"></span></div><small>D'+b.end+'</small></div>').join("");
+}
 function logIt(s,highlight=false){S.log.unshift(highlight?'<span class="warning">'+esc(s)+'</span>':esc(s));S.log=S.log.slice(0,80);}
 const GOALS={
 growth:"Learn and grow",recognition:"Be recognized",impact:"Serve clients",balance:"Healthy balance",security:"Stable career",creativity:"Creative freedom"

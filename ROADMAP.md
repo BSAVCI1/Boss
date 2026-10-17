@@ -12,7 +12,7 @@
 
 ## Current: v6 — Sustainable pacing and office assistant (delivered)
 - Validated the original pressure: 30% new-deal probability whenever below the cap; repeated dilemmas every 8–15 game days; project work often needs more time than that.
-- Client inquiry cadence is now 12–20 game days (adjusted for applicable breakthroughs), and deadline windows are longer; current saves receive a one-time deadline grace period.
+- Client inquiry cadence is now 12–20 game days (adjusted for applicable breakthroughs), with at least 25 real seconds between inquiries, and deadline windows are longer; current saves receive a one-time deadline grace period.
 - Only a manageable number of open projects are offered at once. **Focus mode** blocks new inquiries and dilemmas until the player resumes intake. Existing deadlines and salaries still progress.
 - At least 45 real seconds between new dilemma interruptions, on top of a 28–42-day game-time gap.
 - Hire an assistant for $20 or appoint any existing employee. Assistants assign new or unassigned projects to idle, well-suited staff, without replacing direct orders, and can resolve routine recognition and paid family leave requests.

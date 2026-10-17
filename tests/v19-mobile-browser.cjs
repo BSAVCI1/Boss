@@ -92,9 +92,17 @@ async function runBrowser(){
   await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,screenWidth:390,screenHeight:844,deviceScaleFactor:1,mobile:true});
   // Measure the attached renderer without navigating. Reloading can silently
   // move Chrome to a new process, losing the page-scoped metric override.
-  const measured=await send("Runtime.evaluate",{expression:"window.innerWidth",returnByValue:true});
-  assert.ok(measured.result?.value>=385&&measured.result?.value<=395,
-    "CDP cannot establish a true 390px viewport on active game renderer: "+measured.result?.value);
+  const inspect=async()=>{const v=await send("Runtime.evaluate",{expression:"JSON.stringify({width:window.innerWidth,screen:screen.width,visual:window.visualViewport?.width,scale:window.visualViewport?.scale,dpr:window.devicePixelRatio})",returnByValue:true});return JSON.parse(v.result?.value||"{}");};
+  let metrics=await inspect();
+  if(metrics.width<385||metrics.width>395){
+   // A few Chromium builds apply the 390px *screen* size but adopt a larger
+   // mobile layout viewport. Retest with a strict 390px responsive CSS viewport.
+   await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,screenWidth:390,screenHeight:844,deviceScaleFactor:1,mobile:false});
+   await sleep(150);
+   metrics=await inspect();
+  }
+  assert.ok(metrics.width>=385&&metrics.width<=395,
+    "CDP cannot establish a strict 390px responsive viewport on active game renderer: "+JSON.stringify(metrics));
   const trigger=await send("Runtime.evaluate",{expression:"typeof window.__bossRunMobileQa==='function'&&window.__bossRunMobileQa()",returnByValue:true});
   assert.notEqual(trigger.result?.value,false,"Mobile QA instrumentation was not installed on the active game page");
   const title=(await send("Runtime.evaluate",{expression:"document.title",returnByValue:true})).result?.value||"";

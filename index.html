@@ -917,20 +917,41 @@ function worldChangeStrategy(key){if(S.ev||!WORLD_STRATEGIES[key]||S.world.strat
 const old=S.world.strategy,before=coachSnap();S.world.strategy=key;S.world.changedAt=S.day;
 coachDecision("Company strategy: "+WORLD_STRATEGIES[key].name,before,"Moved from "+WORLD_STRATEGIES[old].name+". Changes future customer win odds and future contract price/scope, never reprices existing agreements.",null,30);
 logIt("New commercial strategy: "+WORLD_STRATEGIES[key].name+". Review competitive bids and project contribution over 30 days.");save();refresh();return true;}
-function worldNewEvent(){const w=S.world,phase=Math.floor(S.day/50)%4,types=["tender","referrals","slowdown","retention"],type=types[phase];w.activeEvent={id:S.day,opened:S.day,until:S.day+45,type};w.nextEvent=S.day+55;
+function worldNewEvent(){const w=S.world,phase=Math.floor(S.day/50)%4,types=["tender","referrals","slowdown","retention"],type=types[phase];w.activeEvent={id:S.day,opened:S.day,until:S.day+45,type,sector:S.market.focus};w.nextEvent=S.day+55;
 if(type==="slowdown")w.shockUntil=S.day+25;
 logIt("New market brief: "+({tender:"Major contract tender",referrals:"Referral window",slowdown:"Competitive slowdown",retention:"Client relationship opportunity"}[type])+". Review Growth when convenient.");
 }
+function worldOfferTerms(event){
+if(!event)return null;
+const tier=dealTier(),sector=event.sector||S.market.focus;
+if(event.type==="tender"){
+const fee=Math.max(80,Math.round((66+20*tier)*S.mod.reward*(1+S.rep/200)*(SECTORS[sector]?.premium||1)*(S.economy?.pricing==="premium"?1.1:1)));
+const cost=Math.max(12,Math.round(fee*.025+tier*2)),client=SECTORS[sector]?.clients[(event.opened+3)%SECTORS[sector].clients.length]||"Prospective client";
+return{cost,fee,client,complexity:tier,description:"Tender preparation "+biCurrency(cost)+" · indicative contract "+biCurrency(fee)+" · complexity "+tier+". Award and final signed value are not guaranteed."};}
+if(event.type==="referrals")return{cost:10,description:"Referral campaign: $10 · 30 game days of increased prospecting. Conversion is not guaranteed."};
+if(event.type==="slowdown")return{cost:10,description:"Market intelligence: $10 · 30 game days of better competitive readiness."};
+return{cost:0,description:"Account renewal invitation · no preparation fee; qualified customer and available sales capacity required."};
+}
+function worldOfferEligibility(event){
+if(!event)return{allowed:false,reason:"No active opportunity"};
+if(S.ev)return{allowed:false,reason:"Resolve the pending decision first"};
+const terms=worldOfferTerms(event);
+if(S.cash<terms.cost)return{allowed:false,reason:"Not enough cash: requires "+biCurrency(terms.cost)};
+if(["tender","retention"].includes(event.type)&&S.pipeline.leads.length>=12)return{allowed:false,reason:"Sales pipeline full (12 leads): work existing bids before adding another"};
+if(event.type==="retention"&&!Object.entries(S.market.customers).some(([name,c])=>c.loyalty>=55&&S.market.open.includes(c.sector)&&!S.pipeline.leads.some(l=>l.client===name)&&!S.deals.some(d=>d.cl===name)))return{allowed:false,reason:"No eligible returning customer free of active deals"};
+return{allowed:true,reason:""};
+}
 function worldEventChoice(choice){const w=S.world,event=w.activeEvent;if(S.ev||!event||!["act","pass"].includes(choice))return false;
+if(choice==="act"&&!worldOfferEligibility(event).allowed)return false;
 const before=coachSnap();let info="";
 if(choice==="pass"){info="Skipped optional market opportunity without direct cash cost.";}
-else if(event.type==="tender"){if(S.cash<12||S.pipeline.leads.length>=12)return false;S.cash-=12;biMoney("marketing",12,"Bid preparation: major tender");const sec=S.market.focus,client=SECTORS[sec].clients[(S.day+3)%SECTORS[sec].clients.length];
+else if(event.type==="tender"){const terms=worldOfferTerms(event);S.cash-=terms.cost;biMoney("marketing",terms.cost,"Bid preparation: major tender");const sec=event.sector||S.market.focus,client=terms.client;
 const lead={id:S.pipeline.seq++,client,sector:sec,stage:"negotiation",progress:0,age:7,source:"major tender",created:S.day,preference:"quality"};
 S.pipeline.leads.push(lead);biFunnel("lead",lead);biFunnel("qualified",lead);biFunnel("proposal",lead);biFunnel("negotiation",lead);
-info="Spent $12 preparing a major tender; a qualified bid enters negotiation, but capacity and competitors still determine success.";}
+info="Spent "+biCurrency(terms.cost)+" preparing a complexity "+terms.complexity+" tender (indicative "+biCurrency(terms.fee)+"). The bid enters negotiation; a win is not guaranteed.";}
 else if(event.type==="referrals"){if(S.cash<10)return false;S.cash-=10;biMoney("marketing",10,"Customer referral campaign");w.boostUntil=S.day+30;info="Spent $10 to expand prospecting for 30 days; sales and delivery capacity remain constraints.";}
 else if(event.type==="slowdown"){if(S.cash<10)return false;S.cash-=10;biMoney("research",10,"Competitive market intelligence");w.researchUntil=S.day+30;info="Spent $10 on customer/competitor research; a small bid-readiness advantage lasts 30 days.";}
-else if(event.type==="retention"){const found=Object.entries(S.market.customers).filter(([,c])=>c.loyalty>=55&&S.market.open.includes(c.sector));
+else if(event.type==="retention"){const found=Object.entries(S.market.customers).filter(([name,c])=>c.loyalty>=55&&S.market.open.includes(c.sector)&&!S.pipeline.leads.some(l=>l.client===name)&&!S.deals.some(d=>d.cl===name));
 if(!found.length)return false;
 const [client,cust]=found.sort((a,b)=>b[1].loyalty-a[1].loyalty)[0];
 if(S.pipeline.leads.length>=12)return false;
@@ -971,10 +992,7 @@ $("world-rivals").innerHTML=w.rivals.map(r=>'<div class="coach-row"><b>'+esc(r.n
 $("world-tenders").innerHTML=w.tenders.slice(0,7).map(t=>'<div class="coach-row"><b>'+esc(t.client)+'</b> · '+(t.result==="won"?"Won":"Lost")+' against '+esc(t.rival)+'<div class="coach-mini">Day '+t.day+' · '+esc(t.priority)+' buyer · '+esc(t.strategy)+' strategy · Estimated win chance '+Math.round(100*t.probability)+'%. Probability is a game model, not a guarantee.</div></div>').join("")||'<p class="small">No competitive tender outcomes recorded yet. New bids will accumulate as Sales converts prospects.</p>';
 $("world-market-info").textContent=economyPressure().name+" · "+(45-S.day%45)+" days until next market cycle · "+(S.day<=w.shockUntil?"Additional competitor-driven slowdown through Day "+w.shockUntil+". ":"")+"Bid outcomes depend on customer needs, competitive offers, reputation and your strategy.";
 const brief=w.activeEvent,labels={tender:"A major customer is accepting bids",referrals:"Customers are open to referrals",slowdown:"Competitive pressure is rising",retention:"A trusted customer may renew"};
-$("world-event").innerHTML=brief?'<div class="coach-row coach-amber"><b>'+labels[brief.type]+'</b><div class="coach-mini">Decision window: until Day '+brief.until+'. '+(brief.type==="tender"?"Prepare a qualified tender proposal for $12; the contract is not guaranteed.":brief.type==="referrals"?"Run a $10 referral campaign; 30-day prospecting boost.":brief.type==="slowdown"?"Spend $10 on competitive research to improve bid readiness for 30 days.":"Invite a loyal customer to a new qualified opportunity without promising a sale.")+'</div><div class="buttons"><button type="button" data-world-event="act">Take opportunity</button><button type="button" data-world-event="pass">Pass</button></div></div>':
-'<p class="small">No action required. Next optional market brief around Day '+w.nextEvent+'.</p>';
-if(brief){const button=$("world-event").querySelector("button[data-world-event=act]");
-if(button)button.disabled=!!S.ev||(brief.type==="tender"&&S.cash<12)||(brief.type==="referrals"&&S.cash<10)||(brief.type==="slowdown"&&S.cash<10)||(brief.type==="retention"&&!Object.values(S.market.customers).some(c=>c.loyalty>=55))||S.pipeline.leads.length>=12;}
+$("world-event").innerHTML=brief?'<div class="coach-row coach-amber"><b>'+labels[brief.type]+'</b><div class="coach-mini">Decision window: through Day '+brief.until+'. '+esc(worldOfferTerms(brief).description)+'</div>'+(worldOfferEligibility(brief).allowed?'':'<div class="risk-watch small">Unavailable: '+esc(worldOfferEligibility(brief).reason)+'</div>')+'<div class="buttons"><button type="button" data-world-event="act" '+(worldOfferEligibility(brief).allowed?'':'disabled')+'>Take opportunity</button><button type="button" data-world-event="pass">Pass</button></div></div>':'<p class="small">No action required. Next optional market brief around Day '+w.nextEvent+'.</p>';
 }
 
 function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss17")||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
@@ -1275,6 +1293,7 @@ if(![3,5,8].includes(d.target.leads))d.target.leads=5;
 if(![70,85,95].includes(d.target.onTime))d.target.onTime=85;
 if(!state.team.some(p=>p.id===d.managerId&&p.department===key&&p.role.primary==="lead"&&p.id!==state.ops.assistantId))d.managerId=null;
 }}
+function orgLeaderTitle(p){return p&&p.career?.rank>=4&&p.career.path==="leadership"?"Director":"Department Manager";}
 function orgManager(key){const id=S.org.departments[key]?.managerId;const p=person(id);return p&&p.department===key&&p.role.primary==="lead"&&p.id!==S.ops.assistantId?p:null;}
 function orgReports(key){const mgr=orgManager(key);return S.team.filter(p=>p.department===key&&p.id!==mgr?.id&&p.id!==S.ops.assistantId);}
 function orgPeriod(){for(const key of DEPT_KEYS){const d=S.org.departments[key];if(S.day-d.periodStart>=30){
@@ -1332,7 +1351,7 @@ chart.innerHTML='<div class="org-grid">'+DEPT_KEYS.map(key=>{const d=S.org.depar
 const period=Math.max(1,S.day-d.periodStart),attempts=x.delivered+x.missed;const state=key==="commercial"?(x.leads>=d.target.leads?"Target met":period>=10&&x.leads/period<d.target.leads/30*.65?"Behind target":"Building pipeline"):(attempts<3?"Collecting evidence":x.onTime/attempts*100>=d.target.onTime?"Target met":"Behind target");
 const score=key==="commercial"?"Leads "+x.leads+"/"+d.target.leads+" · Wins "+x.wins:
 "On-time "+(x.delivered+x.missed?Math.round(x.onTime/(x.delivered+x.missed)*100)+"%":"—")+"/"+d.target.onTime+"% · Delivered "+x.delivered+" · Missed "+x.missed;
-return '<div class="org-dept"><h3>'+DEPARTMENTS[key].name+'</h3><div class="small">'+DEPARTMENTS[key].roles+'</div><div class="org-manager">'+(m?"Manager: "+esc(m.n):"Founder-led · No manager")+'</div>'+people.map(p=>'<div class="org-report">'+esc(p.n)+' · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'<div class="org-metric">'+score+'</div><div class="org-metric '+(state==='Behind target'?'risk-watch':'')+'">'+state+' · '+people.length+' direct reports'+(m?' · Manager premium $0.75/day':'')+'</div><div class="org-metric">Coaching '+d.stats.coached+' · Budget '+biCurrency(d.spent)+' / '+biCurrency(d.budget)+' · Day '+(S.day-d.periodStart)+'/30</div>'+(d.reviews.length?'<div class="org-metric"><b>Previous review:</b> '+esc(d.reviews[d.reviews.length-1].result)+' · '+esc(d.reviews[d.reviews.length-1].reading)+' · '+esc(d.reviews[d.reviews.length-1].manager)+'</div>':'')+(m&&people.length>5?'<div class="risk-watch small">Wide span of control reduces effectiveness.</div>':'')+'</div>';
+return '<div class="org-dept"><h3>'+DEPARTMENTS[key].name+'</h3><div class="small">'+DEPARTMENTS[key].roles+'</div><div class="org-manager">'+(m?orgLeaderTitle(m)+": "+esc(m.n):"Founder-led · No manager")+'</div>'+people.map(p=>'<div class="org-report">'+esc(p.n)+' · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'<div class="org-metric">'+score+'</div><div class="org-metric '+(state==='Behind target'?'risk-watch':'')+'">'+state+' · '+people.length+' direct reports'+(m?' · Manager premium $0.75/day':'')+'</div><div class="org-metric">Coaching '+d.stats.coached+' · Budget '+biCurrency(d.spent)+' / '+biCurrency(d.budget)+' · Day '+(S.day-d.periodStart)+'/30</div>'+(d.reviews.length?'<div class="org-metric"><b>Previous review:</b> '+esc(d.reviews[d.reviews.length-1].result)+' · '+esc(d.reviews[d.reviews.length-1].reading)+' · '+esc(d.reviews[d.reviews.length-1].manager)+'</div>':'')+(m&&people.length>5?'<div class="risk-watch small">Wide span of control reduces effectiveness.</div>':'')+'</div>';
 }).join("")+'</div>';
 if($("org-settings").open){const sig=JSON.stringify(DEPT_KEYS.map(k=>{const d=S.org.departments[k];return[k,d.managerId,d.budget,d.target.leads,d.target.onTime]}))+"|"+S.team.map(p=>p.id+":"+p.department+":"+p.career.rank+":"+Math.floor(p.career.xp/10)+":"+S.ops.assistantId).join(",");if(sig!==orgControlsSignature){orgControlsSignature=sig;renderOrgControls();}}
 }
@@ -1604,7 +1623,7 @@ $("ceo-set-direction").addEventListener("click",()=>{
 const priority=ceoDraftPriority??$("ceo-priority").value;
 if(!ceoDirection(priority))$("ceo-direction-confirm").textContent=S.ev?"Resolve the current CEO decision before changing direction.":"Direction unchanged. Choose a different strategy or wait for the next review.";
 });
-$("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}});
+$("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
 $("launch-service-line").addEventListener("click",()=>{if(executiveLaunch($("service-line-select").value)){save();refresh();}});
 $("service-line-select").addEventListener("change",()=>executiveShow());
 $("game-primary").addEventListener("click",()=>{const b=$("game-primary");navigate(b.dataset.go||"work",b.dataset.project?Number(b.dataset.project):undefined);});
@@ -1869,7 +1888,7 @@ const primary=SECTORS[S.market.focus]?.name||"Services",strategy=worldStrategy()
 $("company-identity").textContent="B2B client services · Serving "+primary+" and "+S.market.open.length+" industries · "+strategy+".";
 $("ceo-direct-reports").innerHTML=DEPT_KEYS.map(key=>{
 const m=orgManager(key),staff=orgReports(key);
-return '<div class="ceo-report"><b>'+DEPARTMENTS[key].name+'</b><div>'+(m?esc(m.n)+" · Director · "+staff.length+" reports":"Founder-led · "+staff.length+" colleagues")+'</div><details><summary>View team</summary>'+staff.map(p=>'<div class="small">'+esc(p.n)+' · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'</details></div>';}).join("");
+return '<div class="ceo-report"><b>'+DEPARTMENTS[key].name+'</b><div>'+(m?esc(m.n)+" · "+orgLeaderTitle(m)+" · "+staff.length+" reports":"Founder-led · "+staff.length+" colleagues")+'</div><details><summary>View team</summary>'+staff.map(p=>'<div class="small">'+esc(p.n)+' · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'</details></div>';}).join("");
 $("ceo-assistant").textContent=a? a.n+" · CEO coordination and manager follow-ups":"Unfilled · appointment optional";
 $("ceo-priority").value=ceoDraftPriority??S.exec.priority;
 $("ceo-direction-time").textContent="Day "+Math.max(0,S.day-S.exec.priorityDay)+" / 90";
@@ -1878,7 +1897,7 @@ $("ceo-set-direction").disabled=!!S.ev;
 const inbox=S.exec.proposals,ev=S.world.activeEvent;
 $("exec-count").textContent=inbox.length+" manager requests"+(ev?" · 1 market brief":"");
 $("executive-meeting-summary").textContent="Weekly manager proposals, monthly performance reviews, and CEO approvals. Routine work stays delegated.";
-const brief=ev?'<div class="exec-proposal exec-opportunity"><b>Market opportunity — '+esc(ev.type)+'</b><p>Available through Day '+ev.until+'. Optional; evaluate in Growth before it expires.</p><button type="button" data-go="growth">Review opportunity →</button></div>':"";
+const brief=ev?'<div class="exec-proposal exec-opportunity"><b>Market opportunity — '+esc(ev.type)+'</b><p>Available through Day '+ev.until+'. '+esc(worldOfferTerms(ev).description)+'</p>'+(worldOfferEligibility(ev).allowed?'':'<p class="risk-watch">Unavailable: '+esc(worldOfferEligibility(ev).reason)+'</p>')+'<div class="buttons"><button type="button" data-world-event="act" '+(worldOfferEligibility(ev).allowed?'':'disabled')+'>Take opportunity</button><button type="button" data-world-event="pass">Pass</button></div></div>':"";
 $("exec-inbox").innerHTML=brief+(inbox.map(p=>{
 const chief=person(p.managerId),cost=biCurrency(p.cost),affordable=S.cash>=p.cost;
 return '<div class="exec-proposal"><b>'+esc(chief?.n||"Director")+' · '+esc(DEPARTMENTS[p.dept].name)+'</b><p>'+esc(p.benefit)+' · '+cost+' one-time'+(p.type==="hire"?" + salary $1.50/day":p.type==="raise"?" · salary +$0.25/day":p.type==="line"?" · new service-line investment":"")+'</p><p><b>Risk:</b> '+esc(p.risk)+'</p><div class="buttons"><button data-exec-action="approve" data-exec-id="'+p.id+'" '+(affordable?"":"disabled")+' type="button">Approve</button><button data-exec-action="decline" data-exec-id="'+p.id+'" type="button">Decline</button></div></div>';}).join("")||(!ev?'<p class="small">No CEO approvals needed. Your managers continue running their departments.</p>':""));

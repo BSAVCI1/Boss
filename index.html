@@ -1805,7 +1805,7 @@ function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
-function tick(){if(paused||S.ev)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();worldDay();let dirty=false,ideaDirty=false;
+function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
 if(delegateWork())dirty=true;
 if(autonomousWork())dirty=true;
@@ -1901,7 +1901,7 @@ save();structural="";renderStructure();refresh();}
 function hireOfficeAssistant(){if(S.ev||S.ops.assistantId||S.cash<20)return;const p=createPerson();p.s.ops=Math.max(2.3,p.s.ops);p.interest="systems";p.trait="Social";p.mood=75;p.loy=70;p.t="assist";S.cash-=20;biMoney("recruiting",20,"Hire executive assistant: "+p.n);ensureCareer(p);ensureRole(p);ensureDepartment(p);S.team.push(p);S.ops.assistantId=p.id;logIt("You hired "+p.n+" as executive assistant for $20.");save();structural="";renderStructure();refresh();}
 function toggleFocus(){if(S.ev)return;S.flow.focus=!S.flow.focus;if(!S.flow.focus){S.flow.nextLead=Math.max(S.flow.nextLead,S.day+5);S.flow.lastLeadAt=Date.now();S.nextEv=Math.max(S.nextEv,S.day+12);}logIt(S.flow.focus?"You closed intake to focus on existing work.":"You reopened client inquiries and staff matters.");save();refresh();}
 function order(pid,t){const p=person(pid);if(!p||S.ev)return;p.role.auto=false;p.role.autoTask=false;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===pid)S.ops.assistantId=null;release(p);p.t=t;save();renderStructure();refresh();}
-function updateButtons(){$("speed-select").value=String(spd);$("pause").classList.toggle("selected",paused);$("pause").setAttribute("aria-pressed",String(paused));$("pause").textContent=paused?"Resume":"Pause";}
+function updateButtons(){$("speed-select").value=String(spd);$("pause").classList.toggle("selected",paused);$("pause").setAttribute("aria-pressed",String(paused));$("pause").textContent=paused?"Resume":"Pause";$("pause").disabled=!!(saveConflict||saveErrorReason||indexedWriteCount>0);$("game-forward").disabled=!!(saveConflict||saveErrorReason||indexedWriteCount>0);}
 function paintControls(){updateButtons();}
 function navigate(view,projectId){if(!["today","work","team","growth"].includes(view))return;
 if(typeof window!=="undefined")viewScroll[activeView]=window.scrollY||0;
@@ -1911,8 +1911,8 @@ for(const b of document.querySelectorAll(".bottom-nav button[data-view]")){const
 if(view==="work"&&Number.isFinite(projectId)){for(const el of $("deals").querySelectorAll("details[data-project-id]"))if(Number(el.dataset.projectId)===projectId){el.open=true;projectExpanded.add(projectId);}}
 if(typeof window!=="undefined"&&typeof window.scrollTo==="function"){const target=Number.isFinite(projectId)?0:viewScroll[view]||0;requestAnimationFrame(()=>window.scrollTo(0,target));}
 }
-$("speed-select").addEventListener("change",()=>{spd=[1,3,8].includes(Number($("speed-select").value))?Number($("speed-select").value):1;S.ui.speed=spd;save();paused=false;paintControls();schedule();});
-$("pause").addEventListener("click",()=>{paused=!paused;paintControls();schedule();});
+$("speed-select").addEventListener("change",()=>{spd=[1,3,8].includes(Number($("speed-select").value))?Number($("speed-select").value):1;S.ui.speed=spd;save();if(!saveConflict&&!saveErrorReason&&indexedWriteCount===0)paused=false;paintControls();schedule();});
+$("pause").addEventListener("click",()=>{if(saveConflict||saveErrorReason||indexedWriteCount>0)return;paused=!paused;paintControls();schedule();});
 $("export-save").addEventListener("click",exportGameBackup);
 $("restart").addEventListener("click",()=>{if(!confirm("Restart the company from zero?"))return;
 fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";sectorSignature="";customerSignature="";projectExpanded.clear();employeeExpanded.clear();careerExpanded.clear();roadmapExpanded.clear();attentionSignature="";orgControlsSignature="";for(const name of ["today","work","team","growth"])viewScroll[name]=0;
@@ -2462,7 +2462,7 @@ $("game-journey-map").innerHTML=stages.map(([name,done])=>'<span class="game-jou
 const rivals=S.world?.rivals||[],rivalText=rivals.map(q=>'<div class="game-rival"><span class="game-rival-icon">◆</span><span><b>'+esc(q.name)+'</b><small>'+esc(q.archetype)+' approach · '+q.wins+' wins</small></span></div>').join("");
 if($("game-rivals").innerHTML!==rivalText)$("game-rivals").innerHTML=rivalText;
 }
-function gameAdvanceDays(){if(S.ev)return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev||indexedWriteCount>0;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
+function gameAdvanceDays(){if(S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev||indexedWriteCount>0;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
 
 function renderBriefing(){
 const urgent=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"||f.risk==="watch");
@@ -2598,7 +2598,7 @@ poach:"Matching an outside offer is a one-time retention cost; letting an employ
 praise:"Sharing credit improves employee morale; taking credit favors short-term reputation at a loyalty cost."})[kind]||"The decision journal records immediate changes and reviews later results.";
 }
 function showModal(){const m=$("modal");if(!S.ev){m.hidden=true;document.body.classList.remove("modal-open");return;}const d=dilemmaInfo(S.ev);if(!d){S.ev=null;save();m.hidden=true;return;}if(m.hidden||$("modal-title").textContent!==d[0]){$("modal-title").textContent=d[0];$("modal-text").textContent=d[1]+(S.coach.mode==="guided"?"\n\nDecision preview: "+coachDecisionPreview(S.ev.k):"");$("choices").innerHTML=d[2].map((txt,i)=>{const cost=coachChoiceCost(S.ev.k,i);return '<button type="button" data-choice="'+i+'" '+(cost>S.cash?'disabled title="Insufficient cash"':'')+'>'+esc(txt)+(cost>S.cash?' · insufficient cash':'')+'</button>';}).join("");}m.hidden=false;document.body.classList.add("modal-open");}
-function schedule(){clearTimeout(clock);if(!paused&&!S.ev)clock=setTimeout(()=>{tick();schedule();},1200/spd);}
+function schedule(){clearTimeout(clock);if(!paused&&!S.ev&&!saveConflict&&!saveErrorReason&&indexedWriteCount===0)clock=setTimeout(()=>{tick();schedule();},1200/spd);}
 function bubble(id,emoji,frames){let a=avatars.get(id);if(!a){a={x:0,y:0,tx:0,ty:0,away:false,hold:0,emoji:"",frames:0};avatars.set(id,a);}a.emoji=emoji||"💬";a.frames=frames;}
 function avatarDraw(){if(activeView!=="today"){requestAnimationFrame(avatarDraw);return;}const rows=Math.ceil(S.team.length/5),h=Math.max(150,80*rows+50);if(canvas.height!==h)canvas.height=h;const style=getComputedStyle(document.documentElement);const bar=style.getPropertyValue("--bar").trim(),ink=style.getPropertyValue("--ink").trim(),muted=style.getPropertyValue("--muted").trim();ctx.clearRect(0,0,640,h);ctx.fillStyle=bar;ctx.fillRect(0,0,640,h);
 ctx.fillStyle="#b7d7e8";ctx.fillRect(611,(h-32)/2,22,32);ctx.fillStyle="#224b67";ctx.font="9px system-ui";ctx.textAlign="center";ctx.fillText("water",622,(h-32)/2+19);

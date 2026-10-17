@@ -119,6 +119,14 @@
 - Save key `boss15` reads `boss141` and all earlier supported history, starts forward-only v15 invoice records and preserves signed fees. Offline single-file guardrails remain.
 - **Acceptance:** JS game tests for migration, accrual vs collection, credit interest and debt repayment, cash reconciliation, contract price locks, investment P&L, promotion criteria, 365+ days and narrow-screen UX. Historical/causal limits stay transparent.
 
+
+## Delivered: v15.1 — Career Pathways & Evidence-Based Progression
+- Five title levels: Associate → Senior → Lead → Principal Specialist/Department Manager → Distinguished Specialist/Director. Specialist and management paths diverge beyond Lead; managerial promotions require actual authority, management work and measured team performance.
+- Employee development can follow targeted Sales, Marketing, Product or Operations learning, but knowledge/XP alone no longer unlock promotions. Each step combines measured time in grade, real role-based practice, proficiency, experience and demonstrated outcomes.
+- Time in grade thresholds: 110, 150, 190 and 250 days respectively, plus growing experience and skill requirements; payroll impacts and skill gaps shown in an expandable individual roadmap.
+- Existing titles, salaries, legacy XP, financial data, projects and organizational roles retained in `boss151`; no retrospective career practice fabricated. Old `boss15` key remains untouched.
+- Acceptance: all v15 finance/play tests pass plus long-running 365+ day simulation, no premature or automatic promotions, distinct leadership eligibility and mobile disclosures.
+
 ## Backlog (await owner selection)
 - Office expansions and richer multi-level organizations (first department managers delivered v13)
 - Reactive rival companies

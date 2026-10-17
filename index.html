@@ -600,6 +600,16 @@ S.cash-=4;biMoney("development",4,DEPARTMENTS[dept].name+" coaching: "+target.n)
 target.career.stress=clamp(target.career.stress-4);target.career.satisfaction=clamp(target.career.satisfaction+3);
 const weak=DEPARTMENTS[dept].skills.reduce((a,b)=>target.s[a]<target.s[b]?a:b);target.s[weak]+=.14*S.mod.learn;
 logIt(p.n+" coached "+target.n+" in "+DEPARTMENTS[dept].name+" ($4 from department budget).");}
+
+function renderOrganization(){const chart=$("org-chart");if(!chart)return;
+$("org-status").textContent=DEPT_KEYS.filter(k=>orgManager(k)).length+" of 2 managers appointed";
+chart.innerHTML='<div class="org-grid">'+DEPT_KEYS.map(key=>{const d=S.org.departments[key],m=orgManager(key),people=orgReports(key),x=d.stats;
+const score=key==="commercial"?"Leads "+x.leads+"/"+d.target.leads+" · Wins "+x.wins:
+"On-time "+(x.delivered?Math.round(x.onTime/x.delivered*100)+"%":"—")+"/"+d.target.onTime+"% · Projects "+x.delivered;
+return '<div class="org-dept"><h3>'+DEPARTMENTS[key].name+'</h3><div class="small">'+DEPARTMENTS[key].roles+'</div><div class="org-manager">'+(m?"Manager: "+esc(m.n):"Founder-led · No manager")+'</div>'+people.map(p=>'<div class="org-report">'+esc(p.n)+' · '+esc(ROLE_NAMES[p.role.primary])+'</div>').join("")+'<div class="org-metric">'+score+'</div><div class="org-metric">Coaching '+d.stats.coached+' · Budget '+biCurrency(d.spent)+' / '+biCurrency(d.budget)+' · Day '+(S.day-d.periodStart)+'/30</div>'+(m&&people.length>5?'<div class="risk-watch small">Wide span of control reduces effectiveness.</div>':'')+'</div>';
+}).join("")+'</div>';
+if($("org-settings").open)renderOrgControls();
+}
 function roleAction(id,action){if(S.ev)return;const p=person(id);if(!p)return;const r=p.role;
 if(action==="resume"){if(p.id===S.ops.assistantId)return;r.auto=true;if(!p.t.startsWith("d")){p.t="idle";r.autoTask=false;}logIt(p.n+" returned to the team work plan.");}
 else if(action==="manual"){r.auto=false;r.autoTask=false;logIt("Manual task control enabled for "+p.n+".");}

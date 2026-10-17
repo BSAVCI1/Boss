@@ -9,7 +9,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,open:false,innerHTML:""
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,unitApplyPreset,unitApplyDraft,unitRecordInput,unitPresetValues,unitCareerReadiness,unitDevelopSuccessor,unitDevelopTeam,ladderEvaluation,ladderNext,ladderPromote,ladderSetAuthority,ladderDay,ladderPayroll,ladderLaunchReadiness,ladderReassign,renderLadder,renderLaunchGuide,delegateWork,assign,beginEditableInteraction,finishEditableInteraction,editableInteractionPending,renderBusinessUnits,refresh,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
+const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,unitApplyPreset,unitApplyDraft,unitRecordInput,unitPresetValues,unitCareerReadiness,unitDevelopSuccessor,unitDevelopTeam,ladderEvaluation,ladderNext,ladderPromote,ladderSetAuthority,ladderDay,ladderPayroll,ladderLaunchReadiness,ladderReassign,dailySalary,renderLadder,renderLaunchGuide,delegateWork,assign,beginEditableInteraction,finishEditableInteraction,editableInteractionPending,renderBusinessUnits,refresh,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exported+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -816,6 +816,54 @@ test("v21.4b a weekly review may autonomously promote only inside the CEO payrol
  s.org.progression.lastChecked=-1;G.ladderDay();
  assert.equal(s.org.progression.appointments.length,1);
  assert.equal(s.org.progression.events.at(-1).action,"within payroll authority");
+ reconcile(s);
+});
+
+
+test("v21.4b Senior Manager and Director gates require verified subordinate leadership",()=>{
+ const s=init();s.deals=[];s.day=250;fund(s,10000);
+ for(let i=0;i<15;i++){const p=G.createPerson();G.ensureCareer(p);G.ensureRole(p);G.ensureDepartment(p);G.ensurePerformance(p,0);s.team.push(p);}
+ for(const p of s.team){p.perf.days=200;p.career.rank=3;p.career.xp=140;for(const skill of ["coaching","communication","delegation","planning"])p.management[skill]=95;}
+ const g=s.org.progression;
+ const leaders=s.team.slice(0,5);
+ for(const p of leaders)g.appointments.push({id:p.id,level:"lead",since:100,successorId:null});
+ const beforeSenior=G.ladderEvaluation("senior");
+ assert.equal(beforeSenior.ready,false,"five team leads without a manager do not make a senior manager");
+ assert.ok(beforeSenior.reasons.includes("No internal successor ready"));
+ g.appointments[0].level="manager";g.appointments[0].since=120;
+ const seniorBlocked=G.ladderEvaluation("senior");
+ assert.equal(seniorBlocked.ready,false,"four remaining team leads insufficient for Senior Manager");
+ g.appointments.push({id:s.team[5].id,level:"lead",since:100,successorId:null});
+ const senior=G.ladderEvaluation("senior");
+ assert.equal(senior.ready,true);assert.equal(senior.count,5);
+ assert.equal(G.ladderPromote("senior",senior.candidateId,true),true);
+ assert.equal(g.appointments.filter(n=>n.level==="senior").length,1);
+ assert.equal(G.ladderEvaluation("director").ready,false,"Director requires three managers");
+ for(const p of s.team.slice(6,9))g.appointments.push({id:p.id,level:"manager",since:100,successorId:null});
+ const director=G.ladderEvaluation("director");
+ assert.equal(director.ready,true);assert.equal(director.count,3);
+ assert.equal(G.ladderPromote("director",director.candidateId,true),true);
+ assert.equal(g.appointments.filter(n=>n.level==="director").length,1);
+ const direct=Object.keys(g.reportTo);
+ assert.equal(new Set(direct).size,direct.length);
+ assert.ok([...Object.values(g.reportTo)].every(id=>g.appointments.some(n=>n.id===id)));
+ const salary=s.team.reduce((n,p)=>n+G.dailySalary(p),0);
+ assert.ok(Number.isFinite(salary)&&salary>0);
+ reconcile(s);
+});
+test("v21.4b automatic game tick promotes once under approved payroll and saves same day",()=>{
+ const s=init();fund(s,1800);s.day=83;s.deals=[];s.flow.focus=true;s.nextEv=99999;
+ for(let i=0;i<2;i++){const p=G.createPerson();G.ensureCareer(p);G.ensureRole(p);G.ensureDepartment(p);G.ensurePerformance(p,0);s.team.push(p);}
+ for(const p of s.team){p.perf.days=50;p.career.rank=1;p.career.xp=40;}
+ assert.equal(G.ladderSetAuthority(.5),true);
+ s.org.progression.lastChecked=-1;
+ const day=s.day;G.tick();
+ assert.equal(s.day,day+1);
+ assert.equal(s.org.progression.appointments.length,1);
+ assert.equal(s.org.progression.events.filter(x=>x.level==="lead").length,1);
+ assert.equal(G.load().org.progression.appointments.length,1);
+ const saved=G.load();assert.equal(saved.day,s.day);
+ assert.equal(saved.org.progression.events.filter(x=>x.level==="lead").length,1);
  reconcile(s);
 });
 

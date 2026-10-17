@@ -515,6 +515,34 @@ const RECIPES=[
 ["check","stand","Team rhythm","Morale +50%","morale",1.5]
 ];
 const $=id=>document.getElementById(id);
+// Mobile interaction shield: simulation and saving run while UI updates wait for edits.
+const EDITABLE_CONTROL="input,select,textarea,[contenteditable='true']";
+let editingControl=null,editingActive=false,editingCooldownUntil=0,editingFlushTimer=null;
+function beginEditableInteraction(event){
+ const el=event?.target?.closest?.(EDITABLE_CONTROL);
+ if(!el||el.disabled)return;
+ editingControl=el;editingActive=true;editingCooldownUntil=0;
+ if(editingFlushTimer!==null){clearTimeout(editingFlushTimer);editingFlushTimer=null;}
+}
+function editableInteractionPending(){
+ return !!(editingActive&&editingControl?.isConnected!==false)||Date.now()<editingCooldownUntil;
+}
+function finishEditableInteraction(event){
+ const el=event?.target?.closest?.(EDITABLE_CONTROL);
+ if(!el||el!==editingControl)return;
+ editingActive=false;editingControl=null;
+ editingCooldownUntil=Date.now()+750; // Wait for native iOS picker dismissal.
+ if(editingFlushTimer!==null)clearTimeout(editingFlushTimer);
+ editingFlushTimer=setTimeout(()=>{
+  editingFlushTimer=null;
+  if(editableInteractionPending()||!gameReady||!S)return;
+  structural="";unitViewSignature="";renderStructure();refresh();
+ },850);
+}
+for(const name of ["touchstart","pointerdown","mousedown","focusin","keydown","input"])
+ document.addEventListener(name,beginEditableInteraction,true);
+for(const name of ["change","focusout"])
+ document.addEventListener(name,finishEditableInteraction,true);
 const R=n=>Math.floor(Math.random()*n);
 const pick=a=>a[R(a.length)];
 const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
@@ -1629,6 +1657,7 @@ plan.lastTeam=S.day;logIt(director.n+" arranged a "+DEPARTMENTS[dept].name+" wel
 }
 }
 function renderOrganization(){
+if(editableInteractionPending())return;
 const chart=$("org-chart");if(!chart)return;
 const open=new Set([...chart.querySelectorAll("details[data-org-view]")].filter(x=>x.open).map(x=>x.dataset.orgView));
 $("org-status").textContent=DEPT_KEYS.filter(k=>orgManager(k)).length+" of 2 department heads appointed";
@@ -1655,6 +1684,7 @@ const inputBusy=!!(editing&&typeof editing.closest==="function"&&editing.closest
 if(sig!==orgControlsSignature&&!inputBusy){orgControlsSignature=sig;renderOrgControls();}}
 }
 function renderOrgControls(){
+if(editableInteractionPending())return;
 $("org-controls").innerHTML=DEPT_KEYS.map(key=>{
 const d=S.org.departments[key],director=orgManager(key),p=d.plan;
 const qualified=S.team.filter(x=>x.department===key&&x.id!==S.ops.assistantId&&!unitOfPerson(x.id)&&(x.career.rank>=1||x.career.xp>=10));
@@ -1916,7 +1946,8 @@ if((level==="critical"||level==="watch"||level==="unassigned")&&S.ops.alerted[ke
 const summary=level==="critical"?"projected to miss its deadline":level==="watch"?"has limited schedule buffer":"needs an available teammate";
 logIt(a.n+" flagged "+f.d.cl+": "+summary+".",level==="critical");}
 S.ops.alerted[key]=level;}}
-function renderAssistantPolicy(){const p=S.ops.policy;$("policy-assign").checked=p.assign;$("policy-priority").value=p.priority;$("policy-praise").checked=p.praise;$("policy-family").checked=p.family;$("policy-mistake").checked=p.mistake;$("policy-idea").checked=p.idea;$("policy-alerts").checked=p.alerts;$("policy-budget").value=String(p.budget);$("policy-total").value=String(p.totalBudget);$("policy-days").value=String(p.days);
+function renderAssistantPolicy(){
+if(editableInteractionPending())return;const p=S.ops.policy;$("policy-assign").checked=p.assign;$("policy-priority").value=p.priority;$("policy-praise").checked=p.praise;$("policy-family").checked=p.family;$("policy-mistake").checked=p.mistake;$("policy-idea").checked=p.idea;$("policy-alerts").checked=p.alerts;$("policy-budget").value=String(p.budget);$("policy-total").value=String(p.totalBudget);$("policy-days").value=String(p.days);
 $("policy-budget-status").textContent="Routine spending "+biCurrency(p.spent)+" / "+biCurrency(p.totalBudget)+" · expires Day "+(p.since+p.days)+(S.day>=p.since+p.days?" · EXPIRED — renew to continue":"");}
 function updateAssistantPolicy(){const p=S.ops.policy;p.assign=$("policy-assign").checked;p.priority=$("policy-priority").value;p.praise=$("policy-praise").checked;p.family=$("policy-family").checked;p.mistake=$("policy-mistake").checked;p.idea=$("policy-idea").checked;p.alerts=$("policy-alerts").checked;const perAction=Number($("policy-budget").value),total=Number($("policy-total").value),days=Number($("policy-days").value);
 if($("policy-budget").value.trim()!==""&&$("policy-budget").validity?.valid!==false&&Number.isFinite(perAction)&&perAction>=0&&perAction<=10000000)p.budget=perAction;
@@ -2091,6 +2122,7 @@ function teamReportingGroups(){
  return groups;
 }
 function renderStructure(){
+if(editableInteractionPending())return;
 const dSig=S.deals.map(d=>d.id+":"+d.w+":"+d.negotiated+":"+d.extended+":"+d.reviewed+":"+(d.prog>=d.work*.2)).join(",")+"|"+S.team.map(p=>p.id+":"+p.t+":"+p.role.primary+":"+p.role.auto+":"+p.department).join(",")+"|"+DEPT_KEYS.map(k=>[S.org.departments[k].managerId,...DEPARTMENTS[k].skills.map(role=>S.org.departments[k].subManagers?.[role])].join(":")).join(",")+"|"+S.ops.assistantId+"|"+JSON.stringify((S.exec?.units||[]).map(u=>[u.key,u.managerId,u.staffIds]));
 if(structural===dSig)return;
 for(const el of $("deals").querySelectorAll("details[data-project-id]")){const id=Number(el.dataset.projectId);if(el.open)projectExpanded.add(id);else projectExpanded.delete(id);}
@@ -2140,6 +2172,7 @@ coachDecision("Career: "+action+" for "+p.n,before,outcome+" Review observed out
 save();if(!structural)renderStructure();refresh();}
 function teamActivity(){if(S.ev||S.day-S.hr.lastTeamDay<12)return;const before=coachSnap();const cost=S.team.length*5;if(S.cash<cost)return;S.cash-=cost;biMoney("people",cost,"Team activity");S.hr.lastTeamDay=S.day;for(const p of S.team){Mo(p,10);L(p,4);p.career.stress=clamp(p.career.stress-7);p.career.satisfaction=clamp(p.career.satisfaction+3);Me(p,"You brought us together as a team");}logIt("The team enjoyed a shared activity. Morale improved.");coachDecision("Team culture activity",before,"Cost "+biCurrency(cost)+" with improved employee mood and recovery.",null,7);save();refresh();}
 function renderCandidates(){
+if(editableInteractionPending())return;
 $("hire-skill").value=S.hr.skill;
 $("hire-interest").value=S.hr.interest;
 const list=S.hr.pool.map(c=>{
@@ -2453,8 +2486,8 @@ function unitPayrollDay(){
  for(const u of S.exec.units)for(const id of u.staffIds){const p=person(id);if(p){u.payrollCost+=dailySalary(p);if(id!==u.managerId)u.staffDays++;}}
 }
 function renderBusinessUnits(){
+if(editableInteractionPending())return;
  const target=$("business-units");if(!target)return;
- if(document.activeElement?.closest?.("#business-units")?.matches?.("select,input"))return;
  const open=new Set([...target.querySelectorAll("details[data-unit-open]")].filter(p=>p.open).map(p=>p.dataset.unitOpen));
  const signature=JSON.stringify({units:S.exec.units,requests:S.exec.unitRequests,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id])});
  if(signature===unitViewSignature)return;unitViewSignature=signature;
@@ -2708,6 +2741,7 @@ if(!saved)return false;
 renderStructure();refresh();return true;
 }
 function executiveShow(){
+if(editableInteractionPending())return;
 const a=person(S.ops.assistantId);
 $("company-name").textContent="Business Services Group";
 const primary=SECTORS[S.market.focus]?.name||"Services",strategy=worldStrategy().name;
@@ -2811,6 +2845,7 @@ const markup=notices.slice(0,3).join("");if(markup!==attentionSignature){attenti
 for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}
 }
 function refresh(){
+if(editableInteractionPending())return;
 economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();executiveShow();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";

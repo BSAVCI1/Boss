@@ -212,7 +212,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="overview-metrics"><span id="brief-projects">0 projects</span><span id="brief-pipeline">0 in pipeline</span><span id="brief-team">Team ready</span></div>
 <div class="game-mission" id="game-mission"><div class="eyebrow">NEXT CHALLENGE</div><strong id="game-goal">Build your company</strong><p id="game-goal-hint">Choose your next step.</p><div class="game-goal-track"><span id="game-goal-bar"></span></div><div class="game-goal-progress" id="game-goal-progress"></div></div>
 <div class="game-actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
-<div class="game-story" id="game-story" aria-live="polite"></div>
+<div class="game-scene"><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div></div><div class="game-story" id="game-story" aria-live="polite"></div>
 <details class="aux-details" id="game-journey"><summary>My company journey</summary><div id="game-journey-map"></div></details>
 </div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div>
 <details class="aux-details game-advanced" id="ceo-records"><summary>Coach &amp; company records</summary>
@@ -232,7 +232,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </section></details><div class="lab-today" id="lab-today" hidden><span id="lab-today-text"></span><button type="button" id="lab-today-open">Review experiment →</button></div><div id="attention-list" class="attention-list" aria-live="off"></div>
 <details class="aux-details game-advanced" id="today-options"><summary>Work settings &amp; activity</summary>
 <div class="card focusrow"><div><strong>Focus on current work</strong><div class="small" id="focus-hint">Pause incoming work when you need space.</div></div><button type="button" id="focus-toggle">Enable Focus</button></div>
-<details class="aux-details" id="office-panel"><summary>Office scene &amp; settings</summary><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div><button type="button" id="restart" class="danger-secondary">Restart company</button></details>
+<details class="aux-details" id="office-panel"><summary>Game settings &amp; restart</summary><button type="button" id="restart" class="danger-secondary">Restart company</button></details>
 <details class="aux-details"><summary>Company history <span class="small" id="log-recent"></span></summary><div class="card" id="log" aria-live="off"></div></details>
 </details></section>
 <section id="view-work" class="app-view" data-page="work" aria-label="Projects and sales" hidden>
@@ -1550,6 +1550,9 @@ $("restart").addEventListener("click",()=>{if(!confirm("Restart the company from
 fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";sectorSignature="";customerSignature="";projectExpanded.clear();employeeExpanded.clear();careerExpanded.clear();roadmapExpanded.clear();attentionSignature="";orgControlsSignature="";for(const name of ["today","work","team","growth"])viewScroll[name]=0;
 paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();navigate("today");schedule();});
 document.querySelector(".bottom-nav").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(b)navigate(b.dataset.view);});
+$("game-primary").addEventListener("click",()=>{const b=$("game-primary");navigate(b.dataset.go||"work",b.dataset.project?Number(b.dataset.project):undefined);});
+$("game-forward").addEventListener("click",gameAdvanceDays);
+$("game-journey").addEventListener("toggle",()=>{if($("game-journey").open)gameRender();});
 $("attention-list").addEventListener("click",e=>{const b=e.target.closest("button[data-go]");if(b)navigate(b.dataset.go,b.dataset.project?Number(b.dataset.project):undefined);});
 $("lab-today-open").addEventListener("click",()=>{navigate("growth");$("lab-panel").open=true;renderLab(true);});
 $("lab-panel").addEventListener("toggle",()=>{if($("lab-panel").open)renderLab(true);});
@@ -1669,6 +1672,40 @@ if(!$("idea-progress-panel").open)return;
 const rows=S.ideaWork.active.map(x=>'<div class="coach-mini">'+esc(x.proposal.name)+' · '+biCurrency(x.cost)+' · '+x.done.toFixed(1)+'/'+x.proposal.days+' employee-days · '+esc(x.proposal.risk)+' risk</div>').join("")+
 S.ideaWork.history.slice(0,12).map(x=>'<div class="coach-mini">Day '+x.finished+' · '+esc(x.proposal.name)+' · '+biCurrency(x.cost)+' · '+esc(x.result)+' · '+x.actualParticipation+' employee-days</div>').join("");
 if(area.innerHTML!==rows)area.innerHTML=rows||'<p class="small">No funded proposals yet; new requests will offer three price tiers with participation requirements.</p>';}
+
+/* v17 narrative presentation; all rewards and progression derive from existing simulation state. */
+function gameChapter(){let n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;return n>=30&&S.team.length>=12&&leaders===2?"Established":n>=12&&S.team.length>=6?"Growing company":n>=3?"Small agency":"Founder";}
+function gamePlan(){let n=S.market.completed||0,open=S.deals.filter(d=>!person(d.w));
+if(!n&&open.length)return["Assign a teammate to your first project","Match a worker to a customer. Your first completed project starts your story.",0,2,"work",open[0].id];
+if(!n&&S.deals.length)return["Finish your first client project","Your team is delivering. Keep an eye on deadlines.",1,2,"work",S.deals[0].id];
+if(!n)return["Find your first customer","Build an opportunity without overspending on salaries.",0,1,"work",null];
+if(n<3)return["Earn three customer wins","Build trust through finished work, not just new leads.",n,3,"work",null];
+if(S.world?.activeEvent)return["A market opportunity is waiting","Decide whether to act or pass. There is no compulsory penalty.",0,1,"growth",null];
+if(S.rep<40)return["Become known for quality","Deliver reliably to build reputation.",Math.max(0,Math.floor(S.rep)),40,"work",null];
+if(S.team.length<5&&S.cash>=45)return["Build a team that can scale","Make a considered staffing decision before adding payroll.",S.team.length,5,"team",null];
+if((S.world?.stats?.won||0)<5)return["Compete with the market leaders","Win customers by playing to your strengths.",S.world?.stats?.won||0,5,"growth",null];
+if(S.market.open.length<3)return["Explore a new sector","Expand only when your people and finances are ready.",S.market.open.length,3,"growth",null];
+if(n<30)return["Build a sustainable company","Complete thirty projects while developing your people.",n,30,"work",null];
+return["Write your next chapter","Choose your next business strategy and develop future leaders.",1,1,"growth",null];}
+let lastGameEvent=null,toastTimeout=0;
+function gameToast(message){const t=$("game-toast");if(!t)return;t.textContent=message;t.hidden=false;clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>t.hidden=true,2400);}
+function gameRender(){
+const [title,hint,value,max,view,project]=gamePlan(),event={delivered:S.market.completed||0,wins:S.world?.stats?.won||0,built:S.built.length};
+if(lastGameEvent){if(event.delivered>lastGameEvent.delivered)gameToast("Client project completed — great work!");else if(event.built>lastGameEvent.built)gameToast("You unlocked a company capability!");else if(event.wins>lastGameEvent.wins)gameToast("Competitive contract won!");}lastGameEvent=event;
+$("game-chapter").textContent=gameChapter()+" · Day "+S.day;
+$("game-goal").textContent=title;$("game-goal-hint").textContent=hint;$("game-goal-progress").textContent=value+" / "+max;$("game-goal-bar").style.width=Math.min(100,Math.max(0,value/Math.max(1,max)*100))+"%";
+$("game-primary").textContent=(project?"Open this project":view==="work"?"See client work":view==="team"?"Meet your team":"Explore Growth")+" →";
+$("game-primary").dataset.go=view;if(project)$("game-primary").dataset.project=String(project);else delete $("game-primary").dataset.project;
+const stories=S.log.map(x=>String(x).replace(/<[^>]+>/g,"")).filter(x=>/completed|hired|joined|promot|won|missed|quit|unlocked|founded|discovered/i.test(x)).slice(0,2);
+const html=(stories.length?stories:["Your team's next achievement is waiting."]).map(x=>'<div class="game-story-item">'+esc(x)+'</div>').join("");if($("game-story").innerHTML!==html)$("game-story").innerHTML=html;
+if($("game-journey").open){const n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;
+const stages=[["Founder",true],["First customer",n>=1],["Small agency",n>=3],["Growing team",n>=12&&S.team.length>=6],["Established",n>=30&&S.team.length>=12&&leaders===2]];
+$("game-journey-map").innerHTML=stages.map(([name,done])=>'<span class="game-journey-stage '+(done?'unlocked':'locked')+'">'+(done?'✓ ':'◇ ')+name+'</span>').join("");}
+const rivals=S.world?.rivals||[],rivalText=rivals.map(q=>'<div class="game-rival"><span class="game-rival-icon">◆</span><span><b>'+esc(q.name)+'</b><small>'+esc(q.archetype)+' approach · '+q.wins+' wins</small></span></div>').join("");
+if($("game-rivals").innerHTML!==rivalText)$("game-rivals").innerHTML=rivalText;
+}
+function gameAdvanceDays(){if(S.ev)return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
+
 function renderBriefing(){
 const urgent=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"||f.risk==="watch");
 const stressed=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35);
@@ -1690,11 +1727,11 @@ if(stressed.length)notices.push('<div class="card"><h3>Team wellbeing</h3><p>'+s
 if(atRiskMoney)notices.push('<div class="card"><h3>Cash runway</h3><p>Available cash covers fewer than seven days of payroll. Check delivery and new contracts.</p><button type="button" data-go="work">Review work →</button></div>');
 if(S.world.activeEvent)notices.push('<div class="card"><h3>Optional market opportunity</h3><p>A market brief is ready until Day '+S.world.activeEvent.until+'. Choose whether to act or pass in Growth. No interruption is required.</p><button type="button" data-go="growth">Review market →</button></div>');
 if(!notices.length)notices.push('<div class="card"><h3>No urgent decisions</h3><p>Employees are handling routine activities. Check Work or Growth when you want to make strategic decisions.</p></div>');
-const markup=notices.join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
+const markup=notices.slice(0,2).join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
 for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}
 }
 function refresh(){
-economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
+economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);
@@ -1801,7 +1838,7 @@ praise:"Sharing credit improves employee morale; taking credit favors short-term
 function showModal(){const m=$("modal");if(!S.ev){m.hidden=true;document.body.classList.remove("modal-open");return;}const d=dilemmaInfo(S.ev);if(!d){S.ev=null;save();m.hidden=true;return;}if(m.hidden||$("modal-title").textContent!==d[0]){$("modal-title").textContent=d[0];$("modal-text").textContent=d[1]+(S.coach.mode==="guided"?"\n\nDecision preview: "+coachDecisionPreview(S.ev.k):"");$("choices").innerHTML=d[2].map((txt,i)=>{const cost=coachChoiceCost(S.ev.k,i);return '<button type="button" data-choice="'+i+'" '+(cost>S.cash?'disabled title="Insufficient cash"':'')+'>'+esc(txt)+(cost>S.cash?' · insufficient cash':'')+'</button>';}).join("");}m.hidden=false;document.body.classList.add("modal-open");}
 function schedule(){clearTimeout(clock);if(!paused&&!S.ev)clock=setTimeout(()=>{tick();schedule();},1200/spd);}
 function bubble(id,emoji,frames){let a=avatars.get(id);if(!a){a={x:0,y:0,tx:0,ty:0,away:false,hold:0,emoji:"",frames:0};avatars.set(id,a);}a.emoji=emoji;a.frames=frames;}
-function avatarDraw(){if(!$("office-panel").open){requestAnimationFrame(avatarDraw);return;}const rows=Math.ceil(S.team.length/5),h=Math.max(150,80*rows+50);if(canvas.height!==h)canvas.height=h;const style=getComputedStyle(document.documentElement);const bar=style.getPropertyValue("--bar").trim(),ink=style.getPropertyValue("--ink").trim(),muted=style.getPropertyValue("--muted").trim();ctx.clearRect(0,0,640,h);ctx.fillStyle=bar;ctx.fillRect(0,0,640,h);
+function avatarDraw(){if(activeView!=="today"){requestAnimationFrame(avatarDraw);return;}const rows=Math.ceil(S.team.length/5),h=Math.max(150,80*rows+50);if(canvas.height!==h)canvas.height=h;const style=getComputedStyle(document.documentElement);const bar=style.getPropertyValue("--bar").trim(),ink=style.getPropertyValue("--ink").trim(),muted=style.getPropertyValue("--muted").trim();ctx.clearRect(0,0,640,h);ctx.fillStyle=bar;ctx.fillRect(0,0,640,h);
 ctx.fillStyle="#b7d7e8";ctx.fillRect(611,(h-32)/2,22,32);ctx.fillStyle="#224b67";ctx.font="9px system-ui";ctx.textAlign="center";ctx.fillText("water",622,(h-32)/2+19);
 S.team.forEach((p,i)=>{const dx=60+(i%5)*130,dy=40+Math.floor(i/5)*80;ctx.fillStyle=muted;ctx.globalAlpha=.33;ctx.fillRect(dx-26,dy-10,52,20);ctx.globalAlpha=1;let a=avatars.get(p.id);if(!a){a={x:dx,y:dy+34,tx:dx,ty:dy+34,away:false,hold:0,emoji:"",frames:0};avatars.set(p.id,a);}
 if(p.t==="idle"||p.t==="rest"){if(!a.away&&Math.random()<.004){a.away=true;a.hold=170+R(130);}if(a.away){a.tx=596;a.ty=h/2+29;if(Math.abs(a.x-a.tx)<7){a.hold--;if(a.hold<=0)a.away=false;}}if(!a.away){a.tx=dx;a.ty=dy+34;}}

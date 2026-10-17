@@ -2247,12 +2247,18 @@ function unitStaffEligible(p,key){
  const other=unitOfPerson(p.id);return !other||other.key===key;
 }
 function unitRecord(key,type,detail){S.exec.unitEvents.push({key,day:S.day,type,detail});S.exec.unitEvents=S.exec.unitEvents.slice(-80);}
+function unitRestore(checkpoint){
+ // Roll back in place so existing live references do not retain a phantom unit.
+ const restored=JSON.parse(checkpoint);
+ for(const key of Object.keys(S))delete S[key];
+ Object.assign(S,restored);
+}
 function unitCommit(action){
  if(unitMutationPending||S.ev||saveConflict||saveErrorReason)return false;
  const checkpoint=JSON.stringify(S),priorPaused=paused;
  unitMutationPending=true;paused=true;
  const finish=ok=>{
-  if(!ok)S=JSON.parse(checkpoint);
+  if(!ok)unitRestore(checkpoint);
   unitMutationPending=false;
   if(!saveConflict&&!saveErrorReason)paused=priorPaused;
   unitViewSignature="";structural="";renderStructure();refresh();paintControls();schedule();
@@ -2262,7 +2268,7 @@ function unitCommit(action){
   if(action()===false){unitMutationPending=false;paused=priorPaused;return false;}
   const result=save();
   return result&&typeof result.then==="function"?result.then(finish).catch(()=>finish(false)):finish(result);
- }catch(e){S=JSON.parse(checkpoint);unitMutationPending=false;paused=priorPaused;return false;}
+ }catch(e){unitRestore(checkpoint);unitMutationPending=false;paused=priorPaused;return false;}
 }
 function unitActivate(key){
  if(!SERVICE_LINES[key]||!S.exec.lines.some(x=>x.key===key)||S.exec.units.some(u=>u.key===key))return false;

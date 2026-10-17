@@ -794,7 +794,7 @@ test("v21.4b a five-person company cannot duplicate a Team Lead without three fu
 test("v21.4b Manager stage requires three experienced Team Leads and an actual role upgrade",()=>{
  const s=init();s.deals=[];s.day=189;fund(s,2500);
  for(let i=0;i<8;i++){const p=G.createPerson();G.ensureCareer(p);G.ensureRole(p);G.ensureDepartment(p);G.ensurePerformance(p,0);s.team.push(p);}
- for(const p of s.team){p.perf.days=120;p.career.rank=2;p.career.xp=40;}
+ for(const p of s.team){p.perf.days=120;p.career.rank=2;p.career.xp=40;for(const skill of ["planning","delegation","coaching","communication"])p.management[skill]=66;}
  const leaders=s.team.slice(0,3);
  for(const p of leaders)s.org.progression.appointments.push({id:p.id,level:"lead",since:100,successorId:null});
  const promoted=G.ladderEvaluation("manager");assert.equal(promoted.ready,true);assert.equal(promoted.count,3);

@@ -1632,7 +1632,7 @@ const strategy=S.day===0?WORLD_STRATEGIES.balanced:worldStrategy();
 const work=Math.max(4,Math.ceil((6+Math.round(diff*2.2)+(tier-1))*strategy.scope));
 const base=66+Math.floor(diff*13)+(tier-1)*17+extra+(returning?10:0);
 const d={id:S.did++,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78+strategy.quality,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning,laborCost:0,directCost:0,biBooked:false,bookVal:0,paymentTerms:S.economy?(S.day===0?0:S.economy.terms):0,priceFactor:S.economy?({standard:1,competitive:.94,premium:1.10}[S.economy.pricing]||1):1,termPriceFactor:S.day===0?1:({0:.96,7:1,14:1.04,30:1.08}[S.economy.terms]||1),worldStrategy:S.day===0?"balanced":S.world.strategy,worldPriceFactor:strategy.price};
-d.agreedFee=estimatedFee(d);const line=executiveLineForDeal(d);if(line){d.serviceLine=line.key;d.bookedAt=S.day;}S.deals.push(d);if(S.bi)biBook(d);return d;}
+d.agreedFee=estimatedFee(d);chooseServiceOffer(d);if(d.serviceLine)d.agreedFee=estimatedFee(d);S.deals.push(d);if(S.bi)biBook(d);return d;}
 function sectorAction(key){if(S.ev||!SECTORS[key])return;const before=coachSnap();
 if(S.market.open.includes(key)){if(S.market.focus===key)return;S.market.focus=key;logIt("Your company now specializes in "+SECTORS[key].name+".");}
 else{const sec=SECTORS[key];if(S.rep<sec.rep||S.cash<sec.cost)return;S.cash-=sec.cost;biMoney("investment",sec.cost,"Enter "+sec.name+" sector");S.market.open.push(key);S.market.focus=key;logIt("Expanded into "+sec.name+" for $"+sec.cost+". New clients can now request work.");}

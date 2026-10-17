@@ -296,6 +296,19 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="view-intro"><h2>Growth</h2><p>Industries, investments and company knowledge</p></div>
 <section aria-labelledby="market-title"><h2 id="market-title">Market strategy &amp; expansion</h2><div class="card"><p class="small">Build a reputation in your specialist sector, then unlock new industries. Focus improves delivery speed and client value for matching work.</p><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><div id="sector-options" class="sector-buttons"></div><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
 
+<section aria-labelledby="world-title"><h2 id="world-title">Living market &amp; competitors</h2>
+<div class="card"><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
+<p class="filter-note">Rivals respond to demand, compete on price, quality, speed and reputation, and experience their own simulated growth and setbacks. Their outcomes are fictional, not externally sourced.</p>
+<details class="aux-details" id="world-panel"><summary>Explore market, competitors &amp; strategy</summary>
+<label for="world-strategy">Choose the company's approach to new customers</label>
+<select id="world-strategy"><option value="balanced">Balanced service</option><option value="premium">Premium specialist</option><option value="volume">Efficient volume</option><option value="relationships">Client partnerships</option></select>
+<p class="filter-note" id="world-strategy-note"></p>
+<p id="world-market-info" class="filter-note"></p>
+<h3>Optional market brief</h3><div id="world-event"></div>
+<details class="aux-details"><summary>Meet the competitors</summary><div id="world-rivals"></div></details>
+<details class="aux-details"><summary>Competitive bid outcomes</summary><div id="world-tenders"></div></details>
+<p class="filter-note">Win probabilities are transparent simulation estimates, not real-world causation. Choosing Pass never causes a compulsory penalty; future opportunities continue.</p>
+</details></div></section>
 <section aria-labelledby="lab-title"><h2 id="lab-title">Entrepreneurship &amp; Leadership Lab</h2>
 <div class="card lab-card"><div class="lead"><b>Experiment notebook</b><span id="lab-summary" class="small">Plan a measurable business experiment</span></div>
 <p class="filter-note">Make a prediction, adjust one business policy, then compare financial, customer and employee outcomes. Lessons are saved privately in this browser. Results are simulated evidence, not proof of cause.</p>
@@ -1475,6 +1488,9 @@ $("lab-history").addEventListener("change",e=>{const target=e.target;if(target?.
 $("bi-open-details").addEventListener("click",()=>{navigate("work");$("performance-panel").open=true;renderBI(true);});
 $("performance-panel").addEventListener("toggle",()=>{if($("performance-panel").open)renderBI(true);});
 $("bi-range").addEventListener("change",()=>{S.bi.range=$("bi-range").value;save();renderBI(true);});
+$("world-strategy").addEventListener("change",()=>{if(!worldChangeStrategy($("world-strategy").value))worldRender();});
+$("world-event").addEventListener("click",e=>{const button=e.target.closest("button[data-world-event]");if(button)worldEventChoice(button.dataset.worldEvent);});
+$("world-panel").addEventListener("toggle",()=>{if($("world-panel").open)worldRender();});
 $("sector-options").addEventListener("click",e=>{const b=e.target.closest("button[data-sector]");if(b)sectorAction(b.dataset.sector);});
 $("deals").addEventListener("click",e=>{const b=e.target.closest("button[data-contract]");if(b)negotiateDeal(Number(b.dataset.contract),b.dataset.option);const act=e.target.closest("button[data-project]");if(act)projectAction(Number(act.dataset.project),act.dataset.action);});
 $("focus-toggle").addEventListener("click",toggleFocus);
@@ -1583,12 +1599,13 @@ notices.push('<div class="card"><h3>'+label+'</h3><p>'+esc(f.d.cl)+' — '+info+
 }
 if(stressed.length)notices.push('<div class="card"><h3>Team wellbeing</h3><p>'+stressed.length+' employee'+(stressed.length===1?"":"s")+' under high stress. Review workload and recovery.</p><button type="button" data-go="team">Review team →</button></div>');
 if(atRiskMoney)notices.push('<div class="card"><h3>Cash runway</h3><p>Available cash covers fewer than seven days of payroll. Check delivery and new contracts.</p><button type="button" data-go="work">Review work →</button></div>');
+if(S.world.activeEvent)notices.push('<div class="card"><h3>Optional market opportunity</h3><p>A market brief is ready until Day '+S.world.activeEvent.until+'. Choose whether to act or pass in Growth. No interruption is required.</p><button type="button" data-go="growth">Review market →</button></div>');
 if(!notices.length)notices.push('<div class="card"><h3>No urgent decisions</h3><p>Employees are handling routine activities. Check Work or Growth when you want to make strategic decisions.</p></div>');
 const markup=notices.join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
 for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}
 }
 function refresh(){
-economyRender();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
+economyRender();worldRender();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);

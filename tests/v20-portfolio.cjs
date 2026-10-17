@@ -9,7 +9,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,open:false,innerHTML:""
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgSubReports,orgDirectReports,orgChooseManager,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
+const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgSubReports,orgDirectReports,orgChooseManager,orgChangePolicy,draftExecutiveDirection,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exported+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -178,4 +178,43 @@ test("failed browser write rolls back a business launch with no phantom paid inv
  assert.ok(el("save-warning").textContent.includes("could not save progress"));
  reconcile(current);
 });
+
+test("every departmental budget, spending permission and target saves across reload",()=>{
+ const s=init();fund(s,500);assert.ok(G.save());
+ const cases=[
+  ["commercial",{coaching:91,training:84,team:73,hiring:65,perAction:22,hireSlots:3,payrollLimit:4,days:180,leads:9}],
+  ["delivery",{coaching:67,training:61,team:53,hiring:43,perAction:21,hireSlots:2,payrollLimit:3,days:180,onTime:94}]
+ ];
+ for(const [dept,fields] of cases)for(const [field,value] of Object.entries(fields))
+  assert.equal(G.orgChangePolicy(dept,field,value,true),true,"cannot save "+dept+" "+field);
+ const stored=JSON.parse(store.get("boss20"));
+ const next=G.load();
+ for(const [dept,fields] of cases)for(const [field,value] of Object.entries(fields)){
+  const p=next.org.departments[dept],actual=["coaching","training","team","hiring"].includes(field)?p.plan.limits[field]:["leads","onTime"].includes(field)?p.target[field]:p.plan[field];
+  assert.equal(actual,value,dept+" "+field+" disappeared on reload");
+ }
+ assert.equal(next.day,s.day);assert.equal(next.team.length,s.team.length);
+ assert.equal(store.get("boss20"),JSON.stringify(stored),"loading a save should not alter stored settings");reconcile(next);
+});
+test("invalid or failed numeric updates leave last valid browser settings intact",()=>{
+ const s=init();fund(s,100);assert.ok(G.save());assert.ok(G.orgChangePolicy("commercial","coaching",156,true));
+ const before=store.get("boss20");
+ for(const val of [-10,NaN,Infinity,10000001])assert.equal(G.orgChangePolicy("commercial","coaching",val,true),false);
+ assert.equal(store.get("boss20"),before);
+ const priorWrite=sandbox.localStorage.setItem;
+ sandbox.localStorage.setItem=(key,value)=>{if(key==="boss20")throw Error("storage full");return priorWrite(key,value)};
+ try{assert.equal(G.orgChangePolicy("commercial","training",45,true),false);}
+ finally{sandbox.localStorage.setItem=priorWrite;}
+ assert.equal(G.get().org.departments.commercial.plan.limits.training,0);
+ assert.equal(JSON.parse(store.get("boss20")).org.departments.commercial.plan.limits.coaching,156);
+ assert.equal(el("save-state").dataset.error,"true");reconcile(s);
+});
+test("an unconfirmed CEO strategy draft persists without changing company direction",()=>{
+ const s=init();assert.equal(s.exec.priority,"grow");
+ assert.equal(G.draftExecutiveDirection("people"),true);
+ assert.equal(s.exec.priority,"grow");
+ assert.equal(G.load().ui.pendingCEO,"people");
+ assert.equal(G.load().exec.priority,"grow");
+});
+
 console.log("Boss v20 functional and persistence checks passed.");

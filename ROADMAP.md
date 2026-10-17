@@ -1,8 +1,8 @@
 # Boss — simulation development roadmap
 
-**Owner-updated order (2026-10-17):** 1. Smarter Office Assistant (v7 delivered). 2. Projects & Customers, shorter/higher-paid work and sector expansion (v8 delivered first at owner request). 3. Smarter Employees (v9 next). Other features remain backlog.
+**Owner-updated progress (2026-10-17):** 1. Smart Office Assistant (v7 delivered). 2. Projects & Customers and sector expansion (v8 delivered first at owner request). 3. Smarter Employees (v9 delivered). Further priorities await owner selection.
 
-**Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss7`, `boss6`, `boss5`, and `tl3`.
+**Product guardrails:** one self-contained `index.html`; free, ad-free, offline, private, with no account, tracking, external libraries, fonts or network calls. Local-browser saves only. Mobile-first. The player remains the boss. No mandatory ending. New saves must import `boss8`, `boss7`, `boss6`, `boss5`, and `tl3`.
 
 ## Delivered: v7 — Smarter Office Assistant
 - A collapsible Delegation Desk. Owner can set automatic task assignment on/off, and choose project order: **balanced urgency and skills**, **earliest deadline**, or **best skill fit**.
@@ -22,7 +22,7 @@
 - **Balanced high speed:** when the active pipeline empties, the next eligible lead does not wait out the real-time cooldown; Focus mode still blocks arrivals. Previous open projects are shortened and repriced once on migration to `boss8`.
 - **Validated:** 32 checks, including 180-day 8x simulation, negotiation restrictions, milestones, earnings, sector unlocks, customers, quality control and legacy saves.
 
-## Next: v9 — Smarter Employees (selected priority 2)
+## Delivered: v9 — Smarter Employees (selected priority, completed)
 - **Individual goals** such as skill mastery, pay, client ownership, mentoring, creative freedom or work-life balance. Goals should matter to daily behavior, not be merely labels.
 - **Stress/burnout:** accumulated workload and deadlines change morale, productivity, retention, mistakes and recovery; recognition and reasonable breaks help but cannot instantly erase chronic burnout.
 - **Ambitions:** advancement requests and growth plans with transparent trade-offs; promotions and role changes should connect to demonstrated strengths.
@@ -30,7 +30,15 @@
 - **Changing behavior:** consequences of praise, layoffs, coaching and employer decisions accumulate over time, with simple explainable rule-based logic; no external AI dependency.
 - **Acceptance:** sensible pacing, understandable staff profiles and explanations, performance under long-running simulation, mobile readability, no regressions, migrated saves.
 
-## Backlog (not selected for the next two releases)
+### v9 implementation and validation
+- Private individual goal drives satisfaction and subtly influences work performance.
+- Stress and burnout accumulate when workloads are sustained. Rest/recovery, conversations, coaching, and activities reduce them; severe stress reduces speed, can lower delivery quality, and sometimes prompts a worker-led four-day recovery pause.
+- Visible career panels stay collapsed on mobile; player chooses check-ins, development plans and promotions. Promotions require skill and experience, raise productivity and add recurring payroll costs.
+- Hidden, deterministic talent affinity has an explainable clue. Discovery through actual experiences produces one once-only ability increase.
+- Existing intelligent assistant respects recovery and manual commands always win.
+- Tests covered cooldowns and costs, project delivery and cash-flow, migrated saved games, talent discovery once, promotions, stress recovery and a 400-day accelerated run. Offline single-file source retained.
+
+## Backlog (await owner selection)
 - Departments/managers and office expansions
 - Reactive rival companies
 - Richer team relationships, trust and politics

@@ -1422,7 +1422,7 @@ if(!Array.isArray(c.promotions))c.promotions=[];if(typeof c.autoRest!=="boolean"
 }
 function talentHint(p){const k=p.career.talent;return({sales:"connects naturally with people",mkt:"notices stories and customer patterns",prod:"enjoys making new things",ops:"spots ways to improve routines"})[k];}
 function rankName(p){return careerTitle(p);}
-function dailySalary(p){const rank=p.career.rank,rankPremium=rank<=2?rank*.75:(rank===3?2.55:3.95);const titleBonus=S.org&&DEPT_KEYS.some(k=>S.org.departments[k]?.managerId===p.id)?.75:S.org&&DEPT_KEYS.some(k=>DEPARTMENTS[k].skills.some(role=>S.org.departments[k]?.subManagers?.[role]===p.id))?.5:0;const unitPremium=S.exec?.units?.some(u=>u.managerId===p.id)?.5:0;return(1.5+rankPremium+(p.career.raise||0)+titleBonus+unitPremium)*S.mod.cost;}
+function dailySalary(p){const rank=p.career.rank,rankPremium=rank<=2?rank*.75:(rank===3?2.55:3.95);const titleBonus=S.org&&DEPT_KEYS.some(k=>S.org.departments[k]?.managerId===p.id)?.75:S.org&&DEPT_KEYS.some(k=>DEPARTMENTS[k].skills.some(role=>S.org.departments[k]?.subManagers?.[role]===p.id))?.5:0;const unitPremium=S.exec?.units?.some(u=>u.managerId===p.id)?.5:0;const extra=Math.max(0,ladderPremium(p)-titleBonus-unitPremium);return(1.5+rankPremium+(p.career.raise||0)+titleBonus+unitPremium+extra)*S.mod.cost;}
 function stressFactor(p){const c=p.career;return Math.max(.56,1-(c.stress>=55?(c.stress-55)*.006:0)-c.burnout*.0025);}
 function goalFactor(p,d){const c=p.career;let factor=.95+c.satisfaction/1200;
 if(c.goal==="creativity"&&d&&["creative","technology"].includes(d.sector))factor+=.07;
@@ -1506,7 +1506,125 @@ if(!Number.isFinite(p.perAction)||p.perAction<0)p.perAction=8;
 if(!Number.isFinite(p.lastTraining))p.lastTraining=-99;
 if(!Number.isFinite(p.amendments)||p.amendments<0)p.amendments=0;
 
-}}
+}
+ensureProgression(state);
+}
+
+const LADDER={
+ lead:{name:"Team Lead",required:5,days:14,skill:45,bonus:.50},
+ manager:{name:"Manager",required:3,days:45,skill:55,bonus:.75},
+ senior:{name:"Senior Manager",required:5,days:75,skill:65,bonus:1.05},
+ director:{name:"Director",required:3,days:105,skill:70,bonus:1.35}
+};
+const LADDER_STAGES=["lead","manager","senior","director"];
+function ensureProgression(state){
+ const org=state.org;if(!org)return;
+ if(!org.progression||typeof org.progression!=="object")
+  org.progression={since:state.day,appointments:[],reportTo:{},authorityDaily:0,events:[],lastChecked:-1};
+ const g=org.progression,seen=new Set();
+ if(!Array.isArray(g.appointments))g.appointments=[];
+ g.appointments=g.appointments.filter(x=>x&&LADDER[x.level]&&Number.isInteger(x.id)&&
+  state.team.some(p=>p.id===x.id)&&!seen.has(x.id)&&seen.add(x.id));
+ if(!g.reportTo||typeof g.reportTo!=="object")g.reportTo={};
+ const employees=new Set(state.team.map(p=>p.id)),leaders=new Set(g.appointments.map(x=>x.id));
+ for(const k of Object.keys(g.reportTo))if(!employees.has(Number(k))||!leaders.has(g.reportTo[k])||Number(k)===g.reportTo[k])delete g.reportTo[k];
+ if(!Number.isFinite(g.authorityDaily)||g.authorityDaily<0)g.authorityDaily=0;
+ if(!Array.isArray(g.events))g.events=[];g.events=g.events.slice(-60);
+ if(!Number.isFinite(g.lastChecked))g.lastChecked=-1;
+}
+function ladderNode(id){return S.org?.progression?.appointments?.find(n=>n.id===id)||null;}
+function ladderCorporate(){
+ return S.team.filter(p=>p.id!==S.ops.assistantId&&!unitOfPerson(p.id)&&
+ !DEPT_KEYS.some(k=>orgManager(k)?.id===p.id||DEPARTMENTS[k].skills.some(role=>orgSubManager(k,role)?.id===p.id)));
+}
+function ladderPremium(p){const n=ladderNode(p.id);return n?LADDER[n.level].bonus:0;}
+function ladderPayroll(){return ladderCorporate().reduce((sum,p)=>sum+ladderPremium(p)*S.mod.cost,0);}
+function ladderEvaluation(level){
+ const rule=LADDER[level],g=S.org.progression;if(!rule)return null;
+ const current=g.appointments;
+ const count=level==="lead"?ladderCorporate().length:level==="director"?
+  current.filter(n=>n.level==="manager").length:current.filter(n=>n.level==="lead").length;
+ const previous={manager:"lead",senior:"manager",director:"senior"}[level];
+ const options=ladderCorporate().filter(p=>previous?ladderNode(p.id)?.level===previous:!ladderNode(p.id));
+ const points=p=>managerCompetence(p)*2+(p.perf?.days||0)*.2+(p.perf?.completed||0)*4+(p.career?.xp||0)*.5;
+ options.sort((a,b)=>points(b)-points(a)||a.id-b.id);
+ const p=options[0],from=p&&ladderNode(p.id);
+ const tenure=p?(from?Math.max(0,S.day-from.since):(p.perf?.days||0)):0;
+ const competency=p?managerCompetence(p):0;
+ const reasons=[];
+ if(count<rule.required)reasons.push("Need "+rule.required+" "+(level==="lead"?"company employees":level==="director"?"managers":"Team Leads")+"; currently "+count);
+ if(!p)reasons.push("No internal successor ready");
+ else{
+  if(tenure<rule.days)reasons.push("Experience "+tenure+"/"+rule.days+" days");
+  if(competency<rule.skill)reasons.push("Leadership capability "+Math.round(competency)+"/"+rule.skill);
+  if(p.career.rank<1&&p.career.xp<10)reasons.push("Develop career experience or XP");
+  if(S.deals.some(d=>d.w===p.id))reasons.push("Finish the assigned contract first");
+ }
+ return{level,role:rule.name,count,need:rule.required,candidateId:p?.id||null,
+ candidateName:p?.n||null,reasons,ready:!!p&&!reasons.length,
+ incremental:rule.bonus-(from?LADDER[from.level].bonus:0)};
+}
+function ladderNext(){
+ for(const level of LADDER_STAGES){const c=ladderEvaluation(level);if(c?.ready)return c;}
+ for(const level of LADDER_STAGES){
+  if(!S.org.progression.appointments.some(n=>n.level===level))return ladderEvaluation(level);
+ }
+ return ladderEvaluation("director");
+}
+function ladderReassign(){
+ const people=ladderCorporate(),nodes=S.org.progression.appointments,reportTo={};
+ const leads=nodes.filter(n=>n.level==="lead");
+ for(const lead of leads){const boss=people.find(p=>p.id===lead.id);if(!boss)continue;
+  const staff=people.filter(p=>p.id!==boss.id&&!ladderNode(p.id)&&!reportTo[p.id]&&p.department===boss.department);
+  for(const p of staff.slice(0,3))reportTo[p.id]=boss.id;
+ }
+ for(const [child,parent,capacity] of [["lead","manager",5],["manager","senior",3],["senior","director",3]]){
+  for(const n of nodes.filter(x=>x.level===child)){
+   const manager=nodes.find(x=>x.level===parent&&x.id!==n.id&&
+    Object.values(reportTo).filter(id=>id===x.id).length<capacity&&
+    (parent==="director"||person(x.id)?.department===person(n.id)?.department));
+   if(manager)reportTo[n.id]=manager.id;
+  }
+ }
+ S.org.progression.reportTo=reportTo;
+}
+function ladderPromote(level,id,ceo=false){
+ const eligible=ladderEvaluation(level),p=person(id);if(!eligible?.ready||eligible.candidateId!==id||!p)return false;
+ const extra=eligible.incremental*S.mod.cost,g=S.org.progression;
+ const total=S.team.reduce((sum,x)=>sum+dailySalary(x),0);
+ if(S.cash<(total+extra)*14)return false;
+ if(!ceo&&ladderPayroll()+extra>g.authorityDaily+1e-6)return false;
+ return unitCommit(()=>{
+  const node=ladderNode(id);
+  if(node){node.level=level;node.since=S.day;}else g.appointments.push({id,level,since:S.day,successorId:null});
+  p.career.path="leadership";
+  g.events.push({day:S.day,id,level,action:ceo?"CEO exception":"within payroll authority",extraDaily:extra});
+  g.events=g.events.slice(-60);ladderReassign();
+  logIt(p.n+" became "+LADDER[level].name+"; recurring payroll +"+biCurrency(extra)+"/day.");
+  return true;
+ });
+}
+function ladderSetAuthority(amount){
+ if(!Number.isFinite(amount)||amount<0||amount>100||Math.round(amount*100)!==Math.round(amount*10000)/100)return false;
+ return unitCommit(()=>{S.org.progression.authorityDaily=amount;S.org.progression.events.push({day:S.day,action:"CEO set new-leadership payroll limit",limit:amount});return true;});
+}
+function ladderDay(){
+ const g=S.org.progression;if(S.day%7||g.lastChecked===S.day)return;g.lastChecked=S.day;
+ const next=ladderNext();
+ if(next?.ready&&ladderPayroll()+next.incremental*S.mod.cost<=g.authorityDaily)ladderPromote(next.level,next.candidateId,false);
+}
+function ladderLaunchReadiness(){
+ const leaders=S.org.progression.appointments.filter(n=>n.level==="lead").length;
+ const payroll=S.team.reduce((sum,p)=>sum+dailySalary(p),0),minCash=120+payroll*21;
+ const checks=[
+ {label:"Deliver 5 client projects",met:S.market.completed>=5,detail:S.market.completed+"/5"},
+ {label:"Develop a Team Lead",met:leaders>=1,detail:leaders+"/1"},
+ {label:"Reach reputation 30",met:S.rep>=30,detail:Math.floor(S.rep)+"/30"},
+ {label:"Keep 21 days payroll after launch",met:S.cash>=minCash,detail:biCurrency(S.cash)+" / "+biCurrency(minCash)}
+ ];
+ return{ready:checks.every(c=>c.met),checks};
+}
+
 function orgLeaderTitle(p){
 if(!p)return"Department Manager";
 const isDepartmentHead=S.org?.departments[p.department]?.managerId===p.id;
@@ -1852,7 +1970,7 @@ function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
-function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();unitAutonomousDay();worldDay();let dirty=false,ideaDirty=false;
+function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();unitAutonomousDay();ladderDay();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
 if(unitDelegateWork())dirty=true;
 if(delegateWork())dirty=true;

@@ -1,5 +1,14 @@
 # Boss
 
+## Boss v20.2 — Whole-game Safari save recovery (release candidate)
+
+The player reported that **every refresh returned the full company to Day 2642**; this superseded the narrower v20.1 editable-field issue. The [v20.2 save recovery PR](https://github.com/BSAVCI1/Boss/pull/21) protects the existing `boss20` and prior save keys without clearing site data. A visible status states the saved game day, revision and errors. **Export game backup** downloads the current company, including unsaved in-memory changes, to JSON for safekeeping.
+
+When Safari rejects writes to localStorage (including quota failures), Boss tries a transactional IndexedDB fallback; simulation pauses until the database confirms the save. On reload, it selects the newest valid revision across both local device stores. Failed purchases do not count as successful, and a recovered business-line investment is not charged twice. Unreadable existing saves are not overwritten. No account, network request or cloud database has been added.
+
+Automated evidence includes the inherited migration/financial/730-day suite, multi-business-line purchase and recovery checks, and real 390px Chromium with an injected localStorage failure followed by IndexedDB persistence and a complete browser refresh. These tests establish code behavior but **cannot inspect or certify a specific iPhone's existing Safari storage**. Never clear Safari site data or tap Restart to troubleshoot a save failure. Export a backup before refreshing when the game displays a save warning. A production release is not confirmed until the PR merge, Pages deployment, and live checks succeed.
+
+
 ## Boss v20.1 — release hardening (PR #19)
 
 The [v20.1 correction](https://github.com/BSAVCI1/Boss/pull/19) makes each new $120 business-line investment conditional on a successful local `boss20` write. A storage failure rolls back cash, investment ledger, company line and decision history rather than claiming a successful purchase. It pauses gameplay with a browser-storage warning; it never erases older saves. The independent line journal is written only after successful primary persistence.

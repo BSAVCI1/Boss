@@ -1,12 +1,12 @@
 # Boss
 
-## Boss v20.2 — Full-game save recovery (pending release)
+## Boss v20.2 — Full-game save recovery (released 2026-10-17)
 
 **Why this release exists:** A long-running iPhone Safari company repeatedly returned to Day 2642 on refresh. The entire company's progress, not just editable settings, was failing to persist. The exact on-device browser failure code cannot be inferred remotely.
 
 **Recovery design:** Each successful browser save is verified and shows the committed game day. If regular `localStorage` rejects a save, Boss pauses progression while making a transactional, offline `IndexedDB` save. It resumes only after that transaction is committed. On reload Boss compares verified revisions and restores the newer on-device company; old `boss19` / `boss20` local data is **not cleared, overwritten to free space, or fabricated**. Browser conflicts or failure in both stores block further simulation rather than pretending progress has saved. A top-of-screen warning describes the error and provides **Export game backup**, which prepares a JSON file from the current in-memory company. Do not use Restart or clear Safari website data to fix a save error.
 
-**QA gate:** PR [#21](https://github.com/BSAVCI1/Boss/pull/21) must pass existing finance, migration, business-line investment and 730-day tests, plus real 390px Chromium tests for injected storage quota → alternate-save commit → refresh → newer-day recovery → single paid service-line launch. This is not a direct test of the owner's private Safari data. An exported backup file can be reviewed for a device-specific diagnosis without modifying the browser save.
+**Verified release:** [PR #21](https://github.com/BSAVCI1/Boss/pull/21) merged at production commit `6f227439f0639a960e6ccd2481ad890c9ed27509`. [Production regressions](https://github.com/BSAVCI1/Boss/actions/runs/39060489413) and [GitHub Pages](https://github.com/BSAVCI1/Boss/actions/runs/39060489423) succeeded. Real 390px Chromium tests verified injected localStorage failure → transactional IndexedDB commit → refresh restoring newer game day → one business-line purchase with exactly one $120 investment, with no console errors. This is not a direct test of the owner's private Safari data. An exported backup file can be reviewed for a device-specific diagnosis without modifying the browser save.
 
 ## Boss v20.1 — Editable settings persistence (PR #20, released 2026-10-17)
 

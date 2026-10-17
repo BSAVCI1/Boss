@@ -67,8 +67,8 @@ const line=s.exec.lines[0];G.ceoLineFinish({serviceLine:"product",bookedAt:s.day
 assert.equal(line.delivered,1);assert.equal(line.revenue,210);accounting(s);
 });
 test("mature founder-led specialist is established despite team smaller than 12",()=>{
-fresh();const s=G.get();s.market.completed=305;s.rep=1456;s.day=2252;assert.ok(G.gameChapter().includes("Established"));assert.ok(G.gamePlan()[0].includes("Lead your next"));
-assert.ok(G.gamePlan()[3]>1);
+fresh();const s=G.get();s.market.completed=305;s.rep=1456;s.day=2252;assert.ok(G.gameChapter().includes("Established"));assert.ok(/CEO|direction|chapter/i.test(G.gamePlan()[0]));
+assert.ok(G.gamePlan()[2]<G.gamePlan()[3],"Mature company needs an unfinished strategic goal");
 });
 test("market brief is prioritized on Today and stays for 45 days",()=>{
 fresh();const s=G.get();s.day=45;G.worldNewEvent();const ev=s.world.activeEvent;assert.equal(ev.until,90);

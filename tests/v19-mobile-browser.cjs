@@ -163,17 +163,28 @@ document.addEventListener("DOMContentLoaded",async()=>{
       r.onerror=()=>resolve(null);
     });
     let ok=true;
-    for(const [id,key,value] of [["unit-coaching-technology","coachingLimit",12],["unit-peraction-technology","perAction",4],["unit-quality-technology","qualityTarget",88]]){
+    const revenue=byId("unit-revenue-technology"),coaching=byId("unit-coaching-technology");
+    if(!revenue||!coaching)throw Error("unit authority fields missing");
+    const originalRevenue=Number((await readUnit())?.plan?.revenueTarget||0);
+    revenue.focus();
+    for(const partial of ["3","30","300","3000","30000","300000"]){
+     revenue.value=partial;revenue.dispatchEvent(new Event("input",{bubbles:true}));
+    }
+    await new Promise(r=>setTimeout(r,800));
+    result.checks.multiDigitDraftStable=revenue.isConnected&&byId("unit-revenue-technology")===revenue&&revenue.value==="300000";
+    result.checks.draftDoesNotCommit=(await readUnit())?.plan?.revenueTarget===originalRevenue;
+    for(const [id,value] of [["unit-coaching-technology",12],["unit-peraction-technology",4],["unit-quality-technology",88]]){
       const input=byId(id);if(!input){ok=false;break;}
       input.focus();input.value=String(value);input.dispatchEvent(new Event("input",{bubbles:true}));
-      let saved=false;
-      for(let i=0;i<90;i++){
-       const unit=await readUnit();if(unit?.plan?.[key]===value){saved=true;break;}
-       await new Promise(r=>setTimeout(r,100));
-      }
-      if(!saved){ok=false;break;}
     }
-    result.checks.unitAuthoritySaved=ok;
+    if(ok)document.querySelector('#business-units button[data-unit-action="apply-draft"][data-unit-key="technology"]')?.click();
+    let saved=false;
+    for(let i=0;i<100;i++){
+      const unit=await readUnit();
+      if(unit?.plan?.coachingLimit===12&&unit?.plan?.perAction===4&&unit?.plan?.qualityTarget===88&&unit?.plan?.revenueTarget===300000){saved=true;break;}
+      await new Promise(r=>setTimeout(r,100));
+    }
+    result.checks.unitAuthoritySaved=ok&&saved;
     sessionStorage.setItem("boss-qa-v212-result",JSON.stringify(result));
     sessionStorage.setItem("boss-qa-v212","1");
     location.reload();return;
@@ -218,7 +229,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
    await new Promise(r=>setTimeout(r,1000));
    result.checks.unitAuthorityDisclosureRetained=byId("unit-quality-technology")?.closest("details.aux-details")?.open===true;
    const restoredUnit=recovered?.exec?.units.find(u=>u.key==="technology");
-   result.checks.unitAuthorityReloaded=restoredUnit?.plan?.coachingLimit===12&&
+   result.checks.unitAuthorityReloaded=restoredUnit?.plan?.revenueTarget===300000&&restoredUnit?.plan?.coachingLimit===12&&
     restoredUnit.plan.perAction===4&&restoredUnit.plan.qualityTarget===88&&
     restoredUnit.plan.spent===0&&recovered.bi.totals.investments===120&&
     byId("unit-coaching-technology")?.value==="12"&&byId("unit-quality-technology")?.value==="88";
@@ -298,6 +309,8 @@ async function runBrowser(){
   assert.equal(outcome.checks.unitActivationCommitted,true,"Conversion must commit to fallback storage before confirmation");
   assert.equal(outcome.checks.unitActivationReloaded,true,"After reload exactly one unit remains and no $120 fee was repeated");
    assert.equal(outcome.checks.unitAuthoritySaved,true,"GM budget limits must confirm in extended storage");
+  assert.equal(outcome.checks.multiDigitDraftStable,true,"Full six-digit GM revenue input must retain the original DOM field");
+  assert.equal(outcome.checks.draftDoesNotCommit,true,"Partial numeric drafts must never silently authorize or post budget changes");
    assert.equal(outcome.checks.unitAuthorityReloaded,true,"GM budget and quality goal must survive mobile reload without a new purchase");
   assert.equal(outcome.checks.nativeGMDropdownStable,true,"Opened GM native picker must not be replaced by game ticks");
   assert.equal(outcome.checks.nativeTeammateDropdownStable,true,"Dedicated colleague picker must keep DOM identity");

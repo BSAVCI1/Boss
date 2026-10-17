@@ -1,5 +1,13 @@
 # Boss — simulation development roadmap
 
+## v21.3.1 — Repeating mobile controls reliability defect (release candidate)
+
+- Fix the native General Manager / dedicated employee picker closing during 1×/8× game updates; apply shared interaction shield to all editable controls instead of one field.
+- Keep model/saves progressing and defer DOM replacement until edit completes. Protect partial numeric entries and disclosure state.
+- Add real 390px browser tests simulating multiple ticks while GM select is open, focus on unit numeric draft, release after change, plus regression on financial/saving invariants.
+- [UI interaction governance and release checklist](docs/UI_INTERACTION_GOVERNANCE.md) is now mandatory for all future features. [PR #27](https://github.com/BSAVCI1/Boss/pull/27) must pass QA and deploy before marking released.
+
+
 ## Released v21.3 — Dedicated GM capacity and measurable operating strategies (PR #26)
 
 - Dedicated units assign their customer jobs with an active GM and eligible specialist team; shared corporate dispatch and manual assignment respect unique unit ownership. No silent pooled capacity when a unit is vacant or short staffed.

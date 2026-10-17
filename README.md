@@ -1,5 +1,12 @@
 # Boss
 
+## Boss v21.3.1 — Native mobile editing stability (release candidate)
+
+User-reported GM and dedicated teammate dropdowns closed before selection because autonomous game ticks recreated the whole Operating units DOM. All active select/input/textarea edits now use a shared capture-phase interaction shield with a brief iOS picker dismissal grace period. Background game logic and saving continue, while UI redraws defer until the edit finishes. Other controls in Today, Work, Team and Growth share the same safety rule. See [mandatory mobile UI governance](docs/UI_INTERACTION_GOVERNANCE.md). This fix is not a new business investment and does not reset player saves.
+
+**Release gate:** [PR #27](https://github.com/BSAVCI1/Boss/pull/27) and mobile 390px/414px/browser-save regressions. Do not call this released until merged production checks, GitHub Pages and live verification pass.
+
+
 ## Boss v21.3 — GM-owned delivery capacity (released 2026-10-17 · PR #26)
 
 A dedicated operating unit now runs its own delivery scheduling through its appointed GM. Corporate dispatch cannot silently borrow its specialists and unit delivery cannot use shared employees without a formal transfer; the CEO's manual assignment choices respect the same boundary. An empty GM position or no dedicated specialists can therefore cause genuine delivery delays. Before allocating employees, keep active contracts completed: ownership is by persistent employee ID, not name.

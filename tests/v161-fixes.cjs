@@ -1,9 +1,9 @@
 // Boss v16.1 balance, people and idea-funding regressions. Offline Node.js only.
 const fs=require("node:fs"),vm=require("node:vm"),a=require("node:assert/strict");
 const html=fs.readFileSync("index.html","utf8"),js=html.slice(html.indexOf("<script>")+8,html.lastIndexOf("</script>"));
-a.equal((html.match(/<script\\b/g)||[]).length,1);
-const ids=new Set([...html.matchAll(/\\bid="([^"]+)"/g)].map(x=>x[1]));
-for(const m of js.matchAll(/\\$\\("([^"]+)"\\)/g))a.ok(ids.has(m[1]),"Missing UI ID "+m[1]);
+a.equal((html.match(/<script\b/g)||[]).length,1);
+const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
+for(const m of js.matchAll(/\$\("([^"]+)"\)/g))a.ok(ids.has(m[1]),"Missing UI ID "+m[1]);
 const elements=new Map(),data=new Map();
 const el=id=>{if(!elements.has(id))elements.set(id,{id,innerHTML:"",textContent:"",value:"",open:false,hidden:false,checked:false,disabled:false,style:{},dataset:{},classList:{add(){},remove(){},toggle(){},contains(){return false}},addEventListener(){},querySelector(){return null},querySelectorAll(){return []},focus(){},getContext(){return new Proxy({},{get:()=>()=>{}})},parentNode:{open:true}});return elements.get(id)};
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){}},window:{scrollY:0,innerWidth:390,addEventListener(){},scrollTo(){}},localStorage:{getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout:()=>{},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Map,Set,JSON,console};

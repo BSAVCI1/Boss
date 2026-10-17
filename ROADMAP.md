@@ -145,6 +145,17 @@
 - Kept employee/career accordions expanded when cards are updated and restored their open states via `boss161` saves; funded-ideas panel is stable and refreshed without reconstructing its details element.
 - Regression path: v15 + v16 + v16.1 tests, 365/730+ day cash reconciliation, migration from `boss16` and prior versions, no runtime external dependencies, live mobile Pages smoke. Source issue: https://github.com/BSAVCI1/Boss/issues/3.
 
+## Boss v17 — Game-First Edition (IMPLEMENTED ON DEVELOPMENT BRANCH; awaiting final release verification)
+1. **CEO Desk:** day-by-day business story, earned company chapter, clear next mission with progress and a direct action, short achievement feed, visible animated office, optional seven-day time jump.
+2. **Work:** Customer projects and next opportunities appear first; financial BI, collections, pricing, liabilities and capital decisions remain intact behind **Business records & money**.
+3. **Team:** People are presented ahead of admin, with quick-read mood and wellbeing, while more detailed organizational setup stays under **Managers & organization**.
+4. **Growth:** Clearer rival identities, sector/experiment headings and recognizable locked/unlocked capability states. Existing world, industry, ideas and experiment histories untouched.
+5. **Learning:** The Management Coach, 3 learning modes, full career and performance details, financial statements and the Leadership Journal remain accessible via disclosures for players who prefer depth.
+6. **No economic modifications:** Company chapter progress and notifications read actual game state. No free milestones, invented history or changes to contract values, payroll, receivables, KPIs, employee XP or market outcomes.
+7. **Validation:** Run inherited v15/v16/v16.1 automated suites plus v17 checks for save migration, seven-day pacing, 520/730-day economic reconciliation, functionality of all four navigation views and offline mobile usability. Preserve `boss161` save; new `boss17` key reads older versions.
+
+**Potential next iteration after playtesting:** Richer employee narratives and relationships, meaningful rival rematches, more celebratory results and smoother guided first-session learning — without new administrative dashboards.
+
 ## Backlog (await owner selection)
 - Office expansions and richer multi-level organizations (first department managers delivered v13)
 - Reactive rival companies

@@ -197,6 +197,41 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .coach-grid strong{display:block;font-size:15px}
 .coach-grid small{font-size:11px;color:var(--muted)}
 #coach-pay-wages{margin:8px 0;min-height:44px}
+
+/* v17 game-first UI */
+.game-desk{padding:16px;overflow:hidden}.game-desk>.lead{align-items:center}
+.game-desk h2{font-size:22px;line-height:1.2;margin:10px 0 5px}.game-desk .overview-copy{color:var(--muted);font-size:13px;margin:5px 0 9px}
+.game-chapter{border:1px solid var(--line);border-radius:30px;padding:5px 9px;background:var(--accentWash);font-size:12px;font-weight:750;color:var(--accent)}
+.game-desk .overview-metrics{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0}
+.game-desk .overview-metrics span{border-radius:20px;background:var(--accentWash);font-size:12px;padding:5px 9px}
+.game-mission{border:1px solid var(--line);background:var(--accentWash);border-radius:14px;padding:14px;margin-top:12px}
+.game-mission .eyebrow{letter-spacing:.08em;font-size:10px;color:var(--muted)}
+.game-mission strong{font-size:18px;display:block;line-height:1.28;margin:5px 0}
+.game-mission p{font-size:13px;color:var(--muted);margin:7px 0;line-height:1.45}
+.game-goal-track{height:8px;border-radius:10px;background:var(--bar);overflow:hidden;margin:11px 0 5px}
+.game-goal-track span{display:block;height:100%;background:var(--accent);border-radius:10px;transition:width .3s}
+.game-goal-progress{text-align:right;color:var(--muted);font-size:11px}
+.game-actions{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:7px;margin:12px 0}
+.game-actions button{white-space:normal;font-size:13px;min-height:49px}
+.game-actions .game-primary{background:var(--accent);color:white;border-color:var(--accent);font-weight:750}
+.game-scene .office{border:0;background:var(--accentWash);margin:7px 0;padding:6px}
+.game-scene canvas{max-height:125px;object-fit:contain}
+.game-story-item{padding:7px 0;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px}
+.game-story-item:before{content:"★";color:var(--good);margin-right:7px}
+.game-toast[hidden]{display:none}.game-toast{position:fixed;z-index:18;bottom:calc(84px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);max-width:90vw;width:max-content;padding:10px 14px;border-radius:12px;background:var(--ink);color:var(--panel);font-size:13px;text-align:center;pointer-events:none}
+.game-journey-stage{display:block;padding:8px 10px;border-radius:9px;margin:7px 0;font-size:13px}
+.game-journey-stage.unlocked{background:rgba(58,165,113,.10);color:var(--good)}.game-journey-stage.locked{color:var(--muted);border:1px dashed var(--line)}
+.game-advanced{margin:12px 0!important}.game-advanced>summary{padding:12px 9px;font-weight:650;color:var(--muted);font-size:13px}
+.game-advanced[open]>summary{color:var(--accent)}
+.game-rivals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:2px 0 15px}
+.game-rival{border:1px solid var(--line);border-radius:12px;padding:8px;min-width:0;display:flex;gap:6px;align-items:flex-start}
+.game-rival b{font-size:12px;display:block;overflow-wrap:anywhere}.game-rival small{font-size:10px;color:var(--muted);display:block;overflow-wrap:anywhere}
+.game-rival-icon{background:var(--accentWash);color:var(--accent);border-radius:50%;padding:3px 6px}
+.knowledge-row{padding:10px;border:1px solid var(--line);border-radius:10px;margin:8px 0}
+.knowledge-row.is-locked{opacity:.65}.knowledge-row.is-unlocked{border-color:var(--good);background:rgba(58,165,113,.06)}
+.employee-summary .employee-aside{max-width:43%;min-width:0}.employee-summary .small{overflow-wrap:anywhere}
+@media(max-width:430px){.game-rivals{grid-template-columns:1fr}.game-rival{align-items:center}.game-rival small{font-size:11px}.game-desk{padding:13px}.game-actions{grid-template-columns:1fr 1fr}#view-work h2,#view-team h2,#view-growth h2{font-size:18px;margin:17px 0 9px}}
+@media(prefers-reduced-motion:reduce){.game-goal-track span{transition:none}}
 </style>
 </head>
 <body>
@@ -206,8 +241,16 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
-<div class="overview-card card"><div class="eyebrow">EXECUTIVE BRIEFING</div><h2 id="brief-headline">Your company at a glance</h2><p class="overview-copy" id="brief-summary">Checking your projects, customers and employees.</p>
-<div class="overview-metrics"><span id="brief-projects">0 projects</span><span id="brief-pipeline">0 in pipeline</span><span id="brief-team">Team ready</span></div></div>
+<div class="card game-desk" id="game-desk">
+<div class="lead"><span class="eyebrow">YOUR COMPANY STORY</span><span class="game-chapter" id="game-chapter">Founder</span></div>
+<h2 id="brief-headline">Your company at a glance</h2><p class="overview-copy" id="brief-summary">Your team is getting started.</p>
+<div class="overview-metrics"><span id="brief-projects">0 projects</span><span id="brief-pipeline">0 in pipeline</span><span id="brief-team">Team ready</span></div>
+<div class="game-mission" id="game-mission"><div class="eyebrow">NEXT CHALLENGE</div><strong id="game-goal">Build your company</strong><p id="game-goal-hint">Choose your next step.</p><div class="game-goal-track"><span id="game-goal-bar"></span></div><div class="game-goal-progress" id="game-goal-progress"></div></div>
+<div class="game-actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
+<div class="game-scene"><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div></div><div class="game-story" id="game-story" aria-live="polite"></div>
+<details class="aux-details" id="game-journey"><summary>My company journey</summary><div id="game-journey-map"></div></details>
+</div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div>
+<details class="aux-details game-advanced" id="ceo-records"><summary>Coach &amp; company records</summary>
 <section class="card bi-headline" aria-labelledby="bi-headline-title"><div class="lead"><b id="bi-headline-title">Business performance</b><span class="small" id="bi-period-note">Tracked since Day 0</span></div>
 <div class="bi-grid">
 <div id="bi-tile-revenue"><span>Revenue earned</span><strong id="bi-revenue">$0</strong></div>
@@ -220,14 +263,28 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="coach-mode"><label for="coach-mode">Learning style</label><select id="coach-mode"><option value="guided">Guided · explain and recommend</option><option value="challenge">Challenge · decide, then learn</option><option value="sandbox">Sandbox · minimal assistance</option></select></div>
 <div id="coach-last-decision"></div><div id="coach-priorities"></div>
 <details class="aux-details"><summary>Cash and capacity plan</summary><div id="coach-forecast"></div><button type="button" id="coach-pay-wages">Settle available unpaid wages</button></details>
-<details class="aux-details"><summary>Leadership Decision Journal · outcomes and follow-ups</summary><div id="coach-decisions"></div></details>
-</section><div class="lab-today" id="lab-today" hidden><span id="lab-today-text"></span><button type="button" id="lab-today-open">Review experiment →</button></div><div id="attention-list" class="attention-list" aria-live="off"></div>
+<details class="aux-details"><summary>My Decisions</summary><div id="coach-decisions"></div></details>
+</section></details><div class="lab-today" id="lab-today" hidden><span id="lab-today-text"></span><button type="button" id="lab-today-open">Review experiment →</button></div><div id="attention-list" class="attention-list" aria-live="off"></div>
+<details class="aux-details game-advanced" id="today-options"><summary>Work settings &amp; activity</summary>
 <div class="card focusrow"><div><strong>Focus on current work</strong><div class="small" id="focus-hint">Pause incoming work when you need space.</div></div><button type="button" id="focus-toggle">Enable Focus</button></div>
-<details class="aux-details" id="office-panel"><summary>Office animation &amp; game settings</summary><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div><button type="button" id="restart" class="danger-secondary">Restart company</button></details>
-<details class="aux-details"><summary>Company activity <span class="small" id="log-recent"></span></summary><div class="card" id="log" aria-live="off"></div></details>
-</section>
+<details class="aux-details" id="office-panel"><summary>Game settings &amp; restart</summary><button type="button" id="restart" class="danger-secondary">Restart company</button></details>
+<details class="aux-details"><summary>Company history <span class="small" id="log-recent"></span></summary><div class="card" id="log" aria-live="off"></div></details>
+</details></section>
 <section id="view-work" class="app-view" data-page="work" aria-label="Projects and sales" hidden>
 <div class="view-intro"><h2>Work</h2><p>Projects, customers and future contracts</p></div>
+<section aria-labelledby="deals-title"><h2 id="deals-title">Active projects</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
+
+<section aria-labelledby="pipeline-title"><h2 id="pipeline-title">New opportunities</h2><div class="card">
+<div class="lead"><b>Commercial pipeline</b><span id="pipeline-summary" class="small">Building opportunities</span></div>
+<p class="filter-note">Sales prospect; Marketing generates demand. Prospects move through qualification, proposal and negotiation before becoming projects. Focus holds new contract starts.</p>
+<details class="aux-details policy-details"><summary>Pipeline policy &amp; automatic work</summary><div class="filter-grid"><div><label for="work-mode">Operating policy</label><select id="work-mode"><option value="balanced">Balanced growth and development</option><option value="growth">Growth and client acquisition</option><option value="innovation">Learning and innovation</option></select></div>
+<div><label for="pipeline-target">Target qualified pipeline</label><select id="pipeline-target"><option value="2">2 opportunities</option><option value="4">4 opportunities</option><option value="6">6 opportunities</option></select></div></div>
+<label class="assistant-toggle"><input type="checkbox" id="auto-work"> Assistant / team leads plan idle work automatically</label>
+</details><div id="pipeline-stages" class="pipeline-stages"></div><details class="aux-details"><summary>Lead details</summary><div id="pipeline-details" class="small"></div></details>
+</div></section>
+
+<section aria-labelledby="customers-title"><h2 id="customers-title">Customer relationships</h2><div class="card"><div class="assistant-queue"><div class="lead"><b>Customer relationships</b><span class="small" id="customer-summary">No customers yet</span></div><div id="customer-portfolio" class="small">Finish projects to build customer loyalty.</div></div></div></section>
+<details class="aux-details game-advanced" id="work-records"><summary>Business records &amp; money</summary>
 <details class="aux-details" id="performance-panel">
 <summary>Business intelligence — Finance, Sales, Delivery &amp; People</summary>
 <div class="bi-report">
@@ -250,29 +307,13 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <details class="aux-details"><summary>Capital investment decisions</summary><div class="buttons"><button type="button" id="economy-invest-operations">Delivery toolkit ($65)</button><button type="button" id="economy-invest-commercial">Sales toolkit ($55)</button></div><p class="small">Investments use cash and create a simulated long-lived capability. No depreciation is modeled. Return on investment would require incremental returns compared with a credible no-investment baseline.</p><div id="economy-assets"></div></details>
 <details class="aux-details"><summary>Outstanding customer invoices</summary><div id="economy-invoices"></div></details>
 </div></details>
-<section aria-labelledby="deals-title"><h2 id="deals-title">Client projects: choose assignments and contracts</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
-
-<section aria-labelledby="pipeline-title"><h2 id="pipeline-title">Sales pipeline &amp; workload planning</h2><div class="card">
-<div class="lead"><b>Commercial pipeline</b><span id="pipeline-summary" class="small">Building opportunities</span></div>
-<p class="filter-note">Sales prospect; Marketing generates demand. Prospects move through qualification, proposal and negotiation before becoming projects. Focus holds new contract starts.</p>
-<details class="aux-details policy-details"><summary>Pipeline policy &amp; automatic work</summary><div class="filter-grid"><div><label for="work-mode">Operating policy</label><select id="work-mode"><option value="balanced">Balanced growth and development</option><option value="growth">Growth and client acquisition</option><option value="innovation">Learning and innovation</option></select></div>
-<div><label for="pipeline-target">Target qualified pipeline</label><select id="pipeline-target"><option value="2">2 opportunities</option><option value="4">4 opportunities</option><option value="6">6 opportunities</option></select></div></div>
-<label class="assistant-toggle"><input type="checkbox" id="auto-work"> Assistant / team leads plan idle work automatically</label>
-</details><div id="pipeline-stages" class="pipeline-stages"></div><details class="aux-details"><summary>Lead details</summary><div id="pipeline-details" class="small"></div></details>
-</div></section>
-
-<section aria-labelledby="customers-title"><h2 id="customers-title">Customers</h2><div class="card"><div class="assistant-queue"><div class="lead"><b>Customer relationships</b><span class="small" id="customer-summary">No customers yet</span></div><div id="customer-portfolio" class="small">Finish projects to build customer loyalty.</div></div></div></section>
+</details>
 </section>
 <section id="view-team" class="app-view" data-page="team" aria-label="People and delegation" hidden>
 <div class="view-intro"><h2>Team</h2><p>Employees, roles and culture</p></div>
-<section aria-labelledby="organization-title"><h2 id="organization-title">Organization &amp; management</h2><div class="card org-overview">
-<div class="lead"><b>Reporting lines</b><span id="org-status" class="small">Flat founder-led structure</span></div>
-<p class="filter-note">Choose who reports to whom. A specialist team lead manages only their department, not everyone in the company. Managers coach, coordinate client work and own targets within an approved budget.</p>
-<div id="org-chart"></div><div id="coach-manager-review"></div><details id="org-settings" class="aux-details"><summary>Department budgets, authority &amp; targets</summary><div id="org-controls"></div><p class="filter-note">Managers need Senior rank or 10 experience points. They stop routine individual delivery to lead their department, earn an extra $0.75/day, and can improve direct reports' output by up to 7% when actively coaching. Check costs against results. The office assistant retains cross-company coordination.</p></details>
-</div></section>
-<section aria-labelledby="team-title"><h2 id="team-title">Your team</h2><p class="small" id="team-wellbeing">Career progress, stress and wellbeing</p><div id="people"></div></section>
+<section aria-labelledby="team-title"><h2 id="team-title">Your people</h2><p class="small" id="team-wellbeing">Career progress, stress and wellbeing</p><div id="people"></div></section>
 
-<section aria-labelledby="hiring-title"><h2 id="hiring-title">Recruitment &amp; team culture</h2><div class="card"><details class="aux-details" id="recruitment-panel"><summary>Search and hire employees</summary><div class="filter-grid"><div><label for="hire-skill">Specialty to find</label><select id="hire-skill"><option value="">Any skill</option><option value="sales">Sales</option><option value="mkt">Marketing</option><option value="prod">Product</option><option value="ops">Operations</option></select></div><div><label for="hire-interest">Personal interest</label><select id="hire-interest"><option value="">Any interest</option><option value="customers">Customer relationships</option><option value="creative">Creative projects</option><option value="technology">Technology</option><option value="learning">Learning and growth</option><option value="people">Helping colleagues</option><option value="systems">Better processes</option></select></div></div><p class="filter-note">Search is free; hiring has a one-time fee. Each teammate adds $1.50 per day in salary costs, before cost breakthroughs.</p><div class="buttons"><button type="button" id="search-talent">Search candidates</button></div><div class="candidate-list" id="candidates"></div></details><div class="team-culture"><b>Office assistant · Delegation desk</b><p class="filter-note" id="assistant-status">No assistant assigned.</p><div class="buttons"><button type="button" id="hire-assistant">Hire office assistant ($20)</button></div>
+<section aria-labelledby="hiring-title"><h2 id="hiring-title">Grow the team</h2><div class="card"><details class="aux-details" id="recruitment-panel"><summary>Search and hire employees</summary><div class="filter-grid"><div><label for="hire-skill">Specialty to find</label><select id="hire-skill"><option value="">Any skill</option><option value="sales">Sales</option><option value="mkt">Marketing</option><option value="prod">Product</option><option value="ops">Operations</option></select></div><div><label for="hire-interest">Personal interest</label><select id="hire-interest"><option value="">Any interest</option><option value="customers">Customer relationships</option><option value="creative">Creative projects</option><option value="technology">Technology</option><option value="learning">Learning and growth</option><option value="people">Helping colleagues</option><option value="systems">Better processes</option></select></div></div><p class="filter-note">Search is free; hiring has a one-time fee. Each teammate adds $1.50 per day in salary costs, before cost breakthroughs.</p><div class="buttons"><button type="button" id="search-talent">Search candidates</button></div><div class="candidate-list" id="candidates"></div></details><div class="team-culture"><b>Office assistant · Delegation desk</b><p class="filter-note" id="assistant-status">No assistant assigned.</p><div class="buttons"><button type="button" id="hire-assistant">Hire office assistant ($20)</button></div>
 <p class="filter-note">Hire for $20 or appoint an existing colleague. Configure exactly what the assistant may do; they never displace someone you assigned. Your high-stakes people decisions stay with you.</p>
 <details class="assistant-settings"><summary>Delegation rules — customize your assistant</summary>
 <label class="assistant-toggle"><input type="checkbox" id="policy-assign"> Auto-assign unstaffed deals to idle colleagues</label>
@@ -289,16 +330,23 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="assistant-queue"><div class="lead"><b>Project priorities &amp; deadline forecast</b><span class="small" id="assistant-queue-summary"></span></div><div id="assistant-priorities"></div><p class="filter-note">Forecasts estimate remaining game days from the current assignment, skills and mood. Project deadlines still apply in Focus mode. Suggestions remain visible without an assistant.</p></div>
 </div><div class="team-culture"><b>Motivate the whole team</b><div class="filter-note">A team activity lifts mood and loyalty for everyone. Available every 12 days.</div><div class="buttons"><button type="button" id="team-activity">Team activity</button></div><div class="filter-note" id="team-activity-status"></div></div></div></section>
 
-<section aria-labelledby="skills-title"><h2 id="skills-title">Employee skill &amp; mentoring map</h2><div class="card"><details class="aux-details" id="skills-panel"><summary>Show skills, promotion paths and hiring gaps</summary><p class="filter-note">Role expertise, hidden talents and mentor recommendations evolve through actual work.</p><div id="skills-map"></div></details></div></section>
+<section aria-labelledby="skills-title"><h2 id="skills-title">Skills &amp; careers</h2><div class="card"><details class="aux-details" id="skills-panel"><summary>Show skills, promotion paths and hiring gaps</summary><p class="filter-note">Role expertise, hidden talents and mentor recommendations evolve through actual work.</p><div id="skills-map"></div></details></div></section>
 
+<details class="aux-details game-advanced" id="team-organization"><summary>Managers &amp; organization</summary>
+<section aria-labelledby="organization-title"><h2 id="organization-title">Managers</h2><div class="card org-overview">
+<div class="lead"><b>Reporting lines</b><span id="org-status" class="small">Flat founder-led structure</span></div>
+
+<div id="org-chart"></div><div id="coach-manager-review"></div><details id="org-settings" class="aux-details"><summary>Department budgets, authority &amp; targets</summary><div id="org-controls"></div><p class="filter-note">Managers need Senior rank or 10 experience points. They stop routine individual delivery to lead their department, earn an extra $0.75/day, and can improve direct reports' output by up to 7% when actively coaching. Check costs against results. The office assistant retains cross-company coordination.</p></details>
+</div></section>
+</details>
 </section>
 <section id="view-growth" class="app-view" data-page="growth" aria-label="Strategy and capabilities" hidden>
 <div class="view-intro"><h2>Growth</h2><p>Industries, investments and company knowledge</p></div>
-<section aria-labelledby="market-title"><h2 id="market-title">Market strategy &amp; expansion</h2><div class="card"><p class="small">Build a reputation in your specialist sector, then unlock new industries. Focus improves delivery speed and client value for matching work.</p><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><div id="sector-options" class="sector-buttons"></div><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
+<section aria-labelledby="market-title"><h2 id="market-title">Choose your direction</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><div id="sector-options" class="sector-buttons"></div><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
 
-<section aria-labelledby="world-title"><h2 id="world-title">Living market &amp; competitors</h2>
-<div class="card"><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
-<p class="filter-note">Rivals respond to demand, compete on price, quality, speed and reputation, and experience their own simulated growth and setbacks. Their outcomes are fictional, not externally sourced.</p>
+<section aria-labelledby="world-title"><h2 id="world-title">Your rivals</h2>
+<div class="card"><div id="game-rivals" class="game-rivals"></div><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
+
 <details class="aux-details" id="world-panel"><summary>Explore market, competitors &amp; strategy</summary>
 <label for="world-strategy">Choose the company's approach to new customers</label>
 <select id="world-strategy"><option value="balanced">Balanced service</option><option value="premium">Premium specialist</option><option value="volume">Efficient volume</option><option value="relationships">Client partnerships</option></select>
@@ -309,7 +357,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <details class="aux-details"><summary>Competitive bid outcomes</summary><div id="world-tenders"></div></details>
 <p class="filter-note">Win probabilities are transparent simulation estimates, not real-world causation. Choosing Pass never causes a compulsory penalty; future opportunities continue.</p>
 </details></div></section>
-<section aria-labelledby="lab-title"><h2 id="lab-title">Entrepreneurship &amp; Leadership Lab</h2>
+<section aria-labelledby="lab-title"><h2 id="lab-title">Try an idea</h2>
 <div class="card lab-card"><div class="lead"><b>Experiment notebook</b><span id="lab-summary" class="small">Plan a measurable business experiment</span></div>
 <p class="filter-note">Make a prediction, adjust one business policy, then compare financial, customer and employee outcomes. Lessons are saved privately in this browser. Results are simulated evidence, not proof of cause.</p>
 <details class="aux-details" id="lab-panel"><summary>Open experiment lab</summary>
@@ -333,7 +381,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div id="lab-finished" class="lab-result"></div><div id="coach-lab-controls"></div>
 <details class="aux-details" id="lab-history-panel"><summary>Previous experiments <span id="lab-count">0</span></summary><div id="lab-history"></div></details>
 </details></div></section>
-<section aria-labelledby="idea-title"><h2 id="idea-title">Company capability map</h2><div class="card"><p class="filter-note">Ideas discovered through research, service and daily work fill the map. Related discoveries unlock capabilities automatically—no manual pair matching.</p><div class="lead"><b>Organizational knowledge</b><span class="small" id="idea-summary"></span></div><div id="ideas"></div><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div>
+<section aria-labelledby="idea-title"><h2 id="idea-title">Company upgrades</h2><div class="card"><p class="filter-note">Ideas discovered through research, service and daily work fill the map. Related discoveries unlock capabilities automatically—no manual pair matching.</p><div class="lead"><b>Organizational knowledge</b><span class="small" id="idea-summary"></span></div><div id="ideas"></div><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div>
 <details class="aux-details" id="idea-progress-panel"><summary id="idea-progress-summary">Funded idea outcomes</summary><div id="idea-progress-content"></div></details></div></section>
 
 </section>
@@ -343,7 +391,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <script>
 (function(){
 "use strict";
-const KEY="boss161";
+const KEY="boss17";
 let labHistorySignature="";
 const SKILLS={sales:"Sales",mkt:"Marketing",prod:"Product",ops:"Operations"};
 const KEYS=Object.keys(SKILLS);
@@ -914,7 +962,7 @@ if(brief){const button=$("world-event").querySelector("button[data-world-event=a
 if(button)button.disabled=!!S.ev||(brief.type==="tender"&&S.cash<12)||(brief.type==="referrals"&&S.cash<10)||(brief.type==="slowdown"&&S.cash<10)||(brief.type==="retention"&&!Object.values(S.market.customers).some(c=>c.loyalty>=55))||S.pipeline.leads.length>=12;}
 }
 
-function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
+function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3");if(!raw)return null;const s=JSON.parse(raw);
 if(!s||!Array.isArray(s.team)||!Array.isArray(s.deals)||!Array.isArray(s.seeds)||!Array.isArray(s.built)||!Array.isArray(s.log)||!s.mod||typeof s.day!=="number"||typeof s.pid!=="number"||typeof s.did!=="number"||!s.team.length)return null;
 for(const p of s.team){if(!p.s||!Array.isArray(p.mem)||!KEYS.every(k=>typeof p.s[k]==="number"))return null;
 ensurePerformance(p,s.day);
@@ -1537,6 +1585,9 @@ $("restart").addEventListener("click",()=>{if(!confirm("Restart the company from
 fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";sectorSignature="";customerSignature="";projectExpanded.clear();employeeExpanded.clear();careerExpanded.clear();roadmapExpanded.clear();attentionSignature="";orgControlsSignature="";for(const name of ["today","work","team","growth"])viewScroll[name]=0;
 paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();navigate("today");schedule();});
 document.querySelector(".bottom-nav").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(b)navigate(b.dataset.view);});
+$("game-primary").addEventListener("click",()=>{const b=$("game-primary");navigate(b.dataset.go||"work",b.dataset.project?Number(b.dataset.project):undefined);});
+$("game-forward").addEventListener("click",gameAdvanceDays);
+$("game-journey").addEventListener("toggle",()=>{if($("game-journey").open)gameRender();});
 $("attention-list").addEventListener("click",e=>{const b=e.target.closest("button[data-go]");if(b)navigate(b.dataset.go,b.dataset.project?Number(b.dataset.project):undefined);});
 $("lab-today-open").addEventListener("click",()=>{navigate("growth");$("lab-panel").open=true;renderLab(true);});
 $("lab-panel").addEventListener("toggle",()=>{if($("lab-panel").open)renderLab(true);});
@@ -1608,7 +1659,7 @@ return '<details class="card project-card" data-project-id="'+d.id+'" '+(project
 }).join(""):'<div class="card empty">No active projects. Sales and Marketing are building the next opportunity.</div>';
 $("people").innerHTML=S.team.map(p=>{
 const role=ROLE_NAMES[p.role.primary],risk=p.career.stress>=70||p.career.burnout>=35;
-return '<details class="card employee-card" data-employee-id="'+p.id+'" '+(employeeExpanded.has(p.id)||S.ui.employees.includes(p.id)?'open':'')+'><summary class="employee-summary"><span class="employee-primary"><b><i class="color-dot" style="background:'+p.col+'"></i>'+esc(p.n)+'</b><span class="small">'+esc(role)+' · '+rankName(p)+' · '+DEPARTMENTS[p.department].name+'</span><span class="small '+(risk?'risk-watch':'')+'">Stress '+Math.floor(p.career.stress)+'%</span></span><span class="employee-aside"><span class="small">'+esc(taskText(p))+'</span><span class="small" id="person-v-'+p.id+'">Mood '+Math.floor(p.mood)+'%</span><span class="small">Manage ▾</span></span></summary><div class="employee-expanded"><div class="small">'+esc(p.trait)+' · '+esc(INTERESTS[p.interest]||"Learning and growth")+'</div><div class="progress good"><i id="mood-bar-'+p.id+'"></i></div><div class="skills">'+KEYS.map(k=>'<div class="skill"><div class="skill-name"><b>'+SKILLS[k]+'</b><span id="skill-'+p.id+'-'+k+'"></span></div><div class="progress"><i id="skill-bar-'+p.id+'-'+k+'"></i></div></div>').join("")+'</div><div class="role-panel"><label>Department</label><select class="org-dept-select" data-org-employee="'+p.id+'">'+DEPT_KEYS.map(k=>'<option value="'+k+'" '+(p.department===k?'selected':'')+'>'+DEPARTMENTS[k].name+'</option>').join("")+'</select><label>Primary responsibility</label><div class="buttons">'+ROLE_KEYS.map(k=>'<button type="button" data-role="'+k+'" data-person="'+p.id+'" '+(p.role.primary===k?'class="selected" aria-pressed="true"':'aria-pressed="false"')+' '+(k==="lead"&&p.career.rank<1&&p.career.xp<10?'disabled title="Requires seniority or 10 experience"':'')+'>'+ROLE_NAMES[k]+'</button>').join("")+'</div><button type="button" data-role="'+(p.role.auto?'manual':'resume')+'" data-person="'+p.id+'">'+(p.role.auto?'Manual orders':'Resume autonomous plan')+'</button></div><div class="small">Give a direct task</div><div class="buttons">'+[["study","Study"],["teach","Teach"],["exp","Experiment"],["rest","Rest"],...(p.role.primary==="prod"?[["improve","Product QA"]]:[]),...(p.role.primary==="ops"?[["streamline","Process improvement"]]:[]),...(p.role.primary==="sales"?[["prospect","Prospect clients"]]:[]),...(p.role.primary==="mkt"?[["market","Market demand"]]:[])].map(pair=>'<button type="button" data-order="'+pair[0]+'" data-person="'+p.id+'" '+(p.t===pair[0]?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+pair[1]+'</button>').join("")+'</div><div class="buttons"><button type="button" data-assistant="'+p.id+'" '+(S.ops.assistantId===p.id?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+(S.ops.assistantId===p.id?'Stop assisting':'Appoint as assistant')+'</button></div><div class="buttons help-buttons">'+[["praise","Recognize"],["bonus","Bonus (-$12)"],["coach","Coach (-$8)"]].map(pair=>'<button type="button" data-care="'+pair[0]+'" data-person="'+p.id+'">'+pair[1]+'</button>').join("")+'<button type="button" data-fire="'+p.id+'" '+(S.team.length===1?'disabled title="The last employee must stay."':'')+'>Fire</button></div><details class="career-panel" data-career-id="'+p.id+'" '+(careerExpanded.has(p.id)||S.ui.careers.includes(p.id)?'open':'')+'><summary>Career &amp; wellbeing · <span id="career-short-'+p.id+'">Stress '+Math.floor(p.career.stress)+'%</span></summary><div class="career-data"><span class="small"><b>Goal:</b> '+esc(GOALS[p.career.goal])+'</span><span class="small"><b>Pay:</b> $'+dailySalary(p).toFixed(2)+'/day</span><span class="small" id="career-stats-'+p.id+'">Satisfaction '+Math.floor(p.career.satisfaction)+' · stress '+Math.floor(p.career.stress)+' · burnout '+Math.floor(p.career.burnout)+'</span><span class="small" id="career-experience-'+p.id+'">Experience '+p.career.xp.toFixed(1)+'</span><span class="small"><b>Talent:</b> '+(p.career.revealed?'Discovered '+SKILLS[p.career.talent]:'Clue: '+esc(talentHint(p)))+'</span><span class="small" id="career-promotion-'+p.id+'">Career path: '+esc(coachCareerStatus(p).text)+'</span><span class="small" id="career-readiness-'+p.id+'">'+esc(coachCareerStatus(p).reason)+'</span></div><label class="small" for="career-path-'+p.id+'">Long-term career route</label><select data-path="'+p.id+'" id="career-path-'+p.id+'" '+(p.career.rank<2||p.career.rank>=3?'disabled title="Choose a pathway when at Lead"':'')+'><option value="specialist" '+(p.career.path==="specialist"?"selected":"")+'>Specialist expertise</option><option value="leadership" '+(p.career.path==="leadership"?"selected":"")+'>People leadership (requires appointment)</option></select><details class="aux-details career-roadmap" data-roadmap-id="'+p.id+'" '+(roadmapExpanded.has(p.id)||S.ui.roadmaps.includes(p.id)?'open':'')+'><summary>See the complete career roadmap</summary>'+careerPathHTML(p)+'</details><label class="small" for="train-'+p.id+'">Targeted skill growth</label><select id="train-'+p.id+'" data-training="'+p.id+'"><option value="balanced" '+(p.career.trainingFocus==="balanced"?"selected":"")+'>Balanced — lowest skill</option>'+KEYS.map(k=>'<option value="'+k+'" '+(p.career.trainingFocus===k?"selected":"")+'>'+SKILLS[k]+'</option>').join("")+'</select><p class="small">Study improves skill, but employees also need real-role practice to advance. Sales prospecting, marketing, delivery, teaching and department leadership are counted separately.</p><div class="small" id="career-impact-'+p.id+'">Actual contribution: '+careerRoleDays(p)+' role days · '+p.career.practice.coaching+' teaching days · '+p.career.practice.managing+' management days · '+p.career.completions+' delivered projects</div><div class="career-actions"><button type="button" data-career="checkin" data-person="'+p.id+'">Check-in</button><button type="button" data-career="plan" data-person="'+p.id+'">Growth plan ($10)</button><button type="button" data-career="promote" data-person="'+p.id+'">Promote · $"+careerPromotionPrice(p)+"</button></div></details><div class="memories" id="mem-'+p.id+'"></div></div></details>';
+return '<details class="card employee-card" data-employee-id="'+p.id+'" '+(employeeExpanded.has(p.id)||S.ui.employees.includes(p.id)?'open':'')+'><summary class="employee-summary"><span class="employee-primary"><b><i class="color-dot" style="background:'+p.col+'"></i>'+esc(p.n)+'</b><span class="small">'+esc(role)+' · '+rankName(p)+' · '+DEPARTMENTS[p.department].name+'</span><span class="small '+(risk?'risk-watch':'')+'">'+(risk?'⚠ Needs support':p.career.stress>=45?'◷ Busy':'✓ Doing well')+'</span></span><span class="employee-aside"><span class="small">'+esc(taskText(p))+'</span><span class="small" id="person-v-'+p.id+'">'+(p.mood>=65?'😊 Motivated':p.mood>=35?'😐 Steady':'😟 Discouraged')+'</span><span class="small">Manage ▾</span></span></summary><div class="employee-expanded"><div class="small">'+esc(p.trait)+' · '+esc(INTERESTS[p.interest]||"Learning and growth")+'</div><div class="progress good"><i id="mood-bar-'+p.id+'"></i></div><div class="skills">'+KEYS.map(k=>'<div class="skill"><div class="skill-name"><b>'+SKILLS[k]+'</b><span id="skill-'+p.id+'-'+k+'"></span></div><div class="progress"><i id="skill-bar-'+p.id+'-'+k+'"></i></div></div>').join("")+'</div><div class="role-panel"><label>Department</label><select class="org-dept-select" data-org-employee="'+p.id+'">'+DEPT_KEYS.map(k=>'<option value="'+k+'" '+(p.department===k?'selected':'')+'>'+DEPARTMENTS[k].name+'</option>').join("")+'</select><label>Primary responsibility</label><div class="buttons">'+ROLE_KEYS.map(k=>'<button type="button" data-role="'+k+'" data-person="'+p.id+'" '+(p.role.primary===k?'class="selected" aria-pressed="true"':'aria-pressed="false"')+' '+(k==="lead"&&p.career.rank<1&&p.career.xp<10?'disabled title="Requires seniority or 10 experience"':'')+'>'+ROLE_NAMES[k]+'</button>').join("")+'</div><button type="button" data-role="'+(p.role.auto?'manual':'resume')+'" data-person="'+p.id+'">'+(p.role.auto?'Manual orders':'Resume autonomous plan')+'</button></div><div class="small">Give a direct task</div><div class="buttons">'+[["study","Study"],["teach","Teach"],["exp","Experiment"],["rest","Rest"],...(p.role.primary==="prod"?[["improve","Product QA"]]:[]),...(p.role.primary==="ops"?[["streamline","Process improvement"]]:[]),...(p.role.primary==="sales"?[["prospect","Prospect clients"]]:[]),...(p.role.primary==="mkt"?[["market","Market demand"]]:[])].map(pair=>'<button type="button" data-order="'+pair[0]+'" data-person="'+p.id+'" '+(p.t===pair[0]?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+pair[1]+'</button>').join("")+'</div><div class="buttons"><button type="button" data-assistant="'+p.id+'" '+(S.ops.assistantId===p.id?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+(S.ops.assistantId===p.id?'Stop assisting':'Appoint as assistant')+'</button></div><div class="buttons help-buttons">'+[["praise","Recognize"],["bonus","Bonus (-$12)"],["coach","Coach (-$8)"]].map(pair=>'<button type="button" data-care="'+pair[0]+'" data-person="'+p.id+'">'+pair[1]+'</button>').join("")+'<button type="button" data-fire="'+p.id+'" '+(S.team.length===1?'disabled title="The last employee must stay."':'')+'>Fire</button></div><details class="career-panel" data-career-id="'+p.id+'" '+(careerExpanded.has(p.id)||S.ui.careers.includes(p.id)?'open':'')+'><summary>Career &amp; wellbeing · <span id="career-short-'+p.id+'">Stress '+Math.floor(p.career.stress)+'%</span></summary><div class="career-data"><span class="small"><b>Goal:</b> '+esc(GOALS[p.career.goal])+'</span><span class="small"><b>Pay:</b> $'+dailySalary(p).toFixed(2)+'/day</span><span class="small" id="career-stats-'+p.id+'">Satisfaction '+Math.floor(p.career.satisfaction)+' · stress '+Math.floor(p.career.stress)+' · burnout '+Math.floor(p.career.burnout)+'</span><span class="small" id="career-experience-'+p.id+'">Experience '+p.career.xp.toFixed(1)+'</span><span class="small"><b>Talent:</b> '+(p.career.revealed?'Discovered '+SKILLS[p.career.talent]:'Clue: '+esc(talentHint(p)))+'</span><span class="small" id="career-promotion-'+p.id+'">Career path: '+esc(coachCareerStatus(p).text)+'</span><span class="small" id="career-readiness-'+p.id+'">'+esc(coachCareerStatus(p).reason)+'</span></div><label class="small" for="career-path-'+p.id+'">Long-term career route</label><select data-path="'+p.id+'" id="career-path-'+p.id+'" '+(p.career.rank<2||p.career.rank>=3?'disabled title="Choose a pathway when at Lead"':'')+'><option value="specialist" '+(p.career.path==="specialist"?"selected":"")+'>Specialist expertise</option><option value="leadership" '+(p.career.path==="leadership"?"selected":"")+'>People leadership (requires appointment)</option></select><details class="aux-details career-roadmap" data-roadmap-id="'+p.id+'" '+(roadmapExpanded.has(p.id)||S.ui.roadmaps.includes(p.id)?'open':'')+'><summary>See the complete career roadmap</summary>'+careerPathHTML(p)+'</details><label class="small" for="train-'+p.id+'">Targeted skill growth</label><select id="train-'+p.id+'" data-training="'+p.id+'"><option value="balanced" '+(p.career.trainingFocus==="balanced"?"selected":"")+'>Balanced — lowest skill</option>'+KEYS.map(k=>'<option value="'+k+'" '+(p.career.trainingFocus===k?"selected":"")+'>'+SKILLS[k]+'</option>').join("")+'</select><p class="small">Study improves skill, but employees also need real-role practice to advance. Sales prospecting, marketing, delivery, teaching and department leadership are counted separately.</p><div class="small" id="career-impact-'+p.id+'">Actual contribution: '+careerRoleDays(p)+' role days · '+p.career.practice.coaching+' teaching days · '+p.career.practice.managing+' management days · '+p.career.completions+' delivered projects</div><div class="career-actions"><button type="button" data-career="checkin" data-person="'+p.id+'">Check-in</button><button type="button" data-career="plan" data-person="'+p.id+'">Growth plan ($10)</button><button type="button" data-career="promote" data-person="'+p.id+'">Promote · $"+careerPromotionPrice(p)+"</button></div></details><div class="memories" id="mem-'+p.id+'"></div></div></details>';
 }).join("");
 }function candidateName(){let name=NAMES[(S.pid+S.hr.searchNumber-1)%NAMES.length];const used=new Set(S.team.map(p=>p.n).concat(S.hr.pool.map(p=>p.n)));if(used.has(name)){let i=2;while(used.has(name+" "+i))i++;name=name+" "+i;}return name;}
 function searchCandidates(){if(S.ev)return;S.hr.skill=$("hire-skill").value;S.hr.interest=$("hire-interest").value;S.hr.pool=[];
@@ -1646,7 +1697,7 @@ $("candidates").innerHTML=S.hr.pool.length?'<div class="filter-note">Candidates 
 function renderIdeas(){const all=S.seeds.filter(k=>IDEAS[k]);
 $("idea-summary").textContent=all.length+"/"+Object.keys(IDEAS).length+" discoveries · "+S.built.length+"/"+RECIPES.length+" capabilities";
 $("ideas").innerHTML=RECIPES.map(r=>{const done=S.built.some(b=>b[0]===r[2]),have=Number(S.seeds.includes(r[0]))+Number(S.seeds.includes(r[1]));
-return '<div class="knowledge-row"><div class="lead"><b>'+esc(r[2])+'</b><span class="small">'+(done?'✓ Active':have+'/2 discoveries')+'</span></div><div class="small">'+esc(IDEAS[r[0]])+' '+(S.seeds.includes(r[0])?'✓':'○')+' · '+esc(IDEAS[r[1]])+' '+(S.seeds.includes(r[1])?'✓':'○')+' · '+esc(r[3])+'</div><div class="progress"><i style="width:'+(done?100:have*45)+'%"></i></div></div>';}).join("");
+return '<div class="knowledge-row '+(done?"is-unlocked":"is-locked")+'"><div class="lead"><b>'+(done?"✓ ":"◇ ")+esc(r[2])+'</b><span class="small">'+(done?'Unlocked':have+'/2 found')+'</span></div><div class="small">'+esc(IDEAS[r[0]])+' '+(S.seeds.includes(r[0])?'✓':'○')+' · '+esc(IDEAS[r[1]])+' '+(S.seeds.includes(r[1])?'✓':'○')+' · '+esc(r[3])+'</div><div class="progress"><i style="width:'+(done?100:have*45)+'%"></i></div></div>';}).join("");
 $("built").innerHTML=all.length?'<div class="filter-note">Discovered: '+all.map(k=>esc(IDEAS[k])).join(" · ")+'</div>':'<div class="empty">Employees will discover capabilities through work, research and experimentation.</div>';
 $("idea-message").textContent=ideaMessage||"Ideas now have different funding requirements and measured participation. Unlocks depend on results; past discoveries remain intact.";
 renderIdeaProgress();}
@@ -1656,6 +1707,40 @@ if(!$("idea-progress-panel").open)return;
 const rows=S.ideaWork.active.map(x=>'<div class="coach-mini">'+esc(x.proposal.name)+' · '+biCurrency(x.cost)+' · '+x.done.toFixed(1)+'/'+x.proposal.days+' employee-days · '+esc(x.proposal.risk)+' risk</div>').join("")+
 S.ideaWork.history.slice(0,12).map(x=>'<div class="coach-mini">Day '+x.finished+' · '+esc(x.proposal.name)+' · '+biCurrency(x.cost)+' · '+esc(x.result)+' · '+x.actualParticipation+' employee-days</div>').join("");
 if(area.innerHTML!==rows)area.innerHTML=rows||'<p class="small">No funded proposals yet; new requests will offer three price tiers with participation requirements.</p>';}
+
+/* v17 narrative presentation; all rewards and progression derive from existing simulation state. */
+function gameChapter(){let n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;return n>=30&&S.team.length>=12&&leaders===2?"Established":n>=12&&S.team.length>=6?"Growing company":n>=3?"Small agency":"Founder";}
+function gamePlan(){let n=S.market.completed||0,open=S.deals.filter(d=>!person(d.w));
+if(!n&&open.length)return["Assign a teammate to your first project","Match a worker to a customer. Your first completed project starts your story.",0,2,"work",open[0].id];
+if(!n&&S.deals.length)return["Finish your first client project","Your team is delivering. Keep an eye on deadlines.",1,2,"work",S.deals[0].id];
+if(!n)return["Find your first customer","Build an opportunity without overspending on salaries.",0,1,"work",null];
+if(n<3)return["Earn three customer wins","Build trust through finished work, not just new leads.",n,3,"work",null];
+if(S.world?.activeEvent)return["A market opportunity is waiting","Decide whether to act or pass. There is no compulsory penalty.",0,1,"growth",null];
+if(S.rep<40)return["Become known for quality","Deliver reliably to build reputation.",Math.max(0,Math.floor(S.rep)),40,"work",null];
+if(S.team.length<5&&S.cash>=45)return["Build a team that can scale","Make a considered staffing decision before adding payroll.",S.team.length,5,"team",null];
+if((S.world?.stats?.won||0)<5)return["Compete with the market leaders","Win customers by playing to your strengths.",S.world?.stats?.won||0,5,"growth",null];
+if(S.market.open.length<3)return["Explore a new sector","Expand only when your people and finances are ready.",S.market.open.length,3,"growth",null];
+if(n<30)return["Build a sustainable company","Complete thirty projects while developing your people.",n,30,"work",null];
+return["Write your next chapter","Choose your next business strategy and develop future leaders.",1,1,"growth",null];}
+let lastGameEvent=null,toastTimeout=0;
+function gameToast(message){const t=$("game-toast");if(!t)return;t.textContent=message;t.hidden=false;clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>t.hidden=true,2400);}
+function gameRender(){
+const [title,hint,value,max,view,project]=gamePlan(),event={delivered:S.market.completed||0,wins:S.world?.stats?.won||0,built:S.built.length};
+if(lastGameEvent){if(event.delivered>lastGameEvent.delivered)gameToast("Client project completed — great work!");else if(event.built>lastGameEvent.built)gameToast("You unlocked a company capability!");else if(event.wins>lastGameEvent.wins)gameToast("Competitive contract won!");}lastGameEvent=event;
+$("game-chapter").textContent=gameChapter()+" · Day "+S.day;
+$("game-goal").textContent=title;$("game-goal-hint").textContent=hint;$("game-goal-progress").textContent=value+" / "+max;$("game-goal-bar").style.width=Math.min(100,Math.max(0,value/Math.max(1,max)*100))+"%";
+$("game-primary").textContent=(project?"Open this project":view==="work"?"See client work":view==="team"?"Meet your team":"Explore Growth")+" →";
+$("game-primary").dataset.go=view;if(project)$("game-primary").dataset.project=String(project);else delete $("game-primary").dataset.project;
+const stories=S.log.map(x=>String(x).replace(/<[^>]+>/g,"")).filter(x=>/completed|hired|joined|promot|won|missed|quit|unlocked|founded|discovered/i.test(x)).slice(0,2);
+const html=(stories.length?stories:["Your team's next achievement is waiting."]).map(x=>'<div class="game-story-item">'+esc(x)+'</div>').join("");if($("game-story").innerHTML!==html)$("game-story").innerHTML=html;
+if($("game-journey").open){const n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;
+const stages=[["Founder",true],["First customer",n>=1],["Small agency",n>=3],["Growing team",n>=12&&S.team.length>=6],["Established",n>=30&&S.team.length>=12&&leaders===2]];
+$("game-journey-map").innerHTML=stages.map(([name,done])=>'<span class="game-journey-stage '+(done?'unlocked':'locked')+'">'+(done?'✓ ':'◇ ')+name+'</span>').join("");}
+const rivals=S.world?.rivals||[],rivalText=rivals.map(q=>'<div class="game-rival"><span class="game-rival-icon">◆</span><span><b>'+esc(q.name)+'</b><small>'+esc(q.archetype)+' approach · '+q.wins+' wins</small></span></div>').join("");
+if($("game-rivals").innerHTML!==rivalText)$("game-rivals").innerHTML=rivalText;
+}
+function gameAdvanceDays(){if(S.ev)return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
+
 function renderBriefing(){
 const urgent=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"||f.risk==="watch");
 const stressed=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35);
@@ -1677,11 +1762,11 @@ if(stressed.length)notices.push('<div class="card"><h3>Team wellbeing</h3><p>'+s
 if(atRiskMoney)notices.push('<div class="card"><h3>Cash runway</h3><p>Available cash covers fewer than seven days of payroll. Check delivery and new contracts.</p><button type="button" data-go="work">Review work →</button></div>');
 if(S.world.activeEvent)notices.push('<div class="card"><h3>Optional market opportunity</h3><p>A market brief is ready until Day '+S.world.activeEvent.until+'. Choose whether to act or pass in Growth. No interruption is required.</p><button type="button" data-go="growth">Review market →</button></div>');
 if(!notices.length)notices.push('<div class="card"><h3>No urgent decisions</h3><p>Employees are handling routine activities. Check Work or Growth when you want to make strategic decisions.</p></div>');
-const markup=notices.join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
+const markup=notices.slice(0,2).join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
 for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}
 }
 function refresh(){
-economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
+economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);
@@ -1713,7 +1798,7 @@ if(status){status.textContent=c.recoveryDays>0?"Recovery: "+c.recoveryDays+" day
 if(details)details.textContent="Satisfaction "+Math.floor(c.satisfaction)+"% · Stress "+Math.floor(c.stress)+"% · Burnout "+Math.floor(c.burnout)+"%";
 if(experience)experience.textContent="Experience "+c.xp.toFixed(1)+" · "+c.completions+" completed jobs";
 if(promo){const readiness=coachCareerStatus(p);promo.textContent=readiness.text+" · "+readiness.reason;}const impact=$("career-impact-"+p.id);if(impact)impact.textContent="Actual contribution: "+careerRoleDays(p)+" role days · "+p.career.practice.coaching+" teaching days · "+p.career.practice.managing+" management days · "+p.career.completions+" delivered projects";
-if(v)v.textContent="mood "+Math.floor(p.mood)+"% · loyalty "+Math.floor(p.loy)+"%";if(m)m.style.width=p.mood+"%";if(mem){const content=p.mem.map(s=>"<div>“"+esc(s)+"”</div>").join("");if(mem.innerHTML!==content)mem.innerHTML=content;}for(const k of KEYS){const label=$("skill-"+p.id+"-"+k),bar=$("skill-bar-"+p.id+"-"+k);if(label)label.textContent="Lv "+p.s[k].toFixed(1);if(bar)bar.style.width=((p.s[k]%1)*100)+"%";}}
+if(v)v.textContent=p.mood>=65?"😊 Motivated":p.mood>=35?"😐 Steady":"😟 Discouraged";if(m)m.style.width=p.mood+"%";if(mem){const content=p.mem.map(s=>"<div>“"+esc(s)+"”</div>").join("");if(mem.innerHTML!==content)mem.innerHTML=content;}for(const k of KEYS){const label=$("skill-"+p.id+"-"+k),bar=$("skill-bar-"+p.id+"-"+k);if(label)label.textContent="Lv "+p.s[k].toFixed(1);if(bar)bar.style.width=((p.s[k]%1)*100)+"%";}}
 const logs=S.log.slice(0,14).join("|");if(logSignature!==logs){logSignature=logs;$("log").innerHTML=S.log.slice(0,14).map(x=>'<div class="log-entry">'+x+'</div>').join("");}
 showModal();}
 
@@ -1788,7 +1873,7 @@ praise:"Sharing credit improves employee morale; taking credit favors short-term
 function showModal(){const m=$("modal");if(!S.ev){m.hidden=true;document.body.classList.remove("modal-open");return;}const d=dilemmaInfo(S.ev);if(!d){S.ev=null;save();m.hidden=true;return;}if(m.hidden||$("modal-title").textContent!==d[0]){$("modal-title").textContent=d[0];$("modal-text").textContent=d[1]+(S.coach.mode==="guided"?"\n\nDecision preview: "+coachDecisionPreview(S.ev.k):"");$("choices").innerHTML=d[2].map((txt,i)=>{const cost=coachChoiceCost(S.ev.k,i);return '<button type="button" data-choice="'+i+'" '+(cost>S.cash?'disabled title="Insufficient cash"':'')+'>'+esc(txt)+(cost>S.cash?' · insufficient cash':'')+'</button>';}).join("");}m.hidden=false;document.body.classList.add("modal-open");}
 function schedule(){clearTimeout(clock);if(!paused&&!S.ev)clock=setTimeout(()=>{tick();schedule();},1200/spd);}
 function bubble(id,emoji,frames){let a=avatars.get(id);if(!a){a={x:0,y:0,tx:0,ty:0,away:false,hold:0,emoji:"",frames:0};avatars.set(id,a);}a.emoji=emoji;a.frames=frames;}
-function avatarDraw(){if(!$("office-panel").open){requestAnimationFrame(avatarDraw);return;}const rows=Math.ceil(S.team.length/5),h=Math.max(150,80*rows+50);if(canvas.height!==h)canvas.height=h;const style=getComputedStyle(document.documentElement);const bar=style.getPropertyValue("--bar").trim(),ink=style.getPropertyValue("--ink").trim(),muted=style.getPropertyValue("--muted").trim();ctx.clearRect(0,0,640,h);ctx.fillStyle=bar;ctx.fillRect(0,0,640,h);
+function avatarDraw(){if(activeView!=="today"){requestAnimationFrame(avatarDraw);return;}const rows=Math.ceil(S.team.length/5),h=Math.max(150,80*rows+50);if(canvas.height!==h)canvas.height=h;const style=getComputedStyle(document.documentElement);const bar=style.getPropertyValue("--bar").trim(),ink=style.getPropertyValue("--ink").trim(),muted=style.getPropertyValue("--muted").trim();ctx.clearRect(0,0,640,h);ctx.fillStyle=bar;ctx.fillRect(0,0,640,h);
 ctx.fillStyle="#b7d7e8";ctx.fillRect(611,(h-32)/2,22,32);ctx.fillStyle="#224b67";ctx.font="9px system-ui";ctx.textAlign="center";ctx.fillText("water",622,(h-32)/2+19);
 S.team.forEach((p,i)=>{const dx=60+(i%5)*130,dy=40+Math.floor(i/5)*80;ctx.fillStyle=muted;ctx.globalAlpha=.33;ctx.fillRect(dx-26,dy-10,52,20);ctx.globalAlpha=1;let a=avatars.get(p.id);if(!a){a={x:dx,y:dy+34,tx:dx,ty:dy+34,away:false,hold:0,emoji:"",frames:0};avatars.set(p.id,a);}
 if(p.t==="idle"||p.t==="rest"){if(!a.away&&Math.random()<.004){a.away=true;a.hold=170+R(130);}if(a.away){a.tx=596;a.ty=h/2+29;if(Math.abs(a.x-a.tx)<7){a.hold--;if(a.hold<=0)a.away=false;}}if(!a.away){a.tx=dx;a.ty=dy+34;}}

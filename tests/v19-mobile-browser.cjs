@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   result.checks.customBudgets=!!document.querySelector('[data-org-policy="training"]')&&!!document.querySelector('[data-org-policy="hiring"]');
   result.checks.optionalManagers=!!document.querySelector('[data-org-subrole="sales"]')&&!!document.querySelector('[data-org-subrole="ops"]');
   result.checks.noVisibleUndefined=!document.body.innerText.includes("undefined");
-  result.checks.promotionPriceRendered=[...document.querySelectorAll('button[data-career="promote"]')].length>0&&[...document.querySelectorAll('button[data-career="promote"]')].every(b=>/^Promote · \\$\\d+(?:\\.\\d+)?$/.test(b.textContent.trim()));
+  result.checks.promotionPriceRendered=[...document.querySelectorAll('button[data-career="promote"]')].length>0&&[...document.querySelectorAll('button[data-career="promote"]')].every(b=>/^Promote · \$\d+(?:\.\d+)?$/.test(b.textContent.trim()));
   result.errors=(window.__mobileErrors||[]);
  }catch(e){result.errors.push(String(e.stack||e));}
  document.title="BOSS_QA:"+btoa(unescape(encodeURIComponent(JSON.stringify(result))));

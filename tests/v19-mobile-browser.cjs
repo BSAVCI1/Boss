@@ -77,6 +77,14 @@ async function runBrowser(){
   // Chrome can delay applying a mobile metric override on a newly created tab.
   // Retry a clean navigation only if the *measured* CSS viewport is incorrect;
   // every acceptance assertion remains mandatory after a true 390px render.
+  // Warm the file:// renderer before applying emulation. Chrome may discard
+  // an override placed on about:blank during its first cross-process navigation.
+  await send("Page.navigate",{url:"file://"+file+"?warmup=1"});
+  for(let i=0;i<50;i++){
+   try{const result=await send("Runtime.evaluate",{expression:"document.readyState+'|'+location.search",returnByValue:true});
+    if(result.result?.value==="complete|?warmup=1")break;}catch{}
+   await sleep(150);
+  }
   let outcome=null;
   for(let attempt=0;attempt<3;attempt++){
    await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:true});

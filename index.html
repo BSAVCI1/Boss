@@ -788,8 +788,8 @@ const base=.77+needEdge+specialist-opponent+policy.win+(loyalty>=60?.075:0)+(S.d
 const chance=Math.max(.48,Math.min(.94,base*worldDemand()));
 const feeHint=Math.floor((84+(Math.max(0,dealTier()-1)*18))*(SECTORS[lead.sector]?.premium||1)*pos);
 return{chance,rival,clientNeed,feeHint,rivalIndex:rival.pricing,playerPosition:pos,reason:clientNeed==="price"?"competing mainly on price":clientNeed==="quality"?"comparing quality and reputation":clientNeed==="speed"?"prioritizing reliable delivery":"prioritizing trusted suppliers"};}
-function worldResolveTender(lead){const preview=worldTenderPreview(lead),oldLoyalty=S.market.customers[lead.client]?.loyalty||0;
-const won=Math.random()<preview.chance||(oldLoyalty>=80&&Math.random()<.38);
+function worldResolveTender(lead){const preview=worldTenderPreview(lead);
+const won=Math.random()<preview.chance;
 const result={day:S.day,client:lead.client,sector:lead.sector,rival:preview.rival.name,priority:preview.clientNeed,strategy:S.world.strategy,policy:S.economy.pricing,probability:+preview.chance.toFixed(3),result:won?"won":"lost",feeHint:preview.feeHint};
 S.world.tenders.unshift(result);if(S.world.tenders.length>70)S.world.tenders.length=70;
 S.world.stats[won?"won":"lost"]++;
@@ -1299,7 +1299,8 @@ return false;}
 function renderPipeline(){const stages=["prospect","qualified","proposal","negotiation"],labels=["Prospects","Qualified","Proposals","Negotiating"];
 $("pipeline-summary").textContent=S.pipeline.closed+" won · "+S.pipeline.leads.length+" open";
 $("pipeline-stages").innerHTML=stages.map((k,i)=>'<div class="pipestage"><strong>'+S.pipeline.leads.filter(l=>l.stage===k).length+'</strong>'+labels[i]+'</div>').join("");
-$("pipeline-details").innerHTML=S.pipeline.leads.slice(0,7).map(l=>'<div class="queue-item">'+esc(l.client)+' · '+SECTORS[l.sector].name+' · '+labels[stages.indexOf(l.stage)]+' · '+(S.day-l.created)+' days in pipeline</div>').join("")||'<div class="empty">No leads yet. A salesperson or marketer can build the next opportunity.</div>';}
+$("pipeline-details").innerHTML=S.pipeline.leads.slice(0,7).map(l=>{const t=l.stage==="negotiation"?worldTenderPreview(l):null;
+return '<div class="queue-item">'+esc(l.client)+' · '+SECTORS[l.sector].name+' · '+labels[stages.indexOf(l.stage)]+' · '+(S.day-l.created)+' days in pipeline'+(t?'<div class="small">Bid comparison: '+esc(t.rival.name)+' · Customer values '+esc(t.clientNeed)+' · Our estimated win chance '+Math.round(t.chance*100)+'% · Indicative fee '+biCurrency(t.feeHint)+' (not signed). No guaranteed outcome.</div>':'')+'</div>';}).join("")||'<div class="empty">No leads yet. A salesperson or marketer can build the next opportunity.</div>';}
 function renderSkillMap(){if(!$("skills-panel").open)return;const rows=KEYS.map(k=>{const sorted=S.team.slice().sort((a,b)=>b.s[k]-a.s[k]),best=sorted[0],learner=sorted[sorted.length-1];
 const coverage=S.team.filter(p=>p.s[k]>=2.6).length,demand=S.deals.filter(d=>d.need===k).length;
 const guidance=!coverage?(demand?"Capacity gap: develop a specialist or recruit before demand rises.":"No advanced specialist yet: prepare a trainee before expanding."):coverage===1?"Single-person dependency: build a backup.":"Multiple experienced specialists available.";

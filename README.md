@@ -23,14 +23,14 @@ The complete offline HTML, CSS and JavaScript remain in [index.html](index.html)
 ## Publishing
 GitHub Pages publishes the root of `main`. See [deployment runs](https://github.com/BSAVCI1/Boss/actions). Do not describe a release as live until both regression checks, Pages deployment, and the browser have been verified.
 
-## Boss v19 — Organizational Scaling & Executive Delegation
+## Current release: Boss v19 — Organizational Scaling & Executive Delegation
 v19 introduces optional Sales, Marketing, Product and Operations team managers below the existing Commercial/Delivery heads. The game now displays accurate leadership title levels and unique employee IDs, and warns about overly wide spans of control while letting the CEO appoint role managers to address them.
 
 **Department delegation:** Open Team → Managers & organization → Leadership hierarchy, budgets & delegated authority. For either department set a 90- or 180-game-day authorization and custom numeric coaching, training, team wellbeing and hiring budgets. Set a maximum spend per individual decision, authorized hiring headcount, daily additional payroll ceiling, and measurable lead/on-time target. **Authority is permission, not an expense**: money is deducted only when managers perform allowed actions. No delegated spending happens after expiry unless you select **Renew authority**; any blocked or unapproved action returns to a CEO proposal. Director decisions have an audit trail and remain bounded by available company cash. Salary changes and new service lines still require CEO approval.
 
 **Today market decisions:** Take or Pass optional market opportunities directly in the CEO inbox, without opening Growth. Ineligible actions explain why. Full sales pipelines block only lead-producing tenders or renewals—not campaigns and market research. Bid-preparation fees now vary with company reputation and deal complexity; stated contract estimates are indicative, never guaranteed or retroactive changes to signed fees.
 
-**Release validation:** all seven suites (v15, v16, v16.1, v17, v18 and two v19 QA sets) test legacy migration, 730-game-day accounting, delegation limits, hire payroll, training, save preservation and tender behavior. Mobile browser interaction and Pages publication must be checked for the merged commit before declaring live deployment.
+**Verified production release:** [PR #11](https://github.com/BSAVCI1/Boss/pull/11) merged to main as `8fa6f7051f4f988442c88431a62c869deb5a8b1b` on 2026-10-17. All seven Node regression suites and the real Chromium 390px navigation/overflow smoke passed on [production CI run](https://github.com/BSAVCI1/Boss/actions/runs/39046003370); [GitHub Pages build/deployment](https://github.com/BSAVCI1/Boss/actions/runs/39046002839) succeeded. The live page was fetched successfully and displayed v19 assistant authority and leadership UI. Individual pre-existing browser save content cannot be directly inspected remotely.
 
 ## Previous release: Boss v18.1 — CEO & Leadership Edition
 - [v18 release PR #7](https://github.com/BSAVCI1/Boss/pull/7) brought in CEO reporting lines, strategic priorities, autonomous departmental decisions, executive meetings, Assistant coordination, service-line launches, CEO-visible opportunities and late-game progression.

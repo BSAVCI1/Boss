@@ -451,7 +451,7 @@ const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let S,spd=1,paused=false,selected=[],ideaMessage="",avatars=new Map(),clock,structural="",lastIdeas="",logSignature="",sectorSignature="",customerSignature="";
 const projectExpanded=new Set(),employeeExpanded=new Set(),careerExpanded=new Set(),roadmapExpanded=new Set(),peopleGroupExpanded=new Set(["ceo"]);
-function ensureViewState(s){if(!s.ui||typeof s.ui!=="object")s.ui={};for(const k of ["employees","careers","roadmaps"])if(!Array.isArray(s.ui[k]))s.ui[k]=[];s.ui.productivityOpen=!!s.ui.productivityOpen;}
+function ensureViewState(s){if(!s.ui||typeof s.ui!=="object")s.ui={};for(const k of ["employees","careers","roadmaps"])if(!Array.isArray(s.ui[k]))s.ui[k]=[];s.ui.productivityOpen=!!s.ui.productivityOpen;if(![1,3,8].includes(s.ui.speed))s.ui.speed=1;}
 let orgControlsSignature="";let activeView="today";const viewScroll={today:0,work:0,team:0,growth:0};let attentionSignature="";
 let canvas=$("office"),ctx=canvas.getContext("2d");
 const LAB_TOPICS={
@@ -807,7 +807,8 @@ function save(){
   localStorage.setItem(KEY,payload);
   if(localStorage.getItem(KEY)!==payload)throw new Error("Save readback mismatch");
   persistedRevision=S._saveRevision;
-  saveState("Saved on this device");
+  const field=document.activeElement,unfinished=field?.matches?.('input[data-org-policy],#policy-budget,#policy-total')&&(!String(field.value||"").trim()||field.validity?.valid===false);
+  if(!unfinished)saveState("Saved on this device");
   return true;
  }catch(e){
   paused=true;
@@ -1554,7 +1555,7 @@ function renderOrgControls(){
 $("org-controls").innerHTML=DEPT_KEYS.map(key=>{
 const d=S.org.departments[key],director=orgManager(key),p=d.plan;
 const qualified=S.team.filter(x=>x.department===key&&x.id!==S.ops.assistantId&&(x.career.rank>=1||x.career.xp>=10));
-const number=(type,label,value,min=0,max=10000000)=>'<label>'+label+'</label><input type="number" inputmode="decimal" min="'+min+'" max="'+max+'" step="1" data-org-policy="'+type+'" data-org-dept="'+key+'" value="'+value+'">';
+const number=(type,label,value,min=0,max=10000000)=>'<label>'+label+'</label><input type="number" inputmode="decimal" min="'+min+'" max="'+max+'" step="'+(type==="payrollLimit"?"0.01":"1")+'" data-org-policy="'+type+'" data-org-dept="'+key+'" value="'+value+'">';
 const opts=qualified.map(x=>'<option value="'+x.id+'" '+(director?.id===x.id?'selected':'')+'>'+esc(x.n)+' · #'+x.id+'</option>').join("");
 const roles=DEPARTMENTS[key].skills.map(role=>{
 const manager=orgSubManager(key,role),people=qualified.filter(x=>x.id!==director?.id&&(orgWorkRole(x)===role||x.id===manager?.id));
@@ -1824,7 +1825,7 @@ for(const b of document.querySelectorAll(".bottom-nav button[data-view]")){const
 if(view==="work"&&Number.isFinite(projectId)){for(const el of $("deals").querySelectorAll("details[data-project-id]"))if(Number(el.dataset.projectId)===projectId){el.open=true;projectExpanded.add(projectId);}}
 if(typeof window!=="undefined"&&typeof window.scrollTo==="function"){const target=Number.isFinite(projectId)?0:viewScroll[view]||0;requestAnimationFrame(()=>window.scrollTo(0,target));}
 }
-$("speed-select").addEventListener("change",()=>{spd=Number($("speed-select").value)||1;paused=false;paintControls();schedule();});
+$("speed-select").addEventListener("change",()=>{spd=[1,3,8].includes(Number($("speed-select").value))?Number($("speed-select").value):1;S.ui.speed=spd;save();paused=false;paintControls();schedule();});
 $("pause").addEventListener("click",()=>{paused=!paused;paintControls();schedule();});
 $("restart").addEventListener("click",()=>{if(!confirm("Restart the company from zero?"))return;
 fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";sectorSignature="";customerSignature="";projectExpanded.clear();employeeExpanded.clear();careerExpanded.clear();roadmapExpanded.clear();attentionSignature="";orgControlsSignature="";for(const name of ["today","work","team","growth"])viewScroll[name]=0;
@@ -1837,7 +1838,7 @@ if(!ceoDirection(priority))$("ceo-direction-confirm").textContent=S.ev?"Resolve 
 });
 $("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
 $("launch-service-line").addEventListener("click",()=>{if(executiveLaunch($("service-line-select").value))refresh();});
-$("service-line-select").addEventListener("change",()=>executiveShow());
+$("service-line-select").addEventListener("change",()=>{S.ui.selectedService=$("service-line-select").value;save();executiveShow();});
 $("game-primary").addEventListener("click",()=>{const b=$("game-primary"),view=b.dataset.go||"work";
 navigate(view,b.dataset.project?Number(b.dataset.project):undefined);
 if(view==="today")requestAnimationFrame(()=>{const panel=$("ea-weekly-report");if(panel){panel.open=true;renderExecutiveWeekly();if(typeof panel.scrollIntoView==="function")panel.scrollIntoView({behavior:"smooth",block:"start"});}});
@@ -2502,6 +2503,8 @@ ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(a.x,a.y,11,0,Math.PI*2);ctx.fill();c
 if(a.frames>0){ctx.font="19px system-ui";ctx.fillText(a.emoji,a.x,a.y-17);a.frames--;}
 });requestAnimationFrame(avatarDraw);}
 S=load();if(!S)fresh();else if(S.ui?.pendingCEO&&CEO_PRIORITIES[S.ui.pendingCEO])ceoDraftPriority=S.ui.pendingCEO;
+spd=[1,3,8].includes(S.ui?.speed)?S.ui.speed:1;
+if(S.ui?.selectedService&&SERVICE_LINES[S.ui.selectedService])$("service-line-select").value=S.ui.selectedService;
 window.addEventListener("storage",event=>{if(event.key===KEY&&event.newValue){let rev=0;try{rev=Number(JSON.parse(event.newValue)._saveRevision)||0;}catch{}if(rev>persistedRevision){saveConflict=true;paused=true;saveState("Not saved — a newer company is open in another tab",true);const warning=$("save-warning");if(warning){warning.hidden=false;warning.textContent="Another Boss tab saved this company. Reload this tab to protect the latest progress.";}}}});if(S.ev&&!dilemmaInfo(S.ev))S.ev=null;labPreview();capabilityProgress();save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();requestAnimationFrame(avatarDraw);schedule();
 })();
 </script>

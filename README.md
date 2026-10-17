@@ -1,5 +1,14 @@
 # Boss
 
+## Boss v21.4a — GM budgets, stable editing and succession (released 2026-10-17)
+
+**How to play:** Growth → Operating units → CEO authority & GM scorecard. Choose **Fresh Manager**, **Manager +25%**, **Senior Manager +25%** and click **Apply preset**, or enter any supported amounts and click **Apply custom settings**. Multiple-digit fields stay editable without mid-typing writes. No money is spent just by approving a budget; you authorize later bounded GM expenses. A new GM receives a recommended Fresh preset but **no spending authority** until CEO approval; migrated saves keep their old limits.
+
+Coaching, successor training and team-development ceilings are separate; actual actions ($4 coaching, $8 successor training / 14 days, $6 stress support / 30 days) cost real group cash only once. The unit panel identifies a trained successor and the career milestone, while the complete Team Lead → Manager → Senior Manager → Director reporting structure and explicit shared corporate staff allocations remain **planned** for v21.4b. [Detailed career architecture](docs/V21_MANAGER_CAREER_PLAN.md).
+
+**Verified release:** [PR #28](https://github.com/BSAVCI1/Boss/pull/28) merged as `a4f624d884bab6d0b4abdd05480570e8faef59d8`. [Production regression](https://github.com/BSAVCI1/Boss/actions/runs/39072079093) and [Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39072078922) passed. 390px and 414px mobile, 730-day, IndexedDB and accounting checks passed; the owner's original Safari save was not accessed.
+
+
 ## Boss v21.3.1 — Native mobile editing stability (released 2026-10-17)
 
 User-reported GM and dedicated teammate dropdowns closed before selection because autonomous game ticks recreated the whole Operating units DOM. All active select/input/textarea edits now use a shared capture-phase interaction shield with a brief iOS picker dismissal grace period. Background game logic and saving continue, while UI redraws defer until the edit finishes. Other controls in Today, Work, Team and Growth share the same safety rule. See [mandatory mobile UI governance](docs/UI_INTERACTION_GOVERNANCE.md). This fix is not a new business investment and does not reset player saves.

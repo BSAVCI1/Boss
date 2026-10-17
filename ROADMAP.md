@@ -1,5 +1,16 @@
 # Boss — simulation development roadmap
 
+## Released v21.4a — Autonomous manager spending plans and successor training
+
+- Fixed GM authority input resetting after one character by staging numeric drafts locally and applying all valid fields as one save; added **Custom** plus Fresh/Manager/Senior manager budget templates.
+- 90-day limits (Fresh / Manager / Senior): coaching $24/$30/$38; successor training $24/$30/$38; wellbeing $12/$15/$19; per-action $8/$10/$13; CEO-defined staff target 1–25.
+- Appointing a GM now recommends Fresh but does **not** authorize expense until CEO explicitly applies the preset. Existing saves remain on prior authority.
+- GM trains an eligible successor with real $8 expense and 14-day cooldown, builds team for $6 when stress requires it and budget permits, alongside prior $4 weekly coaching.
+- Tracks reviews, headcount and successor readiness without fabricating promotions, reporting lines or payroll; all charges reconciled to single group ledger.
+- **Follow-on v21.4b:** introduce actual Team Lead 3-person subteams, manager spans of 5 leads, senior manager-to-director gates, Corporate Sales/Marketing/Product/Operations managers and explicit costed central employee-day allocation to unit GMs. [Design](docs/V21_MANAGER_CAREER_PLAN.md).
+- **Release evidence:** [PR #28](https://github.com/BSAVCI1/Boss/pull/28) merged as `a4f624d884bab6d0b4abdd05480570e8faef59d8`. [Production regression](https://github.com/BSAVCI1/Boss/actions/runs/39072079093) and [Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39072078922) passed. 390px and 414px mobile, 730-day, IndexedDB and accounting checks passed; the owner's original Safari save was not accessed.
+
+
 ## Released v21.3.1 — Repeating mobile controls reliability correction
 
 - Fix the native General Manager / dedicated employee picker closing during 1×/8× game updates; apply shared interaction shield to all editable controls instead of one field.

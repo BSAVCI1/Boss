@@ -9,7 +9,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,open:false,innerHTML:""
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,delegateWork,assign,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
+const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,delegateWork,assign,beginEditableInteraction,finishEditableInteraction,editableInteractionPending,renderBusinessUnits,refresh,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exported+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -614,5 +614,34 @@ test("v21.3 unit vacancy and market opportunity surface to CEO",()=>{
  reconcile(s);
 });
 console.log("Boss v21.3 dedicated-capacity regression checks passed.");
+
+test("v21.3.1 native GM dropdown survives live simulated financial and roster changes",()=>{
+ const s=init();fund(s,1000);s.day=900;s.deals=[];
+ assert.equal(G.executiveLaunch("product"),true);assert.equal(G.unitActivate("product"),true);
+ G.renderBusinessUnits();
+ const before=el("business-units").innerHTML;
+ assert.ok(before.includes("unit-gm-product")&&before.includes("unit-employee-product"));
+ const select={isConnected:true,disabled:false,closest:()=>select};
+ G.beginEditableInteraction({target:select});
+ assert.equal(G.editableInteractionPending(),true);
+ s.team[0].t="study";s.exec.units[0].revenue+=5;
+ G.renderBusinessUnits();
+ assert.equal(el("business-units").innerHTML,before,"native dropdown must not be recreated");
+ G.refresh();
+ assert.equal(el("business-units").innerHTML,before,"game refresh must not close selection");
+ G.finishEditableInteraction({target:select});
+ assert.equal(G.editableInteractionPending(),true,"native picker dismissal needs short grace period");
+ reconcile(s);
+});
+test("v21.3.1 input typing retains its DOM during roster redraw",()=>{
+ const s=init();s.day=590;
+ G.renderStructure();const people=el("people").innerHTML;
+ const input={isConnected:true,disabled:false,closest:()=>input};
+ G.beginEditableInteraction({target:input});
+ s.team[0].role.primary="mkt";s.day+=1;G.renderStructure();
+ assert.equal(el("people").innerHTML,people,"typing should not reconstruct interactive sections");
+ G.finishEditableInteraction({target:input});
+ reconcile(s);
+});
 
 console.log("Boss v20 functional and persistence checks passed.");

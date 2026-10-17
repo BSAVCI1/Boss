@@ -1,5 +1,13 @@
 # Boss
 
+## Boss v21.1 — Operating Units Foundation (PR #24 · release candidate)
+
+Building on the verified v20.3 CEO interface, the CEO can organize an **already purchased** service portfolio into an operating unit **without another $120 charge**, appoint an eligible General Manager and transfer available employees by unique ID. Staff members belong to only one unit, and dedicated unit teams no longer appear in shared department spans; incompatible department-manager or Executive Assistant appointments are blocked. Existing signed deals stay untouched when transferring. A new deal can be attributed to the operating unit, and its **forward-only** delivered revenue, direct cost, shared delivery work and allocated daily staff payroll are shown as a unit operating view. There is still only **one legal company and one cash/ledger system**; units are not independent subsidiaries or bank accounts.
+
+**State safety:** Upgrade the existing `boss20` state additively; keep old `boss19`, localStorage and IndexedDB data. No auto-conversion, invented past results, duplicated payroll or second investment. Changes are confirmed only after a durable save; an unwritable browser rolls them back in place. Active-contract assignees cannot transfer until the contract is completed. Real-browser checks cover the 390px UI and quota-failure reload; full financial and 730-day checks are release gates.
+
+**Not yet v21.2–v21.4:** Unit GMs do not have separate hiring envelopes, autonomous staffing budgets, fully independent sales pipelines, or monthly reviews. Those are future steps, followed by v22 rented/purchased offices, v23 investment/acquisition/valuation, and v24 factories. Development and QA: [PR #24](https://github.com/BSAVCI1/Boss/pull/24). Do not treat this release candidate as deployed until checks, merge and GitHub Pages verification pass.
+
 ## Boss v20.3 — CEO clarity & organizational audit (development PR #23)
 
 Following the owner's confirmed iPhone Day 2864 extended-storage recovery, the next safe incremental release clarifies leadership and departmental governance before adding genuinely autonomous business units. The Team roster will show each person's **appointed role** (Director, Department Manager, Team Manager or Executive Assistant) separately from their **career grade**. Department authority is one shared budget across the department; subordinate managers currently coach using that budget, while directors own authorized hiring/training and department-wide wellbeing. Headcount authorization does not limit team reporting span.

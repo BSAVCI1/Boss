@@ -9,15 +9,6 @@
 - **Release verification:** [PR #29](https://github.com/BSAVCI1/Boss/pull/29) merged at `69972b4fe6771478cd38ce82b15e9bc3734dc3e9`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39073362391) and [GitHub Pages](https://github.com/BSAVCI1/Boss/actions/runs/39073362154) passed at that commit. Automated 390/414px Chromium, IndexedDB and 730-day reconciliation tests passed; independent live-site browser run could not start because the browser-provider wallet is out of funds, and no private iPhone Safari save was inspected.
 
 
-## Released v21.4b — Evidence-based leadership growth
-
-- First Team Lead appears after five corporate staff; subsequent leads require three further staff. Promotions depend on genuine tenure/work, career progression and leadership skill, not staff count alone.
-- After three Team Leads a Manager may be appointed; five Team Leads and an experienced Manager qualify a Senior Manager; three Managers and qualified senior leadership qualify a Director. A manager's new level carries measurable ongoing wage premiums and unique reporting IDs.
-- Weekly delegated promotions use a CEO-approved additional payroll ceiling (default $0), 14-day wage runway, explicit CEO approval for exceptions, employee succession evidence, and no invented cash spending.
-- New starters see milestone advice from Executive Assistant; historical saves retain previous services, titles, contracts and ledger entries without retroactive purchase gates.
-- **Not yet delivered:** career-driven departmental hiring autonomy and true cross-unit central resource billing (v21.4c); enforced new-service and new-business eligibility gates (v21.5); offices/investments/factories (v22+).
-- **Verified:** [PR #29](https://github.com/BSAVCI1/Boss/pull/29) merged at `69972b4fe6771478cd38ce82b15e9bc3734dc3e9`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39073362391) and [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39073362154) passed for that commit. GitHub Actions covered 390/414px Chromium, 730-day cash reconciliation, fresh starts, historical save migrations, progression gates and cross-tab/save protection. The independent hosted live-browser check was unavailable due to provider wallet balance; original private iPhone Safari save was not opened.
-
 ## Released v21.4a — Autonomous manager spending plans and successor training
 
 - Fixed GM authority input resetting after one character by staging numeric drafts locally and applying all valid fields as one save; added **Custom** plus Fresh/Manager/Senior manager budget templates.

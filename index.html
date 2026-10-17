@@ -1856,14 +1856,18 @@ if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not 
 for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){performanceFinish(d,true,feeFor(d));ceoLineFinish(d,true,feeFor(d));orgTrackDelivery(d,true);const payout=feeFor(d);biProjectEnd(d,true,payout);S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" completed "+biCurrency(payout)+" "+SECTORS[d.sector].name+" project; "+(d.paymentTerms===0?"cash collected":"invoice issued, collection due in "+d.paymentTerms+" days")+". Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
 else if(d.dl<=0){performanceFinish(d,false);ceoLineFinish(d,false);orgTrackDelivery(d,false);biProjectEnd(d,false);S.rep=Math.max(0,S.rep-3);recordCustomer(d,false);logIt("Missed the deadline for "+d.cl+". Reputation and customer loyalty dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
 assistantDeadlineAlerts();economyDay();ideaProgressDay();
-const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(S.cash,salary);S.cash-=actuallyPaid;
+unitPayrollDay();
+ const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(S.cash,salary);S.cash-=actuallyPaid;
 biMoney("payroll",salary,"Daily payroll",actuallyPaid);
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
 labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev)return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;performanceAssign(d,p);}save();renderStructure();refresh();}
-function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p));}
-function bestIdle(d,department=null){return S.team.filter(p=>(!department||p.department===department)&&p.id!==S.ops.assistantId&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
+function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;
+ const u=d.unitKey?unitOfPerson(p.id):null;
+ const unitFit=d.unitKey?(u?.key===d.unitKey?1.08:u?.key?.88:1):1;
+ return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*unitFit);}
+function bestIdle(d,department=null){return S.team.filter(p=>(!department||p.department===department)&&p.id!==S.ops.assistantId&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&!(S.exec?.units||[]).some(u=>u.managerId===p.id)&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
 function forecast(d){const assigned=person(d.w);const candidate=assigned||bestIdle(d);const speed=workerSpeed(candidate,d);const remaining=Math.max(0,d.work-d.prog);const eta=speed?Math.ceil(remaining/speed):null;const slack=eta===null?null:d.dl-eta;const risk=!assigned?"unassigned":slack<0?"critical":slack<=4?"watch":"ok";return{d,assigned,candidate,eta,slack,risk,fit:speed};}
 function rankedProjects(){const priority=S.ops.policy.priority;return S.deals.map(forecast).sort((a,b)=>{
 if(priority==="deadline")return a.d.dl-b.d.dl||b.fit-a.fit;
@@ -2208,6 +2212,13 @@ function ceoLineFinish(d,success,payout=0){
  if(success){line.delivered=(line.delivered||0)+1;line.revenue=(line.revenue||0)+payout;line.qualityTotal=(line.qualityTotal||0)+(Number(d.quality)||75);}
  else line.missed=(line.missed||0)+1;
  line.lastDeliveryDay=S.day;
+ const u=S.exec.units.find(x=>x.key===d.unitKey&&x.since<=(d.bookedAt??S.day));
+ if(u){
+  u.revenue+=success?payout:0;
+  u.directCost+=d.directCost||0;
+  if(d.w&&!u.staffIds.includes(d.w))u.sharedLaborCost+=d.laborCost||0;
+  if(success){u.delivered++;u.qualityTotal+=Number(d.quality)||75;}else u.missed++;
+ }
 }
 function chooseServiceOffer(d){
  const lines=S.exec.lines.filter(x=>x&&SERVICE_OFFERS[x.key]&&x.since<=S.day);
@@ -2220,12 +2231,18 @@ function chooseServiceOffer(d){
  const level=best.delivered>=10?2:best.delivered>=3?1:0;
  const [name,price,scope,target]=SERVICE_OFFERS[best.key][level];
  d.serviceLine=best.key;d.serviceOffer=name;d.serviceTier=level+1;d.need=SERVICE_LINES[best.key].need;d.bookedAt=S.day;
+ const allocatedUnit=S.exec.units.find(u=>u.key===best.key&&u.since<=S.day);if(allocatedUnit)d.unitKey=allocatedUnit.key;
  d.serviceQualityTarget=target;d.base=Math.round(d.base*price);d.work=Math.ceil(d.work*scope);d.dl=Math.ceil(d.dl*scope);
 }
 
 function unitOfPerson(id){return(S.exec?.units||[]).find(u=>u.staffIds.includes(id))||null;}
 function unitGMEligible(p,key){
  if(!p||p.id===S.ops.assistantId||!(p.career.rank>=1||p.career.xp>=10))return false;
+ if(DEPT_KEYS.some(k=>orgManager(k)?.id===p.id||DEPARTMENTS[k].skills.some(role=>orgSubManager(k,role)?.id===p.id)))return false;
+ const other=unitOfPerson(p.id);return !other||other.key===key;
+}
+function unitStaffEligible(p,key){
+ if(!p||p.id===S.ops.assistantId)return false;
  if(DEPT_KEYS.some(k=>orgManager(k)?.id===p.id||DEPARTMENTS[k].skills.some(role=>orgSubManager(k,role)?.id===p.id)))return false;
  const other=unitOfPerson(p.id);return !other||other.key===key;
 }
@@ -2269,7 +2286,7 @@ function unitAppoint(key,id){
 }
 function unitTransfer(key,id){
  const u=S.exec.units.find(x=>x.key===key),p=person(id);
- if(!u||!p||!unitGMEligible(p,key)||u.staffIds.includes(id)||S.deals.some(d=>d.w===id))return false;
+ if(!u||!p||!unitStaffEligible(p,key)||u.staffIds.includes(id)||S.deals.some(d=>d.w===id))return false;
  return unitCommit(()=>{
   u.staffIds.push(id);unitRecord(key,"staff",p.n+" (#"+id+") allocated to dedicated unit staff without changing salary or past contracts.");
   logIt(p.n+" joined "+SERVICE_LINES[key].name+" unit.");return true;
@@ -2298,7 +2315,7 @@ function renderBusinessUnits(){
   if(!u)return'<div class="unit-panel"><b>'+esc(SERVICE_LINES[l.key].name)+'</b><p class="small">Company-wide service portfolio · shared managers and staff.</p><button type="button" data-unit-action="activate" data-unit-key="'+l.key+'">Organize as operating unit · no repurchase</button></div>';
   const gm=person(u.managerId),staff=u.staffIds.map(id=>person(id)).filter(Boolean);
   const candidates=S.team.filter(p=>unitGMEligible(p,l.key)&&p.id!==u.managerId&&!S.deals.some(d=>d.w===p.id));
-  const transfers=S.team.filter(p=>unitGMEligible(p,l.key)&&!u.staffIds.includes(p.id)&&!S.deals.some(d=>d.w===p.id));
+  const transfers=S.team.filter(p=>unitStaffEligible(p,l.key)&&!u.staffIds.includes(p.id)&&!S.deals.some(d=>d.w===p.id));
   const releasing=staff.filter(p=>p.id!==u.managerId&&!S.deals.some(d=>d.w===p.id));
   const result=u.revenue-u.directCost-u.sharedLaborCost-u.payrollCost;
   return'<details class="unit-panel" data-unit-open="'+l.key+'" '+(open.has(l.key)?'open':'')+'><summary>'+esc(SERVICE_LINES[l.key].name)+' · operating unit · '+(gm?esc(gm.n)+" (GM)":"vacant GM")+'</summary>'+

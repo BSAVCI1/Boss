@@ -796,6 +796,7 @@ test("v21.4b Manager stage requires three experienced Team Leads and an actual r
  for(let i=0;i<8;i++){const p=G.createPerson();G.ensureCareer(p);G.ensureRole(p);G.ensureDepartment(p);G.ensurePerformance(p,0);s.team.push(p);}
  for(const p of s.team){p.perf.days=120;p.career.rank=2;p.career.xp=40;for(const skill of ["planning","delegation","coaching","communication"])p.management[skill]=66;}
  const leaders=s.team.slice(0,3);
+ for(const p of leaders)for(const skill of ["planning","delegation","coaching","communication"])p.management[skill]=85;
  for(const p of leaders)s.org.progression.appointments.push({id:p.id,level:"lead",since:100,successorId:null});
  const promoted=G.ladderEvaluation("manager");assert.equal(promoted.ready,true);assert.equal(promoted.count,3);
  const before=s.cash,expense=s.bi.totals.cashOut;
@@ -840,6 +841,7 @@ test("v21.4b Senior Manager and Director gates require verified subordinate lead
  assert.equal(g.appointments.filter(n=>n.level==="senior").length,1);
  assert.equal(G.ladderEvaluation("director").ready,false,"Director requires three managers");
  for(const p of s.team.slice(6,9))g.appointments.push({id:p.id,level:"manager",since:100,successorId:null});
+ s.day+=120; // Allow senior manager to accumulate the required experience before Director.
  const director=G.ladderEvaluation("director");
  assert.equal(director.ready,true);assert.equal(director.count,3);
  assert.equal(G.ladderPromote("director",director.candidateId,true),true);

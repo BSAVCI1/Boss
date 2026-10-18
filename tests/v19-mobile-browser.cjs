@@ -253,7 +253,8 @@ document.addEventListener("DOMContentLoaded",async()=>{
    result.checks.executiveNoAutomaticCEOAppointment=!!byId("executive-officer-count")?.textContent?.includes("0/3 appointed");
    // v21.4c: corporate manager budget remains editable throughout a live mobile refresh.
    document.querySelector('.bottom-nav button[data-view="team"]').click();
-   const hiringField=byId("management-hire-budget"),slotsField=byId("management-hire-slots");
+   const leadershipDetails=byId("leadership-details");if(leadershipDetails)leadershipDetails.open=true;
+    const hiringField=byId("management-hire-budget"),slotsField=byId("management-hire-slots");
    if(!hiringField||!slotsField)throw Error("Manager hiring authorization fields missing");
    const hiringPanel=hiringField.closest("details.aux-details");
    if(hiringPanel)hiringPanel.open=true;
@@ -379,6 +380,33 @@ async function runBrowser(){
   assert.equal(layout.result.value.stacked,true,"CEO reporting cards must remain stacked at 414px");
   assert.equal(layout.result.value.overflow,false,"No horizontal overflow at 414px");
   console.log("Boss 414px mobile layout verification:",JSON.stringify(layout.result.value));
+  // v22.4B: actual Chromium pixels, not synthetic or DOM-only screenshots.
+  // Existing input, tick, reload and IndexedDB assertions above remain mandatory.
+  const evidenceDir=path.join("reports","v22-4b-mobile");
+  fs.mkdirSync(evidenceDir,{recursive:true});
+  async function capturePeople(width,height,kind){
+    await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+    const prep=await send("Runtime.evaluate",{expression:kind==="organization"?
+     "(()=>{document.querySelector('.bottom-nav button[data-view=\"team\"]').click();const root=document.getElementById('org-explorer');root.scrollIntoView({block:'start'});return {people:document.querySelectorAll('#people details[data-employee-id]').length,tree:root.textContent.includes('CEO'),width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6}})()":
+     "(()=>{document.querySelector('.bottom-nav button[data-view=\"team\"]').click();const g=document.querySelector('#people details[data-team-group]');if(g)g.open=true;const p=g?.querySelector('details[data-employee-id]');if(p)p.open=true;const c=p?.querySelector('details[data-career-id]');if(c)c.open=true;const x=p?.querySelector('.org-career-glance');if(x)x.scrollIntoView({block:'start'});return {people:document.querySelectorAll('#people details[data-employee-id]').length,career:!!x&&x.textContent.includes('Employment grade'),width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,blockedPromotionHidden:!p?.querySelector('button[data-career=\"promote\"]')||p.querySelector('button[data-career=\"promote\"]').hidden}})()",
+      returnByValue:true});
+    const info=prep.result?.value;
+    assert.equal(info.width,width,"Wrong mobile screenshot viewport");
+    assert.equal(info.overflow,false,"People view horizontal overflow");
+    assert.ok(info.people>0,"Actual browser roster is empty");
+    assert.equal(info[kind==="organization"?"tree":"career"],true,"Actual people view missing "+kind);
+    if(kind==="career")assert.equal(info.blockedPromotionHidden,true,"Unmet promotion must be hidden");
+    await sleep(200);
+    const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+    const filename=path.join(evidenceDir,"boss-"+kind+"-"+width+"px.png");
+    assert.ok(shot.data?.length>1500,"Empty Chromium evidence");
+    fs.writeFileSync(filename,Buffer.from(shot.data,"base64"));
+    console.log("PASS screenshot "+filename+" · "+JSON.stringify(info));
+  }
+  await capturePeople(390,844,"organization");
+  await capturePeople(390,844,"career");
+  await capturePeople(414,896,"organization");
+  await capturePeople(414,896,"career");
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }

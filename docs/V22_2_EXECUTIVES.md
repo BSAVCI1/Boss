@@ -1,6 +1,6 @@
-# Boss v22.2 — Corporate Executive Leadership (Release Candidate)
+# Boss v22.2 — Corporate Executive Leadership (Released)
 
-**Release gate:** Not shipped until mandatory regression, 390/414px browser, IndexedDB reload, cash reconciliation and GitHub Pages success after merge. Core game remains offline, one HTML file, with `boss20` and existing extended IndexedDB persistence. No reset or retrospective correction of sales, projects, purchases, payroll, employees, Day, property or unit ownership.
+**Status: RELEASED 2026-10-18.** [PR #38](https://github.com/BSAVCI1/Boss/pull/38) merged at `f189a529b39dc4d78a70394d00b58e92f0078cbf`. [Production regression](https://github.com/BSAVCI1/Boss/actions/runs/39113283639) and [Pages](https://github.com/BSAVCI1/Boss/actions/runs/39113283272) passed on that exact commit, including 390/414px browser, IndexedDB reload and cash reconciliation. Core game remains offline, one HTML file, with `boss20` and existing extended IndexedDB persistence. No reset or retrospective correction of sales, projects, purchases, payroll, employees, Day, property or unit ownership.
 
 ## CEO appointments
 

@@ -9,7 +9,7 @@ function el(id){if(!els.has(id))els.set(id,{id,innerHTML:"",textContent:"",value
 const sandbox={document:{getElementById:el,querySelector:()=>el("x"),querySelectorAll:()=>[],body:el("body"),documentElement:el("html"),activeElement:null,addEventListener(){}},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},setTimeout:()=>1,clearTimeout(){},clearInterval(){},requestAnimationFrame:()=>1,getComputedStyle:()=>({getPropertyValue:()=>""}),Date,Math,JSON,Set,Map,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exposed="fresh,get:()=>S,set:v=>S=v,load,save,createDeal,feeFor,estimatedFee,worldIndicativeFee,worldTenderPreview,renderPipeline,renderCEODecisions,renderCEOFocus,ceoDecisionInventory,managementOps,renderBriefing,renderExecutiveWeekly,ceoPremisesOpportunity,propertyCapacity,propertyPeople,propertyReadiness,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary";
+const exposed="fresh,get:()=>S,set:v=>S=v,load,save,createDeal,feeFor,estimatedFee,worldIndicativeFee,worldTenderPreview,renderPipeline,renderCEODecisions,renderCEOFocus,ceoDecisionInventory,managementOps,renderBriefing,renderExecutiveWeekly,ceoPremisesOpportunity,propertyCapacity,propertyPeople,propertyReadiness,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,canonicalReporting,teamReportingGroups,renderOrgExplorer,clearCareerRequirements,coachCareerStatus,careerAction";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exposed+"};})();",sandbox,{timeout:5000});
 const G=sandbox.G;
 function fresh(){store.clear();G.fresh();return G.get();}
@@ -110,4 +110,88 @@ test("Optional market opportunity is excluded from mandatory approval count",()=
  assert.equal(G.ceoDecisionInventory().approvals,0);
  money(s);
 });
-console.log("v22.4 CEO experience batches 1-3 regression passed");
+
+test("v22.4B fresh founder has a pure canonical reporting roster and three real vacancies",()=>{
+ const s=fresh(),before=JSON.stringify(s),view=G.canonicalReporting();
+ assert.equal(view.entries.length,3);assert.equal(view.groups.flatMap(g=>g.people).length,3);
+ assert.equal(new Set(view.groups.flatMap(g=>g.people).map(p=>p.id)).size,3);
+ assert.ok(view.entries.every(x=>x.supervisor===null&&x.unit===null));
+ G.renderOrgExplorer(view);
+ const tree=el("org-explorer").innerHTML;
+ assert.ok(tree.includes("CEO · founder")&&tree.includes("Vacant"));
+ assert.ok(tree.includes("Commercial")&&tree.includes("Delivery"));
+ assert.equal(JSON.stringify(s),before,"Viewing the hierarchy must be read-only");
+ assert.equal(s.cash,90);money(s);
+});
+test("v22.4B mature Day-4704 roster has one person per ID across CEOs, departments and GMs",()=>{
+ const s=fresh();staff(s,34);s.day=4704;
+ const commercial=s.team[4],salesBoss=s.team[5],gm=s.team[9],unitStaff=s.team[10],lead=s.team[11],report=s.team[12];
+ commercial.department="commercial";commercial.role.primary="lead";
+ salesBoss.department="commercial";salesBoss.role.primary="lead";salesBoss.role.previousPrimary="sales";
+ lead.department="delivery";lead.role.primary="lead";
+ report.department="delivery";report.role.primary="ops";
+ s.org.departments.commercial.managerId=commercial.id;
+ s.org.departments.commercial.subManagers.sales=salesBoss.id;
+ gm.department="delivery";unitStaff.department="delivery";
+ s.exec.units.push({key:"technology",managerId:gm.id,staffIds:[gm.id,unitStaff.id],since:250});
+ s.exec.officers.hr.id=s.team[14].id;s.exec.officers.cfo.id=s.team[15].id;s.exec.officers.coo.id=s.team[16].id;
+ s.ops.assistantId=s.team[17].id;
+ s.org.progression.appointments.push({id:lead.id,level:"lead",since:150});
+ s.org.progression.reportTo[report.id]=lead.id;
+ const immutable=JSON.stringify(s),view=G.canonicalReporting(),flat=view.groups.flatMap(g=>g.people);
+ assert.equal(view.entries.length,34);assert.equal(flat.length,34);
+ assert.equal(new Set(flat.map(p=>p.id)).size,34);
+ const of=id=>view.entries.find(x=>x.p.id===id);
+ assert.equal(of(salesBoss.id).supervisor,commercial.id);
+ assert.equal(of(unitStaff.id).supervisor,gm.id);
+ assert.equal(of(report.id).supervisor,lead.id);
+ for(const role of ["hr","cfo","coo"])assert.equal(of(s.exec.officers[role].id).supervisor,null);
+ assert.equal(of(gm.id).supervisor,null);
+ assert.equal(of(unitStaff.id).owner,"Technology Services"===of(unitStaff.id).owner?"Technology Services":of(unitStaff.id).owner);
+ G.renderOrgExplorer(view);
+ const html=el("org-explorer").innerHTML;
+ assert.ok(html.includes("CEO · founder")&&html.includes("Dedicated operating business"));
+ assert.ok(html.includes("data-employee-jump"));
+ assert.equal(JSON.stringify(s),immutable,"Read-only hierarchy cannot mutate 4704-day history or contracts");
+ money(s);
+});
+test("v22.4B invalid/cyclic saved reporting links cannot duplicate or invent workers",()=>{
+ const s=fresh();staff(s,8);const a=s.team[3],b=s.team[4];
+ a.role.primary="lead";b.role.primary="lead";a.department="commercial";b.department="commercial";
+ s.org.progression.appointments.push({id:a.id,level:"lead",since:1},{id:b.id,level:"lead",since:1});
+ s.org.progression.reportTo[a.id]=b.id;s.org.progression.reportTo[b.id]=a.id;
+ const before=JSON.stringify(s),view=G.canonicalReporting();
+ assert.equal(view.entries.length,8);
+ assert.equal(new Set(view.groups.flatMap(g=>g.people).map(p=>p.id)).size,8);
+ assert.ok(view.entries.some(x=>x.source.includes("Unresolved manager")));
+ assert.equal(JSON.stringify(s),before,"Broken historic links must be explained, not rewritten");
+});
+test("v22.4B career prerequisites and blocked promotion are truthful and non-spending",()=>{
+ const s=fresh(),p=s.team[0],before=JSON.stringify(s),status=G.coachCareerStatus(p);
+ assert.equal(status.ready,false);
+ const brief=G.clearCareerRequirements(p);
+ assert.ok(brief.includes("Employment grade:")&&brief.includes("Next legitimate action"));
+ assert.ok(brief.includes("Time in current grade")||brief.includes("time in grade"));
+ assert.ok(brief.includes("No leadership appointment"));
+ assert.ok(brief.includes("unmerged v22.3 PR #39"));
+ assert.equal(JSON.stringify(s),before);
+ G.careerAction(p.id,"promote");
+ assert.equal(p.career.rank,0);assert.equal(s.cash,90);money(s);
+});
+test("v22.4B genuine cash and practice gates remain separate from leadership appointment",()=>{
+ const s=fresh(),p=s.team[0];s.day=250;
+ p.career.rank=0;p.career.gradeSince=0;p.career.xp=50;
+ const skill=p.role.primary==="lead"?"sales":p.role.primary;
+ p.s[skill]=4.0;p.career.practice.bySkill[skill]=100;
+ const enough=G.coachCareerStatus(p);
+ assert.equal(enough.ready,true,"Actual built-in eligibility should be used");
+ assert.ok(G.clearCareerRequirements(p).includes("Cost"));
+ const before=JSON.stringify(s);
+ const view=G.canonicalReporting();assert.equal(JSON.stringify(s),before);
+ assert.ok(view.entries.find(x=>x.p.id===p.id).supervisor===null);
+ // Distinct organizational appointment cannot be granted by having career-grade criteria.
+ assert.equal(s.org.progression.appointments.length,0);
+ assert.equal(s.exec.officers.hr.id,null);money(s);
+});
+
+console.log("v22.4B reporting, career and prior CEO batches regression passed");

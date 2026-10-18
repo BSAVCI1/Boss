@@ -2601,6 +2601,8 @@ $("ceo-priority-card").addEventListener("click",e=>{
  if(target==="property"){
   $("property-options").open=true;navigate("growth");
   requestAnimationFrame(()=>$("property-panel").scrollIntoView({block:"start"}));
+ }else if(target==="decisions"){
+  $("executive-inbox-panel").scrollIntoView({block:"start"});
  }else if(target==="growth")navigate("growth");
 });
 $("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
@@ -3914,12 +3916,21 @@ function ceoPremisesOpportunity(){
  const ready=types.filter(k=>propertyReadiness(k).ready),best=ready[0]||null;
  return{people,capacity,best,quote:best?propertyQuote(best):null,options:ready.length};
 }
+// v22.4 batch 3: centralize what truly awaits CEO review.
+// Optional opportunities and operational warnings are NOT approvals.
+function ceoDecisionInventory(){
+ const hiring=managementOps().requests.filter(x=>x.status==="open");
+ const unit=S.exec.unitRequests.filter(x=>x.status==="open");
+ const proposals=S.exec.proposals||[];
+ const step=ladderNext(),payroll=S.team.reduce((n,p)=>n+dailySalary(p),0);
+ const promotion=step?.ready&&S.cash>=(payroll+step.incremental*S.mod.cost)*14?step:null;
+ return{hiring,unit,proposals,promotion,optional:!!S.world.activeEvent,
+  approvals:hiring.length+unit.length+proposals.length+(promotion?1:0)};
+}
 function renderCEOFocus(){
  const root=$("ceo-priority-content");if(!root||editableInteractionPending())return;
  const office=ceoPremisesOpportunity();
- const corporateRequests=managementOps().requests.filter(x=>x.status==="open").length;
- const unitRequests=S.exec.unitRequests.filter(x=>x.status==="open").length;
- const actualApprovals=corporateRequests+unitRequests;
+ const decisions=ceoDecisionInventory();
  const unitsWithMissingWork=S.exec.units.filter(u=>S.deals.some(d=>d.unitKey===u.key&&!d.w)).length;
  const delegated=Object.keys(EXECUTIVE_ROLES).filter(k=>!!executiveOfficer(k,"active"));
  const upcoming=companyDirection();
@@ -3928,7 +3939,9 @@ function renderCEOFocus(){
   (office.best?'A qualified '+esc(PROPERTY_TYPES[office.best].name)+' offers '+PROPERTY_TYPES[office.best].capacity+' seats at '+biCurrency(office.quote.price)+' setup or purchase and '+biCurrency(office.quote.dayCost)+'/game-day ongoing cost.':'Expansion is locked: review missing property milestones.')+'</p>'+
   '<button type="button" data-ceo-nav="property">Compare premises and decide →</button>':
   '<h3>Strategic chapter · '+esc(upcoming.title)+'</h3><p>'+esc(upcoming.detail)+'</p><button type="button" data-ceo-nav="growth">Review next growth milestone →</button>';
- const html='<div class="unit-metrics"><span>'+biCurrency(S.cash)+' cash</span><span>'+S.team.length+' colleagues</span><span>'+actualApprovals+' CEO staffing requests</span></div>'+
+ const html='<div class="unit-metrics"><span>'+biCurrency(S.cash)+' cash</span><span>'+S.team.length+' colleagues</span><span>'+decisions.approvals+' CEO approvals pending</span></div>'+
+ (decisions.approvals?'<p class="small"><button type="button" data-ceo-nav="decisions">Review '+decisions.approvals+' approval request'+(decisions.approvals===1?'':'s')+' →</button></p>':'')+
+ (decisions.optional?'<p class="small">1 optional market opportunity · separate from required approvals</p>':'')+
  '<div class="exec-proposal">'+priority+'</div>'+
  '<p class="small"><b>Management is handling:</b> '+(delegated.length?delegated.map(k=>EXECUTIVE_ROLES[k].short).join(', ')+' with active mandates':'Existing managers within approved authority')+
  (unitsWithMissingWork?' · '+unitsWithMissingWork+' GM unit(s) coordinating unassigned work':'')+
@@ -3937,11 +3950,8 @@ function renderCEOFocus(){
 }
 function renderCEODecisions(){
  const root=$("ceo-action-center");if(!root||editableInteractionPending())return;
- const hiring=managementOps().requests.filter(x=>x.status==="open");
- const unit=S.exec.unitRequests.filter(x=>x.status==="open");
- const offer=S.world.activeEvent,step=ladderNext();
- const payroll=S.team.reduce((n,p)=>n+dailySalary(p),0);
- const promotion=step?.ready&&S.cash>=(payroll+step.incremental*S.mod.cost)*14?step:null;
+ const decisions=ceoDecisionInventory();
+ const {hiring,unit,promotion}=decisions,offer=S.world.activeEvent;
  const requests=[];
  for(const req of unit){const u=S.exec.units.find(x=>x.key===req.key);
   const eligible=managementCashReady(req)&&!!u&&u.managerId===req.managerId&&u.staffIds.length<Math.min(25,u.plan.staffingTarget||5);
@@ -3964,14 +3974,14 @@ function renderCEODecisions(){
  if(offer)requests.push('<div class="exec-proposal"><b>Market opportunity · optional</b><p>Offer through Day '+offer.until+
  '. No compulsory penalty for declining.</p><div class="buttons"><button type="button" data-ceo-action="opportunity" data-result="act" '+
  (worldOfferEligibility(offer).allowed?"":"disabled")+'>Take opportunity</button><button type="button" data-ceo-action="opportunity" data-result="pass">Pass</button></div></div>');
- const escalation=requests.length;const cfoGuard=executiveOfficer("cfo","protect")&&!executiveFinanceGuard(0);
+ const escalation=requests.length-(offer?1:0);const cfoGuard=executiveOfficer("cfo","protect")&&!executiveFinanceGuard(0);
  const highHeadcount=S.team.length>=15,units=S.exec.units.length;
  const unfilled=Object.keys(EXECUTIVE_ROLES).filter(k=>!person(S.exec.officers[k]?.id));
  const recommendations=unfilled.filter(k=>(k==="coo"&&units>=2)||(k==="hr"&&highHeadcount)||(k==="cfo"&&S.market.completed>=20));
  const leadership=recommendations.length?'<p class="small"><b>Unfilled executive offices:</b> '+recommendations.map(k=>EXECUTIVE_ROLES[k].short).join(', ')+'. Review qualification milestones before appointing a real colleague; no spending rights are implicit.</p>':"";
  const execOverdue=Object.entries(S.exec.officers).filter(([role,o])=>person(o.id)&&o.mandate&&S.day>=o.authoritySince+90);
  const upcoming=execOverdue.length?'<p class="small">Expired executive mandates: '+execOverdue.map(([role])=>EXECUTIVE_ROLES[role].short).join(', ')+'. Renew explicitly in Executive leadership before managers resume delegated decisions.</p>':'';
- const markup='<div class="lead"><b>CEO decision center</b><span class="small">'+escalation+' actionable decisions</span></div>'+
+ const markup='<div class="lead"><b>CEO decision center</b><span class="small">'+escalation+' approvals here'+(offer?' · 1 optional opportunity':'')+'</span></div>'+
  (requests.length?requests.join(""):'<p class="small">No CEO exceptions requiring an approval. GMs and department managers continue within authorized limits.</p>')+
  (cfoGuard?'<p class="small risk-watch">CFO · cash protection: delegated spending paused until payroll + premises costs have 30 days of runway. CEO direct exceptions retain their existing eligibility rules.</p>':'')+
  leadership+upcoming+'<p class="small" id="ceo-action-status" role="status">Approving any request posts real costs only after durable saving.</p>';

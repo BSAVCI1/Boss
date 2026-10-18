@@ -255,26 +255,27 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .unit-panel .filter-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
 @media(max-width:430px){.unit-panel .filter-grid{grid-template-columns:1fr}.unit-panel{padding:9px}}
 @media(max-width:700px){.ceo-office-grid{grid-template-columns:minmax(0,1fr)}.ceo-office-grid>div{min-width:0}.ceo-office-grid>div:last-child{padding:9px 11px}.ceo-report{overflow-wrap:anywhere}.ceo-report button{max-width:100%}}
+.property-map{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px;margin:12px 0}.property-room{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--accentWash);min-width:0}.property-room .lead{gap:6px}.property-room b{font-size:13px}.property-people{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.property-people span{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:26px;border-radius:7px;background:var(--bar);font-size:15px}.property-choice{border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0}.property-choice p{margin:6px 0}.property-choice button{width:100%;margin:4px 0}.property-choice .small{overflow-wrap:anywhere}@media(max-width:430px){.property-map{grid-template-columns:1fr}.property-choice{padding:9px}}
 </style>
 </head>
 <body>
 <main id="game-root">
 <header class="app-header"><h1>Boss</h1><div class="compact-controls" id="controls">
-<label for="speed-select">Speed</label><select id="speed-select" aria-label="Simulation speed"><option value="1">1×</option><option value="3">3×</option><option value="8">8×</option></select><button type="button" id="pause" aria-pressed="false">Pause</button></div></header>
+<label for="speed-select">Speed</label><select id="speed-select" aria-label="Simulation speed"><option value="1">1× · Standard</option><option value="3">3× · Fast</option><option value="8">8× · Turbo</option></select><button type="button" id="pause" aria-pressed="false">Pause</button></div></header>
 <div class="save-toolbar"><span id="save-state" class="save-state" aria-live="polite">Checking saved game…</span><button id="export-save" type="button" class="save-export">Export game backup</button></div><div id="save-warning" class="save-error" role="alert" hidden></div>
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
 <div class="card ceo-office"><div class="eyebrow">CEO · COMPANY IDENTITY</div><h2 id="company-name">Business Services Group</h2><p id="company-identity"></p><div class="ceo-office-grid"><div><b>My direct reports</b><div id="ceo-direct-reports"></div></div><div><b>Executive Assistant</b><div id="ceo-assistant"></div></div></div></div>
 <div class="card ceo-direction"><div class="lead"><b>Your 90-day direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p><p id="ceo-direction-confirm" class="small" role="status" aria-live="polite"></p></div>
-<div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><details class="aux-details" id="ea-weekly-report"><summary>Executive Assistant · weekly business briefing</summary><div id="ea-weekly-body"></div></details><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
+<div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><details class="aux-details" id="ea-weekly-report"><summary>Executive Assistant · weekly business briefing</summary><div id="ea-weekly-body"></div></details><div id="ceo-action-center" aria-label="CEO approvals and exceptions"></div><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
 <div class="card game-desk" id="game-desk">
 <div class="lead"><span class="eyebrow">YOUR COMPANY STORY</span><span class="game-chapter" id="game-chapter">Founder</span></div>
 <h2 id="brief-headline">Your company at a glance</h2><p class="overview-copy" id="brief-summary">Your team is getting started.</p>
 <div class="overview-metrics"><span id="brief-projects">0 projects</span><span id="brief-pipeline">0 in pipeline</span><span id="brief-team">Team ready</span></div>
 <div class="game-mission" id="game-mission"><div class="eyebrow">NEXT CHALLENGE</div><strong id="game-goal">Build your company</strong><p id="game-goal-hint">Choose your next step.</p><div class="game-goal-track"><span id="game-goal-bar"></span></div><div class="game-goal-progress" id="game-goal-progress"></div></div>
-<div class="game-actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
-<div class="game-scene"><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div></div><div class="game-story" id="game-story" aria-live="polite"></div><div id="company-stage-today" class="game-stage-direction" aria-live="polite"></div>
+<p class="small" id="speed-explainer">Standard · 2.4 seconds per game day. Pause any time; Skip advances up to seven game days.</p><div class="game-actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
+<details class="aux-details" id="campus-visual" open><summary>Live company campus · hide animation to save battery</summary><div class="game-scene"><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office showing active employees and work"></canvas></div></div></details><div class="game-story" id="game-story" aria-live="polite"></div><div id="company-stage-today" class="game-stage-direction" aria-live="polite"></div>
 <details class="aux-details" id="game-journey"><summary>My company journey</summary><div id="game-journey-map"></div></details>
 </div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div>
 <details class="aux-details game-advanced" id="ceo-records"><summary>Coach &amp; company records</summary>
@@ -372,6 +373,12 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <section aria-labelledby="market-title"><h2 id="market-title">Choose your direction</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><details class="aux-details" id="sector-explore"><summary>Explore customer markets</summary><div id="sector-options" class="sector-buttons"></div></details><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
 
 <section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Purchased service lines start as shared service portfolios. You can now organize a purchased line into an operating unit below, appoint a General Manager and allocate dedicated employees. These units are internal operating divisions, not independent subsidiaries or separate bank accounts. Company cash and financial records remain consolidated; unit results only track future work. Shared department budgets and advanced unit delegations evolve in later releases. Revenue is never counted twice.</p><div id="company-unlock-guide" class="filter-note"></div><p id="company-launch-status" class="small" role="status"></p><div id="business-lines"></div><div id="business-units" aria-label="Operating unit management"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">New launches require proven delivery, leadership, qualified staffing and financial runway. Previously purchased lines remain yours. No future revenue is guaranteed.</p></details></section>
+<section class="card" id="property-panel" aria-label="Company offices and buildings"><div class="lead"><b>Offices &amp; company property</b><span class="small" id="property-summary">Distributed work</span></div>
+<p class="small">Lease office space, buy company buildings and open dedicated operating-unit sites. Every choice uses real company cash, one-time investment or setup cost and ongoing rent or upkeep. Existing staff and businesses stay intact.</p>
+<div id="property-overview"></div><details class="aux-details" id="property-options"><summary>Compare premises &amp; approve a move</summary><label for="property-location">Location for next lease or purchase</label>
+<select id="property-location"><option value="park">Business park · balanced</option><option value="central">City center · premium</option><option value="regional">Regional hub · value</option></select>
+<p id="property-location-explain" class="small"></p><div id="property-purchase-options"></div></details><div id="property-status" class="small" role="status"></div>
+</section>
 <section aria-labelledby="world-title"><h2 id="world-title">Your rivals</h2>
 <div class="card"><div id="game-rivals" class="game-rivals"></div><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
 
@@ -549,7 +556,11 @@ const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let S,spd=1,paused=false,selected=[],ideaMessage="",avatars=new Map(),clock,structural="",lastIdeas="",logSignature="",sectorSignature="",customerSignature="";
 const projectExpanded=new Set(),employeeExpanded=new Set(),careerExpanded=new Set(),roadmapExpanded=new Set(),peopleGroupExpanded=new Set(["ceo"]);
-function ensureViewState(s){if(!s.ui||typeof s.ui!=="object")s.ui={};for(const k of ["employees","careers","roadmaps"])if(!Array.isArray(s.ui[k]))s.ui[k]=[];s.ui.productivityOpen=!!s.ui.productivityOpen;if(![1,3,8].includes(s.ui.speed))s.ui.speed=1;}
+function ensureViewState(s){if(!s.ui||typeof s.ui!=="object")s.ui={};for(const k of ["employees","careers","roadmaps"])if(!Array.isArray(s.ui[k]))s.ui[k]=[];s.ui.productivityOpen=!!s.ui.productivityOpen;s.ui.campusOpen=s.ui.campusOpen!==false;if(![1,3,8].includes(s.ui.speed))s.ui.speed=1;if(!["park","central","regional"].includes(s.ui.propertyLocation))s.ui.propertyLocation="park";
+ if(!s.ui.unitFieldDrafts||typeof s.ui.unitFieldDrafts!=="object"||Array.isArray(s.ui.unitFieldDrafts))s.ui.unitFieldDrafts={};
+ if(!s.ui.unitSelectDrafts||typeof s.ui.unitSelectDrafts!=="object"||Array.isArray(s.ui.unitSelectDrafts))s.ui.unitSelectDrafts={};
+ if(!s.ui.authorityDrafts||typeof s.ui.authorityDrafts!=="object"||Array.isArray(s.ui.authorityDrafts))s.ui.authorityDrafts={};
+}
 let orgControlsSignature="";let activeView="today";const viewScroll={today:0,work:0,team:0,growth:0};let attentionSignature="";
 let canvas=$("office"),ctx=canvas.getContext("2d");
 const LAB_TOPICS={
@@ -1221,10 +1232,11 @@ if(!s.team.some(p=>p.id===s.ops.assistantId))s.ops.assistantId=null;
 if(!Number.isFinite(s.ops.handled))s.ops.handled=0;
 if(!Number.isFinite(s.ops.assigned))s.ops.assigned=0;
 if(s.ops.assistantId){const assistant=s.team.find(p=>p.id===s.ops.assistantId);if(assistant){for(const d of s.deals)if(d.w===assistant.id)d.w=null;assistant.t="assist";}}
-if(!s.flow){s.flow={nextLead:s.day+12,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()};s.nextEv=Math.max(s.nextEv,s.day+28);for(const d of s.deals)d.dl+=Math.floor(d.work*.6);}
+if(!s.flow){s.flow={nextLead:s.day+12,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now(),lastInterruptDay:s.day};s.nextEv=Math.max(s.nextEv,s.day+28);for(const d of s.deals)d.dl+=Math.floor(d.work*.6);}
 if(!Number.isFinite(s.flow.nextLead))s.flow.nextLead=s.day+12;
 if(!Number.isFinite(s.flow.lastLeadAt))s.flow.lastLeadAt=Date.now();
 if(!Number.isFinite(s.flow.lastInterruptAt))s.flow.lastInterruptAt=Date.now();
+if(!Number.isFinite(s.flow.lastInterruptDay))s.flow.lastInterruptDay=s.day;
 s.flow.focus=!!s.flow.focus;
 if(!s.market)s.market={open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}};
 if(!Array.isArray(s.market.open)||!s.market.open.length)s.market.open=["hospitality","retail"];
@@ -1619,7 +1631,7 @@ function managementReviewMonth(){
 function managementSetHiringPolicy(amount,slots){
  if(!Number.isInteger(amount)||amount<0||amount>10000||!Number.isInteger(slots)||slots<0||slots>20)return false;
  return unitCommit(()=>{const o=managementOps();o.since=S.day;o.days=90;o.hireBudget=amount;o.hireSpent=0;o.hireSlots=slots;o.hires=0;o.perHire=amount>=20?20:0;
- o.history.unshift({day:S.day,kind:"authorization",limit:amount,slots});managementHiringDraft=null;ladderSignature="";
+ o.history.unshift({day:S.day,kind:"authorization",limit:amount,slots});managementHiringDraft=null;delete S.ui.authorityDrafts.recruitBudget;delete S.ui.authorityDrafts.recruitSlots;ladderSignature="";
  logIt("CEO approved corporate recruiting up to "+slots+" hires and "+biCurrency(amount)+" for 90 days; no upfront cost.");return true;});
 }
 function managementRequestDecision(id,decision){
@@ -1717,7 +1729,7 @@ function ladderPromote(level,id,ceo=false){
 }
 function ladderSetAuthority(amount){
  if(!Number.isFinite(amount)||amount<0||amount>100||Math.round(amount*100)!==Math.round(amount*10000)/100)return false;
- return unitCommit(()=>{ladderSignature="";ladderBudgetDraft=null;S.org.progression.authorityDaily=amount;S.org.progression.events.push({day:S.day,action:"CEO set new-leadership payroll limit",limit:amount});return true;});
+ return unitCommit(()=>{ladderSignature="";ladderBudgetDraft=null;delete S.ui.authorityDrafts.leadership;S.org.progression.authorityDaily=amount;S.org.progression.events.push({day:S.day,action:"CEO set new-leadership payroll limit",limit:amount});return true;});
 }
 function ladderDay(){
  const g=S.org.progression;if(S.day%7||g.lastChecked===S.day)return;g.lastChecked=S.day;
@@ -1801,6 +1813,222 @@ function companyDirection(){
  return{stage,title,detail:blocked?blocked.label+" — "+blocked.detail:
   "All milestones achieved. The CEO may invest $120; launch does not guarantee demand.",unmet:missing,view:blocked&&/Team Lead|Manager/.test(blocked.label)?"team":"growth",key};
 }
+/* v22: property assets, portfolio premises and strictly game-day recurring obligations. */
+const PROPERTY_LOCATIONS={
+ park:{name:"Business park",upfront:1,daily:1,bonus:0,note:"Balanced access, collaboration and fixed costs."},
+ central:{name:"City center",upfront:1.25,daily:1.30,bonus:.025,note:"Better collaboration with higher purchase, rent and upkeep."},
+ regional:{name:"Regional hub",upfront:.85,daily:.88,bonus:-.015,note:"Lower cost, small collaboration trade-off."}
+};
+function propertyQuote(type,location=S.ui?.propertyLocation||"park"){
+ const base=PROPERTY_TYPES[type],loc=PROPERTY_LOCATIONS[location]||PROPERTY_LOCATIONS.park;
+ return base?{price:Math.round(base.price*loc.upfront),dayCost:Math.round(base.dayCost*loc.daily*100)/100,
+  boost:Math.max(.8,base.boost+loc.bonus),location:PROPERTY_LOCATIONS[location]?location:"park"}:null;
+}
+const PROPERTY_TYPES={
+ studio:{name:"Serviced office suite",kind:"lease",capacity:12,price:75,dayCost:1.5,boost:1.025},
+ office:{name:"Regional office lease",kind:"lease",capacity:24,price:220,dayCost:3,boost:1.04},
+ building:{name:"Owned office building",kind:"owned",capacity:40,price:1800,dayCost:1.2,boost:1.06},
+ hq:{name:"Group headquarters",kind:"owned",capacity:80,price:7200,dayCost:3,boost:1.09},
+ satellite:{name:"Operating-unit satellite",kind:"lease",capacity:10,price:100,dayCost:1.1,boost:1.04}
+};
+let propertyViewSignature="";
+function ensureProperties(state){
+ const e=state.exec;if(!e.property||typeof e.property!=="object"){
+  // Forward-only migration: avoid suddenly crowding a 2,000-day established save.
+  const corporate=state.team.filter(p=>!e.units?.some(u=>u.staffIds?.includes(p.id))).length;
+  const baseline={};for(const u of e.units||[])baseline[u.key]=Math.max(6,u.staffIds?.length||0);
+  e.property={since:state.day,seq:1,baselineCapacity:Math.max(8,corporate),unitBaseline:baseline,sites:[],events:[]};
+ }
+ const p=e.property;
+ if(!Array.isArray(p.sites))p.sites=[];if(!Array.isArray(p.events))p.events=[];
+ if(!p.unitBaseline||typeof p.unitBaseline!=="object")p.unitBaseline={};
+ if(!Number.isFinite(p.baselineCapacity)||p.baselineCapacity<8)p.baselineCapacity=Math.max(8,state.team.length);
+ for(const u of e.units||[])if(!Number.isFinite(p.unitBaseline[u.key]))p.unitBaseline[u.key]=Math.max(6,u.staffIds?.length||0);
+ if(!Number.isInteger(p.seq)||p.seq<1)p.seq=Math.max(1,...p.sites.map(x=>(x.id||0)+1));
+ const validUnits=new Set((e.units||[]).map(u=>u.key)),used=new Set();
+ p.sites=p.sites.filter(x=>{
+  if(!x||!Number.isInteger(x.id)||used.has(x.id)||!PROPERTY_TYPES[x.type])return false;
+  if(x.unitKey&&(!SERVICE_LINES[x.unitKey]||!validUnits.has(x.unitKey)))return false;
+  used.add(x.id);
+  if(!["active","inactive","closed","sold"].includes(x.status))x.status="inactive";
+  if(!PROPERTY_LOCATIONS[x.location])x.location="park";
+  if(!Number.isFinite(x.dayCost)||x.dayCost<0)x.dayCost=PROPERTY_TYPES[x.type].dayCost;
+  if(!Number.isFinite(x.boost)||x.boost<0)x.boost=PROPERTY_TYPES[x.type].boost;
+  if(!Number.isFinite(x.book)||x.book<0)x.book=x.investment||0;
+  if(!Number.isFinite(x.lastDepreciation))x.lastDepreciation=x.since;
+  if(!Number.isFinite(x.arrears)||x.arrears<0)x.arrears=0;
+  if(!Number.isFinite(x.since))x.since=state.day;
+  return true;
+ }).slice(-40);
+ p.events=p.events.slice(-50);
+}
+function propertyScope(unitKey=null){return unitKey?"unit:"+unitKey:"corporate";}
+function propertyActive(unitKey=null){return S.exec.property.sites.find(x=>x.status==="active"&&propertyScope(x.unitKey||null)===propertyScope(unitKey));}
+function propertyPeople(unitKey=null){return unitKey?S.team.filter(p=>unitOfPerson(p.id)?.key===unitKey):
+ S.team.filter(p=>!unitOfPerson(p.id));}
+function propertyCapacity(unitKey=null){const p=S.exec.property;const active=propertyActive(unitKey);
+ return active?PROPERTY_TYPES[active.type].capacity:unitKey?(p.unitBaseline[unitKey]||6):p.baselineCapacity;}
+function propertyOccupancy(personN){const unitKey=unitOfPerson(personN.id)?.key||null;
+ const count=propertyPeople(unitKey).length,capacity=propertyCapacity(unitKey);
+ return{unitKey,count,capacity,overloaded:count>capacity,active:propertyActive(unitKey)};
+}
+function propertyWorkMultiplier(personN){
+ const x=propertyOccupancy(personN),bonus=x.active?x.active.boost:1;
+ // Space affects only future assignments and workdays, not signed fees or past days.
+ return bonus*(x.overloaded?Math.max(.76,x.capacity/Math.max(1,x.count)):1);
+}
+function propertyReadiness(type,unitKey=null){
+ const def=PROPERTY_TYPES[type],quote=propertyQuote(type);
+ if(!def)return{ready:false,checks:[{label:"Select an available premise",met:false}]};
+ const corp=propertyPeople().length,leaders=S.org.progression.appointments,manager=leaders.some(n=>["manager","senior","director"].includes(n.level));
+ const owned=S.exec.property.sites.some(x=>x.type===type&&!["closed","sold"].includes(x.status)&&!x.unitKey);
+ const payroll=S.team.reduce((sum,p)=>sum+dailySalary(p),0);
+ const checks=[];
+ if(type==="studio"){checks.push({label:"At least five teammates",met:corp>=5});checks.push({label:"Five completed projects",met:S.market.completed>=5});}
+ if(type==="office"){checks.push({label:"At least ten corporate teammates",met:corp>=10});
+  checks.push({label:"Appoint a Team Lead",met:leaders.some(n=>n.level==="lead")});checks.push({label:"15 delivered projects",met:S.market.completed>=15});}
+ if(type==="building"){checks.push({label:"At least twelve corporate teammates",met:corp>=12});
+  checks.push({label:"Corporate Manager appointed",met:manager});checks.push({label:"25 delivered projects",met:S.market.completed>=25});}
+ if(type==="hq"){checks.push({label:"At least twenty corporate teammates",met:corp>=20});
+  checks.push({label:"Director appointed",met:leaders.some(n=>n.level==="director")});
+  checks.push({label:"Two managed operating units",met:S.exec.units.filter(u=>person(u.managerId)).length>=2});
+  checks.push({label:"50 delivered projects",met:S.market.completed>=50});}
+ if(type==="satellite"){const u=S.exec.units.find(u=>u.key===unitKey);
+  checks.push({label:"Operating unit exists",met:!!u});
+  checks.push({label:"General Manager appointed",met:!!u&&!!person(u.managerId)});
+  checks.push({label:"Dedicated specialist assigned",met:!!u&&u.staffIds.some(id=>id!==u.managerId)});
+ }
+ checks.push({label:"Already own this property type",met:!owned}); // Prevent duplicate property purchases, not leases.
+ const reserveDays=def.kind==="owned"?30:21;
+ const available=S.cash>=quote.price+reserveDays*(payroll+quote.dayCost);
+ checks.push({label:"Cash for purchase and "+reserveDays+" payroll / premises days",met:available});
+ return{ready:checks.every(c=>c.met),checks,required:quote.price+reserveDays*(payroll+quote.dayCost)};
+}
+function propertyOpen(type,unitKey=null){
+ const def=PROPERTY_TYPES[type],quote=propertyQuote(type),state=S.exec.property,check=propertyReadiness(type,unitKey);
+ if(!def||!check.ready||propertyActive(unitKey)?.type===type)return false;
+ return unitCommit(()=>{
+  if(!propertyReadiness(type,unitKey).ready)return false;
+  const old=propertyActive(unitKey);
+  if(old)old.status=old.type==="building"||old.type==="hq"?"inactive":"closed";
+  const entry={id:state.seq++,type,unitKey,status:"active",since:S.day,
+   investment:def.kind==="owned"?quote.price:0,setup:def.kind==="lease"?quote.price:0,arrears:0,book:def.kind==="owned"?quote.price:0,lastDepreciation:S.day,price:quote.price,dayCost:quote.dayCost,boost:quote.boost,location:quote.location};
+  state.sites.push(entry);
+  S.cash-=quote.price;biMoney(def.kind==="owned"?"investment":"office_setup",quote.price,
+   (def.kind==="owned"?"Buy ":"Set up ")+def.name+(unitKey?" for "+SERVICE_LINES[unitKey].name:""));
+  state.events.unshift({day:S.day,action:"open",id:entry.id,type,unitKey,cost:quote.price,location:quote.location});
+  state.events=state.events.slice(0,50);
+  logIt("CEO "+(def.kind==="owned"?"bought ":"leased ")+def.name+" in "+PROPERTY_LOCATIONS[quote.location].name+" for "+biCurrency(quote.price)+"; recurring "+biCurrency(quote.dayCost)+"/day.");
+  propertyViewSignature="";return true;
+ });
+}
+function propertyActivate(id){
+ const site=S.exec.property.sites.find(x=>x.id===id),def=site&&PROPERTY_TYPES[site.type];
+ if(!site||def.kind!=="owned"||site.status!=="inactive")return false;
+ return unitCommit(()=>{
+  const old=propertyActive(site.unitKey||null);if(old)old.status=old.type==="building"||old.type==="hq"?"inactive":"closed";
+  site.status="active";S.exec.property.events.unshift({day:S.day,action:"activate",id});propertyViewSignature="";
+  logIt("CEO moved headquarters into the already-owned "+def.name+"; no new acquisition charge.");return true;
+ });
+}
+function propertyClose(id){
+ const site=S.exec.property.sites.find(x=>x.id===id),def=site&&PROPERTY_TYPES[site.type];
+ if(!site||site.status!=="active"||def.kind!=="lease")return false;
+ return unitCommit(()=>{
+  site.status="closed";S.exec.property.events.unshift({day:S.day,action:"close",id});propertyViewSignature="";
+  logIt("CEO ended the "+def.name+" lease. Future rent stops; unpaid obligations remain.");return true;
+ });
+}
+function propertySell(id){
+ const x=S.exec.property.sites.find(q=>q.id===id),def=x&&PROPERTY_TYPES[x.type];
+ if(!x||def.kind!=="owned"||x.status!=="inactive"||x.arrears>=.01)return false;
+ return unitCommit(()=>{
+  const book=x.book,proceeds=Math.round(book*.92*100)/100,loss=Math.max(0,book-proceeds);
+  x.status="sold";x.book=0;S.cash=+(S.cash+proceeds).toFixed(2);
+  biAdd("cashIn",proceeds);biEvent("property_sale",proceeds,"Sold inactive "+def.name,proceeds);
+  if(loss>.001)biMoney("asset_disposal_loss",loss,"Noncash loss on property disposal",0);
+  S.exec.property.events.unshift({day:S.day,action:"sale",id,book,proceeds,loss});
+  logIt("Sold unused "+def.name+" and received "+biCurrency(proceeds)+". Recorded "+biCurrency(loss)+" noncash disposal loss.");
+  propertyViewSignature="";return true;
+ });
+}
+function propertyArrears(){return S.exec.property.sites.reduce((sum,x)=>sum+x.arrears,0);}
+function propertyPayArrears(){
+ const owed=propertyArrears(),payment=Math.min(S.cash,owed);
+ if(payment<.01)return false;
+ return unitCommit(()=>{
+  let remaining=payment;for(const x of S.exec.property.sites){const n=Math.min(x.arrears,remaining);x.arrears=+(x.arrears-n).toFixed(2);remaining-=n;if(remaining<.001)break;}
+  S.cash=+(S.cash-payment).toFixed(2);biAdd("cashOut",payment);
+  biEvent("property_arrears",payment,"Pay previously expensed premises obligations",payment);
+  S.exec.property.events.unshift({day:S.day,action:"settle",payment});propertyViewSignature="";
+  logIt("Settled "+biCurrency(payment)+" of existing unpaid property bills (no second expense).");return true;
+ });
+}
+function propertyDay(){
+ for(const x of S.exec.property.sites){
+  if(x.investment<=0||x.status==="sold"||S.day-x.lastDepreciation<90||x.book<=0)continue;
+  const drop=Math.min(x.book,Math.round(x.investment*.015*100)/100);
+  if(drop>.001){x.book=+(x.book-drop).toFixed(2);x.lastDepreciation=S.day;
+   biMoney("depreciation",drop,PROPERTY_TYPES[x.type].name+" quarterly noncash depreciation",0);}
+ }
+ for(const x of S.exec.property.sites){if(x.status!=="active")continue;
+  const def=PROPERTY_TYPES[x.type],paid=Math.max(0,Math.min(S.cash,x.dayCost));
+  if(paid>0)S.cash=+(S.cash-paid).toFixed(2);
+  biMoney("property",x.dayCost,def.name+" daily "+(def.kind==="lease"?"rent":"upkeep"),paid);
+  if(paid<x.dayCost)x.arrears=+(x.arrears+x.dayCost-paid).toFixed(2);
+ }
+}
+function propertySummary(){
+ const active=S.exec.property.sites.filter(x=>x.status==="active");
+ return{sites:active.length,capacity:propertyCapacity()+S.exec.units.reduce((n,u)=>n+propertyCapacity(u.key),0),
+  arrears:propertyArrears(),book:S.exec.property.sites.filter(x=>x.investment>0&&x.status!=="sold").reduce((n,x)=>n+x.book,0),
+  daily:active.reduce((n,x)=>n+x.dayCost,0)};
+}
+function propertyWarnings(){
+ const out=[],p=propertySummary();
+ for(const key of [null,...S.exec.units.map(u=>u.key)]){
+  const people=propertyPeople(key).length,cap=propertyCapacity(key);
+  if(people>cap)out.push((key?SERVICE_LINES[key].name:"Corporate office")+" over capacity: "+people+"/"+cap+" seats. Productivity and mood are affected.");
+ }
+ if(p.arrears>.01)out.push("Unpaid office bills "+biCurrency(p.arrears)+" need a payment decision.");
+ return out;
+}
+function renderProperties(){
+ const board=$("property-overview");if(!board||editableInteractionPending())return;
+ const p=S.exec.property,summary=propertySummary(),members=propertyPeople(),unitSites=S.exec.units;
+ const signature=JSON.stringify([S.day,Math.floor(S.cash),members.length,unitSites.map(u=>[u.key,u.staffIds.length,u.managerId]),p.sites,Math.floor(S.market.completed/5),S.org.progression.appointments.length]);
+ if(signature===propertyViewSignature)return;propertyViewSignature=signature;
+ $("property-summary").textContent=summary.sites+" active · "+summary.capacity+" seats · owned book "+biCurrency(summary.book);
+ $("property-location").value=S.ui.propertyLocation||"park";
+ $("property-location-explain").textContent=PROPERTY_LOCATIONS[S.ui.propertyLocation||"park"].note;
+ const headquarters=propertyActive(),corporateCapacity=propertyCapacity();
+ const room=(name,people,capacity,type)=>'<div class="property-room"><div class="lead"><b>'+esc(name)+'</b><span class="small">'+people.length+'/'+capacity+' seats</span></div>'+
+ '<div class="property-people">'+people.slice(0,20).map(x=>'<span title="'+esc(x.n)+'">'+(x.id===S.ops.assistantId?"📋":x.t.startsWith("d")?"💻":"👤")+'</span>').join("")+
+ (people.length>20?'<span>+'+(people.length-20)+'</span>':'')+'</div></div>';
+ board.innerHTML='<div class="unit-metrics"><span>Daily premises cost '+biCurrency(summary.daily)+'</span><span>Owned carrying value '+biCurrency(summary.book)+'</span><span>Unpaid bills '+biCurrency(summary.arrears)+'</span></div>'+
+ '<div class="property-map">'+room(headquarters?PROPERTY_TYPES[headquarters.type].name:"Distributed headquarters",members,corporateCapacity,"corporate")+
+ unitSites.map(u=>room(SERVICE_LINES[u.key].name+" · "+(propertyActive(u.key)?"Satellite":"Distributed team"),propertyPeople(u.key),propertyCapacity(u.key),u.key)).join("")+'</div>'+
+ (propertyWarnings().length?'<p class="risk-watch small">'+propertyWarnings().map(esc).join(" · ")+'</p>':'')+
+ (summary.arrears>=.01?'<button type="button" data-property-action="arrears" '+(S.cash<.01?"disabled":"")+'>Settle unpaid premises costs</button>':'')+
+ '<div class="small">Owned properties depreciate forward as noncash expense; book value is an accounting measure, not a guaranteed resale valuation. Selling an unused building recovers 92% of its current book value. Premises bonuses affect future work only; employees retain their reporting owners. Daily rent and upkeep appear in the consolidated operating ledger.</div>';
+ const existing=p.sites.filter(x=>x.status!=="closed").map(x=>{const def=PROPERTY_TYPES[x.type];return '<div class="property-choice"><b>'+esc(def.name)+'</b> · '+esc(x.unitKey?SERVICE_LINES[x.unitKey].name:"Headquarters")+' · '+x.status+
+ ' · '+biCurrency(x.arrears)+' unpaid'+(x.status==="inactive"&&def.kind==="owned"?'<button type="button" data-property-action="activate" data-property-key="'+x.id+'">Move to owned property</button>':'')+
+ (x.status==="inactive"&&def.kind==="owned"?'<button type="button" data-property-action="sell" data-property-key="'+x.id+'" '+(x.arrears>0?"disabled":"")+'>Sell for '+biCurrency(Math.round(x.book*.92*100)/100)+'</button>':'')+
+ (x.status==="active"&&def.kind==="lease"?'<button type="button" data-property-action="close" data-property-key="'+x.id+'">End lease</button>':'')+'</div>';}).join("");
+ const button=(type,unitKey=null)=>{
+  const def=PROPERTY_TYPES[type],quote=propertyQuote(type),check=propertyReadiness(type,unitKey),current=propertyActive(unitKey)?.type===type,scope=unitKey?SERVICE_LINES[unitKey].name:"Headquarters";
+  return '<div class="property-choice"><b>'+esc(def.name)+'</b> · '+esc(scope)+
+   '<p class="small">'+def.capacity+' seats · '+(def.kind==="lease"?"Setup":"Purchase")+' '+biCurrency(quote.price)+' once · '+biCurrency(quote.dayCost)+'/day '+(def.kind==="lease"?"rent":"upkeep")+
+   ' · future work bonus '+Math.round((quote.boost-1)*100)+'%</p>'+
+   '<p class="small">'+check.checks.map(c=>(c.met?"✓ ":"○ ")+esc(c.label)).join(" · ")+'</p>'+
+   '<button type="button" data-property-action="open" data-property-key="'+type+'" '+(unitKey?'data-property-unit="'+esc(unitKey)+'" ':'')+
+    (!check.ready||current||!!S.ev?'disabled':'')+'> '+(current?"Currently active":check.ready?(def.kind==="owned"?"Buy property":"Sign lease"):"Milestones incomplete")+'</button></div>';
+ };
+ $("property-purchase-options").innerHTML=(existing?'<h3>Current premises &amp; owned buildings</h3>'+existing:'')+
+ '<h3>Corporate premises</h3>'+["studio","office","building","hq"].map(k=>button(k)).join("")+
+ (unitSites.length?'<h3>Operating unit offices</h3>'+unitSites.map(u=>button("satellite",u.key)).join(""):'');
+}
+
 function orgLeaderTitle(p){
 if(!p)return"Department Manager";
 const isDepartmentHead=S.org?.departments[p.department]?.managerId===p.id;
@@ -1999,8 +2227,9 @@ number("perAction","Maximum cost per delegated decision ($)",p.perAction)+number
 }).join("");
 }
 $("leadership-growth").addEventListener("input",e=>{
- const id=e.target?.id;if(id==="leadership-budget")ladderBudgetDraft=e.target.value;
- if(id==="management-hire-budget"||id==="management-hire-slots")managementHiringDraft={amount:$("management-hire-budget")?.value??"",slots:$("management-hire-slots")?.value??""};
+ const id=e.target?.id;if(id==="leadership-budget"){ladderBudgetDraft=e.target.value;S.ui.authorityDrafts.leadership=e.target.value;savePendingDraftSoon();}
+ if(id==="management-hire-budget"||id==="management-hire-slots"){managementHiringDraft={amount:$("management-hire-budget")?.value??"",slots:$("management-hire-slots")?.value??""};
+  S.ui.authorityDrafts.recruitBudget=managementHiringDraft.amount;S.ui.authorityDrafts.recruitSlots=managementHiringDraft.slots;savePendingDraftSoon();}
 });
 $("leadership-growth").addEventListener("click",e=>{
  const button=e.target.closest("button[data-ladder-action]");if(!button)return;
@@ -2154,7 +2383,7 @@ S.market.customers[d.cl]=prev;}
 function fresh(){
  ceoDraftPriority=null;saveConflict=false;saveErrorReason="";paused=false;
  try{persistedRevision=Number(JSON.parse(localStorage.getItem(KEY)||"null")?._saveRevision)||0;}catch{persistedRevision=0;}
- S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now()},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+ S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now(),lastInterruptDay:0},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -2168,6 +2397,7 @@ function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
 function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();unitAutonomousDay();ladderDay();managementReviewMonth();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
+if(unitStaffingDay())dirty=true;
 if(unitDelegateWork())dirty=true;
 if(delegateWork())dirty=true;
 if(autonomousWork())dirty=true;
@@ -2179,7 +2409,7 @@ if((p.t.startsWith("d")||p.t==="assist"||p.t==="exp")&&p.career.stress>=92&&p.ca
 p.career.recoveryDays=4;logIt(p.n+" took a four-day recovery pause after sustained workload.");}
 const recovering=p.career.recoveryDays>0;
 if(recovering){p.career.recoveryDays--;dm=1.5;}
-else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const owned=unitOfPerson(p.id),unitMode=owned&&owned.key===d.unitKey?owned.plan?.focus:"balanced";const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*(S.economy.invested.operations?1.06:1)*(1+S.improvements.operations)*(d.serviceLine&&S.exec.lines.some(x=>x.key===d.serviceLine)?1.05:1);d.prog+=e*(unitMode==="speed"?1.10:unitMode==="quality"?.94:1);const unitWage=dailySalary(p);d.laborCost=(d.laborCost||0)+unitWage;const activeUnit=S.exec?.units?.find(u=>u.key===d.unitKey);if(activeUnit&&!activeUnit.staffIds.includes(p.id))d.unitSharedLaborCost=(d.unitSharedLaborCost||0)+unitWage;
+else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const owned=unitOfPerson(p.id),unitMode=owned&&owned.key===d.unitKey?owned.plan?.focus:"balanced";const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*propertyWorkMultiplier(p)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*(S.economy.invested.operations?1.06:1)*(1+S.improvements.operations)*(d.serviceLine&&S.exec.lines.some(x=>x.key===d.serviceLine)?1.05:1);d.prog+=e*(unitMode==="speed"?1.10:unitMode==="quality"?.94:1);const unitWage=dailySalary(p);d.laborCost=(d.laborCost||0)+unitWage;const activeUnit=S.exec?.units?.find(u=>u.key===d.unitKey);if(activeUnit&&!activeUnit.staffIds.includes(p.id))d.unitSharedLaborCost=(d.unitSharedLaborCost||0)+unitWage;
 d.quality=clamp(d.quality+S.improvements.product*.06+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1)-(p.career.stress>=75?.25:0)-(p.career.burnout>=45?.18:0)+.12*orgEffective("delivery")+(unitMode==="quality"?.14:unitMode==="speed"?-.08:0));
 for(const [index,limit,name] of [[1,.34,"Plan approved"],[2,.73,"Build completed"]])if(d.milestone<index&&d.prog>=d.work*limit){d.milestone=index;logIt(d.cl+": "+name+" ("+Math.round(d.quality)+"% quality).");}
 p.s[d.need]+=.05*S.mod.learn*(aligned?1.12:1);dm=(e>=.9?.4:-.3)+(aligned?.15:0);}else{p.t="idle";dm=-.2;dirty=true;}}
@@ -2193,26 +2423,26 @@ else if(p.t==="exp"){const spent=Math.min(1,S.cash);S.cash-=spent;if(spent>0)biM
 else if(p.t==="rest"){dm=2;}
 else if(p.t==="assist"){p.s.ops+=.025*S.mod.learn;dm=.25;}
 const assignedDeadline=p.t.startsWith("d")?deal(Number(p.t.slice(1)))?.dl??99:99;
-const effectiveTask=recovering?"rest":p.t;performanceWork(p,effectiveTask);careerTrack(p,effectiveTask);talentAndCareerDay(p,effectiveTask,assignedDeadline);biTeamDay(p,effectiveTask);const assignedUnit=unitOfPerson(p.id);if(assignedUnit&&p.id!==assignedUnit.managerId&&effectiveTask.startsWith("d")&&deal(Number(effectiveTask.slice(1)))?.unitKey===assignedUnit.key)assignedUnit.billableDays++;coachLabParticipation(p,effectiveTask);coachTrackRole(p,effectiveTask);
+const effectiveTask=recovering?"rest":p.t;if(!recovering&&propertyOccupancy(p).overloaded)p.mood=clamp(p.mood-.15);performanceWork(p,effectiveTask);careerTrack(p,effectiveTask);talentAndCareerDay(p,effectiveTask,assignedDeadline);biTeamDay(p,effectiveTask);const assignedUnit=unitOfPerson(p.id);if(assignedUnit&&p.id!==assignedUnit.managerId&&effectiveTask.startsWith("d")&&deal(Number(effectiveTask.slice(1)))?.unitKey===assignedUnit.key)assignedUnit.billableDays++;coachLabParticipation(p,effectiveTask);coachTrackRole(p,effectiveTask);
 p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
 if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);orgTrackPerson(p,effectiveTask);if(!recovering)orgManagerDay(p);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
 }
 for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){performanceFinish(d,true,feeFor(d));ceoLineFinish(d,true,feeFor(d));orgTrackDelivery(d,true);const payout=feeFor(d);biProjectEnd(d,true,payout);S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" completed "+biCurrency(payout)+" "+SECTORS[d.sector].name+" project; "+(d.paymentTerms===0?"cash collected":"invoice issued, collection due in "+d.paymentTerms+" days")+". Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
 else if(d.dl<=0){performanceFinish(d,false);ceoLineFinish(d,false);orgTrackDelivery(d,false);biProjectEnd(d,false);S.rep=Math.max(0,S.rep-3);recordCustomer(d,false);logIt("Missed the deadline for "+d.cl+". Reputation and customer loyalty dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
-assistantDeadlineAlerts();economyDay();ideaProgressDay();
+assistantDeadlineAlerts();economyDay();propertyDay();ideaProgressDay();
 unitPayrollDay();
  const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(S.cash,salary);S.cash-=actuallyPaid;
 biMoney("payroll",salary,"Daily payroll",actuallyPaid);
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
-if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
+if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&S.day-S.flow.lastInterruptDay>=28)startDilemma();
 labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev||(d.w!==p.id&&!unitAssignmentAllowed(d,p)))return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;performanceAssign(d,p);}save();renderStructure();refresh();}
 function unitAssignmentAllowed(d,p){const owner=unitOfPerson(p.id);if(owner?.managerId===p.id)return false;return d.unitKey?owner?.key===d.unitKey||managementSupportAllowed(d,p):!owner;}
 function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;
  const u=d.unitKey?unitOfPerson(p.id):null;
  const unitFit=d.unitKey?(u?.key===d.unitKey?1.08:managementSupportAllowed(d,p)?.96:u?.key?.88:1):1;
- return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*unitFit);}
+ return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*propertyWorkMultiplier(p)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*unitFit);}
 function bestIdle(d,department=null){return S.team.filter(p=>(!department||p.department===department)&&unitAssignmentAllowed(d,p)&&p.id!==S.ops.assistantId&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&!(S.exec?.units||[]).some(u=>u.managerId===p.id)&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
 function forecast(d){const assigned=person(d.w);const candidate=assigned||bestIdle(d);const speed=workerSpeed(candidate,d);const remaining=Math.max(0,d.work-d.prog);const eta=speed?Math.ceil(remaining/speed):null;const slack=eta===null?null:d.dl-eta;const risk=!assigned?"unassigned":slack<0?"critical":slack<=4?"watch":"ok";return{d,assigned,candidate,eta,slack,risk,fit:speed};}
 function rankedProjects(){const priority=S.ops.policy.priority;return S.deals.map(forecast).sort((a,b)=>{
@@ -2285,7 +2515,9 @@ save();structural="";renderStructure();refresh();}
 function hireOfficeAssistant(){if(S.ev||S.ops.assistantId||S.cash<20)return;const p=createPerson();p.s.ops=Math.max(2.3,p.s.ops);p.interest="systems";p.trait="Social";p.mood=75;p.loy=70;p.t="assist";S.cash-=20;biMoney("recruiting",20,"Hire executive assistant: "+p.n);ensureCareer(p);ensureRole(p);ensureDepartment(p);S.team.push(p);S.ops.assistantId=p.id;logIt("You hired "+p.n+" as executive assistant for $20.");save();structural="";renderStructure();refresh();}
 function toggleFocus(){if(S.ev)return;S.flow.focus=!S.flow.focus;if(!S.flow.focus){S.flow.nextLead=Math.max(S.flow.nextLead,S.day+5);S.flow.lastLeadAt=Date.now();S.nextEv=Math.max(S.nextEv,S.day+12);}logIt(S.flow.focus?"You closed intake to focus on existing work.":"You reopened client inquiries and staff matters.");save();refresh();}
 function order(pid,t){const p=person(pid);if(!p||S.ev)return;p.role.auto=false;p.role.autoTask=false;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===pid)S.ops.assistantId=null;release(p);p.t=t;save();renderStructure();refresh();}
-function updateButtons(){if(!editableInteractionPending())$("speed-select").value=String(spd);$("pause").classList.toggle("selected",paused);$("pause").setAttribute("aria-pressed",String(paused));$("pause").textContent=paused?"Resume":"Pause";$("pause").disabled=!!(saveConflict||saveErrorReason||indexedWriteCount>0);$("game-forward").disabled=!!(saveConflict||saveErrorReason||indexedWriteCount>0);}
+function updateButtons(){if(!editableInteractionPending())$("speed-select").value=String(spd);
+ const pace=$("speed-explainer");if(pace)pace.textContent=(spd===1?"Standard":spd===3?"Fast":"Turbo")+
+ " · "+(2400/spd/1000).toFixed(2)+" seconds per game day · "+(72/spd).toFixed(1)+" seconds per 30-day review. Pause or skip up to seven days.";$("pause").classList.toggle("selected",paused);$("pause").setAttribute("aria-pressed",String(paused));$("pause").textContent=paused?"Resume":"Pause";$("pause").disabled=!!(saveConflict||saveErrorReason||indexedWriteCount>0);$("game-forward").disabled=!!(saveConflict||saveErrorReason||indexedWriteCount>0);}
 function paintControls(){updateButtons();}
 function navigate(view,projectId){if(!["today","work","team","growth"].includes(view))return;
 if(typeof window!=="undefined")viewScroll[activeView]=window.scrollY||0;
@@ -2307,7 +2539,34 @@ $("ceo-set-direction").addEventListener("click",()=>{
 const priority=ceoDraftPriority??$("ceo-priority").value;
 if(!ceoDirection(priority))$("ceo-direction-confirm").textContent=S.ev?"Resolve the current CEO decision before changing direction.":"Direction unchanged. Choose a different strategy or wait for the next review.";
 });
+$("ceo-action-center").addEventListener("click",e=>{
+ const b=e.target.closest("button[data-ceo-action]");if(!b)return;
+ let result=false;
+ if(b.dataset.ceoAction==="unit-approve"||b.dataset.ceoAction==="unit-decline")
+  result=unitRequestDecision(Number(b.dataset.id),b.dataset.ceoAction==="unit-approve"?"approve":"decline");
+ else if(b.dataset.ceoAction==="manager-approve"||b.dataset.ceoAction==="manager-decline")
+  result=managementRequestDecision(Number(b.dataset.id),b.dataset.ceoAction==="manager-approve"?"approve":"decline");
+ else if(b.dataset.ceoAction==="promotion")
+  result=ladderPromote(b.dataset.level,Number(b.dataset.id),true);
+ else if(b.dataset.ceoAction==="opportunity"){result=worldEventChoice(b.dataset.result);}
+ if(result&&typeof result.then==="function")result.then(ok=>{if(!ok)$("ceo-action-status").textContent="Decision was not saved. Check the available cash and game state.";else renderCEODecisions();});
+ else if(!result)$("ceo-action-status").textContent="Decision not completed. Review the cash reserve, eligibility, or saved game state.";
+});
 $("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
+$("property-location").addEventListener("change",()=>{
+ const choice=$("property-location").value;if(!PROPERTY_LOCATIONS[choice])return;
+ S.ui.propertyLocation=choice;const saved=save();propertyViewSignature="";
+ if(saved&&typeof saved.then==="function")saved.then(ok=>{if(ok)renderProperties();});
+ else if(saved)renderProperties();
+});
+$("property-panel").addEventListener("click",e=>{
+ const b=e.target.closest("button[data-property-action]");if(!b)return;
+ const action=b.dataset.propertyAction,key=b.dataset.propertyKey,unit=b.dataset.propertyUnit;
+ const result=action==="open"?propertyOpen(key,unit||null):action==="activate"?propertyActivate(Number(key)):
+  action==="close"?propertyClose(Number(key)):action==="sell"?propertySell(Number(key)):action==="arrears"?propertyPayArrears():false;
+ if(result&&typeof result.then==="function")result.then(ok=>{if(!ok){$("property-status").textContent="Property decision failed or could not be saved.";renderProperties();}});
+ else if(!result)$("property-status").textContent="Property decision blocked; review the milestones or balance.";
+});
 $("business-units").addEventListener("click",e=>{
  const b=e.target.closest("button[data-unit-action]");if(!b)return;
  const key=b.dataset.unitKey,action=b.dataset.unitAction;
@@ -2322,9 +2581,11 @@ $("business-units").addEventListener("click",e=>{
 });
 $("business-units").addEventListener("input",e=>{
  const field=e.target;if(!field?.matches?.("input[data-unit-field]"))return;
- unitRecordInput(field); // Player drafts never trigger save/DOM repaint on each character.
+ unitRecordInput(field);savePendingDraftSoon(); // Debounced durable drafts; no re-render or new spending until Apply.
 });
 $("business-units").addEventListener("change",e=>{
+ const choice=e.target;
+ if(choice?.matches?.('select[id^="unit-"]')){S.ui.unitSelectDrafts[choice.id]=choice.value;savePendingDraftSoon();}
  const field=e.target;if(!field?.matches?.("select[data-unit-field]"))return;
  if(field.dataset.unitField==="focus")unitSetFocus(field.dataset.unitKey,field.value);
  else unitAuthorize(field.dataset.unitKey,field.dataset.unitField,Number(field.value));
@@ -2346,6 +2607,8 @@ if(view==="today")requestAnimationFrame(()=>{const panel=$("ea-weekly-report");i
 $("ea-weekly-report").addEventListener("toggle",()=>renderExecutiveWeekly());
 $("game-forward").addEventListener("click",gameAdvanceDays);
 $("game-journey").addEventListener("toggle",()=>{if($("game-journey").open)gameRender();});
+$("campus-visual").addEventListener("toggle",()=>{if(S.ui.campusOpen===$("campus-visual").open)return;
+ S.ui.campusOpen=$("campus-visual").open;save();});
 $("attention-list").addEventListener("click",e=>{const b=e.target.closest("button[data-go]");if(b)navigate(b.dataset.go,b.dataset.project?Number(b.dataset.project):undefined);});
 $("lab-today-open").addEventListener("click",()=>{navigate("growth");$("lab-panel").open=true;renderLab(true);});
 $("lab-panel").addEventListener("toggle",()=>{if($("lab-panel").open)renderLab(true);});
@@ -2564,6 +2827,7 @@ if(!Array.isArray(e.units))e.units=[];
 if(!Array.isArray(e.unitEvents))e.unitEvents=[];
 if(!Array.isArray(e.unitRequests))e.unitRequests=[];
 if(!Number.isFinite(e.unitRequestSeq))e.unitRequestSeq=1;
+ ensureProperties(state);
 const unitOwners=new Set(),unitKeys=new Set();
 e.units=e.units.filter(u=>{
  if(!u||!SERVICE_LINES[u.key]||unitKeys.has(u.key)||!e.lines.some(x=>x.key===u.key))return false;
@@ -2733,12 +2997,12 @@ const GM_PRESETS={
 const GM_PRESET_LABELS={fresh:"Fresh manager",manager:"Manager (+25%)",senior:"Senior manager (+25%)",custom:"Custom"};
 const UNIT_EDIT_FIELDS=["revenueTarget","utilizationTarget","coachingLimit","trainingLimit","teamLimit","perAction","qualityTarget","staffingTarget"];
 const unitEditDrafts=new Map();
-function unitDraft(key){if(!unitEditDrafts.has(key))unitEditDrafts.set(key,{});return unitEditDrafts.get(key);}
+function unitDraft(key){return S.ui.unitFieldDrafts[key]||(S.ui.unitFieldDrafts[key]={});}
 function unitRecordInput(field){if(!field?.dataset?.unitKey||!field?.dataset?.unitField)return;unitDraft(field.dataset.unitKey)[field.dataset.unitField]=field.value;}
 function unitPresetValues(tier){return GM_PRESETS[tier]?{...GM_PRESETS[tier]}:null;}
 function unitApplyPreset(key,tier){
  const u=S.exec.units.find(x=>x.key===key),preset=unitPresetValues(tier);if(!u||!preset)return false;
- return unitCommit(()=>{Object.assign(u.plan,preset);u.plan.preset=tier;unitEditDrafts.delete(key);
+ return unitCommit(()=>{Object.assign(u.plan,preset);u.plan.preset=tier;delete S.ui.unitFieldDrafts[key];
   unitRecord(key,"authority","CEO approved "+GM_PRESET_LABELS[tier]+" budget caps; zero upfront spending, no automatic hiring.");return true;});
 }
 function unitApplyDraft(key){
@@ -2749,7 +3013,7 @@ function unitApplyDraft(key){
   const v=Number(raw);if(!Number.isSafeInteger(v)||v<0||v>1000000||(field==="qualityTarget"&&(v<65||v>100))||(field==="utilizationTarget"&&v>100)||(field==="staffingTarget"&&(v<1||v>25)))return false;
   next[field]=v;
  }
- return unitCommit(()=>{Object.assign(u.plan,next);u.plan.preset="custom";unitEditDrafts.delete(key);
+ return unitCommit(()=>{Object.assign(u.plan,next);u.plan.preset="custom";delete S.ui.unitFieldDrafts[key];
   unitRecord(key,"authority","CEO applied custom GM settings as one verified save; no immediate spending.");return true;});
 }
 function unitBudgetAllowed(u,amount){
@@ -2817,6 +3081,86 @@ function unitCareerReadiness(u){
   successorReady:!!successor&&managerCompetence(successor)>=55&&(u.plan.successionSessions||0)>=3,
   managementReady:!!gm&&reviews>=2&&!!successor&&managerCompetence(gm)>=60};
 }
+// v22: a GM negotiates scarce capacity with the functional department leader.
+// Reassigning a corporate specialist for 30 days never creates new payroll or permanent ownership.
+function unitStaffingDay(){
+ let changed=false;
+ for(const u of S.exec.units){
+  const gm=person(u.managerId),p=u.plan;
+  if(!gm||gm.career.recoveryDays>0||gm.career.autoRest)continue;
+  const unassigned=S.deals.filter(d=>d.unitKey===u.key&&!d.w).sort((a,b)=>a.dl-b.dl);
+  if(!unassigned.length)continue;
+  const role=SERVICE_LINES[u.key].need,dept=["sales","mkt"].includes(role)?"commercial":"delivery";
+  const leader=managementLead(dept)||orgManager(dept);
+  const activeShared=managementOps().shared.filter(a=>a.unitKey===u.key&&a.until>S.day&&a.status==="active");
+  // Existing grant covers the demand while the worker is idle; avoid duplicate loans.
+  const availableGrant=activeShared.some(a=>{const w=person(a.employeeId);return w?.t==="idle"&&w.career.recoveryDays===0;});
+  const gap=unassigned.length-availableGrant;
+  if(gap<=0)continue;
+  const needsStaff=unassigned.length>=2||S.deals.filter(d=>d.unitKey===u.key).length>=u.staffIds.length;
+  if(!needsStaff)continue;
+  // Capacity negotiations are bounded: one new shared allocation per unit per 14 game days.
+  if(leader&&S.day-(p.lastSharedNegotiation??-999)>=14){
+   const candidates=managementSharedCandidates(u.key).filter(w=>w.department===dept&&w.role.auto&&w.t==="idle"&&
+      w.career.recoveryDays<=0&&!w.career.autoRest&&w.s[role]>=2);
+   const chosen=candidates.sort((a,b)=>b.s[role]-a.s[role]||a.id-b.id)[0];
+   if(chosen){
+    const o=managementOps();o.shared.push({unitKey:u.key,employeeId:chosen.id,since:S.day,until:S.day+30,status:"active",approvedBy:leader.id,reason:"GM/dept capacity negotiation"});
+    o.shared=o.shared.slice(-40);p.lastSharedNegotiation=S.day;
+    o.history.unshift({day:S.day,kind:"shared",unitKey:u.key,employeeId:chosen.id,approvedBy:leader.id,until:S.day+30});
+    o.history=o.history.slice(0,55);
+    unitRecord(u.key,"negotiation",gm.n+" and "+leader.n+" temporarily allocated "+chosen.n+" for 30 days; no second salary or permanent transfer.");
+    logIt(gm.n+" coordinated with "+leader.n+" for shared unit specialist "+chosen.n+" (30 days, no extra payroll).");
+    changed=true;continue;
+   }
+  }
+  const current=S.exec.unitRequests.find(x=>x.key===u.key&&x.status==="open");
+  if(current){
+   if(unitDelegatedHireReady(current,leader)&&unitHireFromRequest(current,"delegated"))changed=true;
+   continue;
+  }
+  // Request no more than once every seven game days, and allow declined requests a 14-day cooldown.
+  if(S.day-(p.lastHiringAsk??-999)<14||S.day-(p.lastStaffingReview??-999)<7)continue;
+  p.lastStaffingReview=S.day;
+  if(u.staffIds.length>=Math.min(25,p.staffingTarget||5))continue;
+  const request={id:S.exec.unitRequestSeq++,key:u.key,managerId:gm.id,department:dept,leaderId:leader?.id||null,
+   day:S.day,status:"open",kind:"hire",cost:20,payroll:1.5*S.mod.cost,role,
+   reason:"GM "+gm.n+" and "+(leader?.n||"unfilled functional leadership")+" reviewed "+unassigned.length+
+    " unassigned projects, "+Math.max(0,u.staffIds.length-1)+" dedicated specialists. No qualified idle departmental specialist available."};
+  p.lastHiringAsk=S.day;S.exec.unitRequests.push(request);
+  if(unitDelegatedHireReady(request,leader)&&unitHireFromRequest(request,"delegated"))changed=true;
+  else{unitRecord(u.key,"exception",gm.n+" escalated shortage to CEO; recruiting requires verified delegation or approval.");changed=true;}
+ }
+ return changed;
+}
+function unitDelegatedHireReady(req,leader){
+ const u=S.exec.units.find(x=>x.key===req.key);
+ if(!u||!leader||!person(u.managerId)||req.status!=="open"||u.staffIds.length>=Math.min(25,u.plan.staffingTarget||5))return false;
+ return managementHiringAvailable(req)&&managementCashReady(req);
+}
+function unitHireFromRequest(req,authority){
+ const u=S.exec.units.find(x=>x.key===req.key);
+ if(!u||req.status!=="open"||req.managerId!==u.managerId||!person(u.managerId)||
+  u.staffIds.length>=Math.min(25,u.plan.staffingTarget||5)||!managementCashReady(req))return false;
+ if(authority==="delegated"){
+  const leader=managementLead(req.department)||orgManager(req.department);
+  if(!unitDelegatedHireReady(req,leader))return false;
+ }
+ const employee=createPerson();ensureCareer(employee);ensureRole(employee);ensureDepartment(employee);ensurePerformance(employee,S.day);
+ employee.role.primary=req.role||SERVICE_LINES[u.key].need;
+ employee.s[employee.role.primary]=Math.max(2,employee.s[employee.role.primary]);employee.role.auto=true;
+ employee.department=req.department||(["sales","mkt"].includes(employee.role.primary)?"commercial":"delivery");
+ S.team.push(employee);u.staffIds.push(employee.id);
+ S.cash-=req.cost;biMoney("recruiting",req.cost,SERVICE_LINES[u.key].name+" "+authority+" unit specialist: "+employee.n);
+ u.developmentCost+=req.cost;req.status=authority;req.decidedAt=S.day;req.hiredId=employee.id;
+ if(authority==="delegated"){const o=managementOps();o.hires++;o.hireSpent+=req.cost;o.history.unshift({day:S.day,kind:"unit-hire",unitKey:u.key,dept:req.department,employeeId:employee.id,approval:"delegated",cost:req.cost});
+  o.history=o.history.slice(0,55);}
+ unitRecord(u.key,"staffing",employee.n+" (#"+employee.id+") hired by "+(authority==="delegated"?"manager within CEO limits":"CEO exception")+
+  "; "+biCurrency(req.cost)+" recruiting expense and "+biCurrency(dailySalary(employee))+"/day corporate payroll.");
+ logIt("Unit GM staffing: "+employee.n+" hired for "+SERVICE_LINES[u.key].name+" within "+authority+" authority.");
+ structural="";unitViewSignature="";
+ return true;
+}
 function unitAutonomousDay(){
  for(const u of S.exec.units){
   const p=u.plan,gm=person(u.managerId);
@@ -2847,30 +3191,18 @@ function unitAutonomousDay(){
   u.reviews.push({day:S.day,delivered,missed,quality,result,goal:p.qualityTarget,managerId:gm.id,headcount:u.staffIds.length,spent:p.spent,revenue,costs,operating:revenue-costs,utilization,revenueTarget:p.revenueTarget,utilizationTarget:p.utilizationTarget,qualityMet,revenueMet,utilizationMet,focus:p.focus});
   u.reviews=u.reviews.slice(-6);
   p.lastReview=S.day;p.baselineDelivered=u.delivered;p.baselineQuality=u.qualityTotal;p.baselineMissed=u.missed;p.baselineRevenue=u.revenue;p.baselineCosts=u.directCost+u.sharedLaborCost+u.payrollCost+u.developmentCost;p.baselineStaffDays=u.staffDays;p.baselineBillableDays=u.billableDays;
-  const active=S.deals.filter(d=>d.unitKey===u.key).length;
-  if(active>=Math.max(1,u.staffIds.length-1)&&u.staffIds.length<Math.min(25,p.staffingTarget||5)&&!S.exec.unitRequests.some(r=>r.key===u.key&&r.status==="open")){
-   const request={id:S.exec.unitRequestSeq++,key:u.key,managerId:gm.id,day:S.day,status:"open",kind:"hire",cost:20,payroll:1.5*S.mod.cost,role:SERVICE_LINES[u.key].need,reason:"Capacity: "+active+" active unit projects / "+Math.max(0,u.staffIds.length-1)+" specialists. Recruit "+SERVICE_LINES[u.key].need+" expertise; payroll continues after approval."};
-   S.exec.unitRequests.push(request);unitRecord(u.key,"proposal",gm.n+" requested one specialist hire. CEO approval required.");
-  }
+  // Staffing pressure and approvals are now assessed weekly by unitStaffingDay().
   unitRecord(u.key,"review",gm.n+" 30-day review: "+result+(quality===null?" · no deliveries":" · delivered quality "+quality+"% / goal "+p.qualityTarget+"%")+".");
  }
 }
 function unitRequestDecision(id,action){
  const req=S.exec.unitRequests.find(r=>r.id===id&&r.status==="open"),u=S.exec.units.find(x=>x.key===req?.key);
  if(!req||!u||req.managerId!==u.managerId||!["approve","decline"].includes(action))return false;
- if(action==="approve"&&(S.cash<req.cost||u.staffIds.length>=Math.min(25,u.plan.staffingTarget||5)||!person(u.managerId)))return false;
+ if(action==="approve"&&!managementCashReady(req))return false;
  return unitCommit(()=>{
-  req.status=action==="approve"?"approved":"declined";req.decidedAt=S.day;
-  if(action==="approve"){
-   const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);
-   p.role.primary=req.role||SERVICE_LINES[u.key].need;p.s[p.role.primary]=Math.max(2,p.s[p.role.primary]);
-   p.department=["sales","mkt"].includes(p.role.primary)?"commercial":"delivery";
-   S.team.push(p);u.staffIds.push(p.id);
-   S.cash-=req.cost;biMoney("recruiting",req.cost,SERVICE_LINES[u.key].name+" CEO-approved unit hire: "+p.n);
-   u.developmentCost+=req.cost;
-   unitRecord(u.key,"CEO hire","CEO approved "+p.n+" (#"+p.id+") for "+biCurrency(req.cost)+" and ongoing payroll "+biCurrency(dailySalary(p))+"/day.");
-   logIt(p.n+" hired into "+SERVICE_LINES[u.key].name+" after CEO approval.");
-  }else unitRecord(u.key,"CEO decision","CEO declined specialist hire proposed by "+(person(req.managerId)?.n||"General Manager")+".");
+  if(action==="approve")return unitHireFromRequest(req,"approved");
+  req.status="declined";req.decidedAt=S.day;
+  unitRecord(u.key,"CEO decision","CEO declined specialist hire proposed by "+(person(req.managerId)?.n||"General Manager")+".");
   return true;
  });
 }
@@ -2881,12 +3213,15 @@ function unitPayrollDay(){
 function renderBusinessUnits(){
 if(editableInteractionPending())return;
  const target=$("business-units");if(!target)return;
+ const nativeFocus=document.activeElement;
+ if(nativeFocus&&target.contains(nativeFocus)&&nativeFocus.matches?.("input,select,textarea"))return;
  const open=new Set([...target.querySelectorAll("details[data-unit-open]")].filter(p=>p.open).map(p=>p.dataset.unitOpen));
  // A committed picker value is a player's draft decision until they press Appoint/Transfer.
  // Preserve it across redraws without prematurely changing the saved company.
  const selectedChoices=new Map([...target.querySelectorAll('select[id^="unit-"]')].map(el=>[el.id,el.value]));
+ for(const [id,value] of Object.entries(S.ui.unitSelectDrafts))if(!selectedChoices.has(id))selectedChoices.set(id,value);
  const openAuthority=new Set([...target.querySelectorAll('details[data-unit-open]')].filter(el=>el.querySelector('details.aux-details')?.open).map(el=>el.dataset.unitOpen));
- const signature=JSON.stringify({units:S.exec.units,requests:S.exec.unitRequests,shared:managementOps().shared,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id])});
+ const signature=JSON.stringify({units:S.exec.units,requests:S.exec.unitRequests,shared:managementOps().shared,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id]),draftSelections:S.ui.unitSelectDrafts});
  if(signature===unitViewSignature)return;unitViewSignature=signature;
  const choices=S.exec.lines.map(l=>{
   const u=S.exec.units.find(x=>x.key===l.key);
@@ -2935,8 +3270,8 @@ if(editableInteractionPending())return;
    authority+proposals+'</details>';
  }).join("");
  target.innerHTML='<h3>Operating units</h3><p class="small">Build an independent management structure from a service you already purchased; no second launch fee. Managers and dedicated employees affect future work, while all cash and signed contract history remain consolidated.</p>'+choices;
- for(const [id,value] of selectedChoices){const el=$(id);if(el&&!id.startsWith("unit-preset-")&&[...el.options].some(option=>option.value===value))el.value=value;}
- for(const l of S.exec.lines){const d=unitEditDrafts.get(l.key);if(!d)continue;for(const [field,value] of Object.entries(d)){const el=target.querySelector('input[data-unit-key="'+l.key+'"][data-unit-field="'+field+'"]');if(el)el.value=value;}}
+ for(const [id,value] of selectedChoices){const el=$(id);if(el&&[...el.options].some(option=>option.value===value))el.value=value;}
+ for(const l of S.exec.lines){const d=S.ui.unitFieldDrafts[l.key];if(!d)continue;for(const [field,value] of Object.entries(d)){const el=target.querySelector('input[data-unit-key="'+l.key+'"][data-unit-field="'+field+'"]');if(el)el.value=value;}}
  for(const el of target.querySelectorAll('details[data-unit-open]'))if(openAuthority.has(el.dataset.unitOpen)){const nested=el.querySelector('details.aux-details');if(nested)nested.open=true;}
 }
 
@@ -3060,6 +3395,9 @@ function renderExecutiveWeekly(){
   if(x.last&&Number.isFinite(x.last.revenue)&&x.last.revenueTarget>0&&x.last.revenue<x.last.revenueTarget)risks.push(SERVICE_LINES[x.u.key].name+" revenue "+biCurrency(x.last.revenue)+" below target "+biCurrency(x.last.revenueTarget));
  }
  if(!risks.length)risks.push("No important cross-department escalation identified");
+ const premises=propertySummary();
+ if(premises.sites||premises.arrears)risks.push("Property: "+premises.sites+" active sites, "+premises.capacity+" seats, unpaid "+biCurrency(premises.arrears));
+ if(propertyWarnings().length)priorities.push("Review premises: "+propertyWarnings()[0]);
  const direction=companyDirection();
  if(direction.unmet.length)priorities.push("Next company stage: "+direction.unmet[0].label);
  if(live.pipeline)priorities.push("Convert "+live.pipeline+" existing leads");
@@ -3209,6 +3547,15 @@ $("launch-service-line").disabled=!!S.ev||S.cash<120||!companyLaunchReadiness($(
 
 
 let ladderSignature="",ladderBudgetDraft=null;
+let draftSaveTimeout=null;
+function savePendingDraftSoon(){
+ if(draftSaveTimeout!==null)clearTimeout(draftSaveTimeout);
+ draftSaveTimeout=setTimeout(()=>{draftSaveTimeout=null;if(!S||saveConflict||saveErrorReason)return;save();},350);
+}
+function saveDraftNow(){
+ if(draftSaveTimeout!==null){clearTimeout(draftSaveTimeout);draftSaveTimeout=null;}
+ if(!S||saveConflict||saveErrorReason)return;save();
+}
 function renderLadder(){
  const target=$("leadership-growth");if(!target||editableInteractionPending())return;
  const g=S.org.progression,next=ladderNext(),salary=ladderPayroll(),launch=ladderLaunchReadiness();
@@ -3240,13 +3587,13 @@ function renderLadder(){
  (reasons?'<ul class="small">'+reasons+'</ul>':'')+step+
  '<details class="aux-details"><summary>CEO delegation and payroll</summary><p class="small">Recurring payroll authority is separate from coaching and recruitment budgets. Set a maximum additional salary per game day. Within this ceiling, ready promotions can happen automatically on weekly leadership reviews; beyond it, CEO approval is required. Keep 14 days of full payroll in cash before any promotion.</p>'+
  '<label for="leadership-budget">Maximum extra daily management payroll ($)</label>'+
- '<input type="number" min="0" max="100" step="0.25" inputmode="decimal" id="leadership-budget" value="'+esc(ladderBudgetDraft===null?g.authorityDaily:ladderBudgetDraft)+'">'+
+ '<input type="number" min="0" max="100" step="0.25" inputmode="decimal" id="leadership-budget" value="'+esc(S.ui.authorityDrafts.leadership??g.authorityDaily)+'">'+
  '<button type="button" data-ladder-action="budget">Approve payroll ceiling</button>'+
  '<p class="small">Additional leadership payroll '+biCurrency(salary)+'/day of '+biCurrency(g.authorityDaily)+'/day approved. A budget limit authorizes future actions; it does not spend money immediately.</p></details>'+
  '<details class="aux-details"><summary>Corporate staffing decisions</summary>'+
  '<p class="small">Managers review corporate capacity every seven days. A hire costs $20 once plus ongoing payroll. Delegated recruiting is $0 by default. Budget approval is not a cash expense.</p>'+
- '<div class="filter-grid"><div><label for="management-hire-budget">90-day hiring budget ($)</label><input id="management-hire-budget" type="number" inputmode="numeric" min="0" max="10000" value="'+esc(managementHiringDraft?.amount??ops.hireBudget)+'"></div>'+
- '<div><label for="management-hire-slots">Maximum hires</label><input id="management-hire-slots" type="number" inputmode="numeric" min="0" max="20" value="'+esc(managementHiringDraft?.slots??ops.hireSlots)+'"></div></div>'+
+ '<div class="filter-grid"><div><label for="management-hire-budget">90-day hiring budget ($)</label><input id="management-hire-budget" type="number" inputmode="numeric" min="0" max="10000" value="'+esc(S.ui.authorityDrafts.recruitBudget??ops.hireBudget)+'"></div>'+
+ '<div><label for="management-hire-slots">Maximum hires</label><input id="management-hire-slots" type="number" inputmode="numeric" min="0" max="20" value="'+esc(S.ui.authorityDrafts.recruitSlots??ops.hireSlots)+'"></div></div>'+
  '<button type="button" data-ladder-action="hire-policy">Approve recruiting limits</button>'+
  '<p class="small">'+ops.hires+'/'+ops.hireSlots+' hires · '+biCurrency(ops.hireSpent)+' / '+biCurrency(ops.hireBudget)+' used · '+(S.day>=ops.since+ops.days?"EXPIRED":"Through Day "+(ops.since+ops.days))+'. Each hire also needs 21 days of payroll cash.</p>'+
  (pending.map(r=>'<div class="exec-proposal"><b>'+esc(DEPARTMENTS[r.dept].name)+' manager request</b><p>'+esc(person(r.managerId)?.n||"Manager unavailable")+' · '+esc(r.reason)+' One-time '+biCurrency(r.cost)+' and estimated '+biCurrency(r.payroll)+'/day wages.</p><div class="buttons"><button type="button" data-ladder-action="staff-approve" data-request-id="'+r.id+'" '+(!managementCashReady(r)?"disabled":"")+'>Approve hire</button><button type="button" data-ladder-action="staff-decline" data-request-id="'+r.id+'">Decline</button></div></div>').join("")||'<p class="small">No corporate manager requests pending.</p>')+'</details>'+
@@ -3310,6 +3657,46 @@ if($("game-rivals").innerHTML!==rivalText)$("game-rivals").innerHTML=rivalText;
 }
 function gameAdvanceDays(){if(S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev||indexedWriteCount>0;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
 
+function renderCEODecisions(){
+ const root=$("ceo-action-center");if(!root||editableInteractionPending())return;
+ const hiring=managementOps().requests.filter(x=>x.status==="open");
+ const unit=S.exec.unitRequests.filter(x=>x.status==="open");
+ const offer=S.world.activeEvent,step=ladderNext();
+ const payroll=S.team.reduce((n,p)=>n+dailySalary(p),0);
+ const promotion=step?.ready&&S.cash>=(payroll+step.incremental*S.mod.cost)*14?step:null;
+ const requests=[];
+ for(const req of unit){const u=S.exec.units.find(x=>x.key===req.key);
+  const eligible=managementCashReady(req)&&!!u&&u.managerId===req.managerId&&u.staffIds.length<Math.min(25,u.plan.staffingTarget||5);
+  requests.push('<div class="exec-proposal"><b>Operating unit · staffing exception</b><p>'+
+   esc(SERVICE_LINES[req.key]?.name||"Unknown unit")+' · '+esc(req.reason)+' · Recruiting '+biCurrency(req.cost)+
+   ' once + '+biCurrency(req.payroll)+'/day payroll. '+(eligible?"21-day payroll reserve verified.":"Insufficient cash runway or unit staffing limit reached.")+'</p>'+
+   '<div class="buttons"><button type="button" data-ceo-action="unit-approve" data-id="'+req.id+'" '+(eligible?'':'disabled')+'>Approve unit hire</button>'+
+   '<button type="button" data-ceo-action="unit-decline" data-id="'+req.id+'">Decline</button></div></div>');
+ }
+ for(const req of hiring){const eligible=managementCashReady(req);
+  requests.push('<div class="exec-proposal"><b>Corporate department · staffing exception</b><p>'+
+   esc(DEPARTMENTS[req.dept]?.name||"Department")+' · '+esc(req.reason)+
+   ' · One-time '+biCurrency(req.cost)+' + '+biCurrency(req.payroll)+'/day; 21 days payroll required.</p>'+
+   '<div class="buttons"><button type="button" data-ceo-action="manager-approve" data-id="'+req.id+'" '+(eligible?'':'disabled')+'>Approve corporate hire</button>'+
+   '<button type="button" data-ceo-action="manager-decline" data-id="'+req.id+'">Decline</button></div></div>');
+ }
+ if(promotion)requests.push('<div class="exec-proposal"><b>Leadership promotion · CEO authority</b><p>Candidate '+esc(promotion.candidateName)+
+  ' · '+esc(promotion.role)+' · additional recurring payroll '+biCurrency(promotion.incremental*S.mod.cost)+'/day.</p>'+
+  '<button type="button" data-ceo-action="promotion" data-id="'+promotion.candidateId+'" data-level="'+promotion.level+'">Approve promotion</button></div>');
+ if(offer)requests.push('<div class="exec-proposal"><b>Market opportunity · optional</b><p>Offer through Day '+offer.until+
+ '. No compulsory penalty for declining.</p><div class="buttons"><button type="button" data-ceo-action="opportunity" data-result="act" '+
+ (worldOfferEligibility(offer).allowed?"":"disabled")+'>Take opportunity</button><button type="button" data-ceo-action="opportunity" data-result="pass">Pass</button></div></div>');
+ const escalation=requests.length;
+ const highHeadcount=S.team.length>=15,units=S.exec.units.length;
+ const leadership=highHeadcount||units>=2?'<p class="small"><b>Executive structure recommendation:</b> '+(units>=2?
+  "COO to coordinate GMs, capacity and delivery; ":"")+(highHeadcount?
+  "HR/People Director for recruiting, succession and retention; CFO/Finance Director for forecasts, cash and capital. ":"")+
+  "These are recommendations, not appointments or automatic payroll. Future delegated authority must be explicitly approved.</p>":"";
+ const markup='<div class="lead"><b>CEO decision center</b><span class="small">'+escalation+' actionable decisions</span></div>'+
+ (requests.length?requests.join(""):'<p class="small">No CEO exceptions requiring an approval. GMs and department managers continue within authorized limits.</p>')+
+ leadership+'<p class="small" id="ceo-action-status" role="status">Approving any request posts real costs only after durable saving.</p>';
+ if(root.innerHTML!==markup)root.innerHTML=markup;
+}
 function renderBriefing(){
 const urgent=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"||f.risk==="watch");
 const leadership=ladderNext();
@@ -3343,17 +3730,18 @@ if(stressed.length)notices.push('<div class="card"><h3>Team wellbeing</h3><p>'+s
 if(atRiskMoney)notices.push('<div class="card"><h3>Cash runway</h3><p>Available cash covers fewer than seven days of payroll. Check delivery and new contracts.</p><button type="button" data-go="work">Review work →</button></div>');
 
 if(notices.length<3&&direction.unmet.length)notices.push('<div class="card"><h3>Executive Assistant · company milestone</h3><p>'+esc(direction.title)+' · '+esc(direction.detail)+'</p><button type="button" data-go="'+direction.view+'">Review progression →</button></div>');
+if(notices.length<3&&propertyWarnings().length)notices.push('<div class="card"><h3>Premises · capacity and bills</h3><p>'+esc(propertyWarnings()[0])+'</p><button type="button" data-go="growth">Review offices →</button></div>');
 if(!notices.length)notices.push('<div class="card"><h3>No urgent decisions</h3><p>Employees are handling routine activities. Check Work or Growth when you want to make strategic decisions.</p></div>');
 const markup=notices.slice(0,3).join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
 for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}
 }
 function refresh(){
 if(editableInteractionPending())return;
-renderLadder();renderLaunchGuide();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();executiveShow();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
+renderLadder();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);
-$("focus-hint").textContent=S.flow.focus?"No new project starts or dilemmas; existing deadlines still count.":"New leads at least 25 real seconds apart; dilemmas at least 45 seconds apart.";
+$("focus-hint").textContent=S.flow.focus?"No new project starts or dilemmas; existing deadlines still count.":"Inbound leads follow game-day demand cycles; CEO dilemmas recur after at least 28 game days, independent of speed.";
 const waitDays=Math.max(0,S.flow.nextLead-S.day),waitSeconds=S.deals.length===0?0:Math.max(0,Math.ceil((25000-(Date.now()-S.flow.lastLeadAt))/1000));
 $("intake-status").textContent=S.flow.focus?"Intake paused — pipeline can still mature.":"Projects: "+S.deals.length+" active · Leads: "+S.pipeline.leads.length+" · Closed: "+S.pipeline.closed+".";
 const ap=person(S.ops.assistantId);
@@ -3444,7 +3832,7 @@ if(ev.k==="raise"&&i===0){a.career.satisfaction=clamp(a.career.satisfaction+10);
 coachDecision((delegated?"Assistant: ":"CEO: ")+dilemmaInfo(ev)?.[0],before,result,a.id,30);
 if(delegated){const delegationCost={praise:0,family:5,mistake:0,idea:ev.proposal?.cost??10}[ev.k]||0;
 S.ops.policy.spent+=delegationCost;S.ops.handled++;const assistant=person(S.ops.assistantId);logIt((assistant?assistant.n:"Assistant")+" handled a routine request: "+result,true);}else logIt(result,true);
-S.ev=null;S.nextEv=S.day+28+R(15);S.flow.lastInterruptAt=Date.now();
+S.ev=null;S.nextEv=S.day+28+R(15);S.flow.lastInterruptAt=Date.now();S.flow.lastInterruptDay=S.day;
 if(!delegated){save();structural="";renderStructure();renderIdeas();refresh();schedule();}}
 $("choices").addEventListener("click",e=>{const b=e.target.closest("button[data-choice]");if(b)choose(Number(b.dataset.choice));});
 function coachDecisionPreview(kind){
@@ -3458,9 +3846,15 @@ poach:"Matching an outside offer is a one-time retention cost; letting an employ
 praise:"Sharing credit improves employee morale; taking credit favors short-term reputation at a loyalty cost."})[kind]||"The decision journal records immediate changes and reviews later results.";
 }
 function showModal(){const m=$("modal");if(!S.ev){m.hidden=true;document.body.classList.remove("modal-open");return;}const d=dilemmaInfo(S.ev);if(!d){S.ev=null;save();m.hidden=true;return;}if(m.hidden||$("modal-title").textContent!==d[0]){$("modal-title").textContent=d[0];$("modal-text").textContent=d[1]+(S.coach.mode==="guided"?"\n\nDecision preview: "+coachDecisionPreview(S.ev.k):"");$("choices").innerHTML=d[2].map((txt,i)=>{const cost=coachChoiceCost(S.ev.k,i);return '<button type="button" data-choice="'+i+'" '+(cost>S.cash?'disabled title="Insufficient cash"':'')+'>'+esc(txt)+(cost>S.cash?' · insufficient cash':'')+'</button>';}).join("");}m.hidden=false;document.body.classList.add("modal-open");}
-function schedule(){clearTimeout(clock);if(!paused&&!S.ev&&!saveConflict&&!saveErrorReason&&indexedWriteCount===0)clock=setTimeout(()=>{tick();schedule();},1200/spd);}
+// 1× 2.4 seconds/day, 3× 0.8 seconds/day, 8× 0.3 seconds/day. The economy continues in game days.
+function schedule(){clearTimeout(clock);if(!paused&&!S.ev&&!saveConflict&&!saveErrorReason&&indexedWriteCount===0)clock=setTimeout(()=>{tick();schedule();},2400/spd);}
 function bubble(id,emoji,frames){let a=avatars.get(id);if(!a){a={x:0,y:0,tx:0,ty:0,away:false,hold:0,emoji:"",frames:0};avatars.set(id,a);}a.emoji=emoji||"💬";a.frames=frames;}
-function avatarDraw(){if(activeView!=="today"){requestAnimationFrame(avatarDraw);return;}const rows=Math.ceil(S.team.length/5),h=Math.max(150,80*rows+50);if(canvas.height!==h)canvas.height=h;const style=getComputedStyle(document.documentElement);const bar=style.getPropertyValue("--bar").trim(),ink=style.getPropertyValue("--ink").trim(),muted=style.getPropertyValue("--muted").trim();ctx.clearRect(0,0,640,h);ctx.fillStyle=bar;ctx.fillRect(0,0,640,h);
+let lastCampusFrame=-1000;
+function avatarDraw(now=0){
+ if(activeView!=="today"||!$("campus-visual").open){requestAnimationFrame(avatarDraw);return;}
+ // Cap animated canvas work at 20 FPS even on 8×; strategic game-day simulation runs separately.
+ if(now>0&&now-lastCampusFrame<50){requestAnimationFrame(avatarDraw);return;}
+ if(now>0)lastCampusFrame=now;const rows=Math.ceil(S.team.length/5),h=Math.max(150,80*rows+50);if(canvas.height!==h)canvas.height=h;const style=getComputedStyle(document.documentElement);const bar=style.getPropertyValue("--bar").trim(),ink=style.getPropertyValue("--ink").trim(),muted=style.getPropertyValue("--muted").trim();ctx.clearRect(0,0,640,h);ctx.fillStyle=bar;ctx.fillRect(0,0,640,h);
 ctx.fillStyle="#b7d7e8";ctx.fillRect(611,(h-32)/2,22,32);ctx.fillStyle="#224b67";ctx.font="9px system-ui";ctx.textAlign="center";ctx.fillText("water",622,(h-32)/2+19);
 S.team.forEach((p,i)=>{const dx=60+(i%5)*130,dy=40+Math.floor(i/5)*80;ctx.fillStyle=muted;ctx.globalAlpha=.33;ctx.fillRect(dx-26,dy-10,52,20);ctx.globalAlpha=1;let a=avatars.get(p.id);if(!a){a={x:dx,y:dy+34,tx:dx,ty:dy+34,away:false,hold:0,emoji:"",frames:0};avatars.set(p.id,a);}
 if(p.t==="idle"||p.t==="rest"){if(!a.away&&Math.random()<.004){a.away=true;a.hold=170+R(130);}if(a.away){a.tx=596;a.ty=h/2+29;if(Math.abs(a.x-a.tx)<7){a.hold--;if(a.hold<=0)a.away=false;}}if(!a.away){a.tx=dx;a.ty=dy+34;}}
@@ -3492,6 +3886,7 @@ async function bootstrapBoss(){
  if(S.ui?.pendingCEO&&CEO_PRIORITIES[S.ui.pendingCEO])ceoDraftPriority=S.ui.pendingCEO;
  spd=[1,3,8].includes(S.ui?.speed)?S.ui.speed:1;
  if(S.ui?.selectedService&&SERVICE_LINES[S.ui.selectedService])$("service-line-select").value=S.ui.selectedService;
+ $("campus-visual").open=S.ui.campusOpen!==false;
  if(loadFailed){saveConflict=true;paused=true;saveError("UnreadableSave","An existing company could not be loaded. Stored versions have NOT been overwritten.");}
  window.addEventListener("storage",event=>{if(event.key===KEY&&event.newValue){
   let rev=0;try{rev=Number(JSON.parse(event.newValue)._saveRevision)||0;}catch{}

@@ -10,7 +10,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,open:false,innerHTML:""
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,unitApplyPreset,unitApplyDraft,unitRecordInput,unitPresetValues,unitCareerReadiness,unitDevelopSuccessor,unitDevelopTeam,managementReview,managementLead,managementWorkload,managementSetHiringPolicy,managementRequestDecision,managementSharedCandidates,managementShareStaff,managementSupportAllowed,managementHiringAvailable,managementCashReady,managementOps,ladderEvaluation,ladderNext,ladderPromote,ladderSetAuthority,ladderDay,ladderPayroll,ladderLaunchReadiness,ladderReassign,dailySalary,managementOps,managementLead,managementWorkload,managementReview,managementSetHiringPolicy,managementRequestDecision,managementSharedCandidates,managementShareStaff,managementSupportAllowed,renderLadder,renderLaunchGuide,delegateWork,assign,beginEditableInteraction,finishEditableInteraction,editableInteractionPending,renderBusinessUnits,refresh,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
+const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitStaffingDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,unitApplyPreset,unitApplyDraft,unitRecordInput,unitPresetValues,unitCareerReadiness,unitDevelopSuccessor,unitDevelopTeam,managementReview,managementLead,managementWorkload,managementSetHiringPolicy,managementRequestDecision,managementSharedCandidates,managementShareStaff,managementSupportAllowed,managementHiringAvailable,managementCashReady,managementOps,ladderEvaluation,ladderNext,ladderPromote,ladderSetAuthority,ladderDay,ladderPayroll,ladderLaunchReadiness,ladderReassign,dailySalary,managementOps,managementLead,managementWorkload,managementReview,managementSetHiringPolicy,managementRequestDecision,managementSharedCandidates,managementShareStaff,managementSupportAllowed,renderLadder,renderLaunchGuide,delegateWork,assign,beginEditableInteraction,finishEditableInteraction,editableInteractionPending,renderBusinessUnits,refresh,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exported+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -436,7 +436,7 @@ test("v21.2 GM 30-day review and CEO hire proposal reconcile cost, salary and st
  assert.equal(backlog.unitKey,"product");
  u.delivered=2;u.qualityTotal=168;s.day=35;
  const cash=s.cash,headcount=s.team.length,oldPid=s.pid,investments=s.bi.totals.investments;
- G.unitAutonomousDay();
+ G.unitAutonomousDay();G.unitStaffingDay();
  assert.equal(u.reviews.length,1);assert.equal(u.reviews[0].quality,84);
  const proposal=s.exec.unitRequests.find(q=>q.key==="product"&&q.status==="open");
  assert.ok(proposal&&proposal.cost===20);
@@ -457,7 +457,7 @@ test("v21.2 rejected CEO unit proposal does not hire or spend",()=>{
  G.executiveLaunch("marketing");G.unitActivate("marketing");
  const gm=s.team[0];gm.career.rank=1;G.unitAppoint("marketing",gm.id);
  G.createDeal("Marketing customer",0,"hospitality");
- s.day=36;G.unitAutonomousDay();
+ s.day=36;G.unitAutonomousDay();G.unitStaffingDay();
  const req=s.exec.unitRequests.find(q=>q.status==="open");
  assert.ok(req);
  const cash=s.cash,count=s.team.length;
@@ -473,7 +473,7 @@ test("v21.2 replacing or losing a General Manager withdraws outdated hiring requ
  assert.equal(G.executiveLaunch("product"),true);assert.equal(G.unitActivate("product"),true);
  const first=s.team[0],replacement=s.team[1];first.career.rank=1;replacement.career.rank=1;
  assert.equal(G.unitAppoint("product",first.id),true);
- G.createDeal("Qualified open backlog",0,"hospitality");s.day=35;G.unitAutonomousDay();
+ G.createDeal("Qualified open backlog",0,"hospitality");s.day=35;G.unitAutonomousDay();G.unitStaffingDay();
  const request=s.exec.unitRequests.find(r=>r.status==="open");
  assert.ok(request,"First GM should propose hiring based on live unit demand");
  const oldCash=s.cash,oldHeadcount=s.team.length;

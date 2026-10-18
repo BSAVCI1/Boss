@@ -1,5 +1,15 @@
 # Boss — simulation development roadmap
 
+## BOSS Chief Command Center — permanent program governance
+
+**Central program board:** [Notion Chief Command Center](https://app.notion.com/p/3fdff3ed9aa581db94a9ee2c4b4b9277). **Canonical full roadmap and acceptance gates:** [GitHub Chief Command Center](docs/CHIEF_COMMAND_CENTER.md). **New chat starter prompt:** [Chief Command Center master prompt](docs/CHIEF_COMMAND_CENTER_START_PROMPT.md).
+
+This roadmap now operates **one version or small batch per new development chat**, with explicit GitHub PR/CI and Notion handoff to a separate Chief Command Center chat. The Chief chat should manage status, source-of-truth alignment, cross-version dependencies, quality and the next single development prompt; it does not implement the gameplay itself. One chat per batch prevents long execution streams and intermittent chat capacity interruption.
+
+**Full sequenced work:** v22.3A/B economy evidence/integration; v22.4B–D org/career, CEO office & UI release; v22.5A–C Conservative/Balanced/Aggressive/Custom limits and real HR/CFO/COO delegation; v22.6 earned Founder → Business Leader → Group CEO phase behavior; v23A–C differentiated product/customer/competitive strategy, investment and acquisitions; v24A–C campus/org visualization, human employee stories/empire and manufacturing/supply chains, with an end-to-end release quality gate.
+
+**Known initial state (verify live before each action):** v22.2 is deployed; [v22.3 draft PR #39](https://github.com/BSAVCI1/Boss/pull/39) and [v22.4 draft PR #44](https://github.com/BSAVCI1/Boss/pull/44) are not. The latest v22.4 CI pass at its development branch [#39120661653](https://github.com/BSAVCI1/Boss/actions/runs/39120661653) is not a production release.
+
 ## Approved CEO-first experience roadmap — 18 October 2026
 
 **Product direction:** evolve the default experience from founder (hands-on) to business leader (delegate) to group CEO (strategic direction, executive exceptions, capital). Player approved findings from four Day-4704 Today/Work/Team/Growth screenshots. The authoritative [product audit and acceptance criteria](docs/V22_4_CEO_EXPERIENCE_AND_PRODUCT_AUDIT.md) accompany Boss [Notion](https://app.notion.com/p/3fbff3ed9aa581e29a02cba3dfcad323). Never reset the iPhone company or silently reprice history.

@@ -1035,7 +1035,7 @@ coachDecision("Draw working capital",before,"Added "+biCurrency(amount)+" cash a
 logIt("Drew "+biCurrency(amount)+" of working-capital credit. Repay principal and accrued interest when able.");save();refresh();return true;}
 function economyRepay(){if(S.ev)return false;const e=S.economy,owed=e.loan+e.interestDue,amount=Math.min(S.cash,owed,50);if(amount<.01)return false;
 const before=coachSnap(),interest=Math.min(amount,e.interestDue),principal=amount-interest;
-e.interestDue=+(e.interestDue-interest).toFixed(2);e.loan=+(e.loan-principal).toFixed(2);S.cash=+(S.cash-amount).toFixed(2);
+e.interestDue=+(e.interestDue-interest).toFixed(2);e.loan=+(e.loan-principal).toFixed(2);S.cash-=amount;
 biAdd("cashOut",amount);biEvent("repay",amount,"Repay credit principal and accrued interest",amount);
 coachDecision("Repay working capital",before,"Paid "+biCurrency(interest)+" already-expensed interest and "+biCurrency(principal)+" loan principal. No second expense.",null,30);
 save();refresh();return true;}
@@ -1979,7 +1979,7 @@ function propertySell(id){
  if(!x||def.kind!=="owned"||x.status!=="inactive"||x.arrears>=.01)return false;
  return unitCommit(()=>{
   const book=x.book,proceeds=Math.round(book*.92*100)/100,loss=Math.max(0,book-proceeds);
-  x.status="sold";x.book=0;S.cash=+(S.cash+proceeds).toFixed(2);
+  x.status="sold";x.book=0;S.cash+=proceeds;
   biAdd("cashIn",proceeds);biEvent("property_sale",proceeds,"Sold inactive "+def.name,proceeds);
   if(loss>.001)biMoney("asset_disposal_loss",loss,"Noncash loss on property disposal",0);
   S.exec.property.events.unshift({day:S.day,action:"sale",id,book,proceeds,loss});
@@ -1993,7 +1993,7 @@ function propertyPayArrears(){
  if(payment<.01)return false;
  return unitCommit(()=>{
   let remaining=payment;for(const x of S.exec.property.sites){const n=Math.min(x.arrears,remaining);x.arrears=+(x.arrears-n).toFixed(2);remaining-=n;if(remaining<.001)break;}
-  S.cash=+(S.cash-payment).toFixed(2);biAdd("cashOut",payment);
+  S.cash-=payment;biAdd("cashOut",payment);
   biEvent("property_arrears",payment,"Pay previously expensed premises obligations",payment);
   S.exec.property.events.unshift({day:S.day,action:"settle",payment});propertyViewSignature="";
   logIt("Settled "+biCurrency(payment)+" of existing unpaid property bills (no second expense).");return true;
@@ -2008,7 +2008,7 @@ function propertyDay(){
  }
  for(const x of S.exec.property.sites){if(x.status!=="active")continue;
   const def=PROPERTY_TYPES[x.type],paid=Math.max(0,Math.min(S.cash,x.dayCost));
-  if(paid>0)S.cash=+(S.cash-paid).toFixed(2);
+  if(paid>0)S.cash-=paid;
   biMoney("property",x.dayCost,def.name+" daily "+(def.kind==="lease"?"rent":"upkeep"),paid);
   if(paid<x.dayCost)x.arrears=+(x.arrears+x.dayCost-paid).toFixed(2);
  }

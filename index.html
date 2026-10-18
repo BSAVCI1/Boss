@@ -2723,11 +2723,11 @@ $("property-location").addEventListener("change",()=>{
 $("property-panel").addEventListener("click",e=>{
  const b=e.target.closest("button[data-property-action]");if(!b)return;
  const action=b.dataset.propertyAction,key=b.dataset.propertyKey,unit=b.dataset.propertyUnit||null;
- if(action==="cancel"){propertyDraft=null;propertyViewSignature="";renderProperties();return;}
+ if(action==="cancel"){propertyDraft=null;propertyViewSignature="";renderPropertyDecisionPreview();renderProperties();return;}
  if(action==="preview"){
   const p=ceoPropertyComparison(key,unit);if(!p)return;
   propertyDraft={type:key,unitKey:unit,location:p.quote.location,price:p.quote.price,dayCost:p.quote.dayCost};
-  propertyViewSignature="";renderProperties();$("property-decision-preview").scrollIntoView?.({block:"nearest"});return;
+  propertyViewSignature="";renderPropertyDecisionPreview();renderProperties();$("property-decision-preview").scrollIntoView?.({block:"nearest"});return;
  }
  if(action==="confirm"){
   const d=propertyDraft,p=d&&ceoPropertyComparison(d.type,d.unitKey);
@@ -4218,7 +4218,8 @@ function renderCEOFocus(){
   office?{title:"Resolve workplace crowding",why:severity,go:"property",label:"Compare premises and decide →"}:
   first?{title:"Resolve a pending manager request",why:first.name+" · "+first.reason,go:first.location,label:"Review approval and consequences →"}:
   {title:direction.title,why:direction.detail,go:direction.view==="team"?"team":"growth",label:"Open the next company milestone →"};
- const completed=direction.unmet.length?direction.unmet.filter(x=>x.met).length:0;
+ const prerequisiteChecks=direction.key?companyLaunchReadiness(direction.key).checks:[];
+ const completed=prerequisiteChecks.filter(x=>x.met).length;
  const milestone=direction.unmet.length?
   completed+" prerequisites completed · "+direction.unmet.length+" missing: "+direction.unmet.slice(0,2).map(x=>x.label).join("; "):
   "Requirements met or no remaining service lines. The actual launch or improvement still needs CEO action.";

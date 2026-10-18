@@ -427,7 +427,7 @@ async function runBrowser(){
      "(()=>{document.querySelector('.bottom-nav button[data-view=\"growth\"]').click();document.getElementById('property-options').open=true;const b=document.querySelector('#property-purchase-options button[data-property-action=\"preview\"][data-property-key=\"office\"]');if(!b)throw Error('No property comparison action');b.click();return document.getElementById('property-decision-preview').textContent})()";
    const initResult=await send("Runtime.evaluate",{expression:init,returnByValue:true,awaitPromise:true});
    const content=initResult.result?.value||"";
-   assert.ok(content.includes(page==="today"?"CEO approvals pending":"CEO approval preview"),"Missing real "+page+" decision experience");
+   assert.ok(content.includes(page==="today"?"CEO approvals pending":"CEO approval preview"),"Missing real "+page+" decision experience: "+JSON.stringify(initResult).slice(0,700));
    if(page==="property")assert.ok(content.includes("One-time cash out")&&content.includes("Payroll + premises runway after"),"No real quote breakdown");
    await sleep(240);
    const selector=page==="today"?"#ceo-priority-card":"#property-decision-preview";

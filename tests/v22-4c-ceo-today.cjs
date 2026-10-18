@@ -9,7 +9,7 @@ function el(id){if(!els.has(id))els.set(id,{id,innerHTML:"",textContent:"",value
 const sandbox={document:{getElementById:el,querySelector:()=>el("x"),querySelectorAll:()=>[],body:el("body"),documentElement:el("html"),activeElement:null,addEventListener(){}},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},setTimeout:()=>1,clearTimeout(){},clearInterval(){},requestAnimationFrame:()=>1,getComputedStyle:()=>({getPropertyValue:()=>""}),Date,Math,JSON,Set,Map,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exposed="fresh,get:()=>S,set:v=>S=v,load,save,createDeal,feeFor,estimatedFee,worldIndicativeFee,worldTenderPreview,renderPipeline,renderCEODecisions,renderCEOFocus,ceoDecisionInventory,managementOps,renderBriefing,renderExecutiveWeekly,ceoPremisesOpportunity,propertyCapacity,propertyPeople,propertyReadiness,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,canonicalReporting,teamReportingGroups,renderOrgExplorer,clearCareerRequirements,coachCareerStatus,careerAction,ceoPropertyComparison,ceoPropertyAdvice,renderPropertyDecisionPreview,renderProperties,propertyOpen,propertyActive,propertySummary,executiveDecision";
+const exposed="fresh,get:()=>S,set:v=>S=v,load,save,createDeal,feeFor,estimatedFee,worldIndicativeFee,worldTenderPreview,renderPipeline,renderCEODecisions,renderCEOFocus,ceoDecisionInventory,managementOps,renderBriefing,renderExecutiveWeekly,ceoPremisesOpportunity,propertyCapacity,propertyPeople,propertyReadiness,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,canonicalReporting,teamReportingGroups,renderOrgExplorer,clearCareerRequirements,coachCareerStatus,careerAction,ceoPropertyComparison,ceoPropertyAdvice,renderPropertyDecisionPreview,renderProperties,propertyOpen,propertyActive,propertySummary,propertyCapacity,executiveDecision";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exposed+"};})();",sandbox,{timeout:5000});
 const G=sandbox.G;
 function fresh(){store.clear();G.fresh();return G.get();}
@@ -89,6 +89,30 @@ test("v22.4C quote no-op on legacy contract and manager roster, and approved cou
  assert.equal(JSON.stringify(s),before);
  assert.equal(G.ceoDecisionInventory().approvals,0);
  const roster=G.canonicalReporting();assert.equal(new Set(roster.entries.map(x=>x.p.id)).size,s.team.length);
+ money(s);
+});
+
+test("v22.4C authorized office transaction debits cash and ledger exactly once",()=>{
+ const s=fresh();staff(s,19);s.day=4704;s.market.completed=50;s.exec.property.baselineCapacity=12;
+ s.cash+=25000;s.bi.openingCash+=25000;
+ s.org.progression.appointments.push({id:s.team[0].id,level:"lead",since:5});
+ const option=G.ceoPropertyComparison("office"),startCash=s.cash,priorOut=s.bi.totals.cashOut;
+ assert.ok(option.check.ready,"Fixture must meet existing leasing gates");
+ assert.equal(s.exec.property.sites.length,0,"Preview must be non-spending");
+ const opened=G.propertyOpen("office");
+ assert.equal(opened,true,"Legitimate existing property purchase path must succeed");
+ assert.equal(s.cash,startCash-option.quote.price,"One real corporate debit");
+ assert.equal(s.bi.totals.cashOut,priorOut+option.quote.price,"Cash ledger must post exact same debit");
+ assert.equal(s.exec.property.sites.filter(x=>x.status==="active").length,1);
+ assert.equal(G.propertyActive().type,"office");assert.equal(G.propertyCapacity(),24);
+ assert.equal(G.propertyOpen("office"),false,"Repeated same active purchase cannot charge twice");
+ assert.equal(s.cash,startCash-option.quote.price);
+ money(s);
+});
+test("v22.4C ineligible headquarters transaction remains rejected and cash-safe",()=>{
+ const s=fresh(),before=JSON.stringify(s);
+ assert.equal(G.propertyOpen("hq"),false);
+ assert.equal(JSON.stringify(s),before,"Rejected property approval may not mutate saved records");
  money(s);
 });
 console.log("v22.4C CEO Today/property pure projection and real game read-only tests passed");

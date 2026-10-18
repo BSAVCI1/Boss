@@ -1,5 +1,8 @@
 # Boss — simulation development roadmap
 
+> **v22.3C4 integrated Day-0 HQ proof (18 October 2026) — IN DEVELOPMENT / PARTIAL, not deployed.** The [three-strategy actual-engine runner](tests/v22-3c4-integrated-growth.cjs) compares paid corporate-first, balanced business-unit and earlier GM growth from $90/three real employees, measures genuine 20-corporate/Director/two-GM-unit/50-delivery/cash/HQ readiness, and tests explicit CEO purchase only when authorized. [Specification and exact verification gate](docs/V22_3C4_INTEGRATED_ORGANIC_GROWTH.md). C3 proved Director separately but not coexisting with the operating units. v22.3 remains [draft PR #39](https://github.com/BSAVCI1/Boss/pull/39) / [open #40](https://github.com/BSAVCI1/Boss/issues/40); production v22.2 and parallel v22.4 PR #44 remain untouched. Final results and latest-head mandatory CI pending.
+
+
 ## BOSS Chief Command Center — permanent program governance
 
 **Central program board:** [Notion Chief Command Center](https://app.notion.com/p/3fdff3ed9aa581db94a9ee2c4b4b9277). **Canonical full roadmap and acceptance gates:** [GitHub Chief Command Center](docs/CHIEF_COMMAND_CENTER.md). **New chat starter prompt:** [Chief Command Center master prompt](docs/CHIEF_COMMAND_CENTER_START_PROMPT.md).

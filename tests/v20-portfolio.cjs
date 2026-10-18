@@ -1012,7 +1012,7 @@ test("v21.4c time-limited shared staffing never changes primary ownership or upf
  const cash=s.cash,cost=s.bi.totals.cashOut,units=s.exec.units[0].staffIds.slice();
  assert.equal(G.managementShareStaff("product",helper.id),true);
  assert.equal(s.cash,cash);assert.equal(s.bi.totals.cashOut,cost);
- assert.deepEqual([...s.exec.units[0].staffIds],units,"shared employee is not dedicated");
+ assert.equal(JSON.stringify([...s.exec.units[0].staffIds]),JSON.stringify(units),"shared employee is not dedicated");
  assert.equal(G.managementShareStaff("product",helper.id),false,"no duplicate temporary allocation");
  assert.equal(G.managementSupportAllowed({unitKey:"product"},helper),true);
  assert.equal(G.managementSupportAllowed({unitKey:"marketing"},helper),false);

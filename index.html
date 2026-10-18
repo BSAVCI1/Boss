@@ -1001,6 +1001,8 @@ if(!Number.isFinite(x.creditLimit)||x.creditLimit<150)x.creditLimit=150;
 if(!x.invested||typeof x.invested!=="object")x.invested={operations:false,commercial:false};
 if(!x.assets||typeof x.assets!=="object")x.assets={};
 if(!Number.isFinite(x.since))x.since=state.day;
+// Existing saved contracts and historical ledger never acquire procurement liabilities.
+if(!Number.isFinite(x.procurementPayable)||x.procurementPayable<0)x.procurementPayable=0;
 }
 function economyPressure(){const cycle=Math.floor(S.day/45)%4;
 return[{name:"Stable demand",factor:1},{name:"Growing demand",factor:1.10},{name:"Competitive slowdown",factor:.9},{name:"Recovering demand",factor:1.03}][cycle];}
@@ -1297,7 +1299,37 @@ const bucket=biBucket().sources;const day=bucket[source]||(bucket[source]={});da
 function biSector(sector,values){const all=S.bi.sectorTotals[sector]||(S.bi.sectorTotals[sector]={});const day=biBucket().sectors[sector]||(biBucket().sectors[sector]={});for(const [k,v]of Object.entries(values)){all[k]=(all[k]||0)+v;day[k]=(day[k]||0)+v;}}
 function biTeamDay(p,task=p.t){biAdd("staffDays",1);const eligible=["prod","ops"].includes(p.role.primary)&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&p.id!==S.ops.assistantId;
 if(eligible){biAdd("deliveryEligibleDays",1);if(task.startsWith("d"))biAdd("deliveryRoleWorkDays",1);}if(task.startsWith("d"))biAdd("billableDays",1);else if(task==="prospect"){biAdd("salesDays",1);biAdd("acquisitionLabor",dailySalary(p));}else if(task==="market"){biAdd("marketingDays",1);biAdd("acquisitionLabor",dailySalary(p));}else if(["study","teach","exp","coachteam","improve","streamline"].includes(task))biAdd("developmentDays",1);else if(task==="rest"||p.career.recoveryDays>0)biAdd("restDays",1);}
-function biProjectEnd(d,success,payout=0){const quality=Number.isFinite(d.quality)?d.quality:75;const labor=d.laborCost||0,direct=d.directCost||0;
+// v22.3B: explicit external procurement priced from the signed service scope.
+// This is third-party service licensing / specialist procurement, never employee wages.
+function contractProcurementQuote(d){
+ const fee=Math.max(0,feeFor(d)),volume=Math.max(0,d.work||0),complexity=Math.max(1,d.diff||1);
+ const rate=d.serviceLine?(d.serviceTier>=3?.24:.20):(d.tier>=3?.18:.10);
+ const externalUnits=d.serviceLine?1.1:.65;
+ return Math.max(0,Math.round((fee*rate+volume*complexity*externalUnits)*100)/100);
+}
+function contractProcurementClose(d,success){
+ if(d.economicVersion!==1||d.procurementPosted)return;
+ d.procurementPosted=true;
+ // Failed work incurs only nonrefundable external services already consumed.
+ const completion=Math.max(0,Math.min(1,(d.prog||0)/Math.max(1,d.work||1)));
+ const amount=+(success?d.externalProcurementQuote||0:(d.externalProcurementQuote||0)*.25*completion).toFixed(2);
+ if(amount<=0)return;
+ d.directCost=+((d.directCost||0)+amount).toFixed(2);
+ S.economy.procurementPayable=+((S.economy.procurementPayable||0)+amount).toFixed(2);
+ biMoney("procurement",amount,"External delivery licenses and procurement: "+d.cl,0);
+}
+function contractProcurementSettle(){
+ const due=Math.max(0,S.economy.procurementPayable||0);
+ const paid=Math.min(Math.max(0,S.cash),due);
+ if(paid<.005)return;
+ S.cash=+(S.cash-paid).toFixed(2);
+ S.economy.procurementPayable=+(due-paid).toFixed(2);
+ biAdd("cashOut",paid);
+ biEvent("procurement-settlement",paid,"Settle accrued external delivery procurement (not a second expense)",paid);
+}
+function biProjectEnd(d,success,payout=0){contractProcurementClose(d,success);const quality=Number.isFinite(d.quality)?d.quality:75;const labor=d.laborCost||0,direct=d.directCost||0;
+// Reporting only: allocated labor belongs to posted daily payroll; costs are not posted twice.
+biAdd("laborAllocated",labor);biAdd("directAllocated",direct);
 if(success){economyInvoice(d,payout);if(d.biBooked){biAdd("bookedDelivered",d.bookVal);biAdd("realizedComparable",payout);}biAdd("delivered",1);if(d.dl>=0)biAdd("onTime",1);biAdd("qualityTotal",quality);biAdd("projectContribution",payout-labor-direct);biSector(d.sector,{delivered:1,revenue:payout,qualityTotal:quality,contribution:payout-labor-direct});}
 else{biAdd("missed",1);biAdd("projectContribution",-labor-direct);biSector(d.sector,{missed:1,contribution:-labor-direct});}
 const item={day:S.day,client:d.cl,sector:d.sector,fee:payout,booked:d.biBooked?d.bookVal:null,quality:Math.round(quality),labor:+labor.toFixed(2),direct:+direct.toFixed(2),margin:+(payout-labor-direct).toFixed(2),success,onTime:success&&d.dl>=0,source:d.leadSource||"untracked"};
@@ -2352,7 +2384,10 @@ const strategy=S.day===0?WORLD_STRATEGIES.balanced:worldStrategy();
 const work=Math.max(4,Math.ceil((6+Math.round(diff*2.2)+(tier-1))*strategy.scope));
 const base=66+Math.floor(diff*13)+(tier-1)*17+extra+(returning?10:0);
 const d={id:S.did++,pricingVersion:23,cl:customer,sector,need:pick(SECTORS[sector].skills),diff,work,prog:0,base,dl:Math.ceil(work*2.15+9),w:null,tier,quality:78+strategy.quality,milestone:0,change:0,negotiated:false,extended:false,reviewed:false,returning,laborCost:0,directCost:0,biBooked:false,bookVal:0,paymentTerms:S.economy?(S.day===0?0:S.economy.terms):0,priceFactor:S.economy?({standard:1,competitive:.94,premium:1.10}[S.economy.pricing]||1):1,termPriceFactor:S.day===0?1:({0:.96,7:1,14:1.04,30:1.08}[S.economy.terms]||1),worldStrategy:S.day===0?"balanced":S.world.strategy,worldPriceFactor:strategy.price};
-d.agreedFee=estimatedFee(d);chooseServiceOffer(d);if(d.serviceLine)d.agreedFee=estimatedFee(d);S.deals.push(d);if(S.bi)biBook(d);return d;}
+d.agreedFee=estimatedFee(d);chooseServiceOffer(d);if(d.serviceLine)d.agreedFee=estimatedFee(d);
+// Immutable future-only procurement promise; existing v22.3/prior signed contracts lack this version.
+d.economicVersion=1;d.externalProcurementQuote=contractProcurementQuote(d);
+S.deals.push(d);if(S.bi)biBook(d);return d;}
 function sectorAction(key){if(S.ev||!SECTORS[key])return;const before=coachSnap();
 if(S.market.open.includes(key)){if(S.market.focus===key)return;S.market.focus=key;logIt("Your company now specializes in "+SECTORS[key].name+".");}
 else{const sec=SECTORS[key];if(S.rep<sec.rep||S.cash<sec.cost)return;S.cash-=sec.cost;biMoney("investment",sec.cost,"Enter "+sec.name+" sector");S.market.open.push(key);S.market.focus=key;logIt("Expanded into "+sec.name+" for $"+sec.cost+". New clients can now request work.");}
@@ -2440,6 +2475,8 @@ assistantDeadlineAlerts();economyDay();propertyDay();ideaProgressDay();
 unitPayrollDay();
  const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(S.cash,salary);S.cash-=actuallyPaid;
 biMoney("payroll",salary,"Daily payroll",actuallyPaid);
+// Pay prior procurement liabilities after payroll, without silently creating negative cash.
+contractProcurementSettle();
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&S.day-S.flow.lastInterruptDay>=28)startDilemma();
 labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
@@ -3411,9 +3448,19 @@ if(editableInteractionPending())return;
  const openNested=new Map([...target.querySelectorAll('details[data-unit-open]')].map(el=>[
   el.dataset.unitOpen,[...el.querySelectorAll('details.aux-details')].flatMap((d,i)=>d.open?[i]:[])
  ]));
- const signature=JSON.stringify({units:S.exec.units,requests:S.exec.unitRequests,shared:managementOps().shared,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id]),draftSelections:S.ui.unitSelectDrafts});
+ const signature=JSON.stringify({units:S.exec.units,finance:[S.bi?.totals?.revenue,S.bi?.totals?.costs,S.economy?.procurementPayable],requests:S.exec.unitRequests,shared:managementOps().shared,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id]),draftSelections:S.ui.unitSelectDrafts});
  if(signature===unitViewSignature)return;unitViewSignature=signature;
- const choices=S.exec.lines.map(l=>{
+ // One consolidated ledger; GM attribution is a subset, not an additional expense.
+const unitRevenue=S.exec.units.reduce((sum,u)=>sum+(u.revenue||0),0);
+const unitCost=S.exec.units.reduce((sum,u)=>sum+(u.directCost||0)+(u.sharedLaborCost||0)+(u.payrollCost||0)+(u.developmentCost||0),0);
+const groupRevenue=S.bi.totals.revenue||0,groupCost=S.bi.totals.costs||0;
+const nonUnitRevenue=groupRevenue-unitRevenue,corporateCost=groupCost-unitCost;
+const bridge='<p class="small"><b>Group operating reconciliation:</b> GM contribution '+biCurrency(unitRevenue-unitCost)+
+' + non-unit revenue '+biCurrency(nonUnitRevenue)+' − unallocated corporate expenses '+biCurrency(corporateCost)+
+' = consolidated operating profit '+biCurrency(groupRevenue-groupCost)+
+'. External procurement payable '+biCurrency(S.economy.procurementPayable||0)+
+'. Direct labor is included in payroll; unit contribution is not net profit.</p>';
+const choices=S.exec.lines.map(l=>{
   const u=S.exec.units.find(x=>x.key===l.key);
   if(!u)return'<div class="unit-panel"><b>'+esc(SERVICE_LINES[l.key].name)+'</b><p class="small">Company-wide service portfolio · shared managers and staff.</p><button type="button" data-unit-action="activate" data-unit-key="'+l.key+'">Organize as operating unit · no repurchase</button></div>';
   const gm=person(u.managerId),staff=u.staffIds.map(id=>person(id)).filter(Boolean);
@@ -3459,7 +3506,7 @@ if(editableInteractionPending())return;
    '<p class="small">Career path: Specialist → Team Lead (3 specialists) → Manager (up to five leads) → Senior Manager (three or more managers) → Director. Growth requires evidence and a trained replacement, not headcount alone.</p></details>'+
    authority+proposals+'</details>';
  }).join("");
- target.innerHTML='<h3>Operating units</h3><p class="small">Build an independent management structure from a service you already purchased; no second launch fee. Managers and dedicated employees affect future work, while all cash and signed contract history remain consolidated.</p>'+choices;
+ target.innerHTML='<h3>Operating units</h3><p class="small">Build an independent management structure from a service you already purchased; no second launch fee. Managers and dedicated employees affect future work, while all cash and signed contract history remain consolidated.</p>'+bridge+choices;
  for(const [id,value] of selectedChoices){const el=$(id);if(el&&[...el.options].some(option=>option.value===value))el.value=value;}
  for(const l of S.exec.lines){const d=S.ui.unitFieldDrafts[l.key];if(!d)continue;for(const [field,value] of Object.entries(d)){const el=target.querySelector('input[data-unit-key="'+l.key+'"][data-unit-field="'+field+'"]');if(el)el.value=value;}}
  for(const el of target.querySelectorAll('details[data-unit-open]')){

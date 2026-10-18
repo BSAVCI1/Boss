@@ -3691,7 +3691,7 @@ function renderCEODecisions(){
  const leadership=highHeadcount||units>=2?'<p class="small"><b>Executive structure recommendation:</b> '+(units>=2?
   "COO to coordinate GMs, capacity and delivery; ":"")+(highHeadcount?
   "HR/People Director for recruiting, succession and retention; CFO/Finance Director for forecasts, cash and capital. ":"")+
-  "These are recommendations, not appointments or automatic payroll. Future delegated authority must be explicitly approved.</p>':"";
+  "These are recommendations, not appointments or automatic payroll. Future delegated authority must be explicitly approved.</p>":"";
  const markup='<div class="lead"><b>CEO decision center</b><span class="small">'+escalation+' actionable decisions</span></div>'+
  (requests.length?requests.join(""):'<p class="small">No CEO exceptions requiring an approval. GMs and department managers continue within authorized limits.</p>')+
  leadership+'<p class="small" id="ceo-action-status" role="status">Approving any request posts real costs only after durable saving.</p>';

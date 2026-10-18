@@ -249,9 +249,9 @@ test("appointed leadership position wins over functional Team lead while career 
  assert.equal(new Set(ids).size,s.team.length);
  G.renderStructure();
  const people=el("people").innerHTML;
- assert.ok(people.includes("Commercial Director · Career: Lead"),"Director title must show on Team");
- assert.ok(people.includes("Delivery Department Manager · Career: Associate"),"Appointment must not invent promotion");
- assert.ok(people.includes("Marketing Manager · Career: Associate"));
+ assert.ok(people.includes("Commercial Director · Grade Lead"),"Director title must show on Team");
+ assert.ok(people.includes("Delivery Department Manager · Grade Associate"),"Appointment must not invent promotion");
+ assert.ok(people.includes("Marketing Manager · Grade Associate"));
  assert.equal(anna.career.rank,2);reconcile(s);
 });
 test("CEO strategy overdue status is a review prompt, not Day 561/90",()=>{

@@ -1327,7 +1327,7 @@ function contractProcurementSettle(){
  biAdd("cashOut",paid);
  biEvent("procurement-settlement",paid,"Settle accrued external delivery procurement (not a second expense)",paid);
 }
-function biProjectEnd(d,success,payout=0){contractProcurementClose(d,success);const quality=Number.isFinite(d.quality)?d.quality:75;const labor=d.laborCost||0,direct=d.directCost||0;
+function biProjectEnd(d,success,payout=0){if(d.biCompleted)return;contractProcurementClose(d,success);d.biCompleted=true;const quality=Number.isFinite(d.quality)?d.quality:75;const labor=d.laborCost||0,direct=d.directCost||0;
 // Reporting only: allocated labor belongs to posted daily payroll; costs are not posted twice.
 biAdd("laborAllocated",labor);biAdd("directAllocated",direct);
 if(success){economyInvoice(d,payout);if(d.biBooked){biAdd("bookedDelivered",d.bookVal);biAdd("realizedComparable",payout);}biAdd("delivered",1);if(d.dl>=0)biAdd("onTime",1);biAdd("qualityTotal",quality);biAdd("projectContribution",payout-labor-direct);biSector(d.sector,{delivered:1,revenue:payout,qualityTotal:quality,contribution:payout-labor-direct});}
@@ -2469,11 +2469,11 @@ p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
 if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);orgTrackPerson(p,effectiveTask);if(!recovering)orgManagerDay(p);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
 }
-for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){performanceFinish(d,true,feeFor(d));ceoLineFinish(d,true,feeFor(d));orgTrackDelivery(d,true);const payout=feeFor(d);biProjectEnd(d,true,payout);S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" completed "+biCurrency(payout)+" "+SECTORS[d.sector].name+" project; "+(d.paymentTerms===0?"cash collected":"invoice issued, collection due in "+d.paymentTerms+" days")+". Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
-else if(d.dl<=0){performanceFinish(d,false);ceoLineFinish(d,false);orgTrackDelivery(d,false);biProjectEnd(d,false);S.rep=Math.max(0,S.rep-3);recordCustomer(d,false);logIt("Missed the deadline for "+d.cl+". Reputation and customer loyalty dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
+for(const d of [...S.deals]){d.dl-=1;if(d.prog>=d.work){performanceFinish(d,true,feeFor(d));contractProcurementClose(d,true);ceoLineFinish(d,true,feeFor(d));orgTrackDelivery(d,true);const payout=feeFor(d);biProjectEnd(d,true,payout);S.rep+=(2+d.diff*.5+(d.quality>=82?1:0))*S.mod.rep;recordCustomer(d,true);logIt(d.cl+" completed "+biCurrency(payout)+" "+SECTORS[d.sector].name+" project; "+(d.paymentTerms===0?"cash collected":"invoice issued, collection due in "+d.paymentTerms+" days")+". Quality "+Math.round(d.quality)+"%.");const p=person(d.w);if(p){p.career.completions++;p.career.xp+=2;p.career.satisfaction=clamp(p.career.satisfaction+(p.career.goal==="impact"?8:3));p.career.stress=clamp(p.career.stress-3);release(p);p.mood=clamp(p.mood+8);bubble(p.id,"🎉",180);}S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}
+else if(d.dl<=0){performanceFinish(d,false);contractProcurementClose(d,false);ceoLineFinish(d,false);orgTrackDelivery(d,false);biProjectEnd(d,false);S.rep=Math.max(0,S.rep-3);recordCustomer(d,false);logIt("Missed the deadline for "+d.cl+". Reputation and customer loyalty dropped.",true);release(person(d.w));S.deals=S.deals.filter(x=>x.id!==d.id);dirty=true;}}
 assistantDeadlineAlerts();economyDay();propertyDay();ideaProgressDay();
 unitPayrollDay();
- const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(S.cash,salary);S.cash-=actuallyPaid;
+ const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(Math.max(0,S.cash),salary);S.cash-=actuallyPaid;
 biMoney("payroll",salary,"Daily payroll",actuallyPaid);
 // Pay prior procurement liabilities after payroll, without silently creating negative cash.
 contractProcurementSettle();

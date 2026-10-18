@@ -44,7 +44,7 @@ function engine(seed){
 function money(s){const t=s.bi.totals;const mismatch=s.bi.openingCash+t.cashIn-t.cashOut-s.cash;assert.ok(Math.abs(mismatch)<.065,'one cash ledger discrepancy '+mismatch+' day '+s.day);return +mismatch.toFixed(3);}
 function addPeople(G,s,size){const roles=['sales','mkt','prod','ops','prod','ops'];while(s.team.length<size){const p=G.createPerson();G.ensureCareer(p);G.ensureRole(p);G.ensureDepartment(p);G.ensurePerformance(p,s.day);p.role.primary=roles[s.team.length%roles.length];p.role.auto=true;s.team.push(p);}}
 function qualified(p){p.career.rank=Math.max(1,p.career.rank);p.career.xp=Math.max(16,p.career.xp);p.perf.days=Math.max(65,p.perf.days||0);p.management={planning:75,delegation:75,coaching:75,communication:75};p.t='idle';}
-function seeded(G,kind,policy){
+function seeded(G,kind,policy,options={}){
  G.fresh();const s=G.get();s.nextEv=99999999;s.world.nextEvent=99999999;
  // These are explicit test CEO choices, not a new management-policy UI.
  const plan=policies[policy];s.pipeline.mode=plan.pipeline;s.pipeline.target=plan.target;
@@ -96,7 +96,7 @@ function seeded(G,kind,policy){
    assert.equal(s.exec.officers[role].mandate,false,'no implicit delegation');
   }
  }
- if(kind==='B')assert.equal(G.propertyOpen('office'),true);
+ if(kind==='B'){if(!options.skipOffice)assert.equal(G.propertyOpen('office'),true);}
  else assert.equal(G.propertyOpen('hq'),true);
  // Commercial pipeline and directly earned signed work use the production new-deal pricing.
  for(let i=0;i<(mature?4:3);i++)G.createDeal();
@@ -182,9 +182,9 @@ function ceoWorkReview(G,s,kind,policy,elapsed){
 }
 function run(kind,policy,seed){
  const f=engine(seed),origin=kind==='E'?'A':['F','G'].includes(kind)?'B':kind;
- const setup=seeded(f.G,origin,policy),G=setup.G,s=G.get();
+ const setup=seeded(f.G,origin,policy,{skipOffice:kind==='G'}),G=setup.G,s=G.get();
  if(kind==='F'){s.flow.focus=true;s.pipeline.nextInbound=99999999;s.pipeline.mode='balanced';s.pipeline.target=1;}
- if(kind==='G'){s.exec.property.sites=[];s.exec.property.baselineCapacity=8;s.exec.property.unitBaseline=Object.fromEntries(s.exec.units.map(u=>[u.key,6]));}
+ if(kind==='G'){assert.equal(s.exec.property.sites.length,0,'capacity stress must not erase purchased premises or paid opening fees');s.exec.property.baselineCapacity=8;s.exec.property.unitBaseline=Object.fromEntries(s.exec.units.map(u=>[u.key,6]));}
  if(kind==='E')setup.fixture='Organically funded founder: no synthetic opening capital, real candidate hires and studio costs';
  const initialIds=s.team.map(p=>p.id),initialAuthority=JSON.stringify(s.exec.officers);
  const start=s.day,rows=[];let deliveryLabor=0,deliveryDirect=0;const first={building:null,hq:null,hr:null,cfo:null,coo:null};

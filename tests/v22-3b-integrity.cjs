@@ -10,7 +10,7 @@ function instance(){
  function el(id){if(!els.has(id))els.set(id,{id,innerHTML:'',textContent:'',value:'',checked:false,disabled:false,hidden:false,open:false,style:{},dataset:{},classList:{add(){},remove(){},toggle(){},contains(){return false}},addEventListener(){},querySelector(){return null},querySelectorAll(){return []},getContext(){return new Proxy({},{get:()=>()=>{}})},setAttribute(){},removeAttribute(){},focus(){},scrollIntoView(){},matches(){return false},parentNode:{open:true},contains(){return false}});return els.get(id);}
  const sandbox={document:{getElementById:el,querySelector:()=>el('x'),querySelectorAll:()=>[],documentElement:el('html'),body:el('body'),activeElement:null,addEventListener(){}},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>''}),Math,Date,JSON,Set,Map,console};
  vm.createContext(sandbox);
- vm.runInContext(code.slice(0,boot)+'globalThis.G={fresh,load,save,get:()=>S,set:s=>S=s,tick,createDeal,contractProcurementQuote,contractProcurementClose,contractProcurementSettle,biProjectEnd,ceoLineFinish,feeFor,dailySalary,propertyQuote,propertySummary,propertyOpen,propertyReadiness,executiveEligibility};})();',sandbox,{timeout:10000});
+ vm.runInContext(code.slice(0,boot)+'globalThis.G={fresh,load,save,get:()=>S,set:s=>S=s,tick,createDeal,contractProcurementQuote,contractProcurementClose,contractProcurementSettle,biProjectEnd,ceoLineFinish,feeFor,dailySalary,propertyQuote,propertySummary,propertyOpen,propertyReadiness,executiveEligibility,removePerson};})();',sandbox,{timeout:10000});
  return sandbox.G;
 }
 function ledger(s){const t=s.bi.totals;assert.ok(Math.abs(s.bi.openingCash+t.cashIn-t.cashOut-s.cash)<.065,'one authoritative cash ledger');}
@@ -80,4 +80,12 @@ function ledger(s){const t=s.bi.totals;assert.ok(Math.abs(s.bi.openingCash+t.cas
  assert.equal(G.get().exec.officers.hr.id,null,'no implicit executive appointment');
  ledger(G.get());
 }
-console.log('PASS v22.3B: legacy signed fees/salaries/properties, forward-only procurement, accrual-payable, once-only close, failure, cash ledger, reload and executive safeguards');
+{
+ const G=instance();G.fresh();const s=G.get(),manager=s.team[0],trainee=s.team[1];
+ const u={key:'product',managerId:manager.id,staffIds:[manager.id,trainee.id],plan:{successorId:trainee.id}};
+ s.exec.units.push(u);
+ assert.equal(G.removePerson(trainee),true,'employee departure is explicit and must clean references immediately');
+ assert.equal(u.plan.successorId,null,'departed employee cannot remain a nominated successor until reload');
+ assert.equal(u.staffIds.includes(trainee.id),false,'departed employee cannot remain in unit roster');
+}
+console.log('PASS v22.3B: legacy signed fees/salaries/properties, forward-only procurement, accrual-payable, once-only close, failure, successor departure, cash ledger, reload and executive safeguards');

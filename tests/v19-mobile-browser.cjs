@@ -13,6 +13,13 @@ document.addEventListener("DOMContentLoaded",async()=>{
   const nav=document.querySelector(".bottom-nav");
   result.checks.bootstrapComplete=document.documentElement.dataset.bossReady==="true";
   result.checks.navPresent=!!nav;
+  // v22.4D browser acceptance for simplified but still accessible management.
+  const strategy=byId("today-ceo-tools"),story=byId("company-story");
+  result.checks.simplifiedToday=!!strategy&&!strategy.open&&!!story&&!story.open&&byId("game-forward")?.getClientRects().length>0&&!!byId("ceo-action-center");
+  if(strategy){strategy.open=true;result.checks.disclosureOpens=document.querySelector("#executive-officers-panel")?.getClientRects().length>0;strategy.open=false;}
+  const customer=byId("work-customers"),rivals=byId("growth-rivals"),archive=byId("upgrade-archive");
+  result.checks.simplifiedManagement=!!customer&&!customer.open&&!!rivals&&!rivals.open&&!!archive&&!archive.open&&!!byId("ideas");
+  result.checks.noDuplicatedQuickActions=document.querySelectorAll("#game-forward,#game-primary").length===2;
    const officeGrid=document.querySelector(".ceo-office-grid");
    const officeCards=officeGrid?[...officeGrid.children]:[];
    result.checks.ceoHierarchyStacked=officeCards.length===2&&officeCards[1].getBoundingClientRect().top>=officeCards[0].getBoundingClientRect().bottom-1;
@@ -337,6 +344,10 @@ async function runBrowser(){
   assert.equal(outcome.views.length,4,"All four tabs must navigate");
   assert.equal(outcome.checks.bootstrapComplete,true,"Boss asynchronous save recovery bootstrap must complete");
   assert.equal(outcome.checks.navPresent,true);
+   assert.equal(outcome.checks.simplifiedToday,true,"CEO dashboard and simulation actions visible without opening dossiers");
+   assert.equal(outcome.checks.disclosureOpens,true,"Advanced CEO offices must expand");
+   assert.equal(outcome.checks.simplifiedManagement,true,"Customer, rival and research archive should start collapsed");
+   assert.equal(outcome.checks.noDuplicatedQuickActions,true,"Only one set of fast simulation actions");
   assert.equal(outcome.checks.navInViewport,true);
   assert.equal(outcome.checks.ceoHierarchyStacked,true,"CEO hierarchy must stack as full-width mobile rows");
   assert.equal(outcome.checks.customBudgets,true);

@@ -295,7 +295,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 #property-decision-preview .buttons button{min-width:0}
 @media(max-width:390px){.ceo-today-grid{gap:5px}.ceo-today-grid>div{padding:8px}.ceo-today-grid strong{font-size:15px}}
 
-</style>
+.management-pane{margin:10px 0;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}.management-pane>summary{cursor:pointer;min-height:48px;padding:12px 14px;font-weight:720;list-style-position:inside}.management-pane>.card,.management-pane>section{margin:9px 10px 12px;min-width:0}.management-pane>summary:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}#ideas .knowledge-row{padding:9px 0}#upgrade-archive>summary{font-size:13px}#completed-ideas .knowledge-row{opacity:.86}.ceo-quick-actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.ceo-quick-actions button{flex:1 1 145px}@media(max-width:414px){.management-pane>.card,.management-pane>section{margin:8px 7px 10px}.ceo-quick-actions button{min-width:0}}</style>
 </head>
 <body>
 <main id="game-root">
@@ -309,18 +309,21 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="lead"><b>CEO command center</b><span class="small">Decisions and delegated work</span></div>
 <div id="ceo-priority-content"><p class="small">Preparing your company priorities.</p></div>
 </section>
+<div class="ceo-quick-actions game-actions" aria-label="Quick simulation actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
+<details class="management-pane" id="today-ceo-tools"><summary>CEO strategy, executive appointments &amp; company identity</summary>
 <div class="card ceo-office"><div class="eyebrow">CEO · COMPANY IDENTITY</div><h2 id="company-name">Business Services Group</h2><p id="company-identity"></p><div class="ceo-office-grid"><div><b>My direct reports</b><div id="ceo-direct-reports"></div></div><div><b>Executive Assistant</b><div id="ceo-assistant"></div></div></div></div>
 <div class="card" id="executive-officers-panel"><div class="lead"><b>Executive leadership · HR, CFO &amp; COO</b><span id="executive-officer-count" class="small">Founder-led</span></div><p class="small">Appoint proven employees only after business milestones. Actual payroll changes begin after CEO approval; delegated authority begins inactive until expressly granted.</p><div id="executive-officers"></div><p id="executive-officer-action-status" class="small" role="status"></p></div><div class="card ceo-direction"><div class="lead"><b>Your 90-day direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p><p id="ceo-direction-confirm" class="small" role="status" aria-live="polite"></p></div>
+</details>
 <div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><details class="aux-details" id="ea-weekly-report"><summary>Executive Assistant · weekly business briefing</summary><div id="ea-weekly-body"></div></details><div id="ceo-action-center" aria-label="CEO approvals and exceptions"></div><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
-<div class="card game-desk" id="game-desk">
+<details class="management-pane" id="company-story"><summary>Company journey, milestones &amp; live campus</summary><div class="card game-desk" id="game-desk">
 <div class="lead"><span class="eyebrow">YOUR COMPANY STORY</span><span class="game-chapter" id="game-chapter">Founder</span></div>
 <h2 id="brief-headline">Your company at a glance</h2><p class="overview-copy" id="brief-summary">Your team is getting started.</p>
 <div class="overview-metrics"><span id="brief-projects">0 projects</span><span id="brief-pipeline">0 in pipeline</span><span id="brief-team">Team ready</span></div>
 <div class="game-mission" id="game-mission"><div class="eyebrow">NEXT CHALLENGE</div><strong id="game-goal">Build your company</strong><p id="game-goal-hint">Choose your next step.</p><div class="game-goal-track"><span id="game-goal-bar"></span></div><div class="game-goal-progress" id="game-goal-progress"></div></div>
-<p class="small" id="speed-explainer">Standard · 2.4 seconds per game day. Pause any time; Skip advances up to seven game days.</p><div class="game-actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
+<p class="small" id="speed-explainer">Standard · 2.4 seconds per game day. Pause any time; Skip advances up to seven game days.</p>
 <details class="aux-details" id="campus-visual" open><summary>Live company campus · hide animation to save battery</summary><div class="game-scene"><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office showing active employees and work"></canvas></div></div></details><div class="game-story" id="game-story" aria-live="polite"></div><div id="company-stage-today" class="game-stage-direction" aria-live="polite"></div>
 <details class="aux-details" id="game-journey"><summary>My company journey</summary><div id="game-journey-map"></div></details>
-</div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div>
+</div></details><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div>
 <details class="aux-details game-advanced" id="ceo-records"><summary>Coach &amp; company records</summary>
 <section class="card bi-headline" aria-labelledby="bi-headline-title"><div class="lead"><b id="bi-headline-title">Business performance</b><span class="small" id="bi-period-note">Tracked since Day 0</span></div>
 <div class="bi-grid">
@@ -354,7 +357,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </details><div id="pipeline-stages" class="pipeline-stages"></div><details class="aux-details"><summary>Lead details</summary><div id="pipeline-details" class="small"></div></details>
 </div></section>
 
-<section aria-labelledby="customers-title"><h2 id="customers-title">Customer relationships</h2><div class="card"><div class="assistant-queue"><div class="lead"><b>Customer relationships</b><span class="small" id="customer-summary">No customers yet</span></div><div id="customer-portfolio" class="small">Finish projects to build customer loyalty.</div></div></div></section>
+<details class="management-pane" id="work-customers"><summary>Customer relationships · optional portfolio detail</summary><section aria-labelledby="customers-title"><h2 id="customers-title">Customer relationships</h2><div class="card"><div class="assistant-queue"><div class="lead"><b>Customer relationships</b><span class="small" id="customer-summary">No customers yet</span></div><div id="customer-portfolio" class="small">Finish projects to build customer loyalty.</div></div></div></section></details>
 <details class="aux-details game-advanced" id="work-records"><summary>Business records &amp; money</summary>
 <details class="aux-details" id="performance-panel">
 <summary>Business intelligence — Finance, Sales, Delivery &amp; People</summary>
@@ -422,7 +425,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <select id="property-location"><option value="park">Business park · balanced</option><option value="central">City center · premium</option><option value="regional">Regional hub · value</option></select>
 <p id="property-location-explain" class="small"></p><div id="property-decision-preview" role="region" aria-label="CEO property approval preview" hidden></div><div id="property-purchase-options"></div></details><div id="property-status" class="small" role="status"></div>
 </section>
-<section aria-labelledby="world-title"><h2 id="world-title">Your rivals</h2>
+<details class="management-pane" id="growth-rivals"><summary>Rivals, market research &amp; competitive strategy</summary><section aria-labelledby="world-title"><h2 id="world-title">Your rivals</h2>
 <div class="card"><div id="game-rivals" class="game-rivals"></div><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
 
 <details class="aux-details" id="world-panel"><summary>Explore market, competitors &amp; strategy</summary>
@@ -434,7 +437,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <details class="aux-details"><summary>Meet the competitors</summary><div id="world-rivals"></div></details>
 <details class="aux-details"><summary>Competitive bid outcomes</summary><div id="world-tenders"></div></details>
 <p class="filter-note">Win probabilities are transparent simulation estimates, not real-world causation. Choosing Pass never causes a compulsory penalty; future opportunities continue.</p>
-</details></div></section>
+</details></div></section></details>
 <section aria-labelledby="lab-title"><h2 id="lab-title">Try an idea</h2>
 <div class="card lab-card"><div class="lead"><b>Experiment notebook</b><span id="lab-summary" class="small">Plan a measurable business experiment</span></div>
 <p class="filter-note">Make a prediction, adjust one business policy, then compare financial, customer and employee outcomes. Lessons are saved privately in this browser. Results are simulated evidence, not proof of cause.</p>
@@ -459,7 +462,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div id="lab-finished" class="lab-result"></div><div id="coach-lab-controls"></div>
 <details class="aux-details" id="lab-history-panel"><summary>Previous experiments <span id="lab-count">0</span></summary><div id="lab-history"></div></details>
 </details></div></section>
-<section aria-labelledby="idea-title"><h2 id="idea-title">Company upgrades</h2><div class="card"><p class="filter-note">Ideas discovered through research, service and daily work fill the map. Related discoveries unlock capabilities automatically—no manual pair matching.</p><div class="lead"><b>Organizational knowledge</b><span class="small" id="idea-summary"></span></div><p id="upgrades-complete" class="small" hidden></p><details class="aux-details" id="upgrade-archive"><summary>Unlocked capabilities &amp; research history</summary><div id="ideas"></div></details><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div>
+<section aria-labelledby="idea-title"><h2 id="idea-title">Company upgrades</h2><div class="card"><p class="filter-note">Ideas discovered through research, service and daily work fill the map. Related discoveries unlock capabilities automatically—no manual pair matching.</p><div class="lead"><b>Organizational knowledge</b><span class="small" id="idea-summary"></span></div><p id="upgrades-complete" class="small" hidden></p><div id="ideas" aria-label="Next research and upgrade opportunities"></div><details class="aux-details" id="upgrade-archive"><summary id="completed-upgrades-count">Completed upgrades &amp; mastered research</summary><div id="completed-ideas"></div><div id="completed-discoveries" class="small"></div></details><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div>
 <details class="aux-details" id="idea-progress-panel"><summary id="idea-progress-summary">Innovation portfolio · funded ideas</summary><div id="idea-progress-content"></div></details></div></section>
 
 </section>
@@ -575,7 +578,7 @@ function beginEditableInteraction(event){
  if(editingFlushTimer!==null){clearTimeout(editingFlushTimer);editingFlushTimer=null;}
 }
 function editableInteractionPending(){
- return !!(editingActive&&editingControl?.isConnected!==false)||Date.now()<editingCooldownUntil;
+ return !!(editingActive&&editingControl?.isConnected!==false)||!!document.activeElement?.matches?.(EDITABLE_CONTROL)||Date.now()<editingCooldownUntil;
 }
 function finishEditableInteraction(event){
  const el=event?.target?.closest?.(EDITABLE_CONTROL);
@@ -591,8 +594,7 @@ function finishEditableInteraction(event){
 }
 for(const name of ["touchstart","pointerdown","mousedown","focusin","keydown","input"])
  document.addEventListener(name,beginEditableInteraction,true);
-for(const name of ["change","focusout"])
- document.addEventListener(name,finishEditableInteraction,true);
+document.addEventListener("focusout",finishEditableInteraction,true);
 const R=n=>Math.floor(Math.random()*n);
 const pick=a=>a[R(a.length)];
 const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
@@ -4460,7 +4462,7 @@ function schedule(){clearTimeout(clock);if(!paused&&!S.ev&&!saveConflict&&!saveE
 function bubble(id,emoji,frames){let a=avatars.get(id);if(!a){a={x:0,y:0,tx:0,ty:0,away:false,hold:0,emoji:"",frames:0};avatars.set(id,a);}a.emoji=emoji||"💬";a.frames=frames;}
 let lastCampusFrame=-1000;
 function avatarDraw(now=0){
- if(activeView!=="today"||!$("campus-visual").open){requestAnimationFrame(avatarDraw);return;}
+ if(activeView!=="today"||!$("company-story").open||!$("campus-visual").open){requestAnimationFrame(avatarDraw);return;}
  // Cap animated canvas work at 20 FPS even on 8×; strategic game-day simulation runs separately.
  if(now>0&&now-lastCampusFrame<50){requestAnimationFrame(avatarDraw);return;}
  if(now>0)lastCampusFrame=now;const rows=Math.ceil(S.team.length/5),h=Math.max(150,80*rows+50);if(canvas.height!==h)canvas.height=h;const style=getComputedStyle(document.documentElement);const bar=style.getPropertyValue("--bar").trim(),ink=style.getPropertyValue("--ink").trim(),muted=style.getPropertyValue("--muted").trim();ctx.clearRect(0,0,640,h);ctx.fillStyle=bar;ctx.fillRect(0,0,640,h);

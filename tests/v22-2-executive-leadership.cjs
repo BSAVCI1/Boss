@@ -10,7 +10,7 @@ const win={innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}};
 const sandbox={document:{getElementById:el,querySelector:()=>el("none"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:win,localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Date,Math,JSON,console,Set,Map};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const methods="fresh,get:()=>S,set:s=>S=s,load,save,createPerson,ensureCareer,ensureRole,ensurePerformance,ensureDepartment,executiveEligibility,executiveAppoint,executiveUnappoint,executiveMandate,executiveOfficer,executiveOfficerDay,executiveRoleOf,executiveFinanceGuard,renderExecutiveOfficers,managementOps,managementHiringAvailable,unitStaffEligible,unitGMEligible,dailySalary,propertySummary";
+const methods="fresh,get:()=>S,set:s=>S=s,load,save,createPerson,ensureCareer,ensureRole,ensurePerformance,ensureDepartment,executiveEligibility,executiveAppoint,executiveUnappoint,executiveMandate,executiveOfficer,executiveOfficerDay,executiveRoleOf,executiveFinanceGuard,renderExecutiveOfficers,managementOps,managementHiringAvailable,unitStaffEligible,unitGMEligible,unitActivate,unitAppoint,unitTransfer,dailySalary,propertySummary";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+methods+"};})();",sandbox,{timeout:5000});
 const G=sandbox.G;
 function test(name,fn){fn();console.log("PASS "+name);}
@@ -74,7 +74,10 @@ test("COO requires two *staffed* managed units, cannot claim a fictitious group 
  const s=fresh();fund(s,20000);staff(s,15);const who=candidate(s);s.market.completed=16;
  s.exec.lines=[{key:"product",since:0,spent:120},{key:"marketing",since:0,spent:120}];
  assert.equal(G.executiveEligibility("coo").ready,false);
- s.exec.units=[{key:"product",managerId:s.team[0].id,staffIds:[s.team[0].id,s.team[1].id]},{key:"marketing",managerId:s.team[2].id,staffIds:[s.team[2].id,s.team[3].id]}];
+ s.team[0].career.rank=1;s.team[2].career.rank=1;
+ assert.equal(G.unitActivate("product"),true);assert.equal(G.unitActivate("marketing"),true);
+ assert.equal(G.unitAppoint("product",s.team[0].id),true);assert.equal(G.unitTransfer("product",s.team[1].id),true);
+ assert.equal(G.unitAppoint("marketing",s.team[2].id),true);assert.equal(G.unitTransfer("marketing",s.team[3].id),true);
  assert.equal(G.executiveEligibility("coo").ready,true);
  assert.equal(G.executiveAppoint("coo",who.id),true);
  assert.equal(G.executiveOfficer("coo","coordinate"),null);

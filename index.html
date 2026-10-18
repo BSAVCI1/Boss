@@ -3594,6 +3594,7 @@ function updateExecutiveWeekly(){
 }
 function renderExecutiveWeekly(){
  const panel=$("ea-weekly-report");if(!panel||!panel.open)return;
+ const fullDetails=$("ea-weekly-body").querySelector("details[data-ea-full]"),fullWasOpen=!!fullDetails?.open;
  const live=executiveWeeklySnapshot(),since=S.exec.weeklyReports[0]?.day,a=person(S.ops.assistantId),units=S.exec.units.map(u=>({u,gm:person(u.managerId),last:u.reviews.at(-1),active:S.deals.filter(d=>d.unitKey===u.key).length}));
  const risks=[],priorities=[];
  for(const [role,o] of Object.entries(S.exec.officers)){
@@ -3655,6 +3656,18 @@ function renderExecutiveWeekly(){
  (lines?'<b>Service performance</b>'+lines:'')+
  '<b>Three CEO priorities for next week</b><ol>'+priorities.slice(0,3).map(x=>'<li>'+esc(x)+'</li>').join("")+'</ol>'+
  '<p class="small">Based only on tracked game records. Earlier untracked history is not reconstructed, and recorded actions do not guarantee later performance. Routine work stays delegated.</p>';
+ // Keep real detail on demand but make decision-ready content the executive default.
+ const detailedHtml=$("ea-weekly-body").innerHTML;
+ const highValue=priorities.filter(x=>!/delegation active$/i.test(x));
+ const top=[...new Set(highValue)].slice(0,3);
+ const openApprovals=managerRequests.length+S.exec.unitRequests.filter(x=>x.status==="open").length;
+ const executiveSummary='<div class="exec-proposal"><b>Executive summary · '+live.periodDays+' game days</b>'+
+  '<p class="small">Revenue '+biCurrency(live.revenue)+' · operating '+(live.operatingProfit>=0?'profit ':'loss ')+biCurrency(Math.abs(live.operatingProfit))+
+  ' · cash balance '+biCurrency(S.cash)+' · '+openApprovals+' recorded staffing requests needing CEO review.</p>'+
+  '<b>Top recommendations</b><ol>'+top.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ol>'+
+  '<p class="small">Managers handle routine work under their current mandates; exceptions requiring approval appear in the CEO decision center.</p></div>';
+ $("ea-weekly-body").innerHTML=executiveSummary+'<details class="aux-details" data-ea-full '+(fullWasOpen?'open':'')+
+ '><summary>Full operating report · finance, departments, GM units, scorecards and decision history</summary>'+detailedHtml+'</details>';
 }
 function executiveWeek(){
 const e=S.exec;if(S.day<e.nextMeeting)return;
@@ -3972,9 +3985,19 @@ const atRiskMoney=S.cash<S.team.reduce((sum,p)=>sum+dailySalary(p),0)*7;
 const unitRequests=(S.exec?.unitRequests||[]).filter(x=>x.status==="open"),unitShortages=(S.exec?.units||[]).filter(u=>S.deals.some(d=>d.unitKey===u.key&&!d.w));
 const managerRequests=managementOps().requests.filter(r=>r.status==="open");
 const direction=companyDirection();
-const actionable=urgent.length+stressed.length+(atRiskMoney?1:0)+unitRequests.length+unitShortages.length+managerRequests.length+(S.team.length>=5&&leadership?.level==="lead"?1:0);
-$("brief-headline").textContent=actionable?actionable+" area"+(actionable===1?"":"s")+" to review":"Your company is on track";
-$("brief-summary").textContent=actionable?"Your Executive Assistant has highlighted decisions requiring CEO attention. Routine work continues without intervention.":"Projects and development are moving forward. You're free to focus on strategy.";
+// Count unique underlying situations, not every ticket and its escalated manager-unit duplicate.
+const operationalTopics=new Set();
+for(const f of urgent)operationalTopics.add(f.d.unitKey?"unit:"+f.d.unitKey:"contract:"+f.d.id);
+for(const u of unitShortages)operationalTopics.add("unit:"+u.key);
+if(stressed.length)operationalTopics.add("people:wellbeing");
+if(atRiskMoney)operationalTopics.add("cash:runway");
+if(unitRequests.length)operationalTopics.add("unit:recruitment");
+if(managerRequests.length)operationalTopics.add("corporate:recruitment");
+if(S.team.length>=5&&leadership?.level==="lead")operationalTopics.add("leadership:succession");
+if(propertyWarnings().length)operationalTopics.add("facilities");
+const tracked=operationalTopics.size;
+$("brief-headline").textContent=tracked?tracked+" operational topic"+(tracked===1?"":"s")+" tracked":"Your company is on track";
+$("brief-summary").textContent=tracked?"Your management team is tracking these situations. Only items in the CEO decision center need your direct approval.":"Managers are handling routine activities; you can focus on strategic growth.";
 $("brief-projects").textContent=S.deals.length+" active project"+(S.deals.length===1?"":"s");
 $("brief-pipeline").textContent=S.pipeline.leads.length+" pipeline leads";
 $("brief-team").textContent=S.team.length+" employees";

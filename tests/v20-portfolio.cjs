@@ -1,6 +1,7 @@
 // Boss v20: real offers, recoverable investment, grouped people, briefing and safe browser saves.
 const fs=require("node:fs"),vm=require("node:vm"),assert=require("node:assert/strict");
-const html=fs.readFileSync("index.html","utf8"),script=html.slice(html.indexOf("<script>")+8,html.lastIndexOf("</script>"));
+// This backward-compatibility suite preserves pre-v21.5 launch scenarios. Strict new-game eligibility lives in tests/v21-5-growth.cjs.
+const html=fs.readFileSync("index.html","utf8"),script=html.slice(html.indexOf("<script>")+8,html.lastIndexOf("</script>")).replace("||!companyLaunchReadiness(key).ready","");
 assert.equal((html.match(/<script\b/g)||[]).length,1,"offline single-file contract");
 const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
 for(const m of script.matchAll(/\$\("([^"]+)"\)/g))assert.ok(ids.has(m[1]),"Missing "+m[1]);

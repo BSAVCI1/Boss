@@ -1,10 +1,26 @@
 # Boss — simulation development roadmap
 
-## In development — v22.3 Economic Balancing (not released)
+## BOSS Chief Command Center — permanent program governance
 
-- Preserve existing signed fees, cash, wages, business ownership and property; newly generated future deals use `pricingVersion:23` to smooth reputation price inflation above 600 while grandfathered deals retain legacy rules.
-- Clarify operating-unit contribution as before corporate overhead; benchmark pricing multiples, runway and 30/180/730-game-day scenarios; require all finance, migrations, mobile controls and IndexedDB regressions green before any production merge.
-- CFO/HR/COO qualification gates and delegated authority from v22.2 remain untouched. Site and labor recalibration must use measured economic impact, not retroactive changes. [v22.3 economic architecture](docs/V22_3_ECONOMIC_BALANCING.md).
+**Central program board:** [Notion Chief Command Center](https://app.notion.com/p/3fdff3ed9aa581db94a9ee2c4b4b9277). **Canonical full roadmap and acceptance gates:** [GitHub Chief Command Center](docs/CHIEF_COMMAND_CENTER.md). **New chat starter prompt:** [Chief Command Center master prompt](docs/CHIEF_COMMAND_CENTER_START_PROMPT.md).
+
+This roadmap now operates **one version or small batch per new development chat**, with explicit GitHub PR/CI and Notion handoff to a separate Chief Command Center chat. The Chief chat should manage status, source-of-truth alignment, cross-version dependencies, quality and the next single development prompt; it does not implement the gameplay itself. One chat per batch prevents long execution streams and intermittent chat capacity interruption.
+
+**Full sequenced work:** v22.3A/B economy evidence/integration; v22.4B–D org/career, CEO office & UI release; v22.5A–C Conservative/Balanced/Aggressive/Custom limits and real HR/CFO/COO delegation; v22.6 earned Founder → Business Leader → Group CEO phase behavior; v23A–C differentiated product/customer/competitive strategy, investment and acquisitions; v24A–C campus/org visualization, human employee stories/empire and manufacturing/supply chains, with an end-to-end release quality gate.
+
+**Known initial state (verify live before each action):** v22.2 is deployed; [v22.3 draft PR #39](https://github.com/BSAVCI1/Boss/pull/39) and [v22.4 draft PR #44](https://github.com/BSAVCI1/Boss/pull/44) are not. The latest v22.4 CI pass at its development branch [#39120661653](https://github.com/BSAVCI1/Boss/actions/runs/39120661653) is not a production release.
+
+## Approved CEO-first experience roadmap — 18 October 2026
+
+**Product direction:** evolve the default experience from founder (hands-on) to business leader (delegate) to group CEO (strategic direction, executive exceptions, capital). Player approved findings from four Day-4704 Today/Work/Team/Growth screenshots. The authoritative [product audit and acceptance criteria](docs/V22_4_CEO_EXPERIENCE_AND_PRODUCT_AUDIT.md) accompany Boss [Notion](https://app.notion.com/p/3fbff3ed9aa581e29a02cba3dfcad323). Never reset the iPhone company or silently reprice history.
+
+- **v22.3 — Economic Balancing, OPEN:** [draft PR #39](https://github.com/BSAVCI1/Boss/pull/39) covers forward-only pricing and already passed baseline CI, but full 30/180/730-day cost-to-revenue and premises affordability require [issue #40](https://github.com/BSAVCI1/Boss/issues/40). Do not call it released.
+- **v22.4 — CEO Experience, APPROVED:** consistent bid/contract quote economics; remove duplicate/fulfilled role prompts; separate approvals, delegated issues, strategic opportunity and FYI on Today; surface financial and premises decisions; rebuild short EA briefing and clear reporting hierarchy, career blockers, advanced-mode navigation and historic-upgrades archive.
+- **v22.5 — Management Autopilot, APPROVED:** HR/COO/CFO act on genuinely authorized routine work with budget caps, 30-day reserve and role-specific evidence; optional guarded renewals, spending policy presets, proposal outcomes and traceable rejections. No default executive spending rights.
+- **v23 — Investments & Acquisitions, AFTER ECONOMY/CX:** valuation, diligence, integration, actual risks and differentiated operating units.
+- **v24 — Manufacturing / Business World:** gated factories, supply chains, investment world, responsive visual company campus and employee stories.
+
+**Release quality gates:** real 390px/414px UI, live game tick/edit persistence, IndexedDB migration, 730-day financial ledger, single cash and employee identity, old and new contract pricing. Keep each feature branch in a draft PR until verified. Visible progress does not imply production deployment.
 
 
 ## Released v22.2 — HR, CFO & COO executive leadership
@@ -418,3 +434,10 @@
 
 ## Delivery discipline
 Read the latest GitHub `main/index.html`; preserve the complete game; implement on an isolated branch; run syntax, behavior, save and mobile checks; publish through GitHub Pages; update README, CHANGELOG and the Boss Notion page; verify the live URL before claiming completion.
+
+
+## In development — v22.3 Economic Balancing (not released)
+
+- Preserve existing signed fees, cash, wages, business ownership and property; newly generated future deals use `pricingVersion:23` to smooth reputation price inflation above 600 while grandfathered deals retain legacy rules.
+- Clarify operating-unit contribution as before corporate overhead; benchmark pricing multiples, runway and 30/180/730-game-day scenarios; require all finance, migrations, mobile controls and IndexedDB regressions green before any production merge.
+- CFO/HR/COO qualification gates and delegated authority from v22.2 remain untouched. Site and labor recalibration must use measured economic impact, not retroactive changes. [v22.3 economic architecture](docs/V22_3_ECONOMIC_BALANCING.md).

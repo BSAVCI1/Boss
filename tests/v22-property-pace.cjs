@@ -11,7 +11,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,innerHTML:"",textConten
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const methods="fresh,load,get:()=>S,set:x=>S=x,save,executiveLaunch,companyLaunchReadiness,companyDirection,renderLaunchGuide,gameRender,renderBriefing,renderExecutiveWeekly,unitActivate,unitAppoint,unitTransfer,dailySalary,createDeal,feeFor,tick,managementOps,managementSetHiringPolicy,unitStaffingDay,unitDelegateWork,renderCEODecisions,unitRecordInput,unitRequestDecision,unitOfPerson,propertyOpen,propertyClose,propertyActivate,propertyPayArrears,propertyDay,propertySell,propertySummary,propertyReadiness,propertyQuote,propertyWorkMultiplier,propertyOccupancy,propertyCapacity,renderProperties,executiveEligibility,executiveAppoint,executiveUnappoint,executiveMandate,executiveFinanceGuard,executiveOfficer,executiveOfficerDay,renderExecutiveOfficers,unitStaffingDay,managementOps,managementSetHiringPolicy,managementHiringAvailable,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance";
+const methods="fresh,load,get:()=>S,set:x=>S=x,save,executiveLaunch,companyLaunchReadiness,companyDirection,renderLaunchGuide,gameRender,renderBriefing,renderExecutiveWeekly,unitActivate,unitAppoint,unitTransfer,dailySalary,createDeal,feeFor,tick,managementOps,managementSetHiringPolicy,unitStaffingDay,unitDelegateWork,renderCEODecisions,unitRecordInput,unitRequestDecision,unitOfPerson,propertyOpen,propertyClose,propertyActivate,propertyPayArrears,propertyDay,propertySell,propertySummary,propertyReadiness,propertyQuote,propertyWorkMultiplier,propertyOccupancy,propertyCapacity,renderProperties,executiveEligibility,executiveAppoint,executiveUnappoint,executiveMandate,executiveFinanceGuard,executiveOfficer,executiveOfficerDay,renderExecutiveOfficers,unitStaffingDay,managementOps,managementSetHiringPolicy,managementHiringAvailable,managementCashReady,unitBudgetAllowed,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+methods+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function fresh(){store.clear();G.fresh();el("service-line-select").value="product";return G.get();}
@@ -318,5 +318,60 @@ test("v22.2 executive offices produce real scorecards and keep salary/roles acro
  assert.equal(reloaded.exec.officers.cfo.reviews.length,1);
  assert.equal(reloaded.day,35);assert.equal(reloaded.team.length,15);
  assert.ok(reloaded.cash>0);money(reloaded);
+});
+
+test("v22.2 authorized HR can complete pending departmental recruitment without extra CEO spending",()=>{
+ const s=fresh();fund(s,12000);staff(s,15);s.market.completed=35;
+ const mgr=s.team[0],hr=qualified(s,s.team[5].id);
+ s.org.progression.appointments.push({id:mgr.id,level:"manager",since:0});
+ assert.equal(G.executiveAppoint("hr",hr.id),true);
+ assert.equal(G.executiveMandate("hr",true),true);
+ assert.equal(G.managementSetHiringPolicy(40,2),true);
+ const ops=G.managementOps(),req={id:ops.sequence++,status:"open",day:s.day,managerId:mgr.id,
+  dept:"commercial",skill:"mkt",cost:20,payroll:1.5*s.mod.cost,reason:"Approved qualified marketing expansion"};
+ ops.requests.push(req);const people=s.team.length,cash=s.cash;
+ s.day=7;G.executiveOfficerDay();
+ assert.equal(req.status,"delegated");assert.equal(s.team.length,people+1);
+ assert.equal(s.cash,cash-20);assert.equal(ops.hireSpent,20);assert.equal(ops.hires,1);
+ s.day=14;G.executiveOfficerDay();assert.equal(s.team.length,people+1,"processed hiring request cannot be repeated");
+ money(s);
+});
+test("v22.2 CFO veto applies to delegated recruiting even while CEO's existing 21-day runway test passes",()=>{
+ const s=fresh();fund(s,12000);staff(s,15);s.market.completed=35;
+ s.exec.lines.push({key:"product",since:0,spent:120,delivered:5},{key:"marketing",since:0,spent:120,delivered:5});
+ const cfo=qualified(s,s.team[5].id);assert.equal(G.executiveAppoint("cfo",cfo.id),true);
+ assert.equal(G.managementSetHiringPolicy(40,2),true);
+ const req={cost:20,payroll:1.5*s.mod.cost};
+ s.day=7;const total=s.team.reduce((n,p)=>n+G.dailySalary(p),0);
+ const before=s.cash;s.cash=total*25;s.bi.openingCash-=before-s.cash;
+ assert.equal(G.managementCashReady(req),true,"existing CEO approval cash gate remains satisfied");
+ assert.equal(G.managementHiringAvailable(req),true,"CFO mandate initially off");
+ assert.equal(G.executiveMandate("cfo",true),true);
+ assert.equal(G.managementHiringAvailable(req),false,"delegated recruitment blocked at CFO 30-day floor");
+ assert.equal(G.executiveMandate("cfo",false),true);
+ assert.equal(G.managementHiringAvailable(req),true,"CEO revocation restores previous approved scope");
+ money(s);
+});
+test("v22.2 COO coordinates specialist sharing even without a formal department manager, but only with mandate",()=>{
+ const s=fresh();fund(s,16000);staff(s,13);s.market.completed=30;s.deals=[];
+ for(let i=0;i<2;i++){
+  const key=i===0?"product":"marketing",gm=s.team[i],worker=s.team[i+2];
+  s.exec.lines.push({key,since:0,spent:120,delivered:4,revenue:250});
+  s.exec.units.push({key,since:0,managerId:gm.id,staffIds:[gm.id,worker.id],plan:{staffingTarget:5,days:90,since:0,lastReview:0},reviews:[]});
+ }
+ const coo=qualified(s,s.team[8].id),specialist=s.team[9];
+ specialist.department="delivery";specialist.role.primary="prod";specialist.role.auto=true;specialist.t="idle";specialist.s.prod=5;
+ assert.equal(G.executiveAppoint("coo",coo.id),true);
+ for(let i=0;i<2;i++)s.deals.push({id:200+i,unitKey:"product",w:null,dl:20,need:"prod"});
+ assert.equal(G.unitStaffingDay(),true,"without COO, GM should ask CEO for hiring exception");
+ assert.equal(G.managementOps().shared.length,0);
+ s.exec.unitRequests=s.exec.unitRequests.filter(x=>x.key!=="product");
+ assert.equal(G.executiveMandate("coo",true),true);
+ const cash=s.cash,people=s.team.length;
+ assert.equal(G.unitStaffingDay(),true);
+ const grant=G.managementOps().shared.find(x=>x.employeeId===specialist.id&&x.unitKey==="product");
+ assert.ok(grant&&grant.approvedBy===coo.id&&grant.until===s.day+30);
+ assert.equal(s.cash,cash);assert.equal(s.team.length,people);
+ assert.equal(grant.status,"active");money(s);
 });
 console.log("Boss v22 property, save, accounting and pacing validations passed.");

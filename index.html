@@ -1702,7 +1702,13 @@ function ladderEvaluation(level){
  const options=ladderCorporate().filter(p=>previous?ladderNode(p.id)?.level===previous:!ladderNode(p.id));
  const points=p=>managerCompetence(p)*2+(p.perf?.days||0)*.2+(p.perf?.completed||0)*4+(p.career?.xp||0)*.5;
  options.sort((a,b)=>points(b)-points(a)||a.id-b.id);
- const p=options[0],from=p&&ladderNode(p.id);
+ // A ready successor must not be obscured by a higher-scoring but ineligible colleague.
+ const readyCandidate=options.find(q=>{
+  const node=ladderNode(q.id),tenure=node?Math.max(0,S.day-node.since):(q.perf?.days||0);
+  return tenure>=rule.days&&managerCompetence(q)>=rule.skill&&
+   (q.career.rank>=1||q.career.xp>=10)&&!S.deals.some(d=>d.w===q.id);
+ });
+ const p=readyCandidate||options[0],from=p&&ladderNode(p.id);
  const tenure=p?(from?Math.max(0,S.day-from.since):(p.perf?.days||0)):0;
  const competency=p?managerCompetence(p):0;
  const reasons=[];
@@ -1720,11 +1726,28 @@ function ladderEvaluation(level){
  incremental:rule.bonus-(from?LADDER[from.level].bonus:0)};
 }
 function ladderNext(){
- for(const level of [...LADDER_STAGES].reverse()){const c=ladderEvaluation(level);if(c?.ready)return c;}
- for(const level of LADDER_STAGES){
-  if(!S.org.progression.appointments.some(n=>n.level===level))return ladderEvaluation(level);
+ const g=S.org.progression,lead=ladderEvaluation("lead"),manager=ladderEvaluation("manager"),
+  senior=ladderEvaluation("senior"),director=ladderEvaluation("director");
+ if(director.ready)return director;
+ if(senior.ready)return senior;
+ const count=level=>g.appointments.filter(n=>n.level===level).length;
+ const leads=count("lead"),managers=count("manager"),seniors=count("senior");
+ // One Manager is earned once three Team Leads exist; retain five real leads for Senior readiness.
+ // Do not endlessly convert the necessary Team Leads into surplus Managers.
+ if(!managers&&!seniors){
+  if(leads>=3)return manager.ready?manager:lead.ready?lead:manager;
+  return lead;
  }
- return ladderEvaluation("director");
+ if(!seniors){
+  if(leads<5)return lead;
+  return senior;
+ }
+ // A Senior cannot become Director until three *other* Managers have been genuinely developed.
+ if(managers<3){
+  if(leads<3)return lead;
+  return manager;
+ }
+ return director;
 }
 function ladderReassign(){
  const people=ladderCorporate(),nodes=S.org.progression.appointments,reportTo={};

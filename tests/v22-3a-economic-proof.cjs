@@ -13,7 +13,7 @@ const policies={
 };
 function engine(seed){
  const store=new Map(),elements=new Map();
- function el(id){if(!elements.has(id))elements.set(id,{id,innerHTML:'',textContent:'',value:'',checked:false,disabled:false,open:false,hidden:false,style:{},dataset:{},classList:{add(){},remove(){},toggle(){},contains(){return false}},addEventListener(){},querySelector(){return null},querySelectorAll(){return []},getContext(){return new Proxy({},{get:()=>()=>{}})},focus(){},scrollIntoView(){},parentNode:{open:true},contains(){return false}});return elements.get(id);}
+ function el(id){if(!elements.has(id))elements.set(id,{id,innerHTML:'',textContent:'',value:'',checked:false,disabled:false,open:false,hidden:false,style:{},dataset:{},classList:{add(){},remove(){},toggle(){},contains(){return false}},addEventListener(){},querySelector(){return null},querySelectorAll(){return []},getContext(){return new Proxy({},{get:()=>()=>{}})},setAttribute(){},removeAttribute(){},focus(){},scrollIntoView(){},parentNode:{open:true},contains(){return false}});return elements.get(id);}
  let x=seed>>>0;const rng=Object.create(Math);rng.random=()=>{x=(Math.imul(1664525,x)+1013904223)>>>0;return x/4294967296;};
  const sandbox={document:{getElementById:el,querySelector:()=>el('x'),querySelectorAll:()=>[],documentElement:el('html'),body:el('body'),activeElement:null,addEventListener(){}},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>''}),Math:rng,Date,JSON,Set,Map,console};
  vm.createContext(sandbox);
@@ -97,7 +97,7 @@ function seeded(G,kind,policy){
   assert.equal(JSON.stringify(load.exec.property.sites),initial.sites);
   assert.equal(JSON.stringify(load.exec.units),initial.units);
   assert.equal(JSON.stringify(load.exec.officers),initial.officers);
-  assert.deepEqual(Array.from(load.team,p=>p.id),initial.people);
+  assert.equal(JSON.stringify(Array.from(load.team,p=>p.id)),JSON.stringify(initial.people));
   for(const [id,fee] of before){const d=load.deals.find(x=>x.id===id);assert.equal(d.agreedFee,fee);assert.equal(d.pricingVersion,undefined);}
   const newcomer=G.createDeal();assert.equal(newcomer.pricingVersion,23);
   return{G,s:load,baseline:cash,fixture:'synthetic v22.2 historical contracts, existing owned terms, original mandates'};
@@ -155,7 +155,7 @@ function run(kind,policy,seed){
    rows.push(snapshot(G,s,setup.baseline,kind,policy,seed,n));
    const oldDay=s.day,oldCash=s.cash,oldDeals=s.deals.map(d=>[d.id,d.agreedFee,d.pricingVersion]);
    G.save();const loaded=G.load();assert.ok(loaded&&loaded.day===oldDay&&loaded.cash===oldCash,'reload day/cash persistence');
-   assert.deepEqual(Array.from(loaded.deals,d=>[d.id,d.agreedFee,d.pricingVersion]),oldDeals,'contract fee preservation');
+   assert.equal(JSON.stringify(Array.from(loaded.deals,d=>[d.id,d.agreedFee,d.pricingVersion])),JSON.stringify(oldDeals),'contract fee preservation');
    assert.equal(new Set(loaded.team.map(p=>p.id)).size,loaded.team.length);
    assert.equal(JSON.stringify(loaded.exec.units),JSON.stringify(s.exec.units));
    assert.equal(JSON.stringify(loaded.exec.property),JSON.stringify(s.exec.property));

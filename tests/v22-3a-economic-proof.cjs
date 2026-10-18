@@ -55,7 +55,7 @@ function seeded(G,kind,policy){
  // and at least three previous deliveries on the first. This history is part of the synthetic opening snapshot.
  let launch=G.companyLaunchReadiness('product');
  assert.ok(launch.ready,'fixture first business is eligible: '+JSON.stringify(launch.checks));
- assert.equal(G.executiveLaunch('product'),true);
+ {const result=G.executiveLaunch('product');assert.ok(result,'first service launch failed: '+JSON.stringify({result,day:s.day,cash:s.cash,ev:s.ev,ready:G.companyLaunchReadiness('product'),lines:s.exec.lines,stored:!!G.load(),revision:s._saveRevision}));}
  assert.equal(G.unitActivate('product'),true);
  qualified(s.team[3]);assert.equal(G.unitAppoint('product',ids[3]),true);
  assert.equal(G.unitTransfer('product',ids[4]),true);

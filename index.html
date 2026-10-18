@@ -1322,7 +1322,8 @@ function contractProcurementSettle(){
  const due=Math.max(0,S.economy.procurementPayable||0);
  const paid=Math.min(Math.max(0,S.cash),due);
  if(paid<.005)return;
- S.cash=+(S.cash-paid).toFixed(2);
+ // Preserve sub-cent salary precision in the authoritative cash ledger.
+ S.cash-=paid;
  S.economy.procurementPayable=+(due-paid).toFixed(2);
  biAdd("cashOut",paid);
  biEvent("procurement-settlement",paid,"Settle accrued external delivery procurement (not a second expense)",paid);

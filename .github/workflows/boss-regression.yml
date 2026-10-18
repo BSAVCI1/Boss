@@ -13,7 +13,7 @@ jobs:
         with:
           node-version: '20'
       - name: Run standalone game regression checks
-        run: node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs && node tests/v17-game.cjs && node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v20-portfolio.cjs && node tests/v21-5-growth.cjs && node tests/v22-property-pace.cjs && node tests/v22-2-executive-leadership.cjs && node tests/v22-3-economic-balancing.cjs && node tests/v22-3a-economic-proof.cjs && node tests/v22-3b-economic-calibration.cjs && node --experimental-websocket tests/v19-mobile-browser.cjs
+        run: node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs && node tests/v17-game.cjs && node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v20-portfolio.cjs && node tests/v21-5-growth.cjs && node tests/v22-property-pace.cjs && node tests/v22-2-executive-leadership.cjs && node tests/v22-3-economic-balancing.cjs && node tests/v22-3a-economic-proof.cjs && node tests/v22-3b-economic-calibration.cjs && node tests/v22-3b-integrity.cjs && BOSS_ECONOMIC_MODEL=baseline node tests/v22-3b-sensitivity.cjs && BOSS_ECONOMIC_MODEL=minimal node tests/v22-3b-sensitivity.cjs && BOSS_ECONOMIC_MODEL=balanced node tests/v22-3b-sensitivity.cjs && BOSS_ECONOMIC_MODEL=pressure node tests/v22-3b-sensitivity.cjs && node tests/v22-3b-compare.cjs && node --experimental-websocket tests/v19-mobile-browser.cjs
 
       - name: Upload v22.3A economic evidence
         if: always()
@@ -29,4 +29,17 @@ jobs:
         with:
           name: v22-3b-economic-calibration
           path: reports/v22-3b-economic-calibration.json
+          if-no-files-found: warn
+
+      - name: Upload four-model 7-stage calibration comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v22-3b-sensitivity-evidence
+          path: |
+            reports/v22-3b-baseline.json
+            reports/v22-3b-minimal.json
+            reports/v22-3b-balanced.json
+            reports/v22-3b-pressure.json
+            reports/v22-3b-comparison.json
           if-no-files-found: warn

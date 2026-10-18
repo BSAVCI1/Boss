@@ -1,5 +1,18 @@
 # Boss — simulation development roadmap
 
+## Approved CEO-first experience roadmap — 18 October 2026
+
+**Product direction:** evolve the default experience from founder (hands-on) to business leader (delegate) to group CEO (strategic direction, executive exceptions, capital). Player approved findings from four Day-4704 Today/Work/Team/Growth screenshots. The authoritative [product audit and acceptance criteria](docs/V22_4_CEO_EXPERIENCE_AND_PRODUCT_AUDIT.md) accompany Boss [Notion](https://app.notion.com/p/3fbff3ed9aa581e29a02cba3dfcad323). Never reset the iPhone company or silently reprice history.
+
+- **v22.3 — Economic Balancing, OPEN:** [draft PR #39](https://github.com/BSAVCI1/Boss/pull/39) covers forward-only pricing and already passed baseline CI, but full 30/180/730-day cost-to-revenue and premises affordability require [issue #40](https://github.com/BSAVCI1/Boss/issues/40). Do not call it released.
+- **v22.4 — CEO Experience, APPROVED:** consistent bid/contract quote economics; remove duplicate/fulfilled role prompts; separate approvals, delegated issues, strategic opportunity and FYI on Today; surface financial and premises decisions; rebuild short EA briefing and clear reporting hierarchy, career blockers, advanced-mode navigation and historic-upgrades archive.
+- **v22.5 — Management Autopilot, APPROVED:** HR/COO/CFO act on genuinely authorized routine work with budget caps, 30-day reserve and role-specific evidence; optional guarded renewals, spending policy presets, proposal outcomes and traceable rejections. No default executive spending rights.
+- **v23 — Investments & Acquisitions, AFTER ECONOMY/CX:** valuation, diligence, integration, actual risks and differentiated operating units.
+- **v24 — Manufacturing / Business World:** gated factories, supply chains, investment world, responsive visual company campus and employee stories.
+
+**Release quality gates:** real 390px/414px UI, live game tick/edit persistence, IndexedDB migration, 730-day financial ledger, single cash and employee identity, old and new contract pricing. Keep each feature branch in a draft PR until verified. Visible progress does not imply production deployment.
+
+
 ## Released v22.2 — HR, CFO & COO executive leadership
 
 - CEO can appoint an existing qualified, idle colleague as HR/Chief People Officer, CFO or COO after explicit company, experience and payroll-runway gates; retain one employee identity and normal historic payroll.

@@ -200,7 +200,7 @@ function oneShotAccountingTests(){
  // Legacy signed agreements are unversioned and must never incur new procurement.
  const {G}=engine(90513),setup=seeded(G,'A','balanced'),state=setup.s;
  const legacy=state.deals[0];delete legacy.economicVersion;delete legacy.externalProcurementQuote;
- const fee=legacy.agreedFee,salary=state.team.map(p=>G.dailySalary(p));
+ const fee=legacy.agreedFee,salary=Array.from(state.team,p=>G.dailySalary(p));
  const firstDay=state.day,cash=state.cash;
  G.save();const restored=G.load();assert.equal(restored.deals[0].agreedFee,fee);
  assert.equal(restored.deals[0].economicVersion,undefined);

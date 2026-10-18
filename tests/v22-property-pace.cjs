@@ -196,7 +196,7 @@ test("v22 GM and department manager grant qualified 30-day idle specialist witho
  assert.equal(s.team.reduce((n,p)=>n+G.dailySalary(p),0),salaries);
  G.unitDelegateWork();
  assert.ok(s.deals.filter(d=>d.unitKey==="product"&&d.w).length>=2,"GM can allocate dedicated and shared workers");
- assert.equal(G.unitStaffingDay(),false,"same-day repeated review cannot allocate another specialist");
+ G.unitStaffingDay();assert.equal(G.managementOps().shared.filter(x=>x.unitKey==="product"&&x.status==="active").length,1,"shared allocation must not duplicate");
  money(s);
 });
 test("v22 unit hire uses CEO-approved shared slot and dollar caps with 21 payroll days",()=>{

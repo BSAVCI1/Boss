@@ -17,7 +17,7 @@ function engine(seed){
  let x=seed>>>0;const rng=Object.create(Math);rng.random=()=>{x=(Math.imul(1664525,x)+1013904223)>>>0;return x/4294967296;};
  const sandbox={document:{getElementById:el,querySelector:()=>el('x'),querySelectorAll:()=>[],documentElement:el('html'),body:el('body'),activeElement:null,addEventListener(){}},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>''}),Math:rng,Date,JSON,Set,Map,console};
  vm.createContext(sandbox);
- const names='fresh,load,save,get:()=>S,set:s=>S=s,createDeal,tick,assign,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,propertySummary,propertyQuote,propertyReadiness,propertyOpen,companyLaunchReadiness,executiveLaunch,unitActivate,unitAppoint,unitTransfer,executiveEligibility,executiveAppoint,executiveMandate,feeFor,reputationPriceFactor';
+ const names='fresh,load,save,get:()=>S,set:s=>S=s,createDeal,tick,assign,bestIdle,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,propertySummary,propertyQuote,propertyReadiness,propertyOpen,companyLaunchReadiness,executiveLaunch,unitActivate,unitAppoint,unitTransfer,executiveEligibility,executiveAppoint,executiveMandate,feeFor,reputationPriceFactor';
  vm.runInContext(script.slice(0,boot)+'globalThis.G={'+names+'};})();',sandbox,{timeout:10000});
  return{G:sandbox.G,store};
 }
@@ -142,11 +142,27 @@ function snapshot(G,s,baseline,kind,policy,seed,elapsed,deliveryLabor,deliveryDi
  assert.equal(r.day,kind==='A'?elapsed:(kind==='B'?180+elapsed:kind==='C'?4704+elapsed:2864+elapsed));
  return r;
 }
+// Founder and developing-company CEOs still review unassigned customer work; all assignments
+// go through the *real* player action and role/operating-unit eligibility. Mature GMs remain autonomous.
+function ceoWorkReview(G,s,kind,policy,elapsed){
+ if(kind!=='A'&&kind!=='B')return;
+ const cadence={conservative:14,balanced:7,growth:3}[policy];
+ if(elapsed!==1&&elapsed%cadence!==0)return;
+ const max={conservative:1,balanced:2,growth:3}[policy];let decisions=0;
+ for(const d of [...s.deals].filter(x=>!x.w)){
+  if(decisions>=max)break;
+  const p=G.bestIdle(d);
+  if(!p)continue;
+  G.assign(d.id,p.id);
+  if(d.w===p.id)decisions++;
+ }
+}
 function run(kind,policy,seed){
  const f=engine(seed),setup=seeded(f.G,kind,policy),G=setup.G,s=G.get();
  const initialIds=s.team.map(p=>p.id),initialAuthority=JSON.stringify(s.exec.officers);
  const start=s.day,rows=[];let deliveryLabor=0,deliveryDirect=0;const first={building:null,hq:null,hr:null,cfo:null,coo:null};
  for(let n=1;n<=730;n++){
+  ceoWorkReview(G,s,kind,policy,n);
   const before=s.day;G.tick();assert.equal(s.day,before+1,'a game day must advance exactly once');
   // Real completed-project records preserve allocated delivery effort; BI_FIELDS.laborAllocated is not populated by the current engine.
   // Collect the newly completed records EVERY DAY before the built-in 120-project history truncation.
@@ -171,7 +187,7 @@ function run(kind,policy,seed){
  return{rows,first,fixture:setup.fixture};
 }
 function main(){
- const out={meta:{engine:'Boss production index.html tick()',pricing:'v22.3 candidate',seeds,policies,horizons,measurements:'Since synthetic fixture start; amounts in in-game dollars. No owner Safari save.'},rows:[],firstAffordability:[],failures:[]};
+ const out={meta:{engine:'Boss production index.html tick()',pricing:'v22.3 candidate',seeds,policies,horizons,measurements:'Since synthetic fixture start; amounts in in-game dollars. Founder/developing CEO reviews new work every 14/7/3 game days for conservative/balanced/growth respectively using production assign(). No owner Safari save.'},rows:[],firstAffordability:[],failures:[]};
  for(const scenario of ['A','B','C','D'])for(const policy of Object.keys(policies))for(const seed of seeds){
   try{const p=run(scenario,policy,seed);out.rows.push(...p.rows);out.firstAffordability.push({scenario,policy,seed,...p.first});}
   catch(error){out.failures.push({scenario,policy,seed,error:String(error.stack||error)});}

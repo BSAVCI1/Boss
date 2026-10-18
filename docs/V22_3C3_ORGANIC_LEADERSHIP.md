@@ -21,7 +21,24 @@ The C3 source now considers qualified alternative candidates, retains a bench of
 - Day 1460: $0 cash, one corporate worker, 55 deliveries, 0 Team Leads, 1 Manager, 0 Seniors, 0 Directors; score of remaining Manager reached 100 but cash and staffing had failed. C3 therefore remains **PARTIAL**, and the chosen organic economic/recruitment scenario cannot be presented as an end-to-end founder-to-HQ success.
 - Six course starts and two completed-course records were observed; training did not grant automatic titles.
 
-**Unproven:** credible corporate staffing and liquidity strategy that sustains enough real reporting lines for Senior→Director, then two GM units/HQ eligibility and cash purchase. This is an intertwined financial/demand and organizational-growth blocker, not a justification for free staff/cash or threshold reductions. Full latest-head Actions, owner Safari and property payback remain pending.
+**Unproven:** a *combined* two-GM, organically earned Director corporate structure with sufficient cash/HQ eligibility and an actual CEO-authorized HQ purchase in one replay. This is an intertwined financial/demand and organizational-growth blocker, not a justification for free staff/cash or threshold reductions. Full latest-head Actions, owner Safari and property payback remain pending.
+
+## Verified actual-engine leadership ladder — additional corporate-first scenario
+
+The mandatory `tests/v22-3c3-organic-leadership.cjs` now includes **two independent deterministic Day-0 founder strategies**. Both start with **3 existing employees and $90**, using actual paid CEO candidate hiring, legitimate staff work, cash reserve gates, actual promotion eligibility and bounded paid training. No synthetic capital, employees, project deliveries, competencies or leadership titles are injected. Before final CI, the complete test passed an independently executed V8 harness with the repository’s real `tick()`, save and CEO actions.
+
+**Corporate-first / Balanced procurement, seed 20261018** (real engine, no operating-unit purchase yet):
+- First Team Lead **Day 140**, Manager **Day 273**, Senior Manager **Day 441**, Director **Day 546** — an actual proof that the established competence thresholds and rank transitions can be earned.
+- Day 730: **34 corporate employees**, **184 real completed projects**, **$76,349.71 cash**, with one approved Director rather than unlimited promotions.
+- HQ eligibility is *correctly blocked solely by the two genuine managed-unit requirement*. Cash and staffing readiness are **not** proof of ownership. This is not the required integrated HQ path.
+- Managers and Seniors autonomously focus on real subordinate reporting duties rather than unrelated individual work when reporting lines exist; mentorship targets named direct reports. A real organizational Director need is enforced: one Director allowed up to 39 corporate staff, a second at 40, etc., without altering existing appointees or competence thresholds.
+
+**HQ-oriented / Balanced procurement, seed 20261018** (real launches/GM operations and training):
+- First Team Lead Day 154, Manager Day 357, first service launch Day 181 and first GM Day 185, but Senior/Director and second managed unit were not obtained.
+- Day 1460: **$0 cash**, 8 employees, 60 deliveries, ~**$6,732 liabilities**, 0 Seniors/Directors and 0 HQ; the financial and operational combination was not viable under that CEO growth policy.
+- This proves a **distinct unsolved integration gap**: organic Director readiness *exists* separately, but sustained two-unit organization with the requisite Director and liquid reserves is **not demonstrated**. Do not grant free capital or retroactive economic changes to hide it.
+
+**Verification status:** the independent V8 check is not equivalent to the mandatory latest-head GitHub Actions or real mobile/IndexedDB/owner Safari. Full release acceptance and owner Safari are still outstanding.
 
 ## Implementation: genuine work, mentoring and study
 

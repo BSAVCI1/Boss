@@ -81,3 +81,8 @@ Growth is not always the most profitable strategy: pricing, terms, sales win pro
 ## QA evidence / outstanding
 
 [Mandatory Actions #39125794859](https://github.com/BSAVCI1/Boss/actions/runs/39125794859) passed the 108-snapshot actual-engine runner, cash and saved-fee invariants, 1×/3×/8× tick parity, all mandatory v15–v22.3 regression suites, the real 390px and 414px Chromium UI (including input focus and unfinished budget drafts), saved business units/authority/property, and extended browser storage/IndexedDB. [Subsequent tip-of-branch pass #39125880253](https://github.com/BSAVCI1/Boss/actions/runs/39125880253) also succeeded with a redundant noncanonical test removed. Exact artifact and full seed results are available in the run. **Not checked:** private owner Safari save or live production deployment; statistical precision beyond n=3, external price benchmarks or unused property investments. Leave v22.3B, merge/deployment and owner verification for Chief approval.
+
+
+## Subsequent prospective v22.3B comparison (separate draft work)
+
+The figures above remain **unaltered archived v22.3A measurements**, not results of a calibrated release. The original 108-snapshot runner now pins the earlier no-third-party-procurement baseline when invoked from the newer v22.3B branch. Current live prospective design and test-methodology evidence are in [v22.3B calibration](V22_3B_PROSPECTIVE_ECONOMIC_CALIBRATION.md); check the final-head Actions artifact before using any post-calibration numbers. Production remains v22.2.

@@ -1,6 +1,6 @@
 # Boss v21 — Autonomous Operating Units Architecture
 
-> Source of truth: this file, ROADMAP.md, tests and index.html. Status on 2026-10-17: v21.1, v21.2 and v21.3 released. Release evidence: [PR #26](https://github.com/BSAVCI1/Boss/pull/26) merged at `05f3aafbd6ea867981c387a2de07b2b5a364830c`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39068721207), [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39068720775) and [isolated live smoke](https://agent.tinyfish.ai/runs/68f10a64-a9c1-4e64-ab8c-7229e2345199) passed. No private iPhone Safari save was opened.
+> Historical architecture for v21.1–v21.3, current through **v21.4c released 2026-10-18**. Read [v21.4c autonomy architecture](V21_4C_AUTONOMY.md), [progression architecture](PROGRESSION_ARCHITECTURE.md), ROADMAP.md, tests and index.html for the latest implemented behavior. v21.3 release evidence: [PR #26](https://github.com/BSAVCI1/Boss/pull/26); v21.4c release evidence: [PR #30](https://github.com/BSAVCI1/Boss/pull/30), [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39105167550), [Pages](https://github.com/BSAVCI1/Boss/actions/runs/39105167176). Private owner iPhone Safari save has not been inspected.
 
 ## Preservation / migration contract
 
@@ -28,6 +28,12 @@ Consolidated company cash and `S.bi` accounting never change due merely to assig
 
 Required: old v19/v20/v21 import, no-second-purchase, stable IDs/reports, no cross-unit assignment, GM vacancy/capacity delays, strategy feedback, 30-day actual metrics, zero delegated authority, cooldown and recurring wages, cash ledger equality, 730-day accelerated game, 390px/414px browser, IndexedDB failed-write and refresh recovery, one HTML file, and offline boot. Validate the actual PR head SHA, GitHub Actions results and merge; then separately confirm GitHub Pages *on the new main SHA* and isolated live-site performance. Never claim an owner Safari save test from a synthetic browser.
 
-## Later v21 milestones (not included here)
+## Subsequent delivered v21.4 capabilities
 
-v21.4: explicit subordinate functional manager structure inside justified units; time-boxed CEO-approved resource envelopes and management spans, verified cross-unit collaboration, periodic group-level capital choices, GM career and succession paths, compact playable executive meetings and responsive world/org visualization. Any shared staffing must use explicit employee-day ownership and one payroll source. v22 office/property purchase/rent/assets, v23 investments/acquisitions and v24 factories/products/inventory are independent gated future releases.
+- **v21.4a (PR #28):** CEO-applied 90-day GM spending templates, staging of mobile number inputs, bounded development spending and GM successor training. New GM appointments recommend a preset only; no automatic spending authority.
+- **v21.4b (PR #29):** Evidence-based corporate leadership ladder, bounded reporting groups, payroll-limited automatic promotion and CEO exception approvals. Proposed new-service prerequisites are advisory, not hard locks.
+- **v21.4c (PR #30):** Corporate managers review genuine capacity gaps weekly and create staffed hiring proposals. CEO-approved 90-day recruiting amount and slots permit bounded automatic hires ($20 recruiting once plus recurring salary) with a 21-day payroll runway; default authority is zero. CEO also authorizes 30-day temporary corporate specialist access to a GM unit. Primary employment and corporate payroll remain unchanged; only actual shared worker-days are attributed into unit costs, without a duplicate charge. See [the current autonomy specification](V21_4C_AUTONOMY.md).
+
+## Next gates (not delivered in v21.4c)
+
+**v21.5:** Enforce service/new-business progression prerequisites safely and advance subordinate-manager operational reviews and organizational direction. Do not retroactively block historical purchased lines or modify original contracts. **v22** office/property purchase/rental/assets, **v23** investments/acquisitions and **v24** factories/products/inventory remain future releases. This file's earlier QA checklist still applies; browser Actions results do not prove the owner's private Safari save or an independent live-device session.

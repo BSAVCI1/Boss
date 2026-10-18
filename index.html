@@ -375,7 +375,9 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Purchased service lines start as shared service portfolios. You can now organize a purchased line into an operating unit below, appoint a General Manager and allocate dedicated employees. These units are internal operating divisions, not independent subsidiaries or separate bank accounts. Company cash and financial records remain consolidated; unit results only track future work. Shared department budgets and advanced unit delegations evolve in later releases. Revenue is never counted twice.</p><div id="company-unlock-guide" class="filter-note"></div><p id="company-launch-status" class="small" role="status"></p><div id="business-lines"></div><div id="business-units" aria-label="Operating unit management"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">New launches require proven delivery, leadership, qualified staffing and financial runway. Previously purchased lines remain yours. No future revenue is guaranteed.</p></details></section>
 <section class="card" id="property-panel" aria-label="Company offices and buildings"><div class="lead"><b>Offices &amp; company property</b><span class="small" id="property-summary">Distributed work</span></div>
 <p class="small">Lease office space, buy company buildings and open dedicated operating-unit sites. Every choice uses real company cash, one-time investment or setup cost and ongoing rent or upkeep. Existing staff and businesses stay intact.</p>
-<div id="property-overview"></div><details class="aux-details" id="property-options"><summary>Compare premises &amp; approve a move</summary><div id="property-purchase-options"></div></details><div id="property-status" class="small" role="status"></div>
+<div id="property-overview"></div><details class="aux-details" id="property-options"><summary>Compare premises &amp; approve a move</summary><label for="property-location">Location for next lease or purchase</label>
+<select id="property-location"><option value="park">Business park · balanced</option><option value="central">City center · premium</option><option value="regional">Regional hub · value</option></select>
+<p id="property-location-explain" class="small"></p><div id="property-purchase-options"></div></details><div id="property-status" class="small" role="status"></div>
 </section>
 <section aria-labelledby="world-title"><h2 id="world-title">Your rivals</h2>
 <div class="card"><div id="game-rivals" class="game-rivals"></div><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
@@ -554,7 +556,7 @@ const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let S,spd=1,paused=false,selected=[],ideaMessage="",avatars=new Map(),clock,structural="",lastIdeas="",logSignature="",sectorSignature="",customerSignature="";
 const projectExpanded=new Set(),employeeExpanded=new Set(),careerExpanded=new Set(),roadmapExpanded=new Set(),peopleGroupExpanded=new Set(["ceo"]);
-function ensureViewState(s){if(!s.ui||typeof s.ui!=="object")s.ui={};for(const k of ["employees","careers","roadmaps"])if(!Array.isArray(s.ui[k]))s.ui[k]=[];s.ui.productivityOpen=!!s.ui.productivityOpen;if(![1,3,8].includes(s.ui.speed))s.ui.speed=1;}
+function ensureViewState(s){if(!s.ui||typeof s.ui!=="object")s.ui={};for(const k of ["employees","careers","roadmaps"])if(!Array.isArray(s.ui[k]))s.ui[k]=[];s.ui.productivityOpen=!!s.ui.productivityOpen;if(![1,3,8].includes(s.ui.speed))s.ui.speed=1;if(!["park","central","regional"].includes(s.ui.propertyLocation))s.ui.propertyLocation="park";}
 let orgControlsSignature="";let activeView="today";const viewScroll={today:0,work:0,team:0,growth:0};let attentionSignature="";
 let canvas=$("office"),ctx=canvas.getContext("2d");
 const LAB_TOPICS={
@@ -1808,6 +1810,16 @@ function companyDirection(){
   "All milestones achieved. The CEO may invest $120; launch does not guarantee demand.",unmet:missing,view:blocked&&/Team Lead|Manager/.test(blocked.label)?"team":"growth",key};
 }
 /* v22: property assets, portfolio premises and strictly game-day recurring obligations. */
+const PROPERTY_LOCATIONS={
+ park:{name:"Business park",upfront:1,daily:1,bonus:0,note:"Balanced access, collaboration and fixed costs."},
+ central:{name:"City center",upfront:1.25,daily:1.30,bonus:.025,note:"Better collaboration with higher purchase, rent and upkeep."},
+ regional:{name:"Regional hub",upfront:.85,daily:.88,bonus:-.015,note:"Lower cost, small collaboration trade-off."}
+};
+function propertyQuote(type,location=S.ui?.propertyLocation||"park"){
+ const base=PROPERTY_TYPES[type],loc=PROPERTY_LOCATIONS[location]||PROPERTY_LOCATIONS.park;
+ return base?{price:Math.round(base.price*loc.upfront),dayCost:Math.round(base.dayCost*loc.daily*100)/100,
+  boost:Math.max(.8,base.boost+loc.bonus),location:PROPERTY_LOCATIONS[location]?location:"park"}:null;
+}
 const PROPERTY_TYPES={
  studio:{name:"Serviced office suite",kind:"lease",capacity:12,price:75,dayCost:1.5,boost:1.025},
  office:{name:"Regional office lease",kind:"lease",capacity:24,price:220,dayCost:3,boost:1.04},
@@ -1835,6 +1847,9 @@ function ensureProperties(state){
   if(x.unitKey&&(!SERVICE_LINES[x.unitKey]||!validUnits.has(x.unitKey)))return false;
   used.add(x.id);
   if(!["active","inactive","closed","sold"].includes(x.status))x.status="inactive";
+  if(!PROPERTY_LOCATIONS[x.location])x.location="park";
+  if(!Number.isFinite(x.dayCost)||x.dayCost<0)x.dayCost=PROPERTY_TYPES[x.type].dayCost;
+  if(!Number.isFinite(x.boost)||x.boost<0)x.boost=PROPERTY_TYPES[x.type].boost;
   if(!Number.isFinite(x.book)||x.book<0)x.book=x.investment||0;
   if(!Number.isFinite(x.lastDepreciation))x.lastDepreciation=x.since;
   if(!Number.isFinite(x.arrears)||x.arrears<0)x.arrears=0;
@@ -1854,12 +1869,12 @@ function propertyOccupancy(personN){const unitKey=unitOfPerson(personN.id)?.key|
  return{unitKey,count,capacity,overloaded:count>capacity,active:propertyActive(unitKey)};
 }
 function propertyWorkMultiplier(personN){
- const x=propertyOccupancy(personN),bonus=x.active?PROPERTY_TYPES[x.active.type].boost:1;
+ const x=propertyOccupancy(personN),bonus=x.active?x.active.boost:1;
  // Space affects only future assignments and workdays, not signed fees or past days.
  return bonus*(x.overloaded?Math.max(.76,x.capacity/Math.max(1,x.count)):1);
 }
 function propertyReadiness(type,unitKey=null){
- const def=PROPERTY_TYPES[type];
+ const def=PROPERTY_TYPES[type],quote=propertyQuote(type);
  if(!def)return{ready:false,checks:[{label:"Select an available premise",met:false}]};
  const corp=propertyPeople().length,leaders=S.org.progression.appointments,manager=leaders.some(n=>["manager","senior","director"].includes(n.level));
  const owned=S.exec.property.sites.some(x=>x.type===type&&!["closed","sold"].includes(x.status)&&!x.unitKey);
@@ -1881,25 +1896,25 @@ function propertyReadiness(type,unitKey=null){
  }
  checks.push({label:"Already own this property type",met:!owned}); // Prevent duplicate property purchases, not leases.
  const reserveDays=def.kind==="owned"?30:21;
- const available=S.cash>=def.price+reserveDays*(payroll+def.dayCost);
+ const available=S.cash>=quote.price+reserveDays*(payroll+quote.dayCost);
  checks.push({label:"Cash for purchase and "+reserveDays+" payroll / premises days",met:available});
- return{ready:checks.every(c=>c.met),checks,required:def.price+reserveDays*(payroll+def.dayCost)};
+ return{ready:checks.every(c=>c.met),checks,required:quote.price+reserveDays*(payroll+quote.dayCost)};
 }
 function propertyOpen(type,unitKey=null){
- const def=PROPERTY_TYPES[type],state=S.exec.property,check=propertyReadiness(type,unitKey);
+ const def=PROPERTY_TYPES[type],quote=propertyQuote(type),state=S.exec.property,check=propertyReadiness(type,unitKey);
  if(!def||!check.ready||propertyActive(unitKey)?.type===type)return false;
  return unitCommit(()=>{
   if(!propertyReadiness(type,unitKey).ready)return false;
   const old=propertyActive(unitKey);
   if(old)old.status=old.type==="building"||old.type==="hq"?"inactive":"closed";
   const entry={id:state.seq++,type,unitKey,status:"active",since:S.day,
-   investment:def.kind==="owned"?def.price:0,setup:def.kind==="lease"?def.price:0,arrears:0,book:def.kind==="owned"?def.price:0,lastDepreciation:S.day};
+   investment:def.kind==="owned"?quote.price:0,setup:def.kind==="lease"?quote.price:0,arrears:0,book:def.kind==="owned"?quote.price:0,lastDepreciation:S.day,price:quote.price,dayCost:quote.dayCost,boost:quote.boost,location:quote.location};
   state.sites.push(entry);
-  S.cash-=def.price;biMoney(def.kind==="owned"?"investment":"office_setup",def.price,
+  S.cash-=quote.price;biMoney(def.kind==="owned"?"investment":"office_setup",quote.price,
    (def.kind==="owned"?"Buy ":"Set up ")+def.name+(unitKey?" for "+SERVICE_LINES[unitKey].name:""));
-  state.events.unshift({day:S.day,action:"open",id:entry.id,type,unitKey,cost:def.price});
+  state.events.unshift({day:S.day,action:"open",id:entry.id,type,unitKey,cost:quote.price,location:quote.location});
   state.events=state.events.slice(0,50);
-  logIt("CEO "+(def.kind==="owned"?"bought ":"leased ")+def.name+" for "+biCurrency(def.price)+"; recurring "+biCurrency(def.dayCost)+"/day.");
+  logIt("CEO "+(def.kind==="owned"?"bought ":"leased ")+def.name+" in "+PROPERTY_LOCATIONS[quote.location].name+" for "+biCurrency(quote.price)+"; recurring "+biCurrency(quote.dayCost)+"/day.");
   propertyViewSignature="";return true;
  });
 }
@@ -1953,17 +1968,17 @@ function propertyDay(){
    biMoney("depreciation",drop,PROPERTY_TYPES[x.type].name+" quarterly noncash depreciation",0);}
  }
  for(const x of S.exec.property.sites){if(x.status!=="active")continue;
-  const def=PROPERTY_TYPES[x.type],paid=Math.max(0,Math.min(S.cash,def.dayCost));
+  const def=PROPERTY_TYPES[x.type],paid=Math.max(0,Math.min(S.cash,x.dayCost));
   if(paid>0)S.cash=+(S.cash-paid).toFixed(2);
-  biMoney("property",def.dayCost,def.name+" daily "+(def.kind==="lease"?"rent":"upkeep"),paid);
-  if(paid<def.dayCost)x.arrears=+(x.arrears+def.dayCost-paid).toFixed(2);
+  biMoney("property",x.dayCost,def.name+" daily "+(def.kind==="lease"?"rent":"upkeep"),paid);
+  if(paid<x.dayCost)x.arrears=+(x.arrears+x.dayCost-paid).toFixed(2);
  }
 }
 function propertySummary(){
  const active=S.exec.property.sites.filter(x=>x.status==="active");
  return{sites:active.length,capacity:propertyCapacity()+S.exec.units.reduce((n,u)=>n+propertyCapacity(u.key),0),
   arrears:propertyArrears(),book:S.exec.property.sites.filter(x=>x.investment>0&&x.status!=="sold").reduce((n,x)=>n+x.book,0),
-  daily:active.reduce((n,x)=>n+PROPERTY_TYPES[x.type].dayCost,0)};
+  daily:active.reduce((n,x)=>n+x.dayCost,0)};
 }
 function propertyWarnings(){
  const out=[],p=propertySummary();
@@ -1979,7 +1994,9 @@ function renderProperties(){
  const p=S.exec.property,summary=propertySummary(),members=propertyPeople(),unitSites=S.exec.units;
  const signature=JSON.stringify([S.day,Math.floor(S.cash),members.length,unitSites.map(u=>[u.key,u.staffIds.length,u.managerId]),p.sites,Math.floor(S.market.completed/5),S.org.progression.appointments.length]);
  if(signature===propertyViewSignature)return;propertyViewSignature=signature;
- $("property-summary").textContent=summary.sites+" active · "+summary.capacity+" seats · owned cost "+biCurrency(summary.book);
+ $("property-summary").textContent=summary.sites+" active · "+summary.capacity+" seats · owned book "+biCurrency(summary.book);
+ $("property-location").value=S.ui.propertyLocation||"park";
+ $("property-location-explain").textContent=PROPERTY_LOCATIONS[S.ui.propertyLocation||"park"].note;
  const headquarters=propertyActive(),corporateCapacity=propertyCapacity();
  const room=(name,people,capacity,type)=>'<div class="property-room"><div class="lead"><b>'+esc(name)+'</b><span class="small">'+people.length+'/'+capacity+' seats</span></div>'+
  '<div class="property-people">'+people.slice(0,20).map(x=>'<span title="'+esc(x.n)+'">'+(x.id===S.ops.assistantId?"📋":x.t.startsWith("d")?"💻":"👤")+'</span>').join("")+
@@ -1995,10 +2012,10 @@ function renderProperties(){
  (x.status==="inactive"&&def.kind==="owned"?'<button type="button" data-property-action="sell" data-property-key="'+x.id+'" '+(x.arrears>0?"disabled":"")+'>Sell for '+biCurrency(Math.round(x.book*.92*100)/100)+'</button>':'')+
  (x.status==="active"&&def.kind==="lease"?'<button type="button" data-property-action="close" data-property-key="'+x.id+'">End lease</button>':'')+'</div>';}).join("");
  const button=(type,unitKey=null)=>{
-  const def=PROPERTY_TYPES[type],check=propertyReadiness(type,unitKey),current=propertyActive(unitKey)?.type===type,scope=unitKey?SERVICE_LINES[unitKey].name:"Headquarters";
+  const def=PROPERTY_TYPES[type],quote=propertyQuote(type),check=propertyReadiness(type,unitKey),current=propertyActive(unitKey)?.type===type,scope=unitKey?SERVICE_LINES[unitKey].name:"Headquarters";
   return '<div class="property-choice"><b>'+esc(def.name)+'</b> · '+esc(scope)+
-   '<p class="small">'+def.capacity+' seats · '+(def.kind==="lease"?"Setup":"Purchase")+' '+biCurrency(def.price)+' once · '+biCurrency(def.dayCost)+'/day '+(def.kind==="lease"?"rent":"upkeep")+
-   ' · future work bonus '+Math.round((def.boost-1)*100)+'%</p>'+
+   '<p class="small">'+def.capacity+' seats · '+(def.kind==="lease"?"Setup":"Purchase")+' '+biCurrency(quote.price)+' once · '+biCurrency(quote.dayCost)+'/day '+(def.kind==="lease"?"rent":"upkeep")+
+   ' · future work bonus '+Math.round((quote.boost-1)*100)+'%</p>'+
    '<p class="small">'+check.checks.map(c=>(c.met?"✓ ":"○ ")+esc(c.label)).join(" · ")+'</p>'+
    '<button type="button" data-property-action="open" data-property-key="'+type+'" '+(unitKey?'data-property-unit="'+esc(unitKey)+'" ':'')+
     (!check.ready||current||!!S.ev?'disabled':'')+'> '+(current?"Currently active":check.ready?(def.kind==="owned"?"Buy property":"Sign lease"):"Milestones incomplete")+'</button></div>';
@@ -2517,6 +2534,12 @@ const priority=ceoDraftPriority??$("ceo-priority").value;
 if(!ceoDirection(priority))$("ceo-direction-confirm").textContent=S.ev?"Resolve the current CEO decision before changing direction.":"Direction unchanged. Choose a different strategy or wait for the next review.";
 });
 $("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
+$("property-location").addEventListener("change",()=>{
+ const choice=$("property-location").value;if(!PROPERTY_LOCATIONS[choice])return;
+ S.ui.propertyLocation=choice;const saved=save();propertyViewSignature="";
+ if(saved&&typeof saved.then==="function")saved.then(ok=>{if(ok)renderProperties();});
+ else if(saved)renderProperties();
+});
 $("property-panel").addEventListener("click",e=>{
  const b=e.target.closest("button[data-property-action]");if(!b)return;
  const action=b.dataset.propertyAction,key=b.dataset.propertyKey,unit=b.dataset.propertyUnit;

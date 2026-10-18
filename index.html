@@ -2847,10 +2847,33 @@ function clearCareerRequirements(p){
  const management=p.management&&["planning","delegation","coaching","communication"].every(k=>Number.isFinite(p.management[k]))?
   (p.management.planning+p.management.delegation+p.management.coaching+p.management.communication)/4:null;
  const nextLevel=node?({lead:"manager",manager:"senior",senior:"director"}[node.level]||null):null,rule=nextLevel?LADDER[nextLevel]:null;
- const leadership=node?'<div class="small"><b>Leadership authority:</b> '+esc(LADDER[node.level]?.name||"Appointed")+
-  ' · '+(rule?'next '+esc(rule.name)+' requires '+rule.days+' days in current appointment, competency '+rule.skill+', and '+rule.required+' eligible subordinate leaders/staff.':'top level.')+
-  ' Current competency '+(management===null?'not recorded':management.toFixed(0))+'/100. Actual staffing, candidate priority and 14-day payroll cover apply separately.</div>':
-  '<div class="small">No leadership appointment. Career grade does not grant manager authority.</div>';
+ // A leadership appointment is separate from career grade and delegated spending.
+ const appointed=S.org.progression.appointments||[];
+ const countKind=nextLevel==="director"?"manager":"lead";
+ const countLabel=nextLevel==="director"?"active Managers":"active Team Leads";
+ const actualCount=rule?appointed.filter(x=>x.level===countKind).length:0;
+ const tenure=node?Math.max(0,S.day-node.since):0;
+ const increase=rule?(rule.bonus-LADDER[node.level].bonus)*S.mod.cost:0;
+ const cashCover=rule?14*(S.team.reduce((sum,x)=>sum+dailySalary(x),0)+increase):0;
+ const candidate=rule?ladderEvaluation(nextLevel):null;
+ const blockers=rule?[
+  actualCount<rule.required?countLabel+" "+actualCount+"/"+rule.required:null,
+  tenure<rule.days?"Appointment experience "+tenure+"/"+rule.days+" days":null,
+  management!==null&&management<rule.skill?"Leadership competency "+management.toFixed(0)+"/"+rule.skill:null,
+  p.career.rank<1&&p.career.xp<10?"Earn career experience or XP":null,
+  S.deals.some(d=>d.w===p.id)?"Finish assigned contract first":null,
+  S.cash<cashCover?"14-day payroll cash "+biCurrency(S.cash)+"/"+biCurrency(cashCover):null,
+  candidate?.candidateId!==p.id?"A different candidate currently ranks highest for this appointment":null
+ ].filter(Boolean):[];
+ const leadership=node?'<div class="small"><b>Leadership appointment (not spending authority):</b> '+esc(LADDER[node.level]?.name||"Appointed")+
+  (rule?' → '+esc(rule.name)+' needs '+rule.days+' appointment days, '+rule.skill+' competency, and '+rule.required+' '+countLabel+
+    '. Current staffing '+actualCount+'/'+rule.required+', tenure '+tenure+'/'+rule.days+'.':' · highest appointment level.')+
+  ' Current leadership competency '+(management===null?'not recorded':management.toFixed(0))+'/100.'+
+  (blockers.length?'<div class="career-alert">Leadership blockers: '+esc(blockers.join(' · '))+'</div>':
+    rule?'<div class="career-calm">Leadership criteria met for the current candidate; CEO or approved delegated authorization is still required.</div>':'')+
+  (rule&&ladderPayroll()+increase>S.org.progression.authorityDaily?
+    '<div>CEO payroll exception required if this new appointment becomes eligible.</div>':'')+
+  '</div>':'<div class="small">No leadership appointment. Career grade does not appoint a manager or grant authority.</div>';
  let next="Continue genuine role experience, Study, Teach or coaching.";
  const blocked=status.checks?.find(x=>!x.met);
  if(blocked){if(blocked.label==="Time in current grade")next="Continue real game days in grade.";

@@ -9,7 +9,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,open:false,innerHTML:""
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,unitApplyPreset,unitApplyDraft,unitRecordInput,unitPresetValues,unitCareerReadiness,unitDevelopSuccessor,unitDevelopTeam,managementReview,managementLead,managementWorkload,managementSetHiringPolicy,managementRequestDecision,managementSharedCandidates,managementShareStaff,managementSupportAllowed,managementHiringAvailable,managementCashReady,managementOps,ladderEvaluation,ladderNext,ladderPromote,ladderSetAuthority,ladderDay,ladderPayroll,ladderLaunchReadiness,ladderReassign,dailySalary,renderLadder,renderLaunchGuide,delegateWork,assign,beginEditableInteraction,finishEditableInteraction,editableInteractionPending,renderBusinessUnits,refresh,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
+const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,unitApplyPreset,unitApplyDraft,unitRecordInput,unitPresetValues,unitCareerReadiness,unitDevelopSuccessor,unitDevelopTeam,managementReview,managementLead,managementWorkload,managementSetHiringPolicy,managementRequestDecision,managementSharedCandidates,managementShareStaff,managementSupportAllowed,managementHiringAvailable,managementCashReady,managementOps,ladderEvaluation,ladderNext,ladderPromote,ladderSetAuthority,ladderDay,ladderPayroll,ladderLaunchReadiness,ladderReassign,dailySalary,managementOps,managementLead,managementWorkload,managementReview,managementSetHiringPolicy,managementRequestDecision,managementSharedCandidates,managementShareStaff,managementSupportAllowed,renderLadder,renderLaunchGuide,delegateWork,assign,beginEditableInteraction,finishEditableInteraction,editableInteractionPending,renderBusinessUnits,refresh,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exported+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -948,6 +948,108 @@ test("v21.4c old company migration defaults to zero hiring permission and zero s
  assert.equal(loaded.org.progression.operations.shared.length,0);
  assert.equal(loaded.day,2915);assert.equal(loaded.cash,orig);
  assert.equal(loaded.bi.totals.investments,old);reconcile(loaded);
+});
+
+
+test("v21.4c new and legacy companies have zero delegated recruiting and no fabricated history",()=>{
+ const s=init();const oldCash=s.cash,paid=s.bi.totals.investments;
+ assert.equal(G.managementOps().hireBudget,0);assert.equal(G.managementOps().hireSlots,0);
+ assert.equal(G.managementOps().requests.length,0);assert.equal(G.managementOps().shared.length,0);
+ delete s.org.progression.operations;
+ assert.ok(G.save());
+ const loaded=G.load();G.set(loaded);
+ assert.equal(G.managementOps().hireBudget,0);assert.equal(G.managementOps().hireSlots,0);
+ assert.equal(G.managementOps().shared.length,0);assert.equal(loaded.cash,oldCash);
+ assert.equal(loaded.bi.totals.investments,paid);
+ reconcile(loaded);
+});
+test("v21.4c staffing proposal requires genuine backlog and supports one CEO-approved hire",()=>{
+ const s=init();fund(s,2800);s.day=140;s.deals=[];s.flow.focus=true;
+ const manager=s.team[0];manager.department="delivery";manager.role.primary="prod";
+ s.org.progression.appointments.push({id:manager.id,level:"manager",since:44,successorId:null});
+ const candidate=s.team[1];candidate.department="delivery";candidate.role.primary="ops";
+ for(let i=0;i<2;i++){const d=G.createDeal("Corporate staffing QA "+i,0,"hospitality");d.need="prod";d.w=null;d.unitKey=undefined;}
+ const beforeCash=s.cash,out=s.bi.totals.cashOut,head=s.team.length;
+ G.managementReview();
+ const req=G.managementOps().requests[0];
+ assert.ok(req&&req.status==="open"&&req.dept==="delivery"&&req.managerId===manager.id);
+ assert.equal(G.managementOps().hireBudget,0);assert.equal(s.team.length,head);
+ assert.equal(G.managementRequestDecision(req.id,"approve"),true);
+ assert.equal(req.status,"approved");assert.equal(s.team.length,head+1);
+ assert.equal(s.cash,beforeCash-20);assert.equal(s.bi.totals.cashOut,out+20);
+ assert.equal(G.managementRequestDecision(req.id,"approve"),false,"one application only");
+ assert.equal(G.managementOps().hires,0,"CEO exception must not consume delegated slots");
+ assert.equal(G.load().org.progression.operations.requests.find(x=>x.id===req.id).status,"approved");
+ G.managementReview();assert.equal(s.team.length,head+1,"cooldown blocks duplicate hire");
+ reconcile(s);
+});
+test("v21.4c manager hiring policy respects cash runway, period, action and slot ceilings",()=>{
+ const s=init();fund(s,2900);s.day=140;s.deals=[];s.flow.focus=true;
+ const manager=s.team[0];manager.department="delivery";manager.role.primary="prod";
+ s.org.progression.appointments.push({id:manager.id,level:"manager",since:40,successorId:null});
+ for(let i=0;i<2;i++){const d=G.createDeal("Corporate delegated QA "+i,0,"hospitality");d.need="prod";d.w=null;d.unitKey=undefined;}
+ assert.equal(G.managementSetHiringPolicy(40,1),true);
+ const before=s.cash,oldCosts=s.bi.totals.cashOut;
+ G.managementReview();
+ assert.equal(G.managementOps().hires,1);
+ assert.equal(G.managementOps().hireSpent,20);
+ assert.equal(s.cash,before-20);assert.equal(s.bi.totals.cashOut,oldCosts+20);
+ const employeeCount=s.team.length;
+ G.managementReview();assert.equal(s.team.length,employeeCount);
+ s.day+=100;G.managementReview();
+ assert.equal(G.managementOps().hires,1,"90-day policy must not silently renew");
+ assert.equal(s.team.length,employeeCount,"expired policy may propose, not hire");
+ assert.ok(G.managementOps().requests.some(r=>r.status==="open"),"CEO receives exception after budget expiry");
+ reconcile(s);
+});
+test("v21.4c time-limited shared staffing never changes primary ownership or upfront ledger",()=>{
+ const s=init();fund(s,2600);s.day=125;s.deals=[];s.flow.focus=true;
+ assert.equal(G.executiveLaunch("product"),true);assert.equal(G.unitActivate("product"),true);
+ const gm=s.team[0];gm.career.rank=1;
+ assert.equal(G.unitAppoint("product",gm.id),true);
+ const helper=s.team[1];helper.role.auto=true;helper.t="idle";
+ const cash=s.cash,cost=s.bi.totals.cashOut,units=s.exec.units[0].staffIds.slice();
+ assert.equal(G.managementShareStaff("product",helper.id),true);
+ assert.equal(s.cash,cash);assert.equal(s.bi.totals.cashOut,cost);
+ assert.deepEqual([...s.exec.units[0].staffIds],units,"shared employee is not dedicated");
+ assert.equal(G.managementShareStaff("product",helper.id),false,"no duplicate temporary allocation");
+ assert.equal(G.managementSupportAllowed({unitKey:"product"},helper),true);
+ assert.equal(G.managementSupportAllowed({unitKey:"marketing"},helper),false);
+ const allocated=s.org.progression.operations.shared[0];
+ assert.equal(allocated.until,155);
+ assert.equal(G.load().org.progression.operations.shared[0].employeeId,helper.id);
+ s.day=156;
+ assert.equal(G.managementSupportAllowed({unitKey:"product"},helper),false,"support must expire");
+ reconcile(s);
+});
+test("v21.4c actual corporate support labor is attributed by workdays, not final worker",()=>{
+ const s=init();fund(s,4800);s.day=125;s.deals=[];s.flow.focus=true;s.nextEv=99999;
+ assert.equal(G.executiveLaunch("product"),true);assert.equal(G.unitActivate("product"),true);
+ const gm=s.team[0];gm.career.rank=1;
+ assert.equal(G.unitAppoint("product",gm.id),true);
+ const helper=s.team[1],dedicated=s.team[2];
+ helper.role.auto=true;helper.t="idle";helper.career.stress=0;
+ dedicated.role.auto=true;dedicated.t="idle";dedicated.career.stress=0;
+ assert.equal(G.unitTransfer("product",dedicated.id),true);
+ assert.equal(G.managementShareStaff("product",helper.id),true);
+ const contract=G.createDeal("Shared corporate workday QA",0,"hospitality");
+ contract.unitKey="product";contract.serviceLine="product";
+ contract.need="prod";contract.work=18;contract.dl=75;contract.prog=0;
+ assert.equal(G.managementSupportAllowed(contract,helper),true);
+ assert.equal(G.unitAssignmentAllowed(contract,helper),true);
+ G.assign(contract.id,helper.id);assert.equal(contract.w,helper.id);
+ const helperWage=G.dailySalary(helper);
+ G.tick();
+ assert.ok(contract.unitSharedLaborCost>=helperWage-.01);
+ const firstCost=contract.unitSharedLaborCost;
+ G.assign(contract.id,dedicated.id);assert.equal(contract.w,dedicated.id);
+ for(let i=0;i<55&&s.deals.includes(contract);i++)G.tick();
+ assert.equal(s.exec.units[0].delivered,1);
+ assert.ok(Math.abs(s.exec.units[0].sharedLaborCost-firstCost)<.01,"unit must charge only actual shared labor days");
+ assert.ok(s.exec.units[0].payrollCost>0,"dedicated payroll appears only once in unit slice");
+ assert.ok(contract.laborCost>firstCost,"corporate contract tracks all worker labor for informational contribution");
+ assert.equal(new Set(s.team.map(p=>p.id)).size,s.team.length);
+ reconcile(s);
 });
 
 console.log("Boss v20 functional and persistence checks passed.");

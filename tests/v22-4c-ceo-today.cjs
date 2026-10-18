@@ -134,7 +134,7 @@ test("v22.4D archive unfinished capabilities separately without a second purchas
  G.renderIdeas();assert.equal(state.built.filter(x=>x[0]===first[2]).length,1,"No duplicate completed upgrade");
 });
 test("v22.4D simplified main screens retain single authoritative controls",()=>{
- const labels=[...html.matchAll(/\\bid="(game-forward|game-primary|ceo-action-center|ideas|completed-ideas|upgrades-complete)"/g)].map(x=>x[1]);
+ const labels=[...html.matchAll(/\bid="(game-forward|game-primary|ceo-action-center|ideas|completed-ideas|upgrades-complete)"/g)].map(x=>x[1]);
  for(const key of ["game-forward","game-primary","ceo-action-center","ideas","completed-ideas","upgrades-complete"])
   assert.equal(labels.filter(x=>x===key).length,1,"Exactly one "+key);
  for(const key of ["today-ceo-tools","company-story","work-customers","growth-rivals","upgrade-archive"])

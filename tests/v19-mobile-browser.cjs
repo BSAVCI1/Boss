@@ -228,6 +228,29 @@ document.addEventListener("DOMContentLoaded",async()=>{
    qualityField.value="88";qualityField.dispatchEvent(new Event("input",{bubbles:true}));qualityField.blur();
    await new Promise(r=>setTimeout(r,1000));
    result.checks.unitAuthorityDisclosureRetained=byId("unit-quality-technology")?.closest("details.aux-details")?.open===true;
+   // v21.4c: corporate manager budget remains editable throughout a live mobile refresh.
+   document.querySelector('.bottom-nav button[data-view="team"]').click();
+   const hiringField=byId("management-hire-budget"),slotsField=byId("management-hire-slots");
+   if(!hiringField||!slotsField)throw Error("Manager hiring authorization fields missing");
+   const hiringPanel=hiringField.closest("details.aux-details");
+   if(hiringPanel)hiringPanel.open=true;
+   hiringField.focus();
+   for(const part of ["1","12","120","1200"]){hiringField.value=part;hiringField.dispatchEvent(new Event("input",{bubbles:true}));}
+   await new Promise(r=>setTimeout(r,800));
+   result.checks.managerHiringDraftStable=hiringField.isConnected&&byId("management-hire-budget")===hiringField&&hiringField.value==="1200";
+   result.checks.managerHiringStillRequiresApply=!!(hiringPanel?.open)&&slotsField.isConnected;
+   const policySnapshot=await new Promise(resolve=>{
+     const q=indexedDB.open("BossSafeProgress",1);
+     q.onerror=()=>resolve(null);
+     q.onsuccess=()=>{
+       const request=q.result.transaction("game","readonly").objectStore("game").get("boss20");
+       request.onsuccess=()=>{try{resolve(JSON.parse(request.result?.payload||"null")?.org?.progression?.operations||null)}catch{resolve(null)}};
+       request.onerror=()=>resolve(null);
+     };
+   });
+   result.checks.managerHiringBudgetNotAutoCommitted=policySnapshot?.hireBudget===0;
+   hiringField.blur();
+   await new Promise(r=>setTimeout(r,800));
    const restoredUnit=recovered?.exec?.units.find(u=>u.key==="technology");
    result.checks.unitAuthorityReloaded=restoredUnit?.plan?.revenueTarget===300000&&restoredUnit?.plan?.coachingLimit===12&&
     restoredUnit.plan.perAction===4&&restoredUnit.plan.qualityTarget===88&&
@@ -319,6 +342,9 @@ async function runBrowser(){
   assert.equal(outcome.checks.partialUnitNumericProtected,true,"Partial unit budget edits must not be overwritten mid-typing");
   assert.equal(outcome.checks.teammateDraftSurvivesRepaint,true,"Chosen teammate must remain selected until Transfer is clicked");
   assert.equal(outcome.checks.unitAuthorityDisclosureRetained,true,"Editing must not collapse the authority panel");
+  assert.equal(outcome.checks.managerHiringDraftStable,true,"Manager recruitment budget must allow uninterrupted multi-digit typing");
+  assert.equal(outcome.checks.managerHiringStillRequiresApply,true,"Manager policy disclosure and slots must remain editable");
+  assert.equal(outcome.checks.managerHiringBudgetNotAutoCommitted,true,"Typing manager hiring budget must not authorize money until Apply is pressed");
   assert.deepEqual(outcome.errors,[]);
   await send("Emulation.setDeviceMetricsOverride",{width:414,height:896,deviceScaleFactor:1,mobile:true});
   await sleep(150);

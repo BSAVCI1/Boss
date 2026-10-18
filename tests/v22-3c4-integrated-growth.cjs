@@ -116,6 +116,23 @@ function simulate(seed,strategy,horizon){
     if(decisions.length<180)decisions.push({day,type:'legitimatePromotion',level:next.level,id:next.candidateId});
    }
   }
+  // Optional CEO-approved premises as staffing expands. Property costs and recurring
+  // upkeep are posted by the real engine, never waived by this harness.
+  const corpNow=G.propertyPeople().length;
+  const premises=s.exec.property.sites.find(z=>z.status==='active'&&!z.unitKey);
+  const target=corpNow>=26?'building':corpNow>=14?'office':corpNow>=8?'studio':null;
+  if(target&&premises?.type!==target&&!(premises?.type==='hq')
+    &&(target==='building'?s.cash>12000:target==='office'?s.cash>5000:s.cash>2000)){
+   const gate=G.propertyReadiness(target),quote=G.propertyQuote(target);
+   if(gate.ready&&s.cash>quote.price+baseWage()*policy.reserve){
+    const beforeCash=s.cash,beforeSites=s.exec.property.sites.length;
+    if(G.propertyOpen(target)){
+     assert.ok(Math.abs(beforeCash-s.cash-quote.price)<.065,'real property acquisition cost');
+     assert.equal(s.exec.property.sites.length,beforeSites+1,'real premises record');
+     if(decisions.length<180)decisions.push({day,type:'approvedPremises',property:target,cost:quote.price});
+    }
+   }else lastFailure.premises=gate.checks.filter(c=>!c.met).map(c=>c.label);
+  }
   // Do not launch early in a corporate-first scenario; actual readiness is authoritative.
   if(day>=policy.launchDay&&!s.exec.lines.some(x=>x.key==='product')
      &&s.cash>policy.launchCash){

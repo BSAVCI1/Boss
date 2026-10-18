@@ -1,5 +1,11 @@
 # Boss
 
+## v21.4c — Autonomous corporate managers (release candidate)
+
+Managers now diagnose corporate delivery backlogs and propose hiring. With explicit CEO approval of a 90-day recruiting amount and maximum hiring slots, managers may execute affordable hires within authority; otherwise the Executive Assistant escalates the decision. Hiring costs $20 once plus recurring payroll, with 21 days of wage runway required. Permission itself spends no cash and defaults to zero for all saved companies.
+
+Growth → Operating units also permits CEO-authorized 30-day access to a central corporate specialist, without moving their primary reporting line or paying salary twice. Unit costs attribute only actual shared labor worked. The existing promotion, mobile input and Safari save protections remain unchanged. [Architecture](docs/V21_4C_AUTONOMY.md). [PR #30](https://github.com/BSAVCI1/Boss/pull/30) is pending release verification.
+
 ## Boss v21.4b — Leadership milestones and managed company growth (released 2026-10-17)
 
 Start a company with three colleagues. At five, Today and the Executive Assistant surface a qualified first Team Lead candidate, explain blockers and offer the CEO a Team view to approve. A Team Lead can supervise up to three uniquely owned staff members; every additional lead requires another three people. Three Team Leads open the Manager path, five Team Leads the Senior Manager path, and three Managers the Director path. Every actual appointment is gated by career evidence, real role/practice days, leadership competency, contract availability and sufficient cash runway. The EA and Team panel show the next unmet requirement.

@@ -1797,6 +1797,55 @@ function ladderCoachSuccessors(){
   g.events=g.events.slice(-60);
  }
 }
+
+/* v22.3C3: real leadership duties and bounded, CEO-approved study. */
+const LEADERSHIP_COURSE_COST=12,LEADERSHIP_COURSE_DAYS=14;
+function ladderTrainingEligible(p){
+ const n=p&&ladderNode(p.id);
+ return !!n&&!p.career.leadershipCourse&&!p.career.leadershipCourses?.[n.level]&&
+  !p.t.startsWith("d")&&p.career.recoveryDays===0&&!S.ev&&
+  S.cash>=LEADERSHIP_COURSE_COST+S.team.reduce((a,x)=>a+dailySalary(x),0)*14;
+}
+function ladderStartTraining(id){
+ const p=person(id);if(!ladderTrainingEligible(p))return false;
+ return unitCommit(()=>{
+  if(!ladderTrainingEligible(p))return false;
+  const level=ladderNode(id).level;
+  S.cash-=LEADERSHIP_COURSE_COST;biMoney("development",LEADERSHIP_COURSE_COST,"Approved leadership course: "+p.n);
+  p.career.leadershipCourse={level,started:S.day,days:0,priorAutoTask:!!p.role.autoTask};
+  p.t="study";p.role.autoTask=false;ladderSignature="";
+  S.org.progression.events.push({day:S.day,id,level,action:"CEO leadership training",cost:12});
+  S.org.progression.events=S.org.progression.events.slice(-60);
+  logIt("CEO approved 14 Study days of leadership training for "+p.n+" ($12).");
+  return true;
+ });
+}
+function ladderDevelopDay(p,task){
+ const c=p.career.leadershipCourse;
+ if(c&&task==="study"&&p.career.recoveryDays===0){
+  c.days=Math.min(LEADERSHIP_COURSE_DAYS,c.days+1);
+  if(c.days===LEADERSHIP_COURSE_DAYS){
+   ensureManagement(p);
+   for(const skill of ["planning","delegation","coaching","communication"])p.management[skill]=clamp(p.management[skill]+1.25);
+   if(!p.career.leadershipCourses)p.career.leadershipCourses={};
+   p.career.leadershipCourses[c.level]={started:c.started,completed:S.day,cost:12};
+   p.role.autoTask=c.priorAutoTask;p.t="idle";delete p.career.leadershipCourse;ladderSignature="";
+   S.org.progression.events.push({day:S.day,id:p.id,level:c.level,action:"leadership training completed"});
+   S.org.progression.events=S.org.progression.events.slice(-60);
+   logIt(p.n+" finished real leadership training: +1.25 to each management competency.");
+  }
+ }
+ if(!ladderNode(p.id)||p.career.recoveryDays>0||!["coachteam","teach","prospect","market","improve","streamline","assist"].includes(task))return;
+ const reports=ladderCorporate().filter(x=>S.org.progression.reportTo[x.id]===p.id);
+ if(!reports.some(x=>x.career.recoveryDays===0&&(x.t.startsWith("d")||["prospect","market","improve","streamline","coachteam","teach","study","exp"].includes(x.t))))return;
+ ensureManagement(p);
+ const pr=p.career.leadershipPractice||(p.career.leadershipPractice={supervisedDays:0,coachingDays:0,mentoringSessions:0});
+ pr.supervisedDays++;p.management.planning=clamp(p.management.planning+.075);p.management.delegation=clamp(p.management.delegation+.075);
+ if(task!=="coachteam"&&task!=="assist")p.career.practice.managing++;
+ if(task==="coachteam"||task==="teach"){
+  pr.coachingDays++;p.management.coaching=clamp(p.management.coaching+.045);p.management.communication=clamp(p.management.communication+.045);
+ }
+}
 function ladderLaunchReadiness(){
  const leaders=S.org.progression.appointments.filter(n=>n.level==="lead").length;
  const payroll=S.team.reduce((sum,p)=>sum+dailySalary(p),0),minCash=120+payroll*21;

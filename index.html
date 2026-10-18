@@ -2593,7 +2593,8 @@ function unitGMEligible(p,key){
 function unitStaffEligible(p,key){
  if(!p||p.id===S.ops.assistantId)return false;
  if(DEPT_KEYS.some(k=>orgManager(k)?.id===p.id||DEPARTMENTS[k].skills.some(role=>orgSubManager(k,role)?.id===p.id)))return false;
- const other=unitOfPerson(p.id);return !other||other.key===key;
+ const other=unitOfPerson(p.id);if(managementOps().shared.some(a=>a.employeeId===p.id&&a.until>S.day&&a.status==="active"))return false;
+ return !other||other.key===key;
 }
 function unitRecord(key,type,detail){S.exec.unitEvents.push({key,day:S.day,type,detail});S.exec.unitEvents=S.exec.unitEvents.slice(-80);}
 function unitRestore(checkpoint){

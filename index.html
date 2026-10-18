@@ -2800,7 +2800,7 @@ function canonicalReporting(){
  for(const entry of entries){
   const manager=byId.get(entry.supervisor),key=manager?"report-"+manager.id:"ceo-"+(entry.unit?.key||"corporate");
   if(!groups.has(key))groups.set(key,{id:key,title:manager?"Reports to "+manager.n+" (#"+manager.id+")":
-   entry.unit?"CEO oversight · "+entry.owner:"CEO · direct reports and founder-led teams",managerName:manager?.n||"CEO",people:[]});
+   entry.unit?"CEO oversight · "+entry.owner:"CEO · direct reports",managerName:manager?.n||"CEO",people:[]});
   groups.get(key).people.push(entry.p);
  }
  const sorted=[...groups.values()].sort((a,b)=>(a.id.startsWith("ceo-")?0:1)-(b.id.startsWith("ceo-")?0:1)||a.title.localeCompare(b.title));

@@ -906,6 +906,7 @@ test("v21.4c autonomous manager hiring respects 90-day slots, budget, cash and n
  assert.equal(G.managementHiringAvailable({cost:20}),false);
  s.day=105;G.managementReview();assert.equal(policy.requests.filter(r=>r.status==="delegated").length,1);
  assert.equal(policy.hires,1);
+ assert.equal(G.save(),true,"the model must commit the autonomous hire before reload");
  const reloaded=G.load().org.progression.operations;
  assert.equal(reloaded.hireBudget,20);assert.equal(reloaded.hires,1);
  assert.equal(reloaded.requests[0].hiredId,first.hiredId);

@@ -14,3 +14,11 @@ jobs:
           node-version: '20'
       - name: Run standalone game regression checks
         run: node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs && node tests/v17-game.cjs && node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v20-portfolio.cjs && node tests/v21-5-growth.cjs && node tests/v22-property-pace.cjs && node tests/v22-2-executive-leadership.cjs && node tests/v22-4-ceo-experience.cjs && node --experimental-websocket tests/v19-mobile-browser.cjs
+
+      - name: Upload v22.4B real Chromium screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-v22-4b-mobile-evidence
+          path: reports/v22-4b-mobile/*.png
+          if-no-files-found: warn

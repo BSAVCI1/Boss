@@ -1779,15 +1779,20 @@ function ladderDay(){
 
 function ladderCoachSuccessors(){
  const g=S.org.progression;
- for(const n of g.appointments.filter(x=>x.level==="lead")){
-  const leader=person(n.id);if(!leader||n.lastMentored===S.day||S.day%14!==0)continue;
-  const reports=ladderCorporate().filter(p=>g.reportTo[p.id]===n.id&&!ladderNode(p.id));
+ for(const n of g.appointments){
+  const leader=person(n.id);
+  if(!leader||n.lastMentored===S.day||S.day%14!==0||leader.career.recoveryDays>0||["idle","rest","study"].includes(leader.t))continue;
+  const reports=ladderCorporate().filter(p=>g.reportTo[p.id]===n.id&&p.career.recoveryDays===0);
   const trainee=reports.sort((a,b)=>managerCompetence(b)-managerCompetence(a)||a.id-b.id)[0];
   if(!trainee)continue;
   n.successorId=trainee.id;n.lastMentored=S.day;
-  ensureManagement(trainee);trainee.management.coaching=clamp(trainee.management.coaching+.25);
+  ensureManagement(leader);ensureManagement(trainee);
+  trainee.management.coaching=clamp(trainee.management.coaching+.25);
   trainee.career.practice.coaching=(trainee.career.practice.coaching||0)+1;
-  leader.management.coaching=clamp(leader.management.coaching+.1);
+  leader.management.coaching=clamp(leader.management.coaching+.45);
+  leader.management.communication=clamp(leader.management.communication+.40);
+  const pr=leader.career.leadershipPractice||(leader.career.leadershipPractice={supervisedDays:0,coachingDays:0,mentoringSessions:0});
+  pr.mentoringSessions++;
   g.events.push({day:S.day,action:"successor mentoring",leaderId:n.id,successorId:trainee.id});
   g.events=g.events.slice(-60);
  }
@@ -2273,6 +2278,7 @@ $("leadership-growth").addEventListener("click",e=>{
   const value=Number($("leadership-budget")?.value);
   if(Number.isFinite(value)&&$("leadership-budget").value.trim()!=="")ladderSetAuthority(value);
  }else if(button.dataset.ladderAction==="approve")ladderPromote(button.dataset.level,Number(button.dataset.person),true);
+  else if(button.dataset.ladderAction==="course")ladderStartTraining(Number(button.dataset.person));
  else if(button.dataset.ladderAction==="hire-policy"){
   const a=$("management-hire-budget")?.value,b=$("management-hire-slots")?.value;
   if(a!==""&&b!=="")managementSetHiringPolicy(Number(a),Number(b));
@@ -2465,7 +2471,7 @@ else if(p.t==="rest"){dm=2;}
 else if(p.t==="assist"){p.s.ops+=.025*S.mod.learn;dm=.25;}
 else if(p.t==="exec"){p.s.ops+=.01*S.mod.learn;dm=.20;}
 const assignedDeadline=p.t.startsWith("d")?deal(Number(p.t.slice(1)))?.dl??99:99;
-const effectiveTask=recovering?"rest":p.t;if(!recovering&&propertyOccupancy(p).overloaded)p.mood=clamp(p.mood-.15);performanceWork(p,effectiveTask);careerTrack(p,effectiveTask);talentAndCareerDay(p,effectiveTask,assignedDeadline);biTeamDay(p,effectiveTask);const assignedUnit=unitOfPerson(p.id);if(assignedUnit&&p.id!==assignedUnit.managerId&&effectiveTask.startsWith("d")&&deal(Number(effectiveTask.slice(1)))?.unitKey===assignedUnit.key)assignedUnit.billableDays++;coachLabParticipation(p,effectiveTask);coachTrackRole(p,effectiveTask);
+const effectiveTask=recovering?"rest":p.t;if(!recovering&&propertyOccupancy(p).overloaded)p.mood=clamp(p.mood-.15);performanceWork(p,effectiveTask);careerTrack(p,effectiveTask);talentAndCareerDay(p,effectiveTask,assignedDeadline);biTeamDay(p,effectiveTask);const assignedUnit=unitOfPerson(p.id);if(assignedUnit&&p.id!==assignedUnit.managerId&&effectiveTask.startsWith("d")&&deal(Number(effectiveTask.slice(1)))?.unitKey===assignedUnit.key)assignedUnit.billableDays++;coachLabParticipation(p,effectiveTask);coachTrackRole(p,effectiveTask);ladderDevelopDay(p,effectiveTask);
 p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
 if(p.mood>70)p.loy=clamp(p.loy+.05);else if(p.mood<25)p.loy=clamp(p.loy-.2);orgTrackPerson(p,effectiveTask);if(!recovering)orgManagerDay(p);
 if(p.loy<15&&S.team.length>1&&Math.random()<.02){logIt(p.n+" quit. They did not feel valued.");removePerson(p);dirty=true;}
@@ -3820,7 +3826,7 @@ function renderLadder(){
  const g=S.org.progression,next=ladderNext(),salary=ladderPayroll(),launch=ladderLaunchReadiness();
  const opened=[...target.querySelectorAll("details.aux-details")].map(d=>d.open);
  const sig=JSON.stringify({authority:g.authorityDaily,operations:g.operations,roles:g.appointments,reporting:g.reportTo,
-  team:S.team.map(p=>[p.id,p.perf?.days,p.career?.rank,p.career?.xp,p.t]),week:Math.floor(S.day/7),
+  team:S.team.map(p=>[p.id,p.perf?.days,p.career?.rank,p.career?.xp,p.t,p.management?.planning,p.management?.delegation,p.management?.coaching,p.management?.communication,p.career?.leadershipCourse?.days]),week:Math.floor(S.day/7),
   ready:next?.ready,blocked:next?.reasons,cash:Math.floor(S.cash)});
  if(ladderSignature===sig)return;ladderSignature=sig;
  const levelCounts=Object.fromEntries(LADDER_STAGES.map(level=>[level,g.appointments.filter(n=>n.level===level).length]));
@@ -3832,6 +3838,16 @@ function renderLadder(){
   '<p class="small">Milestone is locked until its documented requirements are met.</p>';
  const ops=managementOps(),pending=ops.requests.filter(r=>r.status==="open");
  const reviewed=ops.scorecards.filter((x,i,a)=>a.findIndex(y=>y.personId===x.personId)===i).slice(0,8);
+ const development=g.appointments.map(n=>{
+  const p=person(n.id);if(!p)return "";
+  const level=LADDER_STAGES[LADDER_STAGES.indexOf(n.level)+1],pr=p.career.leadershipPractice||{},c=p.career.leadershipCourse;
+  return '<div class="org-report"><b>'+esc(p.n)+' · '+LADDER[n.level].name+' · competency '+managerCompetence(p).toFixed(1)+'/100</b>'+
+  '<div class="small">'+(level?'Next '+LADDER[level].name+' needs '+LADDER[level].skill:'Director is apex')+
+  ' · actual supervisory days '+(pr.supervisedDays||0)+' · mentored '+(pr.mentoringSessions||0)+' times · course '+
+  (c?c.days+'/14 Study days':p.career.leadershipCourses?.[n.level]?'completed':'not started')+'</div>'+
+  (ladderTrainingEligible(p)?'<button type="button" data-ladder-action="course" data-person="'+p.id+'">CEO approve $12 / 14-day leadership training</button>':
+  '<div class="small">'+(c?'Continue Study; interruptions pause progress.':'Requires no client assignment, an unused rank course and 14 payroll days in reserve.')+'</div>')+'</div>';
+ }).join("");
  const roster=g.appointments.map(n=>{
   const personN=person(n.id),reports=ladderCorporate().filter(x=>g.reportTo[x.id]===n.id);
   const trainee=person(n.successorId);
@@ -3856,7 +3872,7 @@ function renderLadder(){
  '<button type="button" data-ladder-action="hire-policy">Approve recruiting limits</button>'+
  '<p class="small">'+ops.hires+'/'+ops.hireSlots+' hires · '+biCurrency(ops.hireSpent)+' / '+biCurrency(ops.hireBudget)+' used · '+(S.day>=ops.since+ops.days?"EXPIRED":"Through Day "+(ops.since+ops.days))+'. Each hire also needs 21 days of payroll cash.</p>'+
  (pending.map(r=>'<div class="exec-proposal"><b>'+esc(DEPARTMENTS[r.dept].name)+' manager request</b><p>'+esc(person(r.managerId)?.n||"Manager unavailable")+' · '+esc(r.reason)+' One-time '+biCurrency(r.cost)+' and estimated '+biCurrency(r.payroll)+'/day wages.</p><div class="buttons"><button type="button" data-ladder-action="staff-approve" data-request-id="'+r.id+'" '+(!managementCashReady(r)?"disabled":"")+'>Approve hire</button><button type="button" data-ladder-action="staff-decline" data-request-id="'+r.id+'">Decline</button></div></div>').join("")||'<p class="small">No corporate manager requests pending.</p>')+'</details>'+
- '<details class="aux-details"><summary>Reporting lines and successors</summary>'+(roster||'<p class="small">Founder-led team. Reporting groups appear as you promote leaders.</p>')+'</details>'+ 
+ '<details class="aux-details"><summary>Earned leadership development</summary><p class="small">Actual productive direct reports and active supervisory work develop planning/delegation; coaching and 14-day mentoring build people skills. CEO-approved study costs $12 and takes 14 real Study days, once per rank, +1.25 to each skill. Promotions still require all existing eligibility and salary approval.</p>'+development+'</details>'+ '<details class="aux-details"><summary>Reporting lines and successors</summary>'+(roster||'<p class="small">Founder-led team. Reporting groups appear as you promote leaders.</p>')+'</details>'+ 
  '<details class="aux-details"><summary>Measured manager accountability</summary>'+(reviewed.map(x=>'<p class="small">Day '+x.day+' · '+esc(person(x.personId)?.n||"Former leader")+' ('+esc(x.role)+') · '+x.teamSize+' functional colleagues · '+(x.completed===null?'first baseline':'completed '+x.completed)+' · '+x.stressed+' stressed · '+x.unattended+' unassigned · '+esc(x.status)+'</p>').join('')||'<p class="small">Monthly evidence starts after real leadership practice. No historic reviews are invented.</p>')+'</details>'+
  '<p class="small">Next business-line readiness: '+launch.checks.filter(c=>c.met).length+'/'+launch.checks.length+' criteria met. Unmet: '+esc(launch.checks.filter(c=>!c.met).map(c=>c.label).join(" · ")||"none")+'.</p>';
  [...target.querySelectorAll("details.aux-details")].forEach((d,i)=>{if(opened[i])d.open=true;});

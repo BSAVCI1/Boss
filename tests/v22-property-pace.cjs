@@ -357,7 +357,10 @@ test("v22.2 COO coordinates specialist sharing even without a formal department 
  for(let i=0;i<2;i++){
   const key=i===0?"product":"marketing",gm=s.team[i],worker=s.team[i+2];
   s.exec.lines.push({key,since:0,spent:120,delivered:4,revenue:250});
-  s.exec.units.push({key,since:0,managerId:gm.id,staffIds:[gm.id,worker.id],plan:{staffingTarget:5,days:90,since:0,lastReview:0},reviews:[]});
+  gm.career.rank=1;
+  assert.equal(G.unitActivate(key),true);
+  assert.equal(G.unitAppoint(key,gm.id),true);
+  assert.equal(G.unitTransfer(key,worker.id),true);
  }
  const coo=qualified(s,s.team[8].id),specialist=s.team[9];
  specialist.department="delivery";specialist.role.primary="prod";specialist.role.auto=true;specialist.t="idle";specialist.s.prod=5;

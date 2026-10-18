@@ -362,7 +362,7 @@ test("v22.2 COO coordinates specialist sharing even without a formal department 
  const coo=qualified(s,s.team[8].id),specialist=s.team[9];
  specialist.department="delivery";specialist.role.primary="prod";specialist.role.auto=true;specialist.t="idle";specialist.s.prod=5;
  assert.equal(G.executiveAppoint("coo",coo.id),true);
- for(let i=0;i<2;i++)s.deals.push({id:200+i,unitKey:"product",w:null,dl:20,need:"prod"});
+ for(let i=0;i<2;i++){const d=G.createDeal("Unit contract "+i,0,"hospitality");d.unitKey="product";d.serviceLine="product";d.need="prod";d.w=null;}
  assert.equal(G.unitStaffingDay(),true,"without COO, GM should ask CEO for hiring exception");
  assert.equal(G.managementOps().shared.length,0);
  s.exec.unitRequests=s.exec.unitRequests.filter(x=>x.key!=="product");

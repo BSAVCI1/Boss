@@ -26,7 +26,7 @@ The v22.2 model uses an unbounded reputation fee factor `1 + reputation/200`; pa
 | 10,000 | 51.00 | 10.19 | -80% |
 | 30,000 | 151.00 | 12.61 | -92% |
 
-These are pricing-factor scenarios, **not** forecasts of actual revenue or profitability. They isolate one source of inflation. 30/180/730-game-day snapshots are covered in quote-policy regression; full 730-day cost/cash simulation remains covered by the existing game pipeline. Since reputation varies by playstyle, day alone cannot determine realized cash.
+These are pricing-factor scenarios, **not** forecasts of actual revenue or profitability. They isolate one source of inflation. 30/180/730-game-day snapshots are covered in quote-policy regression; actual 730-day group-finance economic replay is documented in [v22.3A evidence](V22_3A_ECONOMIC_PROOF.md). Since reputation varies by playstyle, day alone cannot determine realized cash.
 
 ## Executive authority remains unchanged
 
@@ -41,7 +41,7 @@ HR unlocked at 15 staff plus appointed manager; CFO at 20 completed contracts an
 5. Compare startup / mature / advanced affordability after the quote correction. Evaluate future NEW employment, premises and asset price calibration separately, with a measured cost-to-revenue target; do not reprice already signed sites, alter past payroll, confiscate cash or invent overhead.
 6. Do not represent v23 investment/acquisition gameplay as included in this release. Proceed to v23 only when unit- and group-level profit/cash runway remain credible.
 
-**Next quantitative pass:** 30/180/730 full replay by company growth strategy, revenue per delivered contract, payroll+rent as % of revenue, cash runway, property affordability and utilization; identify whether a prospective recurring procurement/contract-delivery cost or higher-cost new properties is needed rather than guessing.
+**Next approved task needed:** v22.3B prospective balance implementation based on the evidence; do not retrospectively alter old fees, staff commitments or property.
 
 
 ## v22.3A measured economic proof — 18 October 2026 (DRAFT, NOT DEPLOYED)
@@ -103,3 +103,8 @@ Test-only assumptions: **Conservative** = balanced pipeline/target 2, relationsh
 **Candidate balance guardrails (hypotheses, not enforced constants):** measure positive but nontrivial group operating margins over several years and multiple strategies rather than the current 90–95% at scale; require explicit downside scenarios, meaningful payback periods measured in operational cash-generation days, and sufficient (at least 21–30 game-day) reserves before discretionary transactions. First validate a broad **10–35% mature-group operating margin** and **90–360 game-day HQ payback** as experiment ranges with real game observations, not as industry claims, price floors or guaranteed target outcomes. If initial fixtures or actual customer/competitive behavior make these implausible, revise with evidence instead of forcing them.
 
 **Remaining v22.3B gates:** larger seed/adverse samples, affordability from organically grown *unfunded* companies, attribution of direct labor in persistent BI (currently unavailable), invoice ageing beyond latest open invoices, corporate overhead bridge, full issue #40 acceptance and owner Safari non-destructive smoke. Do not infer the owner’s private saved state or declare v22.3 released.
+
+
+## v22.3A economic proof, 18 October 2026 — draft evidence (not deployed)
+
+The [actual-engine scenario report](V22_3A_ECONOMIC_PROOF.md) and [mandatory runner](../tests/v22-3a-economic-proof.cjs) executed **108** 30/180/730-day checkpoints with three operating assumptions and three seeds. Green Actions: [#39125794859](https://github.com/BSAVCI1/Boss/actions/runs/39125794859). Balanced 730-day three-seed means: founder revenue $32,213/result $29,624; developing $270,645/$255,134; mature $400,264/$368,281; grandfathered $375,228/$346,476. Mature cash averaged $3,657,651 on $3.3m synthetic opening cash. Existing completed-project labor is attributed within payroll; the cumulative laborAllocated analytics counter remains unpopulated. No production pricing, payroll, property or authority settings were changed by the v22.3A diagnostic batch. **Issue #40 remains open for v22.3B; PR #39 remains draft.**

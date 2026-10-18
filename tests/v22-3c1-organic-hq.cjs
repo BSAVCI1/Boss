@@ -22,7 +22,8 @@ function makeEngine(seed,model){
  const sandbox={document:{getElementById:el,querySelector:()=>el('x'),querySelectorAll:()=>[],documentElement:el('html'),body:el('body'),activeElement:null,addEventListener(){}},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>''}),Math:rng,Date,JSON,Set,Map,console};
  vm.createContext(sandbox);
  const names='fresh,load,save,get:()=>S,assign,bestIdle,tick,propertyReadiness,propertyQuote,ladderEvaluation,ladderPromote,ladderNext,companyLaunchReadiness,executiveLaunch,unitActivate,unitAppoint,unitTransfer,unitGMEligible,unitStaffEligible,unitOfPerson,ladderNode,searchCandidates,hireCandidate,propertyOpen,dailySalary,propertyPeople';
- vm.runInContext(script.slice(0,boot)+'globalThis.G={'+names+'};})();',sandbox,{timeout:10000});
+ const modelBoot=script.indexOf('S=load();if(!S)fresh();');assert.ok(modelBoot>0,'model-specific bootstrap must be located after quote replacement');
+ vm.runInContext(script.slice(0,modelBoot)+'globalThis.G={'+names+'};})();',sandbox,{timeout:10000});
  return{G:sandbox.G,el};
 }
 function cashCheck(s){const residual=s.bi.openingCash+s.bi.totals.cashIn-s.bi.totals.cashOut-s.cash;assert.ok(Math.abs(residual)<.065,'actual cash ledger identity day '+s.day+': '+residual);return +residual.toFixed(3);}

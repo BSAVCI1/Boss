@@ -1053,4 +1053,15 @@ test("v21.4c actual corporate support labor is attributed by workdays, not final
  reconcile(s);
 });
 
+
+test("v21.4c a manager cannot hire when available colleagues cover an unassigned queue",()=>{
+ const s=init();fund(s,2300);s.day=84;s.deals=[];
+ const head=s.team[0];head.department="commercial";s.org.progression.appointments.push({id:head.id,level:"manager",since:5});
+ for(let i=0;i<2;i++){const p=G.createPerson();G.ensureCareer(p);G.ensureRole(p);G.ensureDepartment(p);p.department="commercial";p.role.primary="sales";p.role.auto=true;p.t="idle";s.team.push(p);}
+ for(let i=0;i<2;i++){const d=G.createDeal("Already-staffed corporate work");d.need="sales";d.w=null;delete d.unitKey;}
+ const before=s.cash,people=s.team.length;
+ G.managementReview();assert.equal(G.managementOps().requests.length,0,"no speculative hiring when the team can cover both contracts");
+ assert.equal(s.cash,before);assert.equal(s.team.length,people);reconcile(s);
+});
+
 console.log("Boss v20 functional and persistence checks passed.");

@@ -256,6 +256,20 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 @media(max-width:430px){.unit-panel .filter-grid{grid-template-columns:1fr}.unit-panel{padding:9px}}
 @media(max-width:700px){.ceo-office-grid{grid-template-columns:minmax(0,1fr)}.ceo-office-grid>div{min-width:0}.ceo-office-grid>div:last-child{padding:9px 11px}.ceo-report{overflow-wrap:anywhere}.ceo-report button{max-width:100%}}
 .property-map{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px;margin:12px 0}.property-room{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--accentWash);min-width:0}.property-room .lead{gap:6px}.property-room b{font-size:13px}.property-people{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.property-people span{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:26px;border-radius:7px;background:var(--bar);font-size:15px}.property-choice{border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0}.property-choice p{margin:6px 0}.property-choice button{width:100%;margin:4px 0}.property-choice .small{overflow-wrap:anywhere}@media(max-width:430px){.property-map{grid-template-columns:1fr}.property-choice{padding:9px}}
+
+/* v22.4B reporting view: the employee ID is the unique roster key. */
+.org-explorer{margin-bottom:10px}.org-ceo{background:var(--accentWash);border:2px solid var(--accent);border-radius:12px;padding:12px}
+.org-leadership{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+.org-sector{border:1px solid var(--line);border-radius:10px;padding:9px;min-width:0}
+.org-sector b{display:block;font-size:13px}.org-sector .small{display:block;margin-top:3px;overflow-wrap:anywhere}
+.org-sector button,.org-ceo button{font-size:12px;min-height:35px;text-align:left;padding:5px 7px}
+.org-minor{border-left:2px solid var(--line);padding-left:8px;margin:7px 0;font-size:12px}
+.org-vacant{color:var(--warn)}.org-roster .team-report-group{margin:7px 0}
+.org-roster .team-report-group>summary{padding:10px 12px;overflow-wrap:anywhere}
+.org-roster .employee-primary{min-width:0}.org-roster .employee-primary .small{overflow-wrap:anywhere}
+.org-career-glance{margin:8px 0;padding:9px 10px;border-inline-start:3px solid var(--accent);background:var(--accentWash);font-size:12px}
+.org-career-glance .small{display:block;margin-top:4px}.org-career-glance .career-alert{color:var(--warn)}
+@media(max-width:430px){.org-leadership{grid-template-columns:minmax(0,1fr)}.org-sector{padding:8px}.org-roster .employee-card{padding:10px}}
 </style>
 </head>
 <body>
@@ -343,8 +357,8 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </section>
 <section id="view-team" class="app-view" data-page="team" aria-label="People and delegation" hidden>
 <div class="view-intro"><h2>Team</h2><p>Employees, roles and culture</p></div>
-<section class="card" aria-label="Leadership development"><div id="leadership-growth"></div></section>
-<section aria-labelledby="team-title"><h2 id="team-title">Your people</h2><p class="small" id="team-wellbeing">Career progress, stress and wellbeing</p><div id="people"></div></section>
+<section class="card org-explorer"><div class="lead"><b>Company reporting tree</b><span id="org-people-count" class="small"></span></div><p class="small">Saved reporting lines and actual appointments. Career grade and delegated management authority are separate.</p><div id="org-explorer"></div></section><details class="aux-details game-advanced" id="leadership-details"><summary>Leadership progression &amp; CEO authorization</summary><div id="leadership-growth"></div></details>
+<section aria-labelledby="team-title"><h2 id="team-title">Your people · by manager</h2><p class="small" id="team-wellbeing">Each employee appears once. Open a reporting group, then an employee for legitimate actions and promotion requirements.</p><div id="people"></div></section>
 <section aria-labelledby="hiring-title"><h2 id="hiring-title">Grow the team</h2><div class="card"><details class="aux-details" id="recruitment-panel"><summary>Search and hire employees</summary><div class="filter-grid"><div><label for="hire-skill">Specialty to find</label><select id="hire-skill"><option value="">Any skill</option><option value="sales">Sales</option><option value="mkt">Marketing</option><option value="prod">Product</option><option value="ops">Operations</option></select></div><div><label for="hire-interest">Personal interest</label><select id="hire-interest"><option value="">Any interest</option><option value="customers">Customer relationships</option><option value="creative">Creative projects</option><option value="technology">Technology</option><option value="learning">Learning and growth</option><option value="people">Helping colleagues</option><option value="systems">Better processes</option></select></div></div><p class="filter-note">Search is free; hiring has a one-time fee. Each teammate adds $1.50 per day in salary costs, before cost breakthroughs.</p><div class="buttons"><button type="button" id="search-talent">Search candidates</button></div><div class="candidate-list" id="candidates"></div></details><div class="team-culture"><b>Executive assistant · CEO support</b><p class="filter-note" id="assistant-status">No executive assistant appointed.</p><div class="buttons"><button type="button" id="hire-assistant">Hire executive assistant ($20)</button></div>
 <p class="filter-note">Hire for $20 or appoint an existing colleague. Configure exactly what the assistant may do; they never displace someone you assigned. Your high-stakes people decisions stay with you.</p>
 <details class="assistant-settings"><summary>Delegation rules — customize your assistant</summary>
@@ -2731,38 +2745,130 @@ $("economy-invest-commercial").addEventListener("click",()=>economyInvest("comme
 $("work-mode").addEventListener("change",()=>{S.pipeline.mode=$("work-mode").value;save();refresh();});
 $("pipeline-target").addEventListener("change",()=>{S.pipeline.target=Number($("pipeline-target").value);save();refresh();});
 $("auto-work").addEventListener("change",()=>{S.pipeline.auto=$("auto-work").checked;save();refresh();});
-function teamReportingGroups(){
- const groups=[],used=new Set(),add=(id,title,people)=>{
-  const entries=people.filter(p=>p&&!used.has(p.id));
-  if(!entries.length)return;
-  for(const p of entries)used.add(p.id);
-  groups.push({id,title,people:entries});
- };
- add("ceo","CEO · direct reports",[
- ...DEPT_KEYS.map(key=>orgManager(key)),...(S.exec?.units||[]).map(u=>person(u.managerId)),person(S.ops.assistantId)]);
- for(const n of S.org.progression.appointments.filter(x=>x.level==="director"||x.level==="senior"))add("ladder-executive-"+n.id,"CEO · "+LADDER[n.level].name,[person(n.id)]);
- for(const n of S.org.progression.appointments.filter(x=>x.level==="lead")){
-  const leader=person(n.id),reporters=S.team.filter(p=>S.org.progression.reportTo[p.id]===n.id&&!ladderNode(p.id));
-  add("ladder-"+n.id,(ROLE_NAMES[orgWorkRole(leader)]||"Corporate")+" · Team Lead "+(leader?.n||"Vacant"),[leader,...reporters]);
+// Read-only roster projection from saved assignments. Does not create managers, change reportTo or serialize state.
+function canonicalReporting(){
+ const entries=[],byId=new Map(S.team.map(p=>[p.id,p])),managerIds=new Set();
+ const execIds=new Set(Object.values(S.exec?.officers||{}).map(o=>o.id).filter(id=>byId.has(id)));
+ const units=S.exec?.units||[],appointments=new Set((S.org?.progression?.appointments||[]).map(n=>n.id));
+ const managerById=new Map();
+ const unitFor=new Map();
+ for(const u of units){
+  if(byId.has(u.managerId))managerIds.add(u.managerId);
+  for(const id of u.staffIds||[])if(byId.has(id)&&!unitFor.has(id))unitFor.set(id,u);
  }
- for(const n of S.org.progression.appointments){const leader=person(n.id),staff=S.team.filter(p=>S.org.progression.reportTo[p.id]===n.id);add("ladder-"+n.id,(leader?.n||"Leader")+" · "+LADDER[n.level].name+" → direct reports",[leader,...staff]);}
- for(const u of S.exec?.units||[])add("unit-"+u.key,SERVICE_LINES[u.key].name+" → "+(person(u.managerId)?.n||"Vacant GM"),u.staffIds.map(id=>person(id)));
  for(const dept of DEPT_KEYS){
-  const chief=orgManager(dept),label=DEPARTMENTS[dept].name;
-  for(const role of DEPARTMENTS[dept].skills){
-   const manager=orgSubManager(dept,role),reports=orgSubReports(dept,role);
-   add(dept+"-"+role,label+" → "+ROLE_NAMES[role]+
-    (manager?" · "+manager.n+" (Manager)":chief?" · reports to "+chief.n:" · founder-led"),
-    [manager,...reports]);
-  }
-  add(dept+"-other",label+" · other direct reports",orgReports(dept).filter(p=>!used.has(p.id)));
+  const head=orgManager(dept);if(head){managerIds.add(head.id);managerById.set(head.id,null);}
+  for(const role of DEPARTMENTS[dept].skills){const sub=orgSubManager(dept,role);if(sub){managerIds.add(sub.id);managerById.set(sub.id,head?.id||null);}}
  }
- add("other","Other colleagues",S.team);
- return groups;
+ for(const p of S.team){
+  const u=unitFor.get(p.id)||units.find(x=>x.managerId===p.id)||null;
+  let supervisor=null,source="CEO direct / founder-led";
+  if(execIds.has(p.id))source="Executive appointment · CEO";
+  else if(p.id===S.ops.assistantId)source="Executive Assistant · CEO";
+  else if(units.some(x=>x.managerId===p.id))source="Business-unit GM · CEO";
+  else if(managerById.has(p.id)){supervisor=managerById.get(p.id);source=supervisor===null?"Department head · CEO":"Department-head reporting";}
+  else if(u){
+   supervisor=byId.has(u.managerId)&&u.managerId!==p.id?u.managerId:null;
+   source=supervisor===null?"Unit GM vacant · CEO oversight":"Dedicated GM reporting";
+  }else{
+   const saved=S.org?.progression?.reportTo?.[p.id];
+   if(byId.has(saved)&&appointments.has(saved)&&saved!==p.id&&!unitFor.has(saved)&&!execIds.has(saved)){
+    supervisor=saved;source="Saved leadership reporting";
+   }else{
+    const sub=orgSubManager(p.department,orgWorkRole(p));
+    const head=orgManager(p.department);
+    if(sub&&sub.id!==p.id){supervisor=sub.id;source="Functional team reporting";}
+    else if(head&&head.id!==p.id){supervisor=head.id;source="Department reporting";}
+   }
+  }
+  entries.push({p,supervisor,source,unit:u,owner:u?(SERVICE_LINES[u.key]?.name||u.key):(DEPARTMENTS[p.department]?.name||"Corporate")});
+ }
+ // Treat invalid cross-unit/cyclic links as unresolved, never invent a supervisor.
+ const lookup=new Map(entries.map(x=>[x.p.id,x]));
+ for(const e of entries){
+  const seen=new Set([e.p.id]);let cur=e;
+  while(cur.supervisor!==null){
+   if(seen.has(cur.supervisor)||!lookup.has(cur.supervisor)||
+    (e.unit?.key||null)!==(lookup.get(cur.supervisor).unit?.key||null)&&
+      lookup.get(cur.supervisor).p.id!==(e.unit?.managerId||null)){
+    e.supervisor=null;e.source="Unresolved manager · CEO oversight";break;
+   }
+   seen.add(cur.supervisor);cur=lookup.get(cur.supervisor);
+  }
+ }
+ const groups=new Map();
+ for(const entry of entries){
+  const manager=byId.get(entry.supervisor),key=manager?"report-"+manager.id:"ceo-"+(entry.unit?.key||"corporate");
+  if(!groups.has(key))groups.set(key,{id:key,title:manager?"Reports to "+manager.n+" (#"+manager.id+")":
+   entry.unit?"CEO oversight · "+entry.owner:"CEO · direct reports and founder-led teams",managerName:manager?.n||"CEO",people:[]});
+  groups.get(key).people.push(entry.p);
+ }
+ const sorted=[...groups.values()].sort((a,b)=>(a.id.startsWith("ceo-")?0:1)-(b.id.startsWith("ceo-")?0:1)||a.title.localeCompare(b.title));
+ return{entries,groups:sorted,byId};
+}
+function teamReportingGroups(){return canonicalReporting().groups;}
+function renderOrgExplorer(view){
+ const root=$("org-explorer");if(!root)return;
+ $("org-people-count").textContent=view.entries.length+" unique employees";
+ const jump=id=>'<button type="button" data-employee-jump="'+id+'">'+esc(person(id)?.n||"Employee")+' #'+id+' →</button>';
+ const executive=Object.entries(EXECUTIVE_ROLES).map(([key,meta])=>{
+  const p=person(S.exec?.officers?.[key]?.id);
+  return '<div class="org-minor"><b>'+esc(meta.short)+'</b> · '+(p?jump(p.id):'<span class="org-vacant">Vacant · earned appointment required</span>')+'</div>';
+ }).join("");
+ const offices=DEPT_KEYS.map(dept=>{
+  const chief=orgManager(dept),n=view.entries.filter(x=>!x.unit&&x.p.department===dept).length;
+  return '<div class="org-sector"><b>'+esc(DEPARTMENTS[dept].name)+' · '+n+' people</b>'+
+    (chief?jump(chief.id):'<span class="small org-vacant">Department head vacant · CEO-led</span>')+
+    DEPARTMENTS[dept].skills.map(role=>{const sub=orgSubManager(dept,role);
+     return '<div class="org-minor">'+esc(ROLE_NAMES[role])+' manager · '+(sub?jump(sub.id):'<span class="small">Unassigned (optional)</span>')+'</div>';
+    }).join("")+'</div>';
+ }).join("");
+ const business=(S.exec?.units||[]).map(u=>{
+  const gm=person(u.managerId),n=view.entries.filter(x=>x.unit?.key===u.key).length;
+  return '<div class="org-sector"><b>'+esc(SERVICE_LINES[u.key]?.name||u.key)+' · '+n+' people</b>'+
+   '<span class="small">Dedicated operating business</span>'+(gm?jump(gm.id):'<span class="org-vacant small">GM vacant · CEO oversight</span>')+'</div>';
+ }).join("");
+ root.innerHTML='<div class="org-ceo"><b>CEO · founder</b><div class="small">Corporate and business-unit leadership</div>'+
+  executive+(person(S.ops.assistantId)?'<div class="org-minor">Executive Assistant · '+jump(S.ops.assistantId)+'</div>':
+   '<div class="org-minor">Executive Assistant · <span class="org-vacant">Not appointed</span></div>')+'</div>'+
+  '<div class="org-leadership">'+offices+business+'</div>'+
+  '<p class="small">The reporting groups below resolve saved leadership assignments first, then actual departmental or unit supervision. An open leadership position never creates an imaginary manager.</p>';
+}
+$("org-explorer").addEventListener("click",e=>{
+ const b=e.target.closest("button[data-employee-jump]");if(!b)return;
+ const id=Number(b.dataset.employeeJump),card=$("people").querySelector('details[data-employee-id="'+id+'"]');
+ if(!card)return;
+ const group=card.closest("details[data-team-group]");if(group)group.open=true;
+ card.open=true;card.scrollIntoView?.({block:"center",behavior:"smooth"});
+});
+function clearCareerRequirements(p){
+ const status=coachCareerStatus(p),step=CAREER_STEPS[p.career.rank],node=ladderNode(p.id);
+ const checks=(status.checks||[]).map(c=>'<div class="'+(c.met?'career-calm':'career-alert')+'">'+(c.met?'✓ ':'○ ')+esc(c.detail||c.label+' '+(Number.isFinite(c.value)?Number(c.value).toFixed(c.unit==="skill"?2:0)+'/'+c.target:''))+'</div>').join("");
+ const management=p.management&&["planning","delegation","coaching","communication"].every(k=>Number.isFinite(p.management[k]))?
+  (p.management.planning+p.management.delegation+p.management.coaching+p.management.communication)/4:null;
+ const nextLevel=node?({lead:"manager",manager:"senior",senior:"director"}[node.level]||null):null,rule=nextLevel?LADDER[nextLevel]:null;
+ const leadership=node?'<div class="small"><b>Leadership authority:</b> '+esc(LADDER[node.level]?.name||"Appointed")+
+  ' · '+(rule?'next '+esc(rule.name)+' requires '+rule.days+' days in current appointment, competency '+rule.skill+', and '+rule.required+' eligible subordinate leaders/staff.':'top level.')+
+  ' Current competency '+(management===null?'not recorded':management.toFixed(0))+'/100. Actual staffing, candidate priority and 14-day payroll cover apply separately.</div>':
+  '<div class="small">No leadership appointment. Career grade does not grant manager authority.</div>';
+ let next="Continue genuine role experience, Study, Teach or coaching.";
+ const blocked=status.checks?.find(x=>!x.met);
+ if(blocked){if(blocked.label==="Time in current grade")next="Continue real game days in grade.";
+  else if(blocked.label==="Experience earned"||blocked.label==="Role-relevant work")next="Assign appropriate paid work, prospecting or teaching.";
+  else if(blocked.label?.includes(" skill"))next="Use Study or an approved development plan.";
+  else next="Complete the stated management reviews, actual staffing or mentoring.";
+ }else if(!status.ready&&step)next="Accumulate the one-time promotion fee in available cash.";
+ else if(status.ready)next="CEO may approve the eligible promotion below.";
+ return '<div class="org-career-glance"><b>Employment grade:</b> '+esc(careerTitle(p))+' → '+
+  esc(step?careerTitle(p,p.career.rank+1):"career maximum")+
+  '<div class="small '+(status.ready?'career-calm':'career-alert')+'">'+esc(status.reason)+'</div>'+
+  (step?'<div class="small">Cost '+biCurrency(step.fee)+' now · recurring +'+biCurrency(step.raise*S.mod.cost)+'/day after approval</div>':'')+
+  '<div class="small"><b>Next legitimate action:</b> '+esc(next)+'</div>'+checks+leadership+
+  '<div class="small">Existing Study, Teach, check-in, coaching and paid growth plans are active. Additional leadership courses and formal successor mentoring are in the separate unmerged v22.3 PR #39.</div></div>';
 }
 function renderStructure(){
 if(editableInteractionPending())return;
-const dSig=Object.entries(S.exec?.officers||{}).map(([k,v])=>k+":"+v.id).join("|")+"|"+S.deals.map(d=>d.id+":"+d.w+":"+d.negotiated+":"+d.extended+":"+d.reviewed+":"+(d.prog>=d.work*.2)).join(",")+"|"+S.team.map(p=>p.id+":"+p.t+":"+p.role.primary+":"+p.role.auto+":"+p.department).join(",")+"|"+DEPT_KEYS.map(k=>[S.org.departments[k].managerId,...DEPARTMENTS[k].skills.map(role=>S.org.departments[k].subManagers?.[role])].join(":")).join(",")+"|"+S.ops.assistantId+"|"+JSON.stringify((S.exec?.units||[]).map(u=>[u.key,u.managerId,u.staffIds]));
+const dSig=JSON.stringify(S.org?.progression?.reportTo||{})+"|"+JSON.stringify(S.org?.progression?.appointments||[])+"|"+S.team.map(p=>p.id+":"+p.career.rank+":"+coachCareerStatus(p).ready).join(",")+"|"+Object.entries(S.exec?.officers||{}).map(([k,v])=>k+":"+v.id).join("|")+"|"+S.deals.map(d=>d.id+":"+d.w+":"+d.negotiated+":"+d.extended+":"+d.reviewed+":"+(d.prog>=d.work*.2)).join(",")+"|"+S.team.map(p=>p.id+":"+p.t+":"+p.role.primary+":"+p.role.auto+":"+p.department).join(",")+"|"+DEPT_KEYS.map(k=>[S.org.departments[k].managerId,...DEPARTMENTS[k].skills.map(role=>S.org.departments[k].subManagers?.[role])].join(":")).join(",")+"|"+S.ops.assistantId+"|"+JSON.stringify((S.exec?.units||[]).map(u=>[u.key,u.managerId,u.staffIds]));
 if(structural===dSig)return;
 for(const el of $("deals").querySelectorAll("details[data-project-id]")){const id=Number(el.dataset.projectId);if(el.open)projectExpanded.add(id);else projectExpanded.delete(id);}
 for(const el of $("people").querySelectorAll("details[data-team-group]")){if(el.open)peopleGroupExpanded.add(el.dataset.teamGroup);else peopleGroupExpanded.delete(el.dataset.teamGroup);}
@@ -2779,10 +2885,11 @@ const known=S.market.customers[d.cl],customerInfo=d.returning?' · Returning cli
 const worker=person(d.w),owner=worker?worker.n:"Unassigned",late=d.dl<=5;
 return '<details class="card project-card" data-project-id="'+d.id+'" '+(projectExpanded.has(d.id)?'open':'')+'><summary><div class="project-summary-top"><div><b>'+esc(d.cl)+'</b><div class="small">'+esc(SECTORS[d.sector].name)+' · '+esc(d.serviceOffer||SKILLS[d.need])+' · '+phase+'</div></div><div class="summary-right"><b id="deal-fee-'+d.id+'">$'+feeFor(d)+'</b><div class="small '+(late?'risk-watch':'')+'" id="dl-'+d.id+'">'+d.dl+' days left</div></div></div><div class="progress"><i id="deal-bar-'+d.id+'" style="width:'+clamp(d.prog/d.work*100)+'%"></i></div><div class="summary-bottom"><span>'+esc(owner)+'</span><span id="prog-'+d.id+'">'+Math.floor(clamp(d.prog/d.work*100))+'%</span><span>Details ▾</span></div></summary><div class="project-expanded"><div class="meta">Stage '+tier+customerInfo+'</div><div class="meta"><span id="quality-'+d.id+'">Quality '+quality+'%</span> · <span id="phase-'+d.id+'">'+phase+'</span> · Plan → Build → Review</div>'+negotiation+(extension||review?'<div class="contract-actions">'+extension+review+'</div>':'')+'<div class="small">Assign a teammate</div><div class="buttons">'+S.team.filter(p=>d.w===p.id||unitAssignmentAllowed(d,p)).map(p=>'<button type="button" data-deal="'+d.id+'" data-person="'+p.id+'" '+(d.w===p.id?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+esc(p.n)+' (<span id="bid-'+d.id+'-'+p.id+'">'+p.s[d.need].toFixed(1)+'</span>)</button>').join("")+'</div></div></details>';
 }).join(""):'<div class="card empty">No active projects. Sales and Marketing are building the next opportunity.</div>';
-$("people").innerHTML=teamReportingGroups().map(group=>{
+const roster=canonicalReporting();renderOrgExplorer(roster);
+$("people").classList.add("org-roster");$("people").innerHTML=roster.groups.map(group=>{
 const body=group.people.map(p=>{
-const role=orgPersonPosition(p),risk=p.career.stress>=70||p.career.burnout>=35;
-return '<details class="card employee-card" data-employee-id="'+p.id+'" '+(employeeExpanded.has(p.id)||S.ui.employees.includes(p.id)?'open':'')+'><summary class="employee-summary"><span class="employee-primary"><b><i class="color-dot" style="background:'+p.col+'"></i>'+esc(p.n)+'</b><span class="small">'+esc(role)+' · Career: '+rankName(p)+' · '+(unitOfPerson(p.id)?'Dedicated operating unit':DEPARTMENTS[p.department].name)+'</span><span class="small '+(risk?'risk-watch':'')+'">'+(risk?'⚠ Needs support':p.career.stress>=45?'◷ Busy':'✓ Doing well')+'</span></span><span class="employee-aside"><span class="small">'+esc(taskText(p))+'</span><span class="small" id="person-v-'+p.id+'">'+(p.mood>=65?'😊 Motivated':p.mood>=35?'😐 Steady':'😟 Discouraged')+'</span><span class="small">Manage ▾</span></span></summary><div class="employee-expanded"><div class="small">'+esc(p.trait)+' · '+esc(INTERESTS[p.interest]||"Learning and growth")+'</div><div class="progress good"><i id="mood-bar-'+p.id+'"></i></div><div class="skills">'+KEYS.map(k=>'<div class="skill"><div class="skill-name"><b>'+SKILLS[k]+'</b><span id="skill-'+p.id+'-'+k+'"></span></div><div class="progress"><i id="skill-bar-'+p.id+'-'+k+'"></i></div></div>').join("")+'</div><div class="role-panel"><p class="small">Functional tasks and management appointments are different. To appoint or change a Department Head or Sales/Marketing/Product/Operations Manager, use Leadership hierarchy &amp; budgets above; changing an employee work role is not a management appointment.</p><label>Department</label><select class="org-dept-select" data-org-employee="'+p.id+'" '+(unitOfPerson(p.id)?'disabled title="Return employee to shared services first"':'')+'>'+DEPT_KEYS.map(k=>'<option value="'+k+'" '+(p.department===k?'selected':'')+'>'+DEPARTMENTS[k].name+'</option>').join("")+'</select><label>Primary responsibility</label><div class="buttons">'+ROLE_KEYS.map(k=>'<button type="button" data-role="'+k+'" data-person="'+p.id+'" '+(p.role.primary===k?'class="selected" aria-pressed="true"':'aria-pressed="false"')+' '+(k==="lead"&&p.career.rank<1&&p.career.xp<10?'disabled title="Requires seniority or 10 experience"':'')+'>'+ROLE_NAMES[k]+'</button>').join("")+'</div><button type="button" data-role="'+(p.role.auto?'manual':'resume')+'" data-person="'+p.id+'">'+(p.role.auto?'Manual orders':'Resume autonomous plan')+'</button></div><div class="small">Give a direct task</div><div class="buttons">'+[["study","Study"],["teach","Teach"],["exp","Experiment"],["rest","Rest"],...(p.role.primary==="prod"?[["improve","Product QA"]]:[]),...(p.role.primary==="ops"?[["streamline","Process improvement"]]:[]),...(p.role.primary==="sales"?[["prospect","Prospect clients"]]:[]),...(p.role.primary==="mkt"?[["market","Market demand"]]:[])].map(pair=>'<button type="button" data-order="'+pair[0]+'" data-person="'+p.id+'" '+(p.t===pair[0]?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+pair[1]+'</button>').join("")+'</div><div class="buttons"><button type="button" data-assistant="'+p.id+'" '+(S.ops.assistantId===p.id?'class="selected" aria-pressed="true"':'aria-pressed="false"')+' '+(unitOfPerson(p.id)?'disabled title="Return employee to shared services before appointing as EA"':'')+'>'+(S.ops.assistantId===p.id?'Stop assisting':'Appoint as assistant')+'</button></div><div class="buttons help-buttons">'+[["praise","Recognize"],["bonus","Bonus (-$12)"],["coach","Coach (-$8)"]].map(pair=>'<button type="button" data-care="'+pair[0]+'" data-person="'+p.id+'">'+pair[1]+'</button>').join("")+'<button type="button" data-fire="'+p.id+'" '+(S.team.length===1?'disabled title="The last employee must stay."':'')+'>Fire</button></div><details class="career-panel" data-career-id="'+p.id+'" '+(careerExpanded.has(p.id)||S.ui.careers.includes(p.id)?'open':'')+'><summary>Career &amp; wellbeing · <span id="career-short-'+p.id+'">Stress '+Math.floor(p.career.stress)+'%</span></summary><div class="career-data"><span class="small"><b>Goal:</b> '+esc(GOALS[p.career.goal])+'</span><span class="small"><b>Pay:</b> $'+dailySalary(p).toFixed(2)+'/day</span><span class="small" id="career-stats-'+p.id+'">Satisfaction '+Math.floor(p.career.satisfaction)+' · stress '+Math.floor(p.career.stress)+' · burnout '+Math.floor(p.career.burnout)+'</span><span class="small" id="career-experience-'+p.id+'">Experience '+p.career.xp.toFixed(1)+'</span><span class="small"><b>Talent:</b> '+(p.career.revealed?'Discovered '+SKILLS[p.career.talent]:'Clue: '+esc(talentHint(p)))+'</span><span class="small" id="career-promotion-'+p.id+'">Career path: '+esc(coachCareerStatus(p).text)+'</span><span class="small" id="career-readiness-'+p.id+'">'+esc(coachCareerStatus(p).reason)+'</span></div><label class="small" for="career-path-'+p.id+'">Long-term career route</label><select data-path="'+p.id+'" id="career-path-'+p.id+'" '+(p.career.rank<2||p.career.rank>=3?'disabled title="Choose a pathway when at Lead"':'')+'><option value="specialist" '+(p.career.path==="specialist"?"selected":"")+'>Specialist expertise</option><option value="leadership" '+(p.career.path==="leadership"?"selected":"")+'>People leadership (requires appointment)</option></select><details class="aux-details career-roadmap" data-roadmap-id="'+p.id+'" '+(roadmapExpanded.has(p.id)||S.ui.roadmaps.includes(p.id)?'open':'')+'><summary>See the complete career roadmap</summary>'+careerPathHTML(p)+'</details><label class="small" for="train-'+p.id+'">Targeted skill growth</label><select id="train-'+p.id+'" data-training="'+p.id+'"><option value="balanced" '+(p.career.trainingFocus==="balanced"?"selected":"")+'>Balanced — lowest skill</option>'+KEYS.map(k=>'<option value="'+k+'" '+(p.career.trainingFocus===k?"selected":"")+'>'+SKILLS[k]+'</option>').join("")+'</select><p class="small">Study improves skill, but employees also need real-role practice to advance. Sales prospecting, marketing, delivery, teaching and department leadership are counted separately.</p><div class="small" id="career-impact-'+p.id+'">Actual contribution: '+careerRoleDays(p)+' role days · '+p.career.practice.coaching+' teaching days · '+p.career.practice.managing+' management days · '+p.career.completions+' delivered projects</div><div class="career-actions"><button type="button" data-career="checkin" data-person="'+p.id+'">Check-in</button><button type="button" data-career="plan" data-person="'+p.id+'">Growth plan ($10)</button><button type="button" data-career="promote" data-person="'+p.id+'">Promote · $'+careerPromotionPrice(p)+'</button></div></details><div class="memories" id="mem-'+p.id+'"></div></div></details>';
+const role=orgPersonPosition(p),risk=p.career.stress>=70||p.career.burnout>=35,careerStatus=coachCareerStatus(p),record=roster.entries.find(x=>x.p.id===p.id);
+return '<details class="card employee-card" data-employee-id="'+p.id+'" '+(employeeExpanded.has(p.id)||S.ui.employees.includes(p.id)?'open':'')+'><summary class="employee-summary"><span class="employee-primary"><b><i class="color-dot" style="background:'+p.col+'"></i>'+esc(p.n)+'</b><span class="small">'+esc(role)+' · Grade '+rankName(p)+' · '+esc(record.owner)+' · Reports to '+esc(group.managerName)+'</span><span class="small '+(risk?'risk-watch':'')+'">'+(risk?'⚠ Needs support':p.career.stress>=45?'◷ Busy':'✓ Doing well')+'</span></span><span class="employee-aside"><span class="small">'+esc(taskText(p))+'</span><span class="small" id="person-v-'+p.id+'">'+(p.mood>=65?'😊 Motivated':p.mood>=35?'😐 Steady':'😟 Discouraged')+'</span><span class="small">Manage ▾</span></span></summary><div class="employee-expanded">'+clearCareerRequirements(p)+'<div class="small">'+esc(p.trait)+' · '+esc(INTERESTS[p.interest]||"Learning and growth")+'</div><div class="progress good"><i id="mood-bar-'+p.id+'"></i></div><div class="skills">'+KEYS.map(k=>'<div class="skill"><div class="skill-name"><b>'+SKILLS[k]+'</b><span id="skill-'+p.id+'-'+k+'"></span></div><div class="progress"><i id="skill-bar-'+p.id+'-'+k+'"></i></div></div>').join("")+'</div><div class="role-panel"><p class="small">Functional tasks and management appointments are different. To appoint or change a Department Head or Sales/Marketing/Product/Operations Manager, use Leadership hierarchy &amp; budgets above; changing an employee work role is not a management appointment.</p><label>Department</label><select class="org-dept-select" data-org-employee="'+p.id+'" '+(unitOfPerson(p.id)?'disabled title="Return employee to shared services first"':'')+'>'+DEPT_KEYS.map(k=>'<option value="'+k+'" '+(p.department===k?'selected':'')+'>'+DEPARTMENTS[k].name+'</option>').join("")+'</select><label>Primary responsibility</label><div class="buttons">'+ROLE_KEYS.map(k=>'<button type="button" data-role="'+k+'" data-person="'+p.id+'" '+(p.role.primary===k?'class="selected" aria-pressed="true"':'aria-pressed="false"')+' '+(k==="lead"&&p.career.rank<1&&p.career.xp<10?'disabled title="Requires seniority or 10 experience"':'')+'>'+ROLE_NAMES[k]+'</button>').join("")+'</div><button type="button" data-role="'+(p.role.auto?'manual':'resume')+'" data-person="'+p.id+'">'+(p.role.auto?'Manual orders':'Resume autonomous plan')+'</button></div><div class="small">Give a direct task</div><div class="buttons">'+[["study","Study"],["teach","Teach"],["exp","Experiment"],["rest","Rest"],...(p.role.primary==="prod"?[["improve","Product QA"]]:[]),...(p.role.primary==="ops"?[["streamline","Process improvement"]]:[]),...(p.role.primary==="sales"?[["prospect","Prospect clients"]]:[]),...(p.role.primary==="mkt"?[["market","Market demand"]]:[])].map(pair=>'<button type="button" data-order="'+pair[0]+'" data-person="'+p.id+'" '+(p.t===pair[0]?'class="selected" aria-pressed="true"':'aria-pressed="false"')+'>'+pair[1]+'</button>').join("")+'</div><div class="buttons"><button type="button" data-assistant="'+p.id+'" '+(S.ops.assistantId===p.id?'class="selected" aria-pressed="true"':'aria-pressed="false"')+' '+(unitOfPerson(p.id)?'disabled title="Return employee to shared services before appointing as EA"':'')+'>'+(S.ops.assistantId===p.id?'Stop assisting':'Appoint as assistant')+'</button></div><div class="buttons help-buttons">'+[["praise","Recognize"],["bonus","Bonus (-$12)"],["coach","Coach (-$8)"]].map(pair=>'<button type="button" data-care="'+pair[0]+'" data-person="'+p.id+'">'+pair[1]+'</button>').join("")+'<button type="button" data-fire="'+p.id+'" '+(S.team.length===1?'disabled title="The last employee must stay."':'')+'>Fire</button></div><details class="career-panel" data-career-id="'+p.id+'" '+(careerExpanded.has(p.id)||S.ui.careers.includes(p.id)?'open':'')+'><summary>Career &amp; wellbeing · <span id="career-short-'+p.id+'">Stress '+Math.floor(p.career.stress)+'%</span></summary><div class="career-data"><span class="small"><b>Goal:</b> '+esc(GOALS[p.career.goal])+'</span><span class="small"><b>Pay:</b> $'+dailySalary(p).toFixed(2)+'/day</span><span class="small" id="career-stats-'+p.id+'">Satisfaction '+Math.floor(p.career.satisfaction)+' · stress '+Math.floor(p.career.stress)+' · burnout '+Math.floor(p.career.burnout)+'</span><span class="small" id="career-experience-'+p.id+'">Experience '+p.career.xp.toFixed(1)+'</span><span class="small"><b>Talent:</b> '+(p.career.revealed?'Discovered '+SKILLS[p.career.talent]:'Clue: '+esc(talentHint(p)))+'</span><span class="small" id="career-promotion-'+p.id+'">Career path: '+esc(coachCareerStatus(p).text)+'</span><span class="small" id="career-readiness-'+p.id+'">'+esc(coachCareerStatus(p).reason)+'</span></div><label class="small" for="career-path-'+p.id+'">Long-term career route</label><select data-path="'+p.id+'" id="career-path-'+p.id+'" '+(p.career.rank<2||p.career.rank>=3?'disabled title="Choose a pathway when at Lead"':'')+'><option value="specialist" '+(p.career.path==="specialist"?"selected":"")+'>Specialist expertise</option><option value="leadership" '+(p.career.path==="leadership"?"selected":"")+'>People leadership (requires appointment)</option></select><details class="aux-details career-roadmap" data-roadmap-id="'+p.id+'" '+(roadmapExpanded.has(p.id)||S.ui.roadmaps.includes(p.id)?'open':'')+'><summary>See the complete career roadmap</summary>'+careerPathHTML(p)+'</details><label class="small" for="train-'+p.id+'">Targeted skill growth</label><select id="train-'+p.id+'" data-training="'+p.id+'"><option value="balanced" '+(p.career.trainingFocus==="balanced"?"selected":"")+'>Balanced — lowest skill</option>'+KEYS.map(k=>'<option value="'+k+'" '+(p.career.trainingFocus===k?"selected":"")+'>'+SKILLS[k]+'</option>').join("")+'</select><p class="small">Study improves skill, but employees also need real-role practice to advance. Sales prospecting, marketing, delivery, teaching and department leadership are counted separately.</p><div class="small" id="career-impact-'+p.id+'">Actual contribution: '+careerRoleDays(p)+' role days · '+p.career.practice.coaching+' teaching days · '+p.career.practice.managing+' management days · '+p.career.completions+' delivered projects</div><div class="career-actions"><button type="button" data-career="checkin" data-person="'+p.id+'">Check-in</button><button type="button" data-career="plan" data-person="'+p.id+'">Growth plan ($10)</button><button type="button" data-career="promote" data-person="'+p.id+'" '+(!careerStatus.ready?'hidden disabled':'')+'>Promote · $'+careerPromotionPrice(p)+'</button></div></details><div class="memories" id="mem-'+p.id+'"></div></div></details>';
 }).join("");
 return '<details class="team-report-group" data-team-group="'+group.id+'" '+(peopleGroupExpanded.has(group.id)?'open':'')+'><summary>'+esc(group.title)+' · '+group.people.length+' people</summary><div class="team-report-members">'+body+'</div></details>';
 }).join("");
@@ -4051,6 +4158,13 @@ $("hire-assistant").title=ap?"Only one assistant at a time.":S.cash<20?"Not enou
 renderAssistantQueue();
 $("cash").textContent="$"+Math.floor(S.cash);$("rep").textContent=String(Math.floor(S.rep));$("day").textContent="Day "+S.day;$("teamcount").textContent=S.team.length;
 for(const d of S.deals){const bar=$("deal-bar-"+d.id),dl=$("dl-"+d.id),prog=$("prog-"+d.id);if(bar)bar.style.width=clamp(d.prog/d.work*100)+"%";if(dl)dl.textContent=d.dl+" days left";if(prog)prog.textContent=Math.floor(clamp(d.prog/d.work*100))+"%";const fee=$("deal-fee-"+d.id),quality=$("quality-"+d.id),phase=$("phase-"+d.id);if(fee)fee.textContent="$"+feeFor(d);if(quality)quality.textContent="Quality "+Math.round(d.quality)+"%";if(phase)phase.textContent=d.milestone>=2?"Review":d.milestone>=1?"Build":"Plan";for(const p of S.team){const b=$("bid-"+d.id+"-"+p.id);if(b)b.textContent=p.s[d.need].toFixed(1);}}
+for(const b of $("people").querySelectorAll("button[data-career]")){
+ const p=person(Number(b.dataset.person));if(!p)continue;
+ const c=p.career,k=b.dataset.career,notReady=k==="promote"&&!coachCareerStatus(p).ready;
+ const cooldown=k==="plan"&&(S.cash<10||S.day-c.lastPlan<14)||k==="checkin"&&S.day-c.lastCheckin<9;
+ b.disabled=!!S.ev||notReady||cooldown;if(k==="promote")b.hidden=notReady;
+ b.title=cooldown?"This action is on cooldown or has insufficient cash":notReady?"Promotion requirements are not met":"";
+}
 for(const b of $("people").querySelectorAll("button[data-care]")){const p=person(Number(b.dataset.person));const cost=b.dataset.care==="bonus"?12:b.dataset.care==="coach"?8:0;const remaining=p?Math.max(0,7-(S.day-p.lastCareDay)):0;b.disabled=!!S.ev||!p||remaining>0||S.cash<cost;b.title=remaining>0?"Available in "+remaining+" days":S.cash<cost?"Not enough cash":"Motivate "+(p?p.n:"");}
 for(const b of $("candidates").querySelectorAll("button[data-hire]")){const c=S.hr.pool.find(x=>x.id===Number(b.dataset.hire));b.disabled=!!S.ev||!c||S.cash<c.fee;}
 const teamCost=S.team.length*5,teamRemaining=Math.max(0,12-(S.day-S.hr.lastTeamDay));$("team-activity").disabled=!!S.ev||teamRemaining>0||S.cash<teamCost;$("team-activity").textContent="Team activity (-$"+teamCost+")";$("team-activity-status").textContent=teamRemaining>0?"Available again in "+teamRemaining+" days.":S.cash<teamCost?"Earn $"+teamCost+" to host an activity.":"Available today.";

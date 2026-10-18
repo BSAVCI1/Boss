@@ -3081,15 +3081,19 @@ return '<article class="card"><div class="lead"><b>'+esc(c.n)+'</b><span class="
 }).join("");
 $("candidates").innerHTML=S.hr.pool.length?'<div class="filter-note">Candidates matching your search:</div>'+list:'<div class="empty">Select skills or interests and tap Search candidates to meet talent.</div>';
 }
-function renderIdeas(){const all=S.seeds.filter(k=>IDEAS[k]);
-const complete=S.built.length>=RECIPES.length;
-$("idea-summary").textContent=complete?"All capabilities unlocked":all.length+"/"+Object.keys(IDEAS).length+" discoveries · "+S.built.length+"/"+RECIPES.length+" capabilities";
+function renderIdeas(){const all=S.seeds.filter(k=>IDEAS[k]),done=S.built.length,complete=done>=RECIPES.length;
+$("idea-summary").textContent=complete?"All capabilities unlocked":all.length+"/"+Object.keys(IDEAS).length+" discoveries · "+done+"/"+RECIPES.length+" capabilities";
 $("upgrades-complete").hidden=!complete;
-$("upgrades-complete").textContent=complete?"Your company has mastered the capability map. Completed upgrades are archived; keep growing through R&D, business lines and leadership.":"";
-$("ideas").innerHTML=RECIPES.map(r=>{const done=S.built.some(b=>b[0]===r[2]),have=Number(S.seeds.includes(r[0]))+Number(S.seeds.includes(r[1]));
-return '<div class="knowledge-row '+(done?"is-unlocked":"is-locked")+'"><div class="lead"><b>'+(done?"✓ ":"◇ ")+esc(r[2])+'</b><span class="small">'+(done?'Unlocked':have+'/2 found')+'</span></div><div class="small">'+esc(IDEAS[r[0]])+' '+(S.seeds.includes(r[0])?'✓':'○')+' · '+esc(IDEAS[r[1]])+' '+(S.seeds.includes(r[1])?'✓':'○')+' · '+esc(r[3])+'</div><div class="progress"><i style="width:'+(done?100:have*45)+'%"></i></div></div>';}).join("");
-$("built").innerHTML=all.length?'<div class="filter-note">Discovered: '+all.map(k=>esc(IDEAS[k])).join(" · ")+'</div>':'<div class="empty">Employees will discover capabilities through work, research and experimentation.</div>';
-$("idea-message").textContent=ideaMessage||(complete?"New R&D can make bounded quality or efficiency improvements instead of repeating old unlocks.":"Ideas require time and funding; success is never guaranteed.");
+$("upgrades-complete").textContent=complete?"All standard capabilities mastered. Continue R&D for bounded improvements; completed recipes cannot be bought again.":"";
+const unlocked=r=>S.built.some(b=>b[0]===r[2]);
+const entry=r=>{const finished=unlocked(r),have=Number(S.seeds.includes(r[0]))+Number(S.seeds.includes(r[1]));
+return '<div class="knowledge-row '+(finished?"is-unlocked":"is-locked")+'"><div class="lead"><b>'+(finished?"✓ ":"◇ ")+esc(r[2])+'</b><span class="small">'+(finished?'Completed':have+'/2 discoveries')+'</span></div><div class="small">'+esc(IDEAS[r[0]])+' '+(S.seeds.includes(r[0])?'✓':'○')+' · '+esc(IDEAS[r[1]])+' '+(S.seeds.includes(r[1])?'✓':'○')+' · '+esc(r[3])+'</div>'+(finished?'':'<div class="progress"><i style="width:'+(have*45)+'%"></i></div>')+'</div>';};
+$("ideas").innerHTML=RECIPES.filter(r=>!unlocked(r)).map(entry).join("")||'<p class="small">No unfinished standard upgrades. Continue growing through new research, projects and employee skills.</p>';
+$("completed-upgrades-count").textContent="Completed upgrades & mastered research · "+done+"/"+RECIPES.length;
+$("completed-ideas").innerHTML=RECIPES.filter(unlocked).map(entry).join("")||'<p class="small">Nothing mastered yet. Discover the prerequisites to unlock capabilities automatically.</p>';
+$("completed-discoveries").textContent=all.length?"Historical discoveries: "+all.map(k=>IDEAS[k]).join(" · "):"No historical research discoveries yet.";
+$("built").innerHTML=all.length?'<p class="small">'+all.length+' research discoveries recorded. Open completed upgrades for full history.</p>':'<p class="small">Research develops through actual work and experiments.</p>';
+$("idea-message").textContent=ideaMessage||(complete?"Continuous research can still deliver bounded improvement; no repeat purchase is offered.":"Research unlocks automatically through discoveries; no automatic spending.");
 renderIdeaProgress();}
 function renderIdeaProgress(){const area=$("idea-progress-content");if(!area)return;
 $("idea-progress-summary").textContent="Funded idea outcomes · "+S.ideaWork.active.length+" active / "+S.ideaWork.history.length+" completed";
@@ -4321,9 +4325,9 @@ if(S.team.length>=5&&leadership?.level==="lead"){
  const note=leadership.ready?"Ready to appoint "+esc(leadership.candidateName)+" as Team Lead.":"Team Lead milestone: "+esc(leadership.reasons.join(" · "));
  notices.push('<div class="card"><h3>Executive Assistant · build your first leader</h3><p>'+note+' The first Team Lead becomes available at five employees; experience and salary authority still apply.</p><button type="button" data-go="team">Review leadership plan →</button></div>');
 }
-if(managerRequests.length)notices.push('<div class="card"><h3>CEO decision · Corporate manager staffing</h3><p>'+managerRequests.length+' manager recruitment requests await an authorization or CEO decision.</p><button type="button" data-go="team">Review staffing →</button></div>');
-if(unitRequests.length)notices.push('<div class="card"><h3>CEO decision · GM staffing</h3><p>'+unitRequests.length+' specialist recruitment proposal(s) require CEO approval before any expense or new payroll.</p><button type="button" data-go="growth">Review GM proposals →</button></div>');
-if(S.world.activeEvent)notices.push('<div class="card"><h3>Optional market opportunity</h3><p>A market offer is available until Day '+S.world.activeEvent.until+'. The CEO can act or pass in Growth.</p><button type="button" data-go="growth">Review opportunity →</button></div>');
+// Corporate hiring approvals already has one authoritative CEO decision / milestone pathway.
+// Unit staffing approvals already has one authoritative CEO decision / milestone pathway.
+// Optional offer already has one authoritative CEO decision / milestone pathway.
 if(unitShortages.length)notices.push('<div class="card"><h3>GM capacity exception</h3><p>'+unitShortages.length+' operating unit(s) have unassigned work. Review GM appointments and dedicated staff.</p><button type="button" data-go="growth">Review unit capacity →</button></div>');
 for(const f of urgent.slice(0,2)){
 const label=f.risk==="critical"?"Deadline risk":f.risk==="unassigned"?"Needs an owner":"Limited schedule buffer";
@@ -4333,10 +4337,10 @@ notices.push('<div class="card"><h3>'+label+'</h3><p>'+esc(f.d.cl)+' — '+info+
 if(stressed.length)notices.push('<div class="card"><h3>Team wellbeing</h3><p>'+stressed.length+' employee'+(stressed.length===1?"":"s")+' under high stress. Review workload and recovery.</p><button type="button" data-go="team">Review team →</button></div>');
 if(atRiskMoney)notices.push('<div class="card"><h3>Cash runway</h3><p>Available cash covers fewer than seven days of payroll. Check delivery and new contracts.</p><button type="button" data-go="work">Review work →</button></div>');
 
-if(notices.length<3&&direction.unmet.length)notices.push('<div class="card"><h3>Executive Assistant · company milestone</h3><p>'+esc(direction.title)+' · '+esc(direction.detail)+'</p><button type="button" data-go="'+direction.view+'">Review progression →</button></div>');
+// Chapter milestone already has one authoritative CEO decision / milestone pathway.
 if(notices.length<3&&propertyWarnings().length)notices.push('<div class="card"><h3>Premises · capacity and bills</h3><p>'+esc(propertyWarnings()[0])+'</p><button type="button" data-go="growth">Review offices →</button></div>');
-if(!notices.length)notices.push('<div class="card"><h3>No urgent decisions</h3><p>Employees are handling routine activities. Check Work or Growth when you want to make strategic decisions.</p></div>');
-const markup=notices.slice(0,3).join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
+if(!notices.length)notices.push('<p class="small">No separate operational warnings. Required CEO decisions remain above.</p>');
+const markup=notices.slice(0,2).join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
 for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}
 }
 function refresh(){

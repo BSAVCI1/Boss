@@ -104,7 +104,7 @@ function seeded(G,kind,policy){
  }
  return{G,s,baseline:cash,fixture:'synthetic pre-earned career, cash and service prerequisites'};
 }
-function snapshot(G,s,baseline,kind,policy,seed,elapsed){
+function snapshot(G,s,baseline,kind,policy,seed,elapsed,deliveryLabor,deliveryDirect){
  const t=s.bi.totals,c=s.bi.categoryTotals,units=s.exec.units||[];
  const unitCost=units.reduce((v,u)=>v+(u.payrollCost||0)+(u.directCost||0)+(u.sharedLaborCost||0)+(u.developmentCost||0),0);
  const unitRevenue=units.reduce((v,u)=>v+(u.revenue||0),0);
@@ -119,7 +119,7 @@ function snapshot(G,s,baseline,kind,policy,seed,elapsed){
   booked:+t.booked.toFixed(2),openSigned:+s.deals.reduce((v,d)=>v+G.feeFor(d),0).toFixed(2),
   revenue:+rev.toFixed(2),receivables:+receivables.toFixed(2),cashCollections:+Math.max(0,rev-receivables).toFixed(2),
   cashIn:+t.cashIn.toFixed(2),cashOut:+t.cashOut.toFixed(2),
-  payroll:+(c.payroll||0).toFixed(2),directLabor:+(t.laborAllocated||0).toFixed(2),
+  payroll:+(c.payroll||0).toFixed(2),directLabor:+deliveryLabor.toFixed(2),directDeliveryCosts:+deliveryDirect.toFixed(2),ledgerLaborAllocated:+(t.laborAllocated||0).toFixed(2),
   totalCosts:+cost.toFixed(2),propertyCosts:+(c.property||0).toFixed(2),depreciation:+(c.depreciation||0).toFixed(2),
   unitRevenue:+unitRevenue.toFixed(2),unitCosts:+unitCost.toFixed(2),unitContribution:+(unitRevenue-unitCost).toFixed(2),
   groupProfit:+profit.toFixed(2),corporateRemainder:+((rev-unitRevenue)-(cost-unitCost)).toFixed(2),
@@ -131,7 +131,7 @@ function snapshot(G,s,baseline,kind,policy,seed,elapsed){
   backlog:s.deals.length,delivered:t.delivered,missed:t.missed,
   utilization:t.deliveryEligibleDays>0?+(100*t.deliveryRoleWorkDays/t.deliveryEligibleDays).toFixed(1):null,
   propertyBook:+property.book.toFixed(2),propertyDaily:+property.daily.toFixed(2),
-  hqAffordable:G.propertyReadiness('hq').ready,buildingAffordable:G.propertyReadiness('building').ready,
+  hqAffordable:G.propertyReadiness('hq').ready,hqOwned:s.exec.property.sites.some(x=>x.type==='hq'&&x.status!=='sold'),hqCashThreshold:+G.propertyReadiness('hq').required.toFixed(2),buildingAffordable:G.propertyReadiness('building').ready,
   hrEligible:G.executiveEligibility('hr').ready,cfoEligible:G.executiveEligibility('cfo').ready,cooEligible:G.executiveEligibility('coo').ready
  };
  assert.ok(r.revenue>=0&&Number.isFinite(r.cash)&&Number.isFinite(r.groupProfit),'finite financial result');
@@ -145,14 +145,17 @@ function snapshot(G,s,baseline,kind,policy,seed,elapsed){
 function run(kind,policy,seed){
  const f=engine(seed),setup=seeded(f.G,kind,policy),G=setup.G,s=G.get();
  const initialIds=s.team.map(p=>p.id),initialAuthority=JSON.stringify(s.exec.officers);
- const start=s.day,rows=[];const first={building:null,hq:null,hr:null,cfo:null,coo:null};
+ const start=s.day,rows=[];let deliveryLabor=0,deliveryDirect=0;const first={building:null,hq:null,hr:null,cfo:null,coo:null};
  for(let n=1;n<=730;n++){
   const before=s.day;G.tick();assert.equal(s.day,before+1,'a game day must advance exactly once');
+  // Real completed-project records preserve allocated delivery effort; BI_FIELDS.laborAllocated is not populated by the current engine.
+  // Collect the newly completed records EVERY DAY before the built-in 120-project history truncation.
+  for(const p of s.bi.projects.filter(p=>p.day===s.day)){deliveryLabor+=p.labor||0;deliveryDirect+=p.direct||0;}
   if(new Set(s.team.map(p=>p.id)).size!==s.team.length)throw Error('duplicate staff IDs');
   const status={building:G.propertyReadiness('building').ready,hq:G.propertyReadiness('hq').ready,hr:G.executiveEligibility('hr').ready,cfo:G.executiveEligibility('cfo').ready,coo:G.executiveEligibility('coo').ready};
   for(const [k,v] of Object.entries(status))if(v&&first[k]===null)first[k]=n;
   if(horizons.includes(n)){
-   rows.push(snapshot(G,s,setup.baseline,kind,policy,seed,n));
+   rows.push(snapshot(G,s,setup.baseline,kind,policy,seed,n,deliveryLabor,deliveryDirect));
    const oldDay=s.day,oldCash=s.cash,oldDeals=s.deals.map(d=>[d.id,d.agreedFee,d.pricingVersion]);
    G.save();const loaded=G.load();assert.ok(loaded&&loaded.day===oldDay&&loaded.cash===oldCash,'reload day/cash persistence');
    assert.equal(JSON.stringify(Array.from(loaded.deals,d=>[d.id,d.agreedFee,d.pricingVersion])),JSON.stringify(oldDeals),'contract fee preservation');
@@ -183,11 +186,20 @@ function main(){
  }
  assert.deepEqual(pace.map(({speed,...x})=>x),[pace[0],pace[0],pace[0]].map(({speed,...x})=>x),'pacing changes timer, not game-day economics');
  out.pace=pace;
+ const measures=['revenue','groupProfit','cash','payroll','totalCosts','directLabor','unitContribution','utilization','unpaidPayroll','runwayDays'];
+ out.summary=[];
+ for(const scenario of ['A','B','C','D'])for(const policy of Object.keys(policies))for(const elapsed of horizons){
+  const rows=out.rows.filter(r=>r.scenario===scenario&&r.policy===policy&&r.elapsed===elapsed);
+  const stats={scenario,policy,elapsed,n:rows.length};
+  for(const key of measures){const a=rows.map(r=>r[key]).filter(Number.isFinite);stats[key]={mean:+(a.reduce((x,y)=>x+y,0)/a.length).toFixed(2),min:+Math.min(...a).toFixed(2),max:+Math.max(...a).toFixed(2)};}
+  out.summary.push(stats);
+ }
  fs.mkdirSync('reports',{recursive:true});
  fs.writeFileSync('reports/v22-3a-economic-proof.json',JSON.stringify(out,null,2)+'\n');
  console.log('PASS v22.3A real engine 4 scenarios, 3 operating assumptions, 3 seeds, 30/180/730-day checkpoints: '+out.rows.length+' reconciled snapshots');
  console.log('PASS deterministic 1x/3x/8x tick parity; no second ledger, no implicit executive mandates, historical contract preservation');
  console.log('ARTIFACT reports/v22-3a-economic-proof.json');
  for(const row of out.rows.filter(r=>r.seed===seeds[0]&&r.policy==='balanced'))console.log('ECONOMIC',JSON.stringify(row));
+ for(const stat of out.summary)console.log('SUMMARY',JSON.stringify(stat));
 }
 main();

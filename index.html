@@ -2247,6 +2247,7 @@ $("business-units").addEventListener("click",e=>{
  else if(action==="manager")unitAppoint(key,Number($("unit-gm-"+key)?.value)||null);
  else if(action==="transfer")unitTransfer(key,Number($("unit-employee-"+key)?.value)||null);
  else if(action==="release")unitRelease(key,Number($("unit-release-"+key)?.value)||null);
+ else if(action==="share")managementShareStaff(key,Number($("unit-share-"+key)?.value)||null);
  else if(action==="renew")unitRenewAuthority(key);
  else if(action==="apply-draft"){const ok=unitApplyDraft(key);const status=$("unit-settings-status-"+key);if(status)status.textContent=ok?"Budget and objectives saved.":"Invalid numbers; no settings changed.";}
  else if(action==="preset"){const tier=$("unit-preset-"+key)?.value;const ok=unitApplyPreset(key,tier);const status=$("unit-settings-status-"+key);if(status)status.textContent=ok?"Preset approved; no upfront spending.":"Select a preset or choose Custom.";}
@@ -2814,7 +2815,7 @@ if(editableInteractionPending())return;
  // Preserve it across redraws without prematurely changing the saved company.
  const selectedChoices=new Map([...target.querySelectorAll('select[id^="unit-"]')].map(el=>[el.id,el.value]));
  const openAuthority=new Set([...target.querySelectorAll('details[data-unit-open]')].filter(el=>el.querySelector('details.aux-details')?.open).map(el=>el.dataset.unitOpen));
- const signature=JSON.stringify({units:S.exec.units,requests:S.exec.unitRequests,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id])});
+ const signature=JSON.stringify({units:S.exec.units,requests:S.exec.unitRequests,shared:managementOps().shared,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id])});
  if(signature===unitViewSignature)return;unitViewSignature=signature;
  const choices=S.exec.lines.map(l=>{
   const u=S.exec.units.find(x=>x.key===l.key);
@@ -2823,6 +2824,7 @@ if(editableInteractionPending())return;
   const candidates=S.team.filter(p=>unitGMEligible(p,l.key)&&p.id!==u.managerId&&!S.deals.some(d=>d.w===p.id));
   const transfers=S.team.filter(p=>unitStaffEligible(p,l.key)&&!u.staffIds.includes(p.id)&&!S.deals.some(d=>d.w===p.id));
   const releasing=staff.filter(p=>p.id!==u.managerId&&!S.deals.some(d=>d.w===p.id));
+  const shared=managementSharedCandidates(l.key),grants=managementOps().shared.filter(a=>a.unitKey===l.key&&a.until>S.day);
   const result=u.revenue-u.directCost-u.sharedLaborCost-u.payrollCost-u.developmentCost;
   const p=u.plan||{},requests=S.exec.unitRequests.filter(q=>q.key===u.key&&q.status==="open"),last=u.reviews.at(-1),career=unitCareerReadiness(u);
   const authority='<details class="aux-details"><summary>CEO authority &amp; GM scorecard</summary><p class="small">Dedicated operating-unit authority; Commercial and Delivery budgets are not shared with this unit. Default delegation is $0; recruiting requires CEO approval.</p>'+
@@ -2851,6 +2853,11 @@ if(editableInteractionPending())return;
    '<div><label for="unit-employee-'+l.key+'">Dedicated employee</label><select id="unit-employee-'+l.key+'"><option value="">Choose available teammate</option>'+transfers.map(p=>'<option value="'+p.id+'">'+esc(p.n)+' (#'+p.id+')</option>').join("")+'</select><button type="button" data-unit-action="transfer" data-unit-key="'+l.key+'" '+(!transfers.length?"disabled":"")+'>Transfer to unit</button></div></div>'+
    (releasing.length?'<label for="unit-release-'+l.key+'">Return employee to shared services</label><select id="unit-release-'+l.key+'">'+releasing.map(p=>'<option value="'+p.id+'">'+esc(p.n)+' (#'+p.id+')</option>').join("")+'</select><button type="button" data-unit-action="release" data-unit-key="'+l.key+'">Return to shared team</button>':"")+
    '<p class="small">Active customer contracts finish before transfers. Each employee has one primary unit; departmental spending authority remains shared.</p>'+
+   '<details class="aux-details"><summary>Temporary corporate support · CEO authorization</summary>'+
+   '<p class="small">Grant 30-day access to corporate specialists for future unit contracts. Payroll and reporting stay corporate; finished unit jobs attribute existing labor expenses, without charging salaries twice.</p>'+
+   '<select id="unit-share-'+l.key+'"><option value="">Choose available corporate colleague</option>'+shared.map(p=>'<option value="'+p.id+'">'+esc(p.n)+' (#'+p.id+') · '+esc(ROLE_NAMES[orgWorkRole(p)]||"Specialist")+'</option>').join("")+'</select>'+
+   '<button type="button" data-unit-action="share" data-unit-key="'+l.key+'" '+(!gm||!shared.length?"disabled":"")+'>Authorize 30-day support</button>'+
+   '<p class="small">'+(grants.map(a=>esc(person(a.employeeId)?.n||"Former colleague")+" through Day "+a.until).join(" · ")||"No current temporary support")+'</p></details>'+
    '<details class="aux-details"><summary>Manager career &amp; succession plan</summary><p class="small">Successor: '+(career.successor?esc(career.successor.n)+" (#"+career.successor.id+")":"Awaiting an eligible team member")+' · Trained sessions '+career.sessions+' / 3 · '+career.reviews+' successful 30-day reviews · '+career.people+' direct specialists.</p>'+
    '<p class="small">'+esc(career.next)+'.'+(career.successorReady?" Successor development threshold reached; promotion requires CEO approval and a real reporting structure.":" Training uses approved budget only.")+'</p>'+
    '<p class="small">Career path: Specialist → Team Lead (3 specialists) → Manager (up to five leads) → Senior Manager (three or more managers) → Director. Growth requires evidence and a trained replacement, not headcount alone.</p></details>'+
@@ -2951,7 +2958,7 @@ function executiveWeeklySnapshot(){
  });
  return{day:S.day,periodDays:rows.length,revenue,costs,operatingProfit:revenue-costs,cashIn,cashOut,cashChange:cashIn-cashOut,
  wins:sum("wins"),delivered:sum("delivered"),missed:sum("missed"),active:S.deals.length,pipeline:S.pipeline.leads.length,
- proposals:S.exec.proposals.length+(S.exec.unitRequests||[]).filter(q=>q.status==="open").length,risks:S.deals.filter(d=>d.dl<=5&&d.prog<d.work).length,
+ proposals:S.exec.proposals.length+(S.exec.unitRequests||[]).filter(q=>q.status==="open").length+managementOps().requests.filter(r=>r.status==="open").length,risks:S.deals.filter(d=>d.dl<=5&&d.prog<d.work).length,
  staff:S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35).length,dept,
  services:S.exec.lines.map(x=>({key:x.key,delivered:x.delivered||0,days:S.day-x.since,revenue:x.revenue||0,contribution:x.contribution||0})),
  recentDecisions:S.exec.history.filter(x=>x.day>S.day-7&&x.day<=S.day)};
@@ -2965,7 +2972,9 @@ function renderExecutiveWeekly(){
  const panel=$("ea-weekly-report");if(!panel||!panel.open)return;
  const live=executiveWeeklySnapshot(),since=S.exec.weeklyReports[0]?.day,a=person(S.ops.assistantId),units=S.exec.units.map(u=>({u,gm:person(u.managerId),last:u.reviews.at(-1),active:S.deals.filter(d=>d.unitKey===u.key).length}));
  const risks=[],priorities=[];
- const ladder=ladderNext();if(ladder&&S.team.length>=5){const reason=ladder.ready?"Ready for CEO approval or within-budget promotion":ladder.reasons.join(" · ");risks.push(ladder.role+" progression: "+reason);priorities.push("Review "+ladder.role+" succession and organization span");}
+ const ladder=ladderNext(),managerRequests=managementOps().requests.filter(r=>r.status==="open");
+ if(managerRequests.length){risks.push(managerRequests.length+" corporate staffing exceptions");priorities.push("Review manager hiring decisions and payroll");}
+ if(ladder&&S.team.length>=5){const reason=ladder.ready?"Ready for CEO approval or within-budget promotion":ladder.reasons.join(" · ");risks.push(ladder.role+" progression: "+reason);priorities.push("Review "+ladder.role+" succession and organization span");}
  if(live.proposals){risks.push(live.proposals+" CEO approvals pending");priorities.push("Decide on "+live.proposals+" management proposals");}
  if(live.risks){risks.push(live.risks+" client deadlines at risk");priorities.push("Resolve "+live.risks+" threatened delivery deadlines");}
  if(live.staff){risks.push(live.staff+" stressed colleagues");priorities.push("Rebalance workload for "+live.staff+" colleagues");}
@@ -3222,7 +3231,8 @@ const leadership=ladderNext();
 const stressed=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35);
 const atRiskMoney=S.cash<S.team.reduce((sum,p)=>sum+dailySalary(p),0)*7;
 const unitRequests=(S.exec?.unitRequests||[]).filter(x=>x.status==="open"),unitShortages=(S.exec?.units||[]).filter(u=>S.deals.some(d=>d.unitKey===u.key&&!d.w));
-const actionable=urgent.length+stressed.length+(atRiskMoney?1:0)+unitRequests.length+unitShortages.length+(S.team.length>=5&&leadership?.level==="lead"?1:0);
+const managerRequests=managementOps().requests.filter(r=>r.status==="open");
+const actionable=urgent.length+stressed.length+(atRiskMoney?1:0)+unitRequests.length+unitShortages.length+managerRequests.length+(S.team.length>=5&&leadership?.level==="lead"?1:0);
 $("brief-headline").textContent=actionable?actionable+" area"+(actionable===1?"":"s")+" to review":"Your company is on track";
 $("brief-summary").textContent=actionable?"Your Executive Assistant has highlighted decisions requiring CEO attention. Routine work continues without intervention.":"Projects and development are moving forward. You're free to focus on strategy.";
 $("brief-projects").textContent=S.deals.length+" active project"+(S.deals.length===1?"":"s");
@@ -3234,6 +3244,7 @@ if(S.team.length>=5&&leadership?.level==="lead"){
  const note=leadership.ready?"Ready to appoint "+esc(leadership.candidateName)+" as Team Lead.":"Team Lead milestone: "+esc(leadership.reasons.join(" · "));
  notices.push('<div class="card"><h3>Executive Assistant · build your first leader</h3><p>'+note+' The first Team Lead becomes available at five employees; experience and salary authority still apply.</p><button type="button" data-go="team">Review leadership plan →</button></div>');
 }
+if(managerRequests.length)notices.push('<div class="card"><h3>CEO decision · Corporate manager staffing</h3><p>'+managerRequests.length+' manager recruitment requests await an authorization or CEO decision.</p><button type="button" data-go="team">Review staffing →</button></div>');
 if(unitRequests.length)notices.push('<div class="card"><h3>CEO decision · GM staffing</h3><p>'+unitRequests.length+' specialist recruitment proposal(s) require CEO approval before any expense or new payroll.</p><button type="button" data-go="growth">Review GM proposals →</button></div>');
 if(S.world.activeEvent)notices.push('<div class="card"><h3>Optional market opportunity</h3><p>A market offer is available until Day '+S.world.activeEvent.until+'. The CEO can act or pass in Growth.</p><button type="button" data-go="growth">Review opportunity →</button></div>');
 if(unitShortages.length)notices.push('<div class="card"><h3>GM capacity exception</h3><p>'+unitShortages.length+' operating unit(s) have unassigned work. Review GM appointments and dedicated staff.</p><button type="button" data-go="growth">Review unit capacity →</button></div>');

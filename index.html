@@ -3292,7 +3292,7 @@ function gameToast(message){const t=$("game-toast");if(!t)return;t.textContent=m
 function gameRender(){
 const [title,hint,value,max,view,project]=gamePlan(),direction=companyDirection(),event={delivered:S.market.completed||0,wins:S.world?.stats?.won||0,built:S.built.length};
 if(lastGameEvent){if(event.delivered>lastGameEvent.delivered)gameToast("Client project completed — great work!");else if(event.built>lastGameEvent.built)gameToast("You unlocked a company capability!");else if(event.wins>lastGameEvent.wins)gameToast("Competitive contract won!");}lastGameEvent=event;
-$("game-chapter").textContent=direction.stage+" · "+gameChapter()+" · Day "+S.day;
+const legacyChapter=gameChapter();$("game-chapter").textContent=(legacyChapter===direction.stage?direction.stage:legacyChapter+" · "+direction.stage)+" · Day "+S.day;
  const stageHtml='<div class="lead"><b>Company direction · '+esc(direction.stage)+'</b></div>'+
  '<p class="small"><b>'+esc(direction.title)+'</b> · '+esc(direction.detail)+'</p>'+
  '<p class="small">'+(direction.unmet.length?direction.unmet.length+" remaining growth requirements":"Next company milestone ready or under management")+'</p>';

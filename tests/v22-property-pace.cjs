@@ -11,7 +11,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,innerHTML:"",textConten
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const methods="fresh,load,get:()=>S,set:x=>S=x,save,executiveLaunch,companyLaunchReadiness,companyDirection,renderLaunchGuide,gameRender,renderBriefing,renderExecutiveWeekly,unitActivate,unitAppoint,unitTransfer,dailySalary,createDeal,feeFor,tick,propertyOpen,propertyClose,propertyActivate,propertyPayArrears,propertyDay,propertySell,propertySummary,propertyReadiness,propertyQuote,propertyWorkMultiplier,propertyOccupancy,propertyCapacity,renderProperties,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance";
+const methods="fresh,load,get:()=>S,set:x=>S=x,save,executiveLaunch,companyLaunchReadiness,companyDirection,renderLaunchGuide,gameRender,renderBriefing,renderExecutiveWeekly,unitActivate,unitAppoint,unitTransfer,dailySalary,createDeal,feeFor,tick,managementOps,managementSetHiringPolicy,unitStaffingDay,unitDelegateWork,renderCEODecisions,unitRecordInput,unitRequestDecision,unitOfPerson,propertyOpen,propertyClose,propertyActivate,propertyPayArrears,propertyDay,propertySell,propertySummary,propertyReadiness,propertyQuote,propertyWorkMultiplier,propertyOccupancy,propertyCapacity,renderProperties,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+methods+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function fresh(){store.clear();G.fresh();el("service-line-select").value="product";return G.get();}
@@ -164,5 +164,72 @@ test("v22 180-day staffed benchmark stays bounded and ledger consistent",()=>{
  assert.equal(s.day,180);assert.ok(elapsed<25000,"180 game-day CPU runtime "+elapsed+"ms exceeded guardrail");
  assert.ok(Number.isFinite(s.cash));money(s);
  console.log("PACE v22 benchmark 24 employees × 180 simulation days = "+elapsed+" ms CPU, UI/calendar excluded");
+});
+
+test("v22 saved authority drafts survive browser reload without silently approving new spending",()=>{
+ const s=fresh();firstReady(s);s.deals=[];assert.equal(G.executiveLaunch("product"),true);assert.equal(G.unitActivate("product"),true);
+ const cap=s.org.progression.authorityDaily;
+ s.ui.authorityDrafts.leadership="7.50";s.ui.authorityDrafts.recruitBudget="1000";s.ui.authorityDrafts.recruitSlots="3";
+ G.unitRecordInput({dataset:{unitKey:"product",unitField:"coachingLimit"},value:"125"});
+ G.save();const loaded=G.load();
+ assert.equal(loaded.ui.authorityDrafts.leadership,"7.50");
+ assert.equal(loaded.ui.authorityDrafts.recruitBudget,"1000");
+ assert.equal(loaded.ui.authorityDrafts.recruitSlots,"3");
+ assert.equal(loaded.ui.unitFieldDrafts.product.coachingLimit,"125");
+ assert.equal(loaded.org.progression.authorityDaily,cap,"drafts must not grant financial authority");
+ assert.equal(loaded.exec.units[0].plan.coachingLimit,0);
+ money(loaded);
+});
+test("v22 GM and department manager grant qualified 30-day idle specialist without a second salary",()=>{
+ const s=fresh();firstReady(s);s.deals=[];staff(s,5);
+ assert.equal(G.executiveLaunch("product"),true);assert.equal(G.unitActivate("product"),true);
+ const gm=s.team[0],dedicated=s.team[1],leader=s.team[2],corporate=s.team[3];
+ gm.career.rank=1;assert.equal(G.unitAppoint("product",gm.id),true);assert.equal(G.unitTransfer("product",dedicated.id),true);
+ leader.department="delivery";s.org.progression.appointments.push({id:leader.id,level:"manager",since:s.day});
+ corporate.department="delivery";corporate.role.primary="prod";corporate.role.auto=true;corporate.t="idle";corporate.s.prod=5;
+ for(let i=0;i<3;i++)G.createDeal("Unit demand "+i);
+ const cash=s.cash,team=s.team.length,salaries=s.team.reduce((n,p)=>n+G.dailySalary(p),0);
+ assert.equal(G.unitStaffingDay(),true);
+ const shared=G.managementOps().shared.find(x=>x.unitKey==="product"&&x.employeeId===corporate.id);
+ assert.ok(shared&&shared.approvedBy===leader.id&&shared.until===s.day+30);
+ assert.equal(s.cash,cash);assert.equal(s.team.length,team);assert.equal(G.unitOfPerson(corporate.id),null);
+ assert.equal(s.team.reduce((n,p)=>n+G.dailySalary(p),0),salaries);
+ G.unitDelegateWork();
+ assert.ok(s.deals.filter(d=>d.unitKey==="product"&&d.w).length>=2,"GM can allocate dedicated and shared workers");
+ G.unitStaffingDay();assert.equal(G.managementOps().shared.filter(x=>x.unitKey==="product"&&x.status==="active").length,1,"shared allocation must not duplicate");
+ money(s);
+});
+test("v22 unit hire uses CEO-approved shared slot and dollar caps with 21 payroll days",()=>{
+ const s=fresh();firstReady(s);s.deals=[];staff(s,4);
+ assert.equal(G.executiveLaunch("product"),true);assert.equal(G.unitActivate("product"),true);
+ const gm=s.team[0],worker=s.team[1],leader=s.team[2];
+ gm.career.rank=1;assert.equal(G.unitAppoint("product",gm.id),true);assert.equal(G.unitTransfer("product",worker.id),true);
+ leader.department="delivery";s.org.progression.appointments.push({id:leader.id,level:"manager",since:s.day});
+ s.team[3].department="commercial";s.team[3].t="study"; // No idle Product specialist exists for a free temporary allocation.
+ assert.equal(G.managementSetHiringPolicy(40,2),true);
+ G.createDeal("Shortage A");G.createDeal("Shortage B");G.createDeal("Shortage C");
+ const cash=s.cash,people=s.team.length,spent=G.managementOps().hireSpent;
+ assert.equal(G.unitStaffingDay(),true);
+ const req=s.exec.unitRequests.find(r=>r.key==="product");
+ assert.ok(req);assert.equal(req.status,"delegated");
+ assert.equal(s.team.length,people+1);assert.equal(s.cash,cash-20);
+ assert.equal(G.managementOps().hireSpent,spent+20);assert.equal(G.managementOps().hires,1);
+ assert.equal(G.unitRequestDecision(req.id,"approve"),false,"no duplicate CEO approval or second charge");
+ money(s);
+});
+test("v22 CEO decision center offers a working escalation when recruitment slots are zero",()=>{
+ const s=fresh();firstReady(s);s.deals=[];assert.equal(G.executiveLaunch("product"),true);assert.equal(G.unitActivate("product"),true);
+ const gm=s.team[0];gm.career.rank=1;assert.equal(G.unitAppoint("product",gm.id),true);
+ G.createDeal("GM unit project 1");G.createDeal("GM unit project 2");
+ assert.equal(G.unitStaffingDay(),true);
+ const req=s.exec.unitRequests.find(r=>r.key==="product"&&r.status==="open");
+ assert.ok(req);
+ G.renderCEODecisions();const panel=el("ceo-action-center").innerHTML;
+ assert.ok(panel.includes("Approve unit hire"));
+ assert.ok(panel.includes('data-ceo-action="unit-approve"'));
+ assert.equal(G.unitRequestDecision(req.id,"approve"),true);
+ assert.equal(req.status,"approved");
+ G.renderCEODecisions();assert.ok(!el("ceo-action-center").innerHTML.includes("Approve unit hire"));
+ money(s);
 });
 console.log("Boss v22 property, save, accounting and pacing validations passed.");

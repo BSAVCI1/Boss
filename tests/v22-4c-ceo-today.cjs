@@ -9,7 +9,7 @@ function el(id){if(!els.has(id))els.set(id,{id,innerHTML:"",textContent:"",value
 const sandbox={document:{getElementById:el,querySelector:()=>el("x"),querySelectorAll:()=>[],body:el("body"),documentElement:el("html"),activeElement:null,addEventListener(){}},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},setTimeout:()=>1,clearTimeout(){},clearInterval(){},requestAnimationFrame:()=>1,getComputedStyle:()=>({getPropertyValue:()=>""}),Date,Math,JSON,Set,Map,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exposed="fresh,get:()=>S,set:v=>S=v,load,save,createDeal,feeFor,estimatedFee,worldIndicativeFee,worldTenderPreview,renderPipeline,renderCEODecisions,renderCEOFocus,ceoDecisionInventory,managementOps,renderBriefing,renderExecutiveWeekly,ceoPremisesOpportunity,propertyCapacity,propertyPeople,propertyReadiness,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,canonicalReporting,teamReportingGroups,renderOrgExplorer,clearCareerRequirements,coachCareerStatus,careerAction,ceoPropertyComparison,ceoPropertyAdvice,renderPropertyDecisionPreview,renderProperties,propertyOpen,propertyActive,propertySummary,propertyCapacity,executiveDecision";
+const exposed="fresh,get:()=>S,set:v=>S=v,load,save,createDeal,feeFor,estimatedFee,worldIndicativeFee,worldTenderPreview,renderPipeline,renderCEODecisions,renderCEOFocus,renderIdeas,RECIPES,ceoDecisionInventory,managementOps,renderBriefing,renderExecutiveWeekly,ceoPremisesOpportunity,propertyCapacity,propertyPeople,propertyReadiness,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,canonicalReporting,teamReportingGroups,renderOrgExplorer,clearCareerRequirements,coachCareerStatus,careerAction,ceoPropertyComparison,ceoPropertyAdvice,renderPropertyDecisionPreview,renderProperties,propertyOpen,propertyActive,propertySummary,propertyCapacity,executiveDecision";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exposed+"};})();",sandbox,{timeout:5000});
 const G=sandbox.G;
 function fresh(){store.clear();G.fresh();return G.get();}
@@ -115,4 +115,32 @@ test("v22.4C ineligible headquarters transaction remains rejected and cash-safe"
  assert.equal(JSON.stringify(s),before,"Rejected property approval may not mutate saved records");
  money(s);
 });
+
+// v22.4D archive is read-only presentation; completed effects and saved history do not move.
+test("v22.4D archive unfinished capabilities separately without a second purchase",()=>{
+ const state=fresh(),recipes=G.RECIPES,first=recipes[0];assert.ok(recipes.length>1);
+ const baseline=JSON.stringify(state),cash=state.cash;
+ G.renderIdeas();assert.ok(el("ideas").innerHTML.includes(first[2]));
+ assert.ok(!el("completed-ideas").innerHTML.includes(first[2]));
+ assert.ok(el("completed-upgrades-count").textContent.includes("0/"+recipes.length));
+ assert.equal(JSON.stringify(state),baseline,"Rendering available work must be inert");
+ state.built.push([first[2]]);state.seeds.push(first[0],first[1]);
+ const archived=JSON.stringify(state);
+ G.renderIdeas();assert.ok(!el("ideas").innerHTML.includes(first[2]));
+ assert.ok(el("completed-ideas").innerHTML.includes(first[2]));
+ assert.ok(el("completed-upgrades-count").textContent.includes("1/"+recipes.length));
+ assert.equal(JSON.stringify(state),archived,"Archiving must not alter research, cash, history or unlock effects");
+ assert.equal(state.cash,cash);
+ G.renderIdeas();assert.equal(state.built.filter(x=>x[0]===first[2]).length,1,"No duplicate completed upgrade");
+});
+test("v22.4D simplified main screens retain single authoritative controls",()=>{
+ const labels=[...html.matchAll(/\\bid="(game-forward|game-primary|ceo-action-center|ideas|completed-ideas|upgrades-complete)"/g)].map(x=>x[1]);
+ for(const key of ["game-forward","game-primary","ceo-action-center","ideas","completed-ideas","upgrades-complete"])
+  assert.equal(labels.filter(x=>x===key).length,1,"Exactly one "+key);
+ for(const key of ["today-ceo-tools","company-story","work-customers","growth-rivals","upgrade-archive"])
+  assert.ok(html.includes('id="'+key+'"'),"Missing player-visible disclosure "+key);
+ assert.ok(html.includes('document.addEventListener("focusout",finishEditableInteraction,true)'));
+ assert.ok(!html.includes('["change","focusout"]'),"Input shield must remain active until blur");
+});
+
 console.log("v22.4C CEO Today/property pure projection and real game read-only tests passed");

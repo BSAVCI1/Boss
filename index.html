@@ -556,7 +556,11 @@ const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let S,spd=1,paused=false,selected=[],ideaMessage="",avatars=new Map(),clock,structural="",lastIdeas="",logSignature="",sectorSignature="",customerSignature="";
 const projectExpanded=new Set(),employeeExpanded=new Set(),careerExpanded=new Set(),roadmapExpanded=new Set(),peopleGroupExpanded=new Set(["ceo"]);
-function ensureViewState(s){if(!s.ui||typeof s.ui!=="object")s.ui={};for(const k of ["employees","careers","roadmaps"])if(!Array.isArray(s.ui[k]))s.ui[k]=[];s.ui.productivityOpen=!!s.ui.productivityOpen;s.ui.campusOpen=s.ui.campusOpen!==false;if(![1,3,8].includes(s.ui.speed))s.ui.speed=1;if(!["park","central","regional"].includes(s.ui.propertyLocation))s.ui.propertyLocation="park";}
+function ensureViewState(s){if(!s.ui||typeof s.ui!=="object")s.ui={};for(const k of ["employees","careers","roadmaps"])if(!Array.isArray(s.ui[k]))s.ui[k]=[];s.ui.productivityOpen=!!s.ui.productivityOpen;s.ui.campusOpen=s.ui.campusOpen!==false;if(![1,3,8].includes(s.ui.speed))s.ui.speed=1;if(!["park","central","regional"].includes(s.ui.propertyLocation))s.ui.propertyLocation="park";
+ if(!s.ui.unitFieldDrafts||typeof s.ui.unitFieldDrafts!=="object"||Array.isArray(s.ui.unitFieldDrafts))s.ui.unitFieldDrafts={};
+ if(!s.ui.unitSelectDrafts||typeof s.ui.unitSelectDrafts!=="object"||Array.isArray(s.ui.unitSelectDrafts))s.ui.unitSelectDrafts={};
+ if(!s.ui.authorityDrafts||typeof s.ui.authorityDrafts!=="object"||Array.isArray(s.ui.authorityDrafts))s.ui.authorityDrafts={};
+}
 let orgControlsSignature="";let activeView="today";const viewScroll={today:0,work:0,team:0,growth:0};let attentionSignature="";
 let canvas=$("office"),ctx=canvas.getContext("2d");
 const LAB_TOPICS={
@@ -1627,7 +1631,7 @@ function managementReviewMonth(){
 function managementSetHiringPolicy(amount,slots){
  if(!Number.isInteger(amount)||amount<0||amount>10000||!Number.isInteger(slots)||slots<0||slots>20)return false;
  return unitCommit(()=>{const o=managementOps();o.since=S.day;o.days=90;o.hireBudget=amount;o.hireSpent=0;o.hireSlots=slots;o.hires=0;o.perHire=amount>=20?20:0;
- o.history.unshift({day:S.day,kind:"authorization",limit:amount,slots});managementHiringDraft=null;ladderSignature="";
+ o.history.unshift({day:S.day,kind:"authorization",limit:amount,slots});managementHiringDraft=null;delete S.ui.authorityDrafts.recruitBudget;delete S.ui.authorityDrafts.recruitSlots;ladderSignature="";
  logIt("CEO approved corporate recruiting up to "+slots+" hires and "+biCurrency(amount)+" for 90 days; no upfront cost.");return true;});
 }
 function managementRequestDecision(id,decision){
@@ -1725,7 +1729,7 @@ function ladderPromote(level,id,ceo=false){
 }
 function ladderSetAuthority(amount){
  if(!Number.isFinite(amount)||amount<0||amount>100||Math.round(amount*100)!==Math.round(amount*10000)/100)return false;
- return unitCommit(()=>{ladderSignature="";ladderBudgetDraft=null;S.org.progression.authorityDaily=amount;S.org.progression.events.push({day:S.day,action:"CEO set new-leadership payroll limit",limit:amount});return true;});
+ return unitCommit(()=>{ladderSignature="";ladderBudgetDraft=null;delete S.ui.authorityDrafts.leadership;S.org.progression.authorityDaily=amount;S.org.progression.events.push({day:S.day,action:"CEO set new-leadership payroll limit",limit:amount});return true;});
 }
 function ladderDay(){
  const g=S.org.progression;if(S.day%7||g.lastChecked===S.day)return;g.lastChecked=S.day;
@@ -2223,8 +2227,9 @@ number("perAction","Maximum cost per delegated decision ($)",p.perAction)+number
 }).join("");
 }
 $("leadership-growth").addEventListener("input",e=>{
- const id=e.target?.id;if(id==="leadership-budget")ladderBudgetDraft=e.target.value;
- if(id==="management-hire-budget"||id==="management-hire-slots")managementHiringDraft={amount:$("management-hire-budget")?.value??"",slots:$("management-hire-slots")?.value??""};
+ const id=e.target?.id;if(id==="leadership-budget"){ladderBudgetDraft=e.target.value;S.ui.authorityDrafts.leadership=e.target.value;savePendingDraftSoon();}
+ if(id==="management-hire-budget"||id==="management-hire-slots"){managementHiringDraft={amount:$("management-hire-budget")?.value??"",slots:$("management-hire-slots")?.value??""};
+  S.ui.authorityDrafts.recruitBudget=managementHiringDraft.amount;S.ui.authorityDrafts.recruitSlots=managementHiringDraft.slots;savePendingDraftSoon();}
 });
 $("leadership-growth").addEventListener("click",e=>{
  const button=e.target.closest("button[data-ladder-action]");if(!button)return;
@@ -2562,9 +2567,11 @@ $("business-units").addEventListener("click",e=>{
 });
 $("business-units").addEventListener("input",e=>{
  const field=e.target;if(!field?.matches?.("input[data-unit-field]"))return;
- unitRecordInput(field); // Player drafts never trigger save/DOM repaint on each character.
+ unitRecordInput(field);savePendingDraftSoon(); // Debounced durable drafts; no re-render or new spending until Apply.
 });
 $("business-units").addEventListener("change",e=>{
+ const choice=e.target;
+ if(choice?.matches?.('select[id^="unit-"]')){S.ui.unitSelectDrafts[choice.id]=choice.value;savePendingDraftSoon();}
  const field=e.target;if(!field?.matches?.("select[data-unit-field]"))return;
  if(field.dataset.unitField==="focus")unitSetFocus(field.dataset.unitKey,field.value);
  else unitAuthorize(field.dataset.unitKey,field.dataset.unitField,Number(field.value));
@@ -2976,12 +2983,12 @@ const GM_PRESETS={
 const GM_PRESET_LABELS={fresh:"Fresh manager",manager:"Manager (+25%)",senior:"Senior manager (+25%)",custom:"Custom"};
 const UNIT_EDIT_FIELDS=["revenueTarget","utilizationTarget","coachingLimit","trainingLimit","teamLimit","perAction","qualityTarget","staffingTarget"];
 const unitEditDrafts=new Map();
-function unitDraft(key){if(!unitEditDrafts.has(key))unitEditDrafts.set(key,{});return unitEditDrafts.get(key);}
+function unitDraft(key){return S.ui.unitFieldDrafts[key]||(S.ui.unitFieldDrafts[key]={});}
 function unitRecordInput(field){if(!field?.dataset?.unitKey||!field?.dataset?.unitField)return;unitDraft(field.dataset.unitKey)[field.dataset.unitField]=field.value;}
 function unitPresetValues(tier){return GM_PRESETS[tier]?{...GM_PRESETS[tier]}:null;}
 function unitApplyPreset(key,tier){
  const u=S.exec.units.find(x=>x.key===key),preset=unitPresetValues(tier);if(!u||!preset)return false;
- return unitCommit(()=>{Object.assign(u.plan,preset);u.plan.preset=tier;unitEditDrafts.delete(key);
+ return unitCommit(()=>{Object.assign(u.plan,preset);u.plan.preset=tier;delete S.ui.unitFieldDrafts[key];
   unitRecord(key,"authority","CEO approved "+GM_PRESET_LABELS[tier]+" budget caps; zero upfront spending, no automatic hiring.");return true;});
 }
 function unitApplyDraft(key){
@@ -2992,7 +2999,7 @@ function unitApplyDraft(key){
   const v=Number(raw);if(!Number.isSafeInteger(v)||v<0||v>1000000||(field==="qualityTarget"&&(v<65||v>100))||(field==="utilizationTarget"&&v>100)||(field==="staffingTarget"&&(v<1||v>25)))return false;
   next[field]=v;
  }
- return unitCommit(()=>{Object.assign(u.plan,next);u.plan.preset="custom";unitEditDrafts.delete(key);
+ return unitCommit(()=>{Object.assign(u.plan,next);u.plan.preset="custom";delete S.ui.unitFieldDrafts[key];
   unitRecord(key,"authority","CEO applied custom GM settings as one verified save; no immediate spending.");return true;});
 }
 function unitBudgetAllowed(u,amount){
@@ -3124,12 +3131,15 @@ function unitPayrollDay(){
 function renderBusinessUnits(){
 if(editableInteractionPending())return;
  const target=$("business-units");if(!target)return;
+ const nativeFocus=document.activeElement;
+ if(nativeFocus&&target.contains(nativeFocus)&&nativeFocus.matches?.("input,select,textarea"))return;
  const open=new Set([...target.querySelectorAll("details[data-unit-open]")].filter(p=>p.open).map(p=>p.dataset.unitOpen));
  // A committed picker value is a player's draft decision until they press Appoint/Transfer.
  // Preserve it across redraws without prematurely changing the saved company.
  const selectedChoices=new Map([...target.querySelectorAll('select[id^="unit-"]')].map(el=>[el.id,el.value]));
+ for(const [id,value] of Object.entries(S.ui.unitSelectDrafts))if(!selectedChoices.has(id))selectedChoices.set(id,value);
  const openAuthority=new Set([...target.querySelectorAll('details[data-unit-open]')].filter(el=>el.querySelector('details.aux-details')?.open).map(el=>el.dataset.unitOpen));
- const signature=JSON.stringify({units:S.exec.units,requests:S.exec.unitRequests,shared:managementOps().shared,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id])});
+ const signature=JSON.stringify({units:S.exec.units,requests:S.exec.unitRequests,shared:managementOps().shared,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id]),draftSelections:S.ui.unitSelectDrafts});
  if(signature===unitViewSignature)return;unitViewSignature=signature;
  const choices=S.exec.lines.map(l=>{
   const u=S.exec.units.find(x=>x.key===l.key);
@@ -3178,8 +3188,8 @@ if(editableInteractionPending())return;
    authority+proposals+'</details>';
  }).join("");
  target.innerHTML='<h3>Operating units</h3><p class="small">Build an independent management structure from a service you already purchased; no second launch fee. Managers and dedicated employees affect future work, while all cash and signed contract history remain consolidated.</p>'+choices;
- for(const [id,value] of selectedChoices){const el=$(id);if(el&&!id.startsWith("unit-preset-")&&[...el.options].some(option=>option.value===value))el.value=value;}
- for(const l of S.exec.lines){const d=unitEditDrafts.get(l.key);if(!d)continue;for(const [field,value] of Object.entries(d)){const el=target.querySelector('input[data-unit-key="'+l.key+'"][data-unit-field="'+field+'"]');if(el)el.value=value;}}
+ for(const [id,value] of selectedChoices){const el=$(id);if(el&&[...el.options].some(option=>option.value===value))el.value=value;}
+ for(const l of S.exec.lines){const d=S.ui.unitFieldDrafts[l.key];if(!d)continue;for(const [field,value] of Object.entries(d)){const el=target.querySelector('input[data-unit-key="'+l.key+'"][data-unit-field="'+field+'"]');if(el)el.value=value;}}
  for(const el of target.querySelectorAll('details[data-unit-open]'))if(openAuthority.has(el.dataset.unitOpen)){const nested=el.querySelector('details.aux-details');if(nested)nested.open=true;}
 }
 
@@ -3455,6 +3465,15 @@ $("launch-service-line").disabled=!!S.ev||S.cash<120||!companyLaunchReadiness($(
 
 
 let ladderSignature="",ladderBudgetDraft=null;
+let draftSaveTimeout=null;
+function savePendingDraftSoon(){
+ if(draftSaveTimeout!==null)clearTimeout(draftSaveTimeout);
+ draftSaveTimeout=setTimeout(()=>{draftSaveTimeout=null;if(!S||saveConflict||saveErrorReason)return;save();},350);
+}
+function saveDraftNow(){
+ if(draftSaveTimeout!==null){clearTimeout(draftSaveTimeout);draftSaveTimeout=null;}
+ if(!S||saveConflict||saveErrorReason)return;save();
+}
 function renderLadder(){
  const target=$("leadership-growth");if(!target||editableInteractionPending())return;
  const g=S.org.progression,next=ladderNext(),salary=ladderPayroll(),launch=ladderLaunchReadiness();
@@ -3486,13 +3505,13 @@ function renderLadder(){
  (reasons?'<ul class="small">'+reasons+'</ul>':'')+step+
  '<details class="aux-details"><summary>CEO delegation and payroll</summary><p class="small">Recurring payroll authority is separate from coaching and recruitment budgets. Set a maximum additional salary per game day. Within this ceiling, ready promotions can happen automatically on weekly leadership reviews; beyond it, CEO approval is required. Keep 14 days of full payroll in cash before any promotion.</p>'+
  '<label for="leadership-budget">Maximum extra daily management payroll ($)</label>'+
- '<input type="number" min="0" max="100" step="0.25" inputmode="decimal" id="leadership-budget" value="'+esc(ladderBudgetDraft===null?g.authorityDaily:ladderBudgetDraft)+'">'+
+ '<input type="number" min="0" max="100" step="0.25" inputmode="decimal" id="leadership-budget" value="'+esc(S.ui.authorityDrafts.leadership??g.authorityDaily)+'">'+
  '<button type="button" data-ladder-action="budget">Approve payroll ceiling</button>'+
  '<p class="small">Additional leadership payroll '+biCurrency(salary)+'/day of '+biCurrency(g.authorityDaily)+'/day approved. A budget limit authorizes future actions; it does not spend money immediately.</p></details>'+
  '<details class="aux-details"><summary>Corporate staffing decisions</summary>'+
  '<p class="small">Managers review corporate capacity every seven days. A hire costs $20 once plus ongoing payroll. Delegated recruiting is $0 by default. Budget approval is not a cash expense.</p>'+
- '<div class="filter-grid"><div><label for="management-hire-budget">90-day hiring budget ($)</label><input id="management-hire-budget" type="number" inputmode="numeric" min="0" max="10000" value="'+esc(managementHiringDraft?.amount??ops.hireBudget)+'"></div>'+
- '<div><label for="management-hire-slots">Maximum hires</label><input id="management-hire-slots" type="number" inputmode="numeric" min="0" max="20" value="'+esc(managementHiringDraft?.slots??ops.hireSlots)+'"></div></div>'+
+ '<div class="filter-grid"><div><label for="management-hire-budget">90-day hiring budget ($)</label><input id="management-hire-budget" type="number" inputmode="numeric" min="0" max="10000" value="'+esc(S.ui.authorityDrafts.recruitBudget??ops.hireBudget)+'"></div>'+
+ '<div><label for="management-hire-slots">Maximum hires</label><input id="management-hire-slots" type="number" inputmode="numeric" min="0" max="20" value="'+esc(S.ui.authorityDrafts.recruitSlots??ops.hireSlots)+'"></div></div>'+
  '<button type="button" data-ladder-action="hire-policy">Approve recruiting limits</button>'+
  '<p class="small">'+ops.hires+'/'+ops.hireSlots+' hires · '+biCurrency(ops.hireSpent)+' / '+biCurrency(ops.hireBudget)+' used · '+(S.day>=ops.since+ops.days?"EXPIRED":"Through Day "+(ops.since+ops.days))+'. Each hire also needs 21 days of payroll cash.</p>'+
  (pending.map(r=>'<div class="exec-proposal"><b>'+esc(DEPARTMENTS[r.dept].name)+' manager request</b><p>'+esc(person(r.managerId)?.n||"Manager unavailable")+' · '+esc(r.reason)+' One-time '+biCurrency(r.cost)+' and estimated '+biCurrency(r.payroll)+'/day wages.</p><div class="buttons"><button type="button" data-ladder-action="staff-approve" data-request-id="'+r.id+'" '+(!managementCashReady(r)?"disabled":"")+'>Approve hire</button><button type="button" data-ladder-action="staff-decline" data-request-id="'+r.id+'">Decline</button></div></div>').join("")||'<p class="small">No corporate manager requests pending.</p>')+'</details>'+

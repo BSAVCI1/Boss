@@ -419,6 +419,36 @@ async function runBrowser(){
   await capturePeople(390,844,"career");
   await capturePeople(414,896,"organization");
   await capturePeople(414,896,"career");
+  // v22.4C actual mobile screenshot proof; the browser runs the real game and original save mechanics.
+  async function captureCEO(width,height,page){
+   await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+   const init=page==="today"?
+     "(()=>{document.querySelector('.bottom-nav button[data-view=\"today\"]').click();return document.getElementById('ceo-priority-content').textContent})()":
+     "(()=>{document.querySelector('.bottom-nav button[data-view=\"growth\"]').click();document.getElementById('property-options').open=true;const b=document.querySelector('#property-purchase-options button[data-property-action=\"preview\"][data-property-key=\"office\"]');if(!b)throw Error('No property comparison action');b.click();return document.getElementById('property-decision-preview').textContent})()";
+   const initResult=await send("Runtime.evaluate",{expression:init,returnByValue:true,awaitPromise:true});
+   const content=initResult.result?.value||"";
+   assert.ok(content.includes(page==="today"?"CEO approvals pending":"CEO approval preview"),"Missing real "+page+" decision experience");
+   if(page==="property")assert.ok(content.includes("One-time cash out")&&content.includes("Payroll + premises runway after"),"No real quote breakdown");
+   await sleep(240);
+   const selector=page==="today"?"#ceo-priority-card":"#property-decision-preview";
+   const moved=await send("Runtime.evaluate",{expression:"(()=>{const t=document.querySelector("+JSON.stringify(selector)+");if(!t||t.hidden)return null;document.documentElement.style.scrollBehavior='auto';document.body.style.scrollBehavior='auto';window.scrollTo({top:Math.max(0,window.scrollY+t.getBoundingClientRect().top-12),behavior:'instant'});return{width:innerWidth,height:innerHeight,overflow:document.documentElement.scrollWidth>innerWidth+6}})()",returnByValue:true});
+   assert.ok(moved.result?.value,"Cannot scroll to "+page);
+   assert.equal(moved.result.value.overflow,false,"CEO "+page+" horizontal overflow "+width);
+   assert.equal(moved.result.value.width,width);
+   await sleep(200);
+   const rect=await send("Runtime.evaluate",{expression:"(()=>{const t=document.querySelector("+JSON.stringify(selector)+");const b=t.getBoundingClientRect();return {top:b.top,bottom:b.bottom,scrollY:window.scrollY}})()",returnByValue:true});
+   assert.ok(rect.result?.value?.top>=0&&rect.result.value.top<height-100,"CEO "+page+" screenshot target not in viewport "+JSON.stringify(rect.result?.value));
+   const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+   assert.ok(shot.data?.length>1500,"Screenshot absent "+page);
+   const dir=path.join("reports","v22-4c-mobile");fs.mkdirSync(dir,{recursive:true});
+   const filename=path.join(dir,"boss-"+(page==="today"?"ceo-today":"office-comparison")+"-"+width+"px.png");
+   fs.writeFileSync(filename,Buffer.from(shot.data,"base64"));
+   console.log("PASS v22.4C real screenshot "+filename+" "+JSON.stringify({viewport:width,target:rect.result.value}));
+  }
+  await captureCEO(390,844,"today");
+  await captureCEO(390,844,"property");
+  await captureCEO(414,896,"today");
+  await captureCEO(414,896,"property");
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }

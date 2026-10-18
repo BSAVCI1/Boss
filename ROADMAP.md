@@ -14,6 +14,13 @@
 **Release quality gates:** real 390px/414px UI, live game tick/edit persistence, IndexedDB migration, 730-day financial ledger, single cash and employee identity, old and new contract pricing. Keep each feature branch in a draft PR until verified. Visible progress does not imply production deployment.
 
 
+## v22.4C — CEO Today & Strategic Decisions (draft candidate; exact-head CI required)
+
+- Extends open draft PR #44, not production: mobile CEO Today highlights real cash versus cumulative operating result, verified approvals versus routine management, one strategic next action, and true company progression prerequisites.
+- Office decision compares the currently saved site's actual seats and corporate workforce with existing eligible lease and ownership quote/readiness functions, one-off spending, continuing property charges and payroll/premises runway. Quote review is read-only; CEO confirmation executes the existing authorized transaction and cash ledger only once.
+- Contextual decision feedback reflects committed cash/headcount/seats after the existing save gate, never forecasts guaranteed revenue. Actual filled executive officers may provide labelled, calculated advice; vacant officers do not speak. No historic contracts, wages, authority, property ownership, employee IDs, storage format or economic quote formulas are rewritten.
+- New mandatory actual-game v22.4C tests and real 390px/414px Chromium Today/property screenshot artifacts are part of the draft regression workflow. Full suite, owner Safari verification, review of separate unmerged v22.3 PR #39 and explicit release approval remain blocking gates. Do not merge/deploy as part of this batch.
+
 ## Released v22.2 — HR, CFO & COO executive leadership
 
 - CEO can appoint an existing qualified, idle colleague as HR/Chief People Officer, CFO or COO after explicit company, experience and payroll-runway gates; retain one employee identity and normal historic payroll.

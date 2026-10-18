@@ -270,6 +270,31 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .org-career-glance{margin:8px 0;padding:9px 10px;border-inline-start:3px solid var(--accent);background:var(--accentWash);font-size:12px}
 .org-career-glance .small{display:block;margin-top:4px}.org-career-glance .career-alert{color:var(--warn)}
 @media(max-width:430px){.org-leadership{grid-template-columns:minmax(0,1fr)}.org-sector{padding:8px}.org-roster .employee-card{padding:10px}}
+
+/* v22.4C — compact decision-first CEO dashboard and non-spending property quote. */
+.ceo-today-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0}
+.ceo-today-grid>div{min-width:0;padding:10px;border:1px solid var(--line);border-radius:10px}
+.ceo-today-grid strong{display:block;overflow-wrap:anywhere;font-size:16px}
+.ceo-today-grid small{font-size:11px;color:var(--muted)}
+.ceo-today-section{border-top:1px solid var(--line);margin-top:11px;padding-top:11px}
+.ceo-today-section h3{font-size:15px;margin:0 0 5px}
+.ceo-today-section p{margin:5px 0;font-size:13px}
+.ceo-today-section button{width:100%;margin-top:7px;text-align:left}
+.ceo-today-section details{font-size:12px;margin-top:8px}
+.ceo-today-section summary{cursor:pointer;min-height:44px;padding-top:10px;color:var(--accent)}
+.ceo-focus-action{background:var(--accentWash);border-radius:11px;padding:11px}
+.ceo-result{border-left:3px solid var(--good);padding:10px;background:var(--accentWash);margin-top:10px;font-size:12px;overflow-wrap:anywhere}
+.ceo-property-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:8px 0}
+.ceo-property-metrics>div{padding:8px;border-radius:8px;background:var(--accentWash);min-width:0;overflow-wrap:anywhere}
+.ceo-property-metrics b{display:block;font-size:14px}
+.ceo-property-metrics small{font-size:11px;color:var(--muted)}
+.ceo-property-advice{border-left:2px solid var(--line);padding:5px 8px;margin:5px 0;font-size:12px}
+#property-decision-preview[hidden]{display:none}
+#property-decision-preview{background:var(--accentWash);padding:11px;border-radius:12px;overflow-wrap:anywhere}
+#property-decision-preview .buttons{display:grid;grid-template-columns:1fr 1fr}
+#property-decision-preview .buttons button{min-width:0}
+@media(max-width:390px){.ceo-today-grid{gap:5px}.ceo-today-grid>div{padding:8px}.ceo-today-grid strong{font-size:15px}}
+
 </style>
 </head>
 <body>
@@ -395,7 +420,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <p class="small">Lease office space, buy company buildings and open dedicated operating-unit sites. Every choice uses real company cash, one-time investment or setup cost and ongoing rent or upkeep. Existing staff and businesses stay intact.</p>
 <div id="property-overview"></div><details class="aux-details" id="property-options"><summary>Compare premises &amp; approve a move</summary><label for="property-location">Location for next lease or purchase</label>
 <select id="property-location"><option value="park">Business park · balanced</option><option value="central">City center · premium</option><option value="regional">Regional hub · value</option></select>
-<p id="property-location-explain" class="small"></p><div id="property-purchase-options"></div></details><div id="property-status" class="small" role="status"></div>
+<p id="property-location-explain" class="small"></p><div id="property-decision-preview" role="region" aria-label="CEO property approval preview" hidden></div><div id="property-purchase-options"></div></details><div id="property-status" class="small" role="status"></div>
 </section>
 <section aria-labelledby="world-title"><h2 id="world-title">Your rivals</h2>
 <div class="card"><div id="game-rivals" class="game-rivals"></div><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
@@ -1866,7 +1891,7 @@ const PROPERTY_TYPES={
  hq:{name:"Group headquarters",kind:"owned",capacity:80,price:7200,dayCost:3,boost:1.09},
  satellite:{name:"Operating-unit satellite",kind:"lease",capacity:10,price:100,dayCost:1.1,boost:1.04}
 };
-let propertyViewSignature="";
+let propertyViewSignature="";let propertyDraft=null;let decisionFeedback=null;
 function ensureProperties(state){
  const e=state.exec;if(!e.property||typeof e.property!=="object"){
   // Forward-only migration: avoid suddenly crowding a 2,000-day established save.
@@ -2028,14 +2053,73 @@ function propertyWarnings(){
  if(p.arrears>.01)out.push("Unpaid office bills "+biCurrency(p.arrears)+" need a payment decision.");
  return out;
 }
+
+function ceoPropertyComparison(type,unitKey=null){
+ const def=PROPERTY_TYPES[type],quote=propertyQuote(type),check=propertyReadiness(type,unitKey);
+ if(!def||!quote)return null;
+ const active=propertyActive(unitKey),people=propertyPeople(unitKey).length,currentSeats=propertyCapacity(unitKey);
+ const payroll=S.team.reduce((sum,p)=>sum+dailySalary(p),0),now=propertySummary().daily;
+ const continuing=+(now-(active?.dayCost||0)+quote.dayCost).toFixed(2),outstanding=propertyArrears();
+ const cashAfter=+(S.cash-quote.price).toFixed(2),daily=payroll+continuing;
+ const afterDays=daily>0?Math.max(0,cashAfter/daily):null;
+ return{type,unitKey,def,quote,check,people,currentSeats,active,
+  seatsGained:def.capacity-currentSeats,shortage:Math.max(0,people-def.capacity),
+  cashAfter,afterDays,payroll,premisesNow:now,premisesAfter:continuing,arrears:outstanding,
+  currentName:active?PROPERTY_TYPES[active.type].name:"Distributed workspace"};
+}
+function ceoPropertyAdvice(option){
+ const notes=[],p=option;
+ const cfo=person(S.exec.officers.cfo?.id),coo=person(S.exec.officers.coo?.id),hr=person(S.exec.officers.hr?.id);
+ if(cfo)notes.push("CFO · "+cfo.n+": projected remaining cash "+biCurrency(p.cashAfter)+
+  " and "+(p.afterDays===null?"no daily payroll or premises burn":p.afterDays.toFixed(1)+" days of payroll + premises coverage")+
+  ". Existing unpaid site bills "+biCurrency(p.arrears)+" remain due.");
+ if(coo)notes.push("COO · "+coo.n+": "+(p.shortage>0?p.shortage+" seats still short after this move":
+  p.seatsGained>0?p.seatsGained+" additional seats":"No net capacity gained")+
+  ". Only subsequent workdays receive any location/productivity modifier.");
+ if(hr)notes.push("HR · "+hr.n+": current "+p.people+" corporate colleagues for "+p.def.capacity+
+  " proposed seats; expanding the team may require another move.");
+ return notes;
+}
+function renderPropertyDecisionPreview(){
+ const node=$("property-decision-preview");if(!node)return;
+ if(!propertyDraft){node.hidden=true;node.innerHTML="";return;}
+ const p=ceoPropertyComparison(propertyDraft.type,propertyDraft.unitKey),still=p&&propertyDraft.location===p.quote.location&&propertyDraft.price===p.quote.price&&
+  propertyDraft.dayCost===p.quote.dayCost,blocked=!p?.check.ready||!!S.ev||!still;
+ if(!p){propertyDraft=null;node.hidden=true;return;}
+ const advisors=ceoPropertyAdvice(p),missing=p.check.checks.filter(c=>!c.met);
+ const name=p.unitKey?SERVICE_LINES[p.unitKey]?.name||p.unitKey:"Corporate headquarters";
+ node.hidden=false;
+ node.innerHTML='<div class="lead"><b>CEO approval preview · '+esc(p.def.name)+'</b></div>'+
+ '<p class="small">'+esc(name)+' · '+esc(PROPERTY_LOCATIONS[p.quote.location].name)+' · '+esc(p.def.kind==="owned"?"Ownership only after an authorized purchase":"Lease only after CEO signature")+'</p>'+
+ '<div class="ceo-property-metrics">'+
+ '<div><small>Current site · headcount</small><b>'+esc(p.currentName)+' · '+p.people+' people</b></div>'+
+ '<div><small>Seats now → proposed</small><b>'+p.currentSeats+' → '+p.def.capacity+'</b></div>'+
+ '<div><small>One-time cash out</small><b>'+biCurrency(p.quote.price)+'</b></div>'+
+ '<div><small>All active premises / day after</small><b>'+biCurrency(p.premisesAfter)+'</b></div>'+
+ '<div><small>Remaining cash if approved</small><b>'+biCurrency(p.cashAfter)+'</b></div>'+
+ '<div><small>Payroll + premises runway after</small><b>'+(p.afterDays===null?"No current burn":p.afterDays.toFixed(1)+" days")+'</b></div></div>'+
+ '<p class="small">Current company payroll '+biCurrency(p.payroll)+'/day; current all-site expenses '+biCurrency(p.premisesNow)+
+ '/day; projected all-site expenses '+biCurrency(p.premisesAfter)+'/day. Capacity gained '+p.seatsGained+
+ ' seats; projected shortage '+p.shortage+'. Existing unpaid bills '+biCurrency(p.arrears)+' do not disappear.</p>'+
+ '<p class="small">Model projects only future work efficiency '+Math.round((p.quote.boost-1)*100)+
+ '% location modifier before crowding; no revenue, profit, employee or contract result is guaranteed.</p>'+
+ (advisors.length?advisors.map(note=>'<p class="ceo-property-advice">'+esc(note)+'</p>').join(""):'<p class="small">No appointed CFO, COO or HR officer. The calculations above are system projections, not executive reports.</p>')+
+ (missing.length?'<p class="risk-watch small">Blocked: '+missing.map(c=>esc(c.label)).join(' · ')+'</p>':'')+
+ (!still?'<p class="risk-watch small">Location or price changed. Compare again to review the current quote.</p>':'')+
+ '<div class="buttons"><button type="button" data-property-action="cancel">Cancel</button>'+
+ '<button type="button" data-property-action="confirm" '+(blocked?'disabled':'')+
+ ' aria-label="CEO confirm property transaction">CEO approve · '+biCurrency(p.quote.price)+'</button></div>';
+}
+
 function renderProperties(){
  const board=$("property-overview");if(!board||editableInteractionPending())return;
  const p=S.exec.property,summary=propertySummary(),members=propertyPeople(),unitSites=S.exec.units;
- const signature=JSON.stringify([S.day,Math.floor(S.cash),members.length,unitSites.map(u=>[u.key,u.staffIds.length,u.managerId]),p.sites,Math.floor(S.market.completed/5),S.org.progression.appointments.length]);
+ const signature=JSON.stringify([S.day,Math.floor(S.cash),members.length,unitSites.map(u=>[u.key,u.staffIds.length,u.managerId]),p.sites,Math.floor(S.market.completed/5),S.org.progression.appointments.length,propertyDraft]);
  if(signature===propertyViewSignature)return;propertyViewSignature=signature;
  $("property-summary").textContent=summary.sites+" active · "+summary.capacity+" seats · owned book "+biCurrency(summary.book);
  $("property-location").value=S.ui.propertyLocation||"park";
  $("property-location-explain").textContent=PROPERTY_LOCATIONS[S.ui.propertyLocation||"park"].note;
+ renderPropertyDecisionPreview();
  const headquarters=propertyActive(),corporateCapacity=propertyCapacity();
  const room=(name,people,capacity,type)=>'<div class="property-room"><div class="lead"><b>'+esc(name)+'</b><span class="small">'+people.length+'/'+capacity+' seats</span></div>'+
  '<div class="property-people">'+people.slice(0,20).map(x=>'<span title="'+esc(x.n)+'">'+(x.id===S.ops.assistantId?"📋":x.t.startsWith("d")?"💻":"👤")+'</span>').join("")+
@@ -2052,12 +2136,14 @@ function renderProperties(){
  (x.status==="active"&&def.kind==="lease"?'<button type="button" data-property-action="close" data-property-key="'+x.id+'">End lease</button>':'')+'</div>';}).join("");
  const button=(type,unitKey=null)=>{
   const def=PROPERTY_TYPES[type],quote=propertyQuote(type),check=propertyReadiness(type,unitKey),current=propertyActive(unitKey)?.type===type,scope=unitKey?SERVICE_LINES[unitKey].name:"Headquarters";
+  const comparison=ceoPropertyComparison(type,unitKey);
   return '<div class="property-choice"><b>'+esc(def.name)+'</b> · '+esc(scope)+
    '<p class="small">'+def.capacity+' seats · '+(def.kind==="lease"?"Setup":"Purchase")+' '+biCurrency(quote.price)+' once · '+biCurrency(quote.dayCost)+'/day '+(def.kind==="lease"?"rent":"upkeep")+
-   ' · future work bonus '+Math.round((quote.boost-1)*100)+'%</p>'+
+   ' · '+(comparison.seatsGained>=0?'+':'')+comparison.seatsGained+' seats · post-deal cash '+biCurrency(comparison.cashAfter)+
+   ' · payroll &amp; sites runway '+(comparison.afterDays===null?'—':comparison.afterDays.toFixed(1)+'d')+'</p>'+
    '<p class="small">'+check.checks.map(c=>(c.met?"✓ ":"○ ")+esc(c.label)).join(" · ")+'</p>'+
-   '<button type="button" data-property-action="open" data-property-key="'+type+'" '+(unitKey?'data-property-unit="'+esc(unitKey)+'" ':'')+
-    (!check.ready||current||!!S.ev?'disabled':'')+'> '+(current?"Currently active":check.ready?(def.kind==="owned"?"Buy property":"Sign lease"):"Milestones incomplete")+'</button></div>';
+   '<button type="button" data-property-action="preview" data-property-key="'+type+'" '+(unitKey?'data-property-unit="'+esc(unitKey)+'" ':'')+
+   (current?'disabled':'')+'> '+(current?"Currently active":check.ready?"Compare then approve":"Inspect missing prerequisites")+'</button></div>';
  };
  $("property-purchase-options").innerHTML=(existing?'<h3>Current premises &amp; owned buildings</h3>'+existing:'')+
  '<h3>Corporate premises</h3>'+["studio","office","building","hq"].map(k=>button(k)).join("")+
@@ -2596,43 +2682,86 @@ $("executive-officers-panel").addEventListener("toggle",e=>{
  const details=e.target;if(!details.matches?.("details[data-executive-panel]"))return;
  S.ui.execPanelsOpen[details.dataset.executivePanel]=details.open;savePendingDraftSoon();
 },true);
+function ceoShowDecisionResult(label,before,ok){
+ if(!ok){decisionFeedback=label+" blocked or could not be durably saved. No successful approval confirmed.";renderCEOFocus();return false;}
+ const delta=+(before.cash-S.cash).toFixed(2),daily=S.team.reduce((n,p)=>n+dailySalary(p),0);
+ decisionFeedback=label+" accepted on Day "+S.day+". Actual cash "+biCurrency(S.cash)+
+  (Math.abs(delta)>.005?" · cash "+(delta>0?"spent ":"received ")+biCurrency(Math.abs(delta)):" · no immediate cash movement")+
+  " · payroll now "+biCurrency(daily)+"/day · workforce "+before.team+" → "+S.team.length+
+  ". Longer-term outcomes are not yet measured.";
+ renderCEOFocus();return true;
+}
 $("ceo-action-center").addEventListener("click",e=>{
  const b=e.target.closest("button[data-ceo-action]");if(!b)return;
- let result=false;
- if(b.dataset.ceoAction==="unit-approve"||b.dataset.ceoAction==="unit-decline")
-  result=unitRequestDecision(Number(b.dataset.id),b.dataset.ceoAction==="unit-approve"?"approve":"decline");
- else if(b.dataset.ceoAction==="manager-approve"||b.dataset.ceoAction==="manager-decline")
-  result=managementRequestDecision(Number(b.dataset.id),b.dataset.ceoAction==="manager-approve"?"approve":"decline");
- else if(b.dataset.ceoAction==="promotion")
-  result=ladderPromote(b.dataset.level,Number(b.dataset.id),true);
- else if(b.dataset.ceoAction==="opportunity"){result=worldEventChoice(b.dataset.result);}
- if(result&&typeof result.then==="function")result.then(ok=>{if(!ok)$("ceo-action-status").textContent="Decision was not saved. Check the available cash and game state.";else renderCEODecisions();});
- else if(!result)$("ceo-action-status").textContent="Decision not completed. Review the cash reserve, eligibility, or saved game state.";
+ const before={cash:S.cash,team:S.team.length},act=b.dataset.ceoAction;let result=false;
+ if(act==="unit-approve"||act==="unit-decline")
+  result=unitRequestDecision(Number(b.dataset.id),act==="unit-approve"?"approve":"decline");
+ else if(act==="manager-approve"||act==="manager-decline")
+  result=managementRequestDecision(Number(b.dataset.id),act==="manager-approve"?"approve":"decline");
+ else if(act==="promotion")result=ladderPromote(b.dataset.level,Number(b.dataset.id),true);
+ else if(act==="opportunity")result=worldEventChoice(b.dataset.result);
+ const label=act.replaceAll("-"," ");
+ const report=ok=>{const accepted=ceoShowDecisionResult(label,before,ok);if(!accepted)$("ceo-action-status").textContent="Decision not saved. Check authority, cash and prerequisites.";else renderCEODecisions();};
+ if(result&&typeof result.then==="function")result.then(report);
+ else report(result);
 });
 $("ceo-priority-card").addEventListener("click",e=>{
  const button=e.target.closest("button[data-ceo-nav]");if(!button)return;
  const target=button.dataset.ceoNav;
- if(target==="property"){
-  $("property-options").open=true;navigate("growth");
-  requestAnimationFrame(()=>$("property-panel").scrollIntoView({block:"start"}));
- }else if(target==="decisions"){
-  $("executive-inbox-panel").scrollIntoView({block:"start"});
- }else if(target==="growth")navigate("growth");
+ if(target==="property"){$("property-options").open=true;navigate("growth");requestAnimationFrame(()=>$("property-panel").scrollIntoView({block:"start"}));}
+ else if(target==="decisions")$("ceo-action-center").scrollIntoView({block:"start"});
+ else if(target==="proposals")$("exec-inbox").scrollIntoView({block:"start"});
+ else if(["growth","team","work","today"].includes(target))navigate(target);
 });
-$("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
+$("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p){const before={cash:S.cash,team:S.team.length};const result=executiveDecision(Number(p.dataset.execId),p.dataset.execAction);const report=ok=>ceoShowDecisionResult("Executive "+p.dataset.execAction,before,ok);if(result&&typeof result.then==="function")result.then(report);else report(result);}else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
 $("property-location").addEventListener("change",()=>{
  const choice=$("property-location").value;if(!PROPERTY_LOCATIONS[choice])return;
- S.ui.propertyLocation=choice;const saved=save();propertyViewSignature="";
+ S.ui.propertyLocation=choice;propertyDraft=null;const saved=save();propertyViewSignature="";
  if(saved&&typeof saved.then==="function")saved.then(ok=>{if(ok)renderProperties();});
  else if(saved)renderProperties();
 });
 $("property-panel").addEventListener("click",e=>{
  const b=e.target.closest("button[data-property-action]");if(!b)return;
- const action=b.dataset.propertyAction,key=b.dataset.propertyKey,unit=b.dataset.propertyUnit;
- const result=action==="open"?propertyOpen(key,unit||null):action==="activate"?propertyActivate(Number(key)):
-  action==="close"?propertyClose(Number(key)):action==="sell"?propertySell(Number(key)):action==="arrears"?propertyPayArrears():false;
- if(result&&typeof result.then==="function")result.then(ok=>{if(!ok){$("property-status").textContent="Property decision failed or could not be saved.";renderProperties();}});
- else if(!result)$("property-status").textContent="Property decision blocked; review the milestones or balance.";
+ const action=b.dataset.propertyAction,key=b.dataset.propertyKey,unit=b.dataset.propertyUnit||null;
+ if(action==="cancel"){propertyDraft=null;propertyViewSignature="";renderProperties();return;}
+ if(action==="preview"){
+  const p=ceoPropertyComparison(key,unit);if(!p)return;
+  propertyDraft={type:key,unitKey:unit,location:p.quote.location,price:p.quote.price,dayCost:p.quote.dayCost};
+  propertyViewSignature="";renderProperties();$("property-decision-preview").scrollIntoView?.({block:"nearest"});return;
+ }
+ if(action==="confirm"){
+  const d=propertyDraft,p=d&&ceoPropertyComparison(d.type,d.unitKey);
+  if(!d||!p||d.location!==p.quote.location||d.price!==p.quote.price||
+    d.dayCost!==p.quote.dayCost||!p.check.ready||!!S.ev){
+   $("property-status").textContent="Quote changed or milestones/cash no longer qualify. Compare again; no purchase made.";
+   propertyDraft=null;propertyViewSignature="";renderProperties();return;
+  }
+  const before={cash:S.cash,team:S.team.length,capacity:propertyCapacity(d.unitKey)};
+  propertyDraft=null; // prevents repeated confirm clicks during IndexedDB commits.
+  const result=propertyOpen(d.type,d.unitKey);
+  const report=ok=>{
+   if(ok){
+    const site=propertyActive(d.unitKey);
+    const receipt="CEO "+(p.def.kind==="owned"?"purchased ":"leased ")+p.def.name+
+     " · cash "+biCurrency(before.cash)+" → "+biCurrency(S.cash)+" · seats "+before.capacity+" → "+
+     propertyCapacity(d.unitKey)+" · contract ongoing "+biCurrency(site?.dayCost||0)+
+     "/day. Future performance is unmeasured.";
+    decisionFeedback=receipt;$("property-status").textContent=receipt;renderCEOFocus();
+   }else{$("property-status").textContent="Property approval rejected or save failed. Verify ownership, current eligibility and ledger before retrying.";}
+   propertyViewSignature="";renderProperties();
+  };
+  if(result&&typeof result.then==="function")result.then(report);else report(result);
+  return;
+ }
+ // Existing management of owned / ended sites remains a separate explicit CEO action.
+ const result=action==="activate"?propertyActivate(Number(key)):
+  action==="close"?propertyClose(Number(key)):action==="sell"?propertySell(Number(key)):
+  action==="arrears"?propertyPayArrears():false;
+ const report=ok=>{if(!ok)$("property-status").textContent="Property action blocked; check site state, cash or save result.";else{
+  decisionFeedback="Property management action "+action+" completed on Day "+S.day+"; available cash now "+biCurrency(S.cash)+
+  ", corporate seats "+propertyCapacity()+". Check property list for the actual site status.";
+  $("property-status").textContent=decisionFeedback;renderCEOFocus();}propertyViewSignature="";renderProperties();};
+ if(result&&typeof result.then==="function")result.then(report);else report(result);
 });
 $("business-units").addEventListener("click",e=>{
  const b=e.target.closest("button[data-unit-action]");if(!b)return;
@@ -4055,27 +4184,69 @@ function ceoDecisionInventory(){
  const step=ladderNext(),payroll=S.team.reduce((n,p)=>n+dailySalary(p),0);
  const promotion=step?.ready&&S.cash>=(payroll+step.incremental*S.mod.cost)*14?step:null;
  return{hiring,unit,proposals,promotion,optional:!!S.world.activeEvent,
-  approvals:hiring.length+unit.length+proposals.length+(promotion?1:0)};
+  approvals:hiring.length+unit.length+proposals.length};
 }
 function renderCEOFocus(){
  const root=$("ceo-priority-content");if(!root||editableInteractionPending())return;
- const office=ceoPremisesOpportunity();
- const decisions=ceoDecisionInventory();
- const unitsWithMissingWork=S.exec.units.filter(u=>S.deals.some(d=>d.unitKey===u.key&&!d.w)).length;
- const delegated=Object.keys(EXECUTIVE_ROLES).filter(k=>!!executiveOfficer(k,"active"));
- const upcoming=companyDirection();
- const priority=office?
-  '<h3>Strategic opportunity · Resolve workplace crowding</h3><p>'+office.people+' people are using '+office.capacity+' corporate seats. This reduces work efficiency and mood. '+
-  (office.best?'A qualified '+esc(PROPERTY_TYPES[office.best].name)+' offers '+PROPERTY_TYPES[office.best].capacity+' seats at '+biCurrency(office.quote.price)+' setup or purchase and '+biCurrency(office.quote.dayCost)+'/game-day ongoing cost.':'Expansion is locked: review missing property milestones.')+'</p>'+
-  '<button type="button" data-ceo-nav="property">Compare premises and decide →</button>':
-  '<h3>Strategic chapter · '+esc(upcoming.title)+'</h3><p>'+esc(upcoming.detail)+'</p><button type="button" data-ceo-nav="growth">Review next growth milestone →</button>';
- const html='<div class="unit-metrics"><span>'+biCurrency(S.cash)+' cash</span><span>'+S.team.length+' colleagues</span><span>'+decisions.approvals+' CEO approvals pending</span></div>'+
- (decisions.approvals?'<p class="small"><button type="button" data-ceo-nav="decisions">Review '+decisions.approvals+' approval request'+(decisions.approvals===1?'':'s')+' →</button></p>':'')+
- (decisions.optional?'<p class="small">1 optional market opportunity · separate from required approvals</p>':'')+
- '<div class="exec-proposal">'+priority+'</div>'+
- '<p class="small"><b>Management is handling:</b> '+(delegated.length?delegated.map(k=>EXECUTIVE_ROLES[k].short).join(', ')+' with active mandates':'Existing managers within approved authority')+
- (unitsWithMissingWork?' · '+unitsWithMissingWork+' GM unit(s) coordinating unassigned work':'')+
- '. Routine operations do not require CEO approval unless a real exception is raised.</p>';
+ const inventory=ceoDecisionInventory(),direction=companyDirection(),office=ceoPremisesOpportunity(),warnings=propertyWarnings();
+ const payroll=S.team.reduce((n,p)=>n+dailySalary(p),0),siteDaily=propertySummary().daily;
+ const currentProfit=(S.bi.totals.revenue||0)-(S.bi.totals.costs||0),daily=payroll+siteDaily;
+ const days=daily>0?S.cash/daily:null,risky=days!==null&&days<7;
+ const requests=[...inventory.hiring.map(x=>({name:DEPARTMENTS[x.dept]?.name+" manager"||"Department manager",reason:x.reason,
+  once:x.cost,recurring:x.payroll,location:"decisions"})),
+ ...inventory.unit.map(x=>({name:person(x.managerId)?.n||"General Manager vacancy",reason:x.reason,
+  once:x.cost,recurring:x.payroll,location:"decisions"})),
+ ...inventory.proposals.map(x=>({name:person(x.managerId)?.n||"Department manager",reason:x.benefit,
+  once:x.cost||0,recurring:x.type==="raise"?.25:x.type==="hire"?1.5*S.mod.cost:x.type==="submanager"?.5*S.mod.cost:0,location:"proposals"}))];
+ const managed=[];
+ for(const [role,officer] of Object.entries(S.exec.officers)){
+  const p=person(officer.id);if(p)managed.push(EXECUTIVE_ROLES[role].short+" "+p.n+
+   (executiveOfficer(role,"active")?" · authorized mandate":" · no active mandate"));
+ }
+ for(const u of S.exec.units){const gm=person(u.managerId),latest=u.reviews?.at(-1);
+  if(gm)managed.push("GM "+gm.n+" · "+(SERVICE_LINES[u.key]?.name||u.key)+
+   (latest?" · last review "+latest.result:" · awaiting first measured review"));
+ }
+ if(!managed.length)for(const dept of DEPT_KEYS){const leader=orgManager(dept);if(leader)managed.push(leader.n+
+  " · "+DEPARTMENTS[dept].name+" · "+(S.org.departments[dept]?.reviews?.at(-1)?.result||"no measured review yet"));}
+ const first=requests[0];
+ const severity=risky?"Cash covers fewer than 7 days of payroll + active premises; review collections and spending.":
+  office?"Workplace crowding: "+office.people+" people for "+office.capacity+" corporate seats.":
+  warnings[0]||"No immediate premises or payroll emergency identified.";
+ const main=risky?
+  {title:"Protect payroll and operating runway",why:severity,go:"work",label:"Review cash and collections →"}:
+  office?{title:"Resolve workplace crowding",why:severity,go:"property",label:"Compare premises and decide →"}:
+  first?{title:"Resolve a pending manager request",why:first.name+" · "+first.reason,go:first.location,label:"Review approval and consequences →"}:
+  {title:direction.title,why:direction.detail,go:direction.view==="team"?"team":"growth",label:"Open the next company milestone →"};
+ const completed=direction.unmet.length?direction.unmet.filter(x=>x.met).length:0;
+ const milestone=direction.unmet.length?
+  completed+" prerequisites completed · "+direction.unmet.length+" missing: "+direction.unmet.slice(0,2).map(x=>x.label).join("; "):
+  "Requirements met or no remaining service lines. The actual launch or improvement still needs CEO action.";
+ const html='<div class="ceo-today-grid">'+
+ '<div><small>Available cash · not profit</small><strong>'+biCurrency(S.cash)+'</strong></div>'+
+ '<div><small>Cumulative tracked operating '+(currentProfit>=0?'profit':'loss')+'</small><strong>'+biCurrency(currentProfit)+'</strong></div>'+
+ '<div><small>Workforce · operating units</small><strong>'+S.team.length+' people · '+S.exec.units.length+' GM units</strong></div>'+
+ '<div><small>Business portfolios</small><strong>'+ (1+S.exec.lines.length)+' total</strong><small>Core + '+S.exec.lines.length+' launched services</small></div></div>'+
+ '<p class="small">'+esc(severity)+(days!==null?' · Current payroll/site cash cover '+days.toFixed(1)+' days.':'')+'</p>'+
+ '<div class="ceo-today-section"><h3>'+inventory.approvals+' CEO approvals pending</h3>'+
+ (first?'<p><b>'+esc(first.name)+'</b> · '+esc(first.reason)+'</p><p class="small">Requested '+biCurrency(first.once)+' once'+
+ (first.recurring?' + '+biCurrency(first.recurring)+'/day ongoing':' · no new daily cost declared')+
+ '. Approve or decline in the existing decision center; expected benefit is not a measured result.</p>'+
+ '<button type="button" data-ceo-nav="'+first.location+'">Review actual request →</button>':
+ '<p class="small">No outstanding hiring, unit or executive proposals. Optional market offers and eligible promotions are not pending requests.</p>')+
+ (inventory.approvals>1?'<details><summary>Additional approvals · '+(inventory.approvals-1)+'</summary>'+
+ requests.slice(1,5).map(x=>'<p>'+esc(x.name)+' · '+esc(x.reason)+' · '+biCurrency(x.once)+' upfront</p>').join("")+'</details>':'')+
+ (inventory.optional?'<p class="small">1 optional market opportunity · not counted as an approval</p>':'')+'</div>'+
+ '<div class="ceo-today-section ceo-focus-action"><h3>Strategic priority · '+esc(main.title)+'</h3><p>'+esc(main.why)+'</p>'+
+ '<button type="button" data-ceo-nav="'+main.go+'">'+esc(main.label)+'</button></div>'+
+ '<div class="ceo-today-section"><h3>Managed by my team</h3>'+
+ (managed.length?managed.slice(0,2).map(x=>'<p class="small">'+esc(x)+'</p>').join("")+
+ (managed.length>2?'<details><summary>More accountable leaders</summary>'+managed.slice(2).map(x=>'<p>'+esc(x)+'</p>').join("")+'</details>':''):
+ '<p class="small">Founder-led operations. No appointed leader with recorded delegated work.</p>')+
+ '<p class="small">Exceptions: '+(inventory.hiring.length+inventory.unit.length)+' staffing request(s); '+(S.exec.units||[]).filter(u=>S.deals.some(d=>d.unitKey===u.key&&!d.w)).length+' GM unit(s) with unassigned work.</p></div>'+
+ '<div class="ceo-today-section"><h3>Next company chapter · '+esc(direction.title)+'</h3><p>'+esc(milestone)+'</p>'+
+ '<button type="button" data-ceo-nav="'+(direction.view==="team"?"team":"growth")+'">View actual milestone requirements →</button></div>'+
+ (decisionFeedback?'<p class="ceo-result" role="status" aria-live="polite">'+esc(decisionFeedback)+'</p>':'');
  if(root.innerHTML!==html)root.innerHTML=html;
 }
 function renderCEODecisions(){
@@ -4104,14 +4275,14 @@ function renderCEODecisions(){
  if(offer)requests.push('<div class="exec-proposal"><b>Market opportunity · optional</b><p>Offer through Day '+offer.until+
  '. No compulsory penalty for declining.</p><div class="buttons"><button type="button" data-ceo-action="opportunity" data-result="act" '+
  (worldOfferEligibility(offer).allowed?"":"disabled")+'>Take opportunity</button><button type="button" data-ceo-action="opportunity" data-result="pass">Pass</button></div></div>');
- const escalation=requests.length-(offer?1:0);const cfoGuard=executiveOfficer("cfo","protect")&&!executiveFinanceGuard(0);
+ const escalation=decisions.approvals;const cfoGuard=executiveOfficer("cfo","protect")&&!executiveFinanceGuard(0);
  const highHeadcount=S.team.length>=15,units=S.exec.units.length;
  const unfilled=Object.keys(EXECUTIVE_ROLES).filter(k=>!person(S.exec.officers[k]?.id));
  const recommendations=unfilled.filter(k=>(k==="coo"&&units>=2)||(k==="hr"&&highHeadcount)||(k==="cfo"&&S.market.completed>=20));
  const leadership=recommendations.length?'<p class="small"><b>Unfilled executive offices:</b> '+recommendations.map(k=>EXECUTIVE_ROLES[k].short).join(', ')+'. Review qualification milestones before appointing a real colleague; no spending rights are implicit.</p>':"";
  const execOverdue=Object.entries(S.exec.officers).filter(([role,o])=>person(o.id)&&o.mandate&&S.day>=o.authoritySince+90);
  const upcoming=execOverdue.length?'<p class="small">Expired executive mandates: '+execOverdue.map(([role])=>EXECUTIVE_ROLES[role].short).join(', ')+'. Renew explicitly in Executive leadership before managers resume delegated decisions.</p>':'';
- const markup='<div class="lead"><b>CEO decision center</b><span class="small">'+escalation+' approvals here'+(offer?' · 1 optional opportunity':'')+'</span></div>'+
+ const markup='<div class="lead"><b>CEO decision center</b><span class="small">'+escalation+' approvals here'+(promotion?' · 1 eligible promotion milestone':'')+(offer?' · 1 optional opportunity':'')+'</span></div>'+
  (requests.length?requests.join(""):'<p class="small">No CEO exceptions requiring an approval. GMs and department managers continue within authorized limits.</p>')+
  (cfoGuard?'<p class="small risk-watch">CFO · cash protection: delegated spending paused until payroll + premises costs have 30 days of runway. CEO direct exceptions retain their existing eligibility rules.</p>':'')+
  leadership+upcoming+'<p class="small" id="ceo-action-status" role="status">Approving any request posts real costs only after durable saving.</p>';

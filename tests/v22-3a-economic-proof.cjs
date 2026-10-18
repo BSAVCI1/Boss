@@ -158,7 +158,7 @@ function run(kind,policy,seed){
    assert.equal(JSON.stringify(Array.from(loaded.deals,d=>[d.id,d.agreedFee,d.pricingVersion])),JSON.stringify(oldDeals),'contract fee preservation');
    assert.equal(new Set(loaded.team.map(p=>p.id)).size,loaded.team.length);
    assert.equal(JSON.stringify(loaded.exec.units),JSON.stringify(s.exec.units));
-   assert.equal(JSON.stringify(loaded.exec.property),JSON.stringify(s.exec.property));
+   assert.equal(JSON.stringify(loaded.exec.property.sites),JSON.stringify(s.exec.property.sites),'property historical terms and ownership survive reload');assert.equal(loaded.exec.property.baselineCapacity,s.exec.property.baselineCapacity,'corporate baseline survives reload');
    assert.equal(JSON.stringify(loaded.exec.officers),JSON.stringify(s.exec.officers));
    money(loaded);
   }

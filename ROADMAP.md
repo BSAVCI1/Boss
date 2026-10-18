@@ -1,5 +1,14 @@
 # Boss — simulation development roadmap
 
+## v21.4c — Autonomous corporate management (release candidate · PR #30)
+
+- Corporate Managers, Senior Managers and Directors now identify measured staffing gaps from unassigned workload, while ready existing staff block speculative hiring.
+- CEO hiring authority: explicit 90-day budget and slot cap, $0/0 default on new and migrated saves, $20 one-time recruiting expense only when actually hired, and real future payroll with at least 21 days of cash runway. Within-budget manager hires can be automatic; exceptions are CEO decisions on Today/Team.
+- GM unit support: CEO authorizes an available corporate specialist for 30 days. A temporary lending permission never moves the employee to unit payroll; unit financial results attribute only actual shared workdays from the same one group ledger.
+- Original personnel, contracts and historical financials remain unchanged; tests cover delegated permissions, expiry, duplicate prevention, 730-day reconciliation, persistence and 390/414px mobile UI.
+- Not yet implemented: hard business-launch gates, unrestricted GM recruitment, offices, acquisitions, factories. Those remain v21.5 and v22+ milestones.
+- [Development PR #30](https://github.com/BSAVCI1/Boss/pull/30) · [Technical scope](docs/V21_4C_AUTONOMY.md). Do not mark released until merge, checks and Pages pass.
+
 ## Released v21.4b — Evidence-based leadership stages
 
 - New-game ladder: five people → Team Lead, then 3 Team Leads → Manager, 5 Team Leads → Senior Manager, 3 Managers → Director; further Team Leads need three more people each. Skills, work/practice days and unfinished contracts affect candidate selection.

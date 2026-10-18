@@ -267,7 +267,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
 <div class="card ceo-office"><div class="eyebrow">CEO · COMPANY IDENTITY</div><h2 id="company-name">Business Services Group</h2><p id="company-identity"></p><div class="ceo-office-grid"><div><b>My direct reports</b><div id="ceo-direct-reports"></div></div><div><b>Executive Assistant</b><div id="ceo-assistant"></div></div></div></div>
-<div class="card ceo-direction"><div class="lead"><b>Your 90-day direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p><p id="ceo-direction-confirm" class="small" role="status" aria-live="polite"></p></div>
+<div class="card" id="executive-officers-panel"><div class="lead"><b>Executive leadership · HR, CFO &amp; COO</b><span id="executive-officer-count" class="small">Founder-led</span></div><p class="small">Appoint proven employees only after business milestones. Actual payroll changes begin after CEO approval; delegated authority begins inactive until expressly granted.</p><div id="executive-officers"></div></div><div class="card ceo-direction"><div class="lead"><b>Your 90-day direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p><p id="ceo-direction-confirm" class="small" role="status" aria-live="polite"></p></div>
 <div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><details class="aux-details" id="ea-weekly-report"><summary>Executive Assistant · weekly business briefing</summary><div id="ea-weekly-body"></div></details><div id="ceo-action-center" aria-label="CEO approvals and exceptions"></div><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
 <div class="card game-desk" id="game-desk">
 <div class="lead"><span class="eyebrow">YOUR COMPANY STORY</span><span class="game-chapter" id="game-chapter">Founder</span></div>
@@ -1434,7 +1434,7 @@ if(!Array.isArray(c.promotions))c.promotions=[];if(typeof c.autoRest!=="boolean"
 }
 function talentHint(p){const k=p.career.talent;return({sales:"connects naturally with people",mkt:"notices stories and customer patterns",prod:"enjoys making new things",ops:"spots ways to improve routines"})[k];}
 function rankName(p){return careerTitle(p);}
-function dailySalary(p){const rank=p.career.rank,rankPremium=rank<=2?rank*.75:(rank===3?2.55:3.95);const titleBonus=S.org&&DEPT_KEYS.some(k=>S.org.departments[k]?.managerId===p.id)?.75:S.org&&DEPT_KEYS.some(k=>DEPARTMENTS[k].skills.some(role=>S.org.departments[k]?.subManagers?.[role]===p.id))?.5:0;const unitPremium=S.exec?.units?.some(u=>u.managerId===p.id)?.5:0;const extra=Math.max(0,ladderPremium(p)-titleBonus-unitPremium);return(1.5+rankPremium+(p.career.raise||0)+titleBonus+unitPremium+extra)*S.mod.cost;}
+function dailySalary(p){const rank=p.career.rank,rankPremium=rank<=2?rank*.75:(rank===3?2.55:3.95);const titleBonus=S.org&&DEPT_KEYS.some(k=>S.org.departments[k]?.managerId===p.id)?.75:S.org&&DEPT_KEYS.some(k=>DEPARTMENTS[k].skills.some(role=>S.org.departments[k]?.subManagers?.[role]===p.id))?.5:0;const unitPremium=S.exec?.units?.some(u=>u.managerId===p.id)?.5:0;const extra=Math.max(0,ladderPremium(p)-titleBonus-unitPremium);return(1.5+rankPremium+(p.career.raise||0)+titleBonus+unitPremium+extra+executiveSalaryPremium(p))*S.mod.cost;}
 function stressFactor(p){const c=p.career;return Math.max(.56,1-(c.stress>=55?(c.stress-55)*.006:0)-c.burnout*.0025);}
 function goalFactor(p,d){const c=p.career;let factor=.95+c.satisfaction/1200;
 if(c.goal==="creativity"&&d&&["creative","technology"].includes(d.sector))factor+=.07;
@@ -1577,7 +1577,7 @@ function managementWorkload(dept){
  return{staff,unattended,busy,ready,overloaded:unattended>=2&&unattended>ready||jobs.length>staff.length&&busy>=Math.max(1,staff.length-1)};
 }
 function managementHiringAvailable(r){
- const o=managementOps();return S.day<o.since+o.days&&o.hires<o.hireSlots&&o.hireSpent+r.cost<=o.hireBudget&&r.cost<=o.perHire;
+ const o=managementOps();return executiveFinanceGuard(r.cost)&&S.day<o.since+o.days&&o.hires<o.hireSlots&&o.hireSpent+r.cost<=o.hireBudget&&r.cost<=o.perHire;
 }
 function managementCashReady(r){return S.cash>=r.cost+(S.team.reduce((n,p)=>n+dailySalary(p),0)+r.payroll)*21;}
 function managementHire(r,authority){
@@ -2037,6 +2037,7 @@ return p.career?.rank>=4&&p.career.path==="leadership"||DEPARTMENTS[p.department
 }
 function orgPersonPosition(p){
  if(!p)return"Unassigned";
+ for(const [role,meta] of Object.entries(EXECUTIVE_ROLES))if(S.exec?.officers?.[role]?.id===p.id)return meta.title;
  if(S.ops.assistantId===p.id)return"Executive Assistant";
  const u=unitOfPerson(p.id);
  if(u?.managerId===p.id)return SERVICE_LINES[u.key].name+" General Manager";
@@ -2053,7 +2054,7 @@ function orgSubReports(key,role){const m=orgSubManager(key,role);return orgRepor
 function orgDirectReports(key){return orgReports(key).filter(p=>DEPARTMENTS[key].skills.every(role=>p.id!==orgSubManager(key,role)?.id&&(orgWorkRole(p)!==role||!orgSubManager(key,role)))||DEPARTMENTS[key].skills.some(role=>p.id===orgSubManager(key,role)?.id));}
 function orgPlan(dept){return S.org.departments[dept]?.plan;}
 function orgFunds(dept,cat,amount,personnel=false){
-const p=orgPlan(dept);if(!p||!Number.isFinite(amount)||amount<0||amount>p.perAction||S.cash<amount||S.day>=p.since+p.days)return false;
+const p=orgPlan(dept);if(!p||!Number.isFinite(amount)||amount<0||amount>p.perAction||S.cash<amount||!executiveFinanceGuard(amount)||S.day>=p.since+p.days)return false;
 if((p.spent[cat]||0)+amount>(p.limits[cat]||0))return false;
 if(personnel&&(p.hires>=p.hireSlots||p.payrollAdded+1.5*S.mod.cost>p.payrollLimit))return false;
 return true;
@@ -2244,7 +2245,7 @@ $("leadership-growth").addEventListener("click",e=>{
   managementRequestDecision(Number(button.dataset.requestId),button.dataset.ladderAction==="staff-approve"?"approve":"decline");
  }
 });
-function roleAction(id,action){if(S.ev)return;const p=person(id);if(!p)return;const before=coachSnap(id);const r=p.role;
+function roleAction(id,action){if(S.ev||executiveRoleOf(id))return;const p=person(id);if(!p)return;const before=coachSnap(id);const r=p.role;
 if(action==="resume"){if(p.id===S.ops.assistantId)return;r.auto=true;if(!p.t.startsWith("d")){p.t="idle";r.autoTask=false;}logIt(p.n+" returned to the team work plan.");}
 else if(action==="manual"){r.auto=false;r.autoTask=false;logIt("Manual task control enabled for "+p.n+".");}
 else if(ROLE_KEYS.includes(action)){if(action==="lead"&&p.career.rank<1&&p.career.xp<10)return;
@@ -2386,16 +2387,16 @@ function fresh(){
  S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now(),lastInterruptDay:0},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
-function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
+function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.t==="exec")return "Executive leadership";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
 function release(p){if(!p)return;for(const d of S.deals)if(d.w===p.id)d.w=null;p.t="idle";}
-function removePerson(p){if(S.team.length<=1)return false;for(const u of S.exec?.units||[]){if(u.managerId===p.id){u.managerId=null;for(const req of S.exec.unitRequests||[])if(req.key===u.key&&req.status==="open"){req.status="withdrawn";req.decidedAt=S.day;}}u.staffIds=u.staffIds.filter(id=>id!==p.id);}if(S.ops.assistantId===p.id)S.ops.assistantId=null;for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===p.id)S.org.departments[k].managerId=null;release(p);S.team=S.team.filter(x=>x.id!==p.id);
+function removePerson(p){if(S.team.length<=1)return false;if(S.exec?.officers)for(const k of Object.keys(S.exec.officers))if(S.exec.officers[k].id===p.id){S.exec.officers[k].id=null;S.exec.officers[k].mandate=false;}for(const u of S.exec?.units||[]){if(u.managerId===p.id){u.managerId=null;for(const req of S.exec.unitRequests||[])if(req.key===u.key&&req.status==="open"){req.status="withdrawn";req.decidedAt=S.day;}}u.staffIds=u.staffIds.filter(id=>id!==p.id);}if(S.ops.assistantId===p.id)S.ops.assistantId=null;for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===p.id)S.org.departments[k].managerId=null;release(p);S.team=S.team.filter(x=>x.id!==p.id);
  if(S.org?.progression){const g=S.org.progression;g.appointments=g.appointments.filter(n=>n.id!==p.id);delete g.reportTo[p.id];for(const id of Object.keys(g.reportTo))if(g.reportTo[id]===p.id)delete g.reportTo[id];if(g.operations){g.operations.shared=g.operations.shared.filter(a=>a.employeeId!==p.id);for(const r of g.operations.requests)if(r.managerId===p.id&&r.status==="open")r.status="withdrawn";}ladderReassign();ladderSignature="";}
  avatars.delete(p.id);return true;}
 function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S.seeds.includes(k));if(!unused.length)return false;
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
-function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();unitAutonomousDay();ladderDay();managementReviewMonth();worldDay();let dirty=false,ideaDirty=false;
+function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();executiveOfficerDay();orgAutonomousTeamDay();unitAutonomousDay();ladderDay();managementReviewMonth();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
 if(unitStaffingDay())dirty=true;
 if(unitDelegateWork())dirty=true;
@@ -2422,6 +2423,7 @@ else if(p.t==="teach"&&S.team.length>1){const k=strongest(p),others=(p.role.prim
 else if(p.t==="exp"){const spent=Math.min(1,S.cash);S.cash-=spent;if(spent>0)biMoney("research",spent,p.n+" research experiment");const avg=KEYS.reduce((s,k)=>s+p.s[k],0)/4;const chance=(.04+.01*avg)*mf*(p.trait==="Curious"?1.5:1)*(p.trait==="Creative"?1.3:1)*(p.interest==="creative"?1.2:1);if(Math.random()<chance){ideaDirty=discover(p.n,[p.role.primary==="sales"?"ref":p.role.primary==="mkt"?"story":p.role.primary==="prod"?"int":"check"])||ideaDirty;}dm=.3;}
 else if(p.t==="rest"){dm=2;}
 else if(p.t==="assist"){p.s.ops+=.025*S.mod.learn;dm=.25;}
+else if(p.t==="exec"){p.s.ops+=.01*S.mod.learn;dm=.20;}
 const assignedDeadline=p.t.startsWith("d")?deal(Number(p.t.slice(1)))?.dl??99:99;
 const effectiveTask=recovering?"rest":p.t;if(!recovering&&propertyOccupancy(p).overloaded)p.mood=clamp(p.mood-.15);performanceWork(p,effectiveTask);careerTrack(p,effectiveTask);talentAndCareerDay(p,effectiveTask,assignedDeadline);biTeamDay(p,effectiveTask);const assignedUnit=unitOfPerson(p.id);if(assignedUnit&&p.id!==assignedUnit.managerId&&effectiveTask.startsWith("d")&&deal(Number(effectiveTask.slice(1)))?.unitKey===assignedUnit.key)assignedUnit.billableDays++;coachLabParticipation(p,effectiveTask);coachTrackRole(p,effectiveTask);
 p.mood=clamp(p.mood+(dm>0?dm*S.mod.morale:dm));
@@ -2514,7 +2516,7 @@ else logIt(p.n+" returned to ordinary team duties.");
 save();structural="";renderStructure();refresh();}
 function hireOfficeAssistant(){if(S.ev||S.ops.assistantId||S.cash<20)return;const p=createPerson();p.s.ops=Math.max(2.3,p.s.ops);p.interest="systems";p.trait="Social";p.mood=75;p.loy=70;p.t="assist";S.cash-=20;biMoney("recruiting",20,"Hire executive assistant: "+p.n);ensureCareer(p);ensureRole(p);ensureDepartment(p);S.team.push(p);S.ops.assistantId=p.id;logIt("You hired "+p.n+" as executive assistant for $20.");save();structural="";renderStructure();refresh();}
 function toggleFocus(){if(S.ev)return;S.flow.focus=!S.flow.focus;if(!S.flow.focus){S.flow.nextLead=Math.max(S.flow.nextLead,S.day+5);S.flow.lastLeadAt=Date.now();S.nextEv=Math.max(S.nextEv,S.day+12);}logIt(S.flow.focus?"You closed intake to focus on existing work.":"You reopened client inquiries and staff matters.");save();refresh();}
-function order(pid,t){const p=person(pid);if(!p||S.ev)return;p.role.auto=false;p.role.autoTask=false;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===pid)S.ops.assistantId=null;release(p);p.t=t;save();renderStructure();refresh();}
+function order(pid,t){const p=person(pid);if(!p||S.ev)return;p.role.auto=false;p.role.autoTask=false;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===pid)S.ops.assistantId=null;if(executiveRoleOf(pid))return;release(p);p.t=t;save();renderStructure();refresh();}
 function updateButtons(){if(!editableInteractionPending())$("speed-select").value=String(spd);
  const pace=$("speed-explainer");if(pace)pace.textContent=(spd===1?"Standard":spd===3?"Fast":"Turbo")+
  " · "+(2400/spd/1000).toFixed(2)+" seconds per game day · "+(72/spd).toFixed(1)+" seconds per 30-day review. Pause or skip up to seven days.";$("pause").classList.toggle("selected",paused);$("pause").setAttribute("aria-pressed",String(paused));$("pause").textContent=paused?"Resume":"Pause";$("pause").disabled=!!(saveConflict||saveErrorReason||indexedWriteCount>0);$("game-forward").disabled=!!(saveConflict||saveErrorReason||indexedWriteCount>0);}
@@ -2827,7 +2829,7 @@ if(!Array.isArray(e.units))e.units=[];
 if(!Array.isArray(e.unitEvents))e.unitEvents=[];
 if(!Array.isArray(e.unitRequests))e.unitRequests=[];
 if(!Number.isFinite(e.unitRequestSeq))e.unitRequestSeq=1;
- ensureProperties(state);
+ ensureOfficers(state);ensureProperties(state);
 const unitOwners=new Set(),unitKeys=new Set();
 e.units=e.units.filter(u=>{
  if(!u||!SERVICE_LINES[u.key]||unitKeys.has(u.key)||!e.lines.some(x=>x.key===u.key))return false;
@@ -3018,7 +3020,7 @@ function unitApplyDraft(key){
 }
 function unitBudgetAllowed(u,amount){
  const p=u?.plan;
- return !!person(u?.managerId)&&p&&S.day<p.since+p.days&&amount>0&&
+ return !!person(u?.managerId)&&p&&S.day<p.since+p.days&&executiveFinanceGuard(amount)&&amount>0&&
  Number.isFinite(amount)&&amount<=p.perAction&&p.spent+amount<=p.coachingLimit&&S.cash>=amount;
 }
 function unitAuthorize(key,field,value){
@@ -3091,7 +3093,7 @@ function unitStaffingDay(){
   const unassigned=S.deals.filter(d=>d.unitKey===u.key&&!d.w).sort((a,b)=>a.dl-b.dl);
   if(!unassigned.length)continue;
   const role=SERVICE_LINES[u.key].need,dept=["sales","mkt"].includes(role)?"commercial":"delivery";
-  const leader=managementLead(dept)||orgManager(dept);
+  const leader=managementLead(dept)||orgManager(dept)||executiveOfficer("coo","coordinate");
   const activeShared=managementOps().shared.filter(a=>a.unitKey===u.key&&a.until>S.day&&a.status==="active");
   // Existing grant covers the demand while the worker is idle; avoid duplicate loans.
   const availableGrant=activeShared.some(a=>{const w=person(a.employeeId);return w?.t==="idle"&&w.career.recoveryDays===0;});
@@ -3143,7 +3145,7 @@ function unitHireFromRequest(req,authority){
  if(!u||req.status!=="open"||req.managerId!==u.managerId||!person(u.managerId)||
   u.staffIds.length>=Math.min(25,u.plan.staffingTarget||5)||!managementCashReady(req))return false;
  if(authority==="delegated"){
-  const leader=managementLead(req.department)||orgManager(req.department);
+  const leader=managementLead(req.department)||orgManager(req.department)||executiveOfficer("coo","coordinate");
   if(!unitDelegatedHireReady(req,leader))return false;
  }
  const employee=createPerson();ensureCareer(employee);ensureRole(employee);ensureDepartment(employee);ensurePerformance(employee,S.day);
@@ -3743,7 +3745,7 @@ for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)day
 }
 function refresh(){
 if(editableInteractionPending())return;
-renderLadder();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
+renderLadder();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);

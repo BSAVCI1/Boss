@@ -1,5 +1,12 @@
 # Boss — simulation development roadmap
 
+## v21.5 — Progression & Company Direction (release candidate)
+
+- Hard new-service launch gates (5 delivered / Team Lead / reputation / qualified specialist / 21-day payroll reserve); second, third, fourth businesses add actual service delivery, staffed GM units, month-end reviews and deeper leadership cash reserves.
+- Growth lists the missing facts and disables purchases until milestones are earned; serverless mutation enforces the same gate before spending. Old purchased lines, ledgers and contract terms remain untouched.
+- Today explains the company's active chapter and next gate. A monthly cost-neutral manager evidence scorecard appears in Team and Executive Assistant reporting.
+- [Implementation and safety](docs/V21_5_GROWTH.md). CI/Pages proof must pass before changing to RELEASED. Property/assets remain v22, investment/acquisitions v23, physical operations/factories v24.
+
 ## Released v21.4c — Autonomous managers and controlled central staffing
 
 - Corporate managers review actual capacity needs weekly, consider idle staff first, and propose hiring only when overloaded. The Executive Assistant surfaces pending exceptions on Today and weekly reports.

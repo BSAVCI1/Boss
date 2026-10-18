@@ -66,6 +66,10 @@ document.addEventListener("DOMContentLoaded",async()=>{
    // Build a synthetic funded company without affecting any real player save.
    const funded=JSON.parse(localStorage.getItem("boss20"));
    funded.cash+=500;funded.bi.openingCash+=500;
+   // Synthetic browser fixture: earn the first-service prerequisites before exercising IndexedDB launch persistence.
+   funded.market.completed=Math.max(5,funded.market.completed);funded.rep=Math.max(35,funded.rep);
+   const productSpecialist=funded.team.find(p=>p.role?.primary==="prod");if(productSpecialist)productSpecialist.s.prod=Math.max(3,productSpecialist.s.prod);
+   if(!funded.org.progression.appointments.some(n=>n.level==="lead"))funded.org.progression.appointments.push({id:funded.team[0].id,level:"lead",since:funded.day,successorId:null});
    localStorage.setItem("boss20",JSON.stringify(funded));
    sessionStorage.setItem("boss-qa-pre-refresh",JSON.stringify(result));
    sessionStorage.setItem("boss-qa-reload","1");

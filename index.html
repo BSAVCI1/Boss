@@ -274,7 +274,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="overview-metrics"><span id="brief-projects">0 projects</span><span id="brief-pipeline">0 in pipeline</span><span id="brief-team">Team ready</span></div>
 <div class="game-mission" id="game-mission"><div class="eyebrow">NEXT CHALLENGE</div><strong id="game-goal">Build your company</strong><p id="game-goal-hint">Choose your next step.</p><div class="game-goal-track"><span id="game-goal-bar"></span></div><div class="game-goal-progress" id="game-goal-progress"></div></div>
 <div class="game-actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
-<div class="game-scene"><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div></div><div class="game-story" id="game-story" aria-live="polite"></div>
+<div class="game-scene"><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div></div><div class="game-story" id="game-story" aria-live="polite"></div><div id="company-stage-today" class="game-stage-direction" aria-live="polite"></div>
 <details class="aux-details" id="game-journey"><summary>My company journey</summary><div id="game-journey-map"></div></details>
 </div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div>
 <details class="aux-details game-advanced" id="ceo-records"><summary>Coach &amp; company records</summary>
@@ -371,7 +371,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="view-intro"><h2>Growth</h2><p>Industries, investments and company knowledge</p></div>
 <section aria-labelledby="market-title"><h2 id="market-title">Choose your direction</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><details class="aux-details" id="sector-explore"><summary>Explore customer markets</summary><div id="sector-options" class="sector-buttons"></div></details><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
 
-<section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Purchased service lines start as shared service portfolios. You can now organize a purchased line into an operating unit below, appoint a General Manager and allocate dedicated employees. These units are internal operating divisions, not independent subsidiaries or separate bank accounts. Company cash and financial records remain consolidated; unit results only track future work. Shared department budgets and advanced unit delegations evolve in later releases. Revenue is never counted twice.</p><div id="company-unlock-guide" class="filter-note"></div><div id="business-lines"></div><div id="business-units" aria-label="Operating unit management"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">CEO approval required. Track new work from launch onward; earlier projects are never invented.</p></details></section>
+<section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Purchased service lines start as shared service portfolios. You can now organize a purchased line into an operating unit below, appoint a General Manager and allocate dedicated employees. These units are internal operating divisions, not independent subsidiaries or separate bank accounts. Company cash and financial records remain consolidated; unit results only track future work. Shared department budgets and advanced unit delegations evolve in later releases. Revenue is never counted twice.</p><div id="company-unlock-guide" class="filter-note"></div><p id="company-launch-status" class="small" role="status"></p><div id="business-lines"></div><div id="business-units" aria-label="Operating unit management"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">New launches require proven delivery, leadership, qualified staffing and financial runway. Previously purchased lines remain yours. No future revenue is guaranteed.</p></details></section>
 <section aria-labelledby="world-title"><h2 id="world-title">Your rivals</h2>
 <div class="card"><div id="game-rivals" class="game-rivals"></div><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
 
@@ -1535,6 +1535,7 @@ function ensureProgression(state){
  const o=g.operations;
  for(const [k,v] of Object.entries({since:state.day,days:90,hireBudget:0,hireSpent:0,hireSlots:0,hires:0,perHire:0,sequence:1}))if(!Number.isFinite(o[k])||o[k]<0)o[k]=v;
  if(!Array.isArray(o.requests))o.requests=[];if(!Array.isArray(o.history))o.history=[];if(!Array.isArray(o.shared))o.shared=[];
+ if(!Array.isArray(o.scorecards))o.scorecards=[];if(!o.scorecardBaseline||typeof o.scorecardBaseline!=="object")o.scorecardBaseline={};
  if(!o.lastAsked||typeof o.lastAsked!=="object")o.lastAsked={};
  o.requests=o.requests.filter(r=>r&&Number.isInteger(r.id)&&["open","approved","declined","delegated","withdrawn"].includes(r.status)).slice(-45);
  o.history=o.history.slice(-55);
@@ -1592,6 +1593,28 @@ function managementReview(){
   if(managementHiringAvailable(r)&&managementCashReady(r))managementHire(r,"delegated");
   else logIt(manager.n+" requested a "+ROLE_NAMES[skill]+" hire; requires CEO decision.");
  }
+}
+function managementReviewMonth(){
+ // Actual 30-day snapshots start with the first observation; no invented history.
+ const o=managementOps();if(S.day%30!==0)return;
+ const ids=new Set(S.org.progression.appointments.map(n=>n.id));
+ for(const dept of DEPT_KEYS){const head=orgManager(dept);if(head)ids.add(head.id);
+  for(const role of DEPARTMENTS[dept].skills){const sub=orgSubManager(dept,role);if(sub)ids.add(sub.id);}
+ }
+ for(const id of ids){const leader=person(id);if(!leader||unitOfPerson(id)||id===S.ops.assistantId)continue;
+  if(o.scorecards.some(x=>x.day===S.day&&x.personId===id))continue;
+  const team=S.team.filter(p=>p.department===leader.department&&p.id!==id&&p.id!==S.ops.assistantId&&!unitOfPerson(p.id)&&!ladderNode(p.id));
+  const current=team.reduce((n,p)=>n+(Number(p.perf?.completed)||0),0);
+  const role=ladderNode(id)?.level||"functional manager";
+  const baseline=o.scorecardBaseline[id],valid=baseline&&baseline.role===role&&baseline.dept===leader.department;
+  const completed=valid?Math.max(0,current-baseline.completed):null;
+  const stressed=team.filter(p=>p.career?.stress>=70||p.career?.burnout>=35).length;
+  const unattended=S.deals.filter(d=>!d.unitKey&&!d.w&&(leader.department==="commercial"?["sales","mkt"]:["prod","ops"]).includes(d.need)).length;
+  const status=completed===null?"Baseline established":unattended>0?"Capacity needs attention":stressed>0?"People support needed":completed>0?"Delivery evidence recorded":"No completed delivery in review period";
+  o.scorecards.unshift({day:S.day,personId:id,role,dept:leader.department,teamSize:team.length,completed,stressed,unattended,status});
+  o.scorecardBaseline[id]={day:S.day,role,dept:leader.department,completed:current};
+ }
+ o.scorecards=o.scorecards.slice(0,90);
 }
 function managementSetHiringPolicy(amount,slots){
  if(!Number.isInteger(amount)||amount<0||amount>10000||!Number.isInteger(slots)||slots<0||slots>20)return false;
@@ -1734,6 +1757,50 @@ function ladderLaunchReadiness(){
  return{ready:checks.every(c=>c.met),checks};
 }
 
+// Forward-only v21.5 stage gates. Previously purchased portfolios are never invalidated.
+function companyLaunchReadiness(key){
+ const owned=S.exec.lines.length,valid=!!SERVICE_LINES[key];
+ if(!valid)return{ready:false,checks:[{label:"Select a valid service",met:false,detail:"Choose one of four services"}]};
+ if(S.exec.lines.some(x=>x.key===key))return{ready:false,owned:true,checks:[{label:"Already purchased",met:false,detail:"No duplicate launch fee"}]};
+ const base=ladderLaunchReadiness().checks;
+ const specialist=S.team.some(p=>p.id!==S.ops.assistantId&&!unitOfPerson(p.id)&&!ladderNode(p.id)&&
+  p.s[SERVICE_LINES[key].need]>=2);
+ const checks=[...base,{label:"Have a qualified "+ROLE_NAMES[SERVICE_LINES[key].need]+" specialist",met:specialist,detail:specialist?"Available in corporate team":"Hire or develop a qualified specialist"}];
+ const payroll=S.team.reduce((sum,p)=>sum+dailySalary(p),0);
+ if(owned>=1){const previous=S.exec.lines.some(x=>(x.delivered||0)>=3);
+  const gm=S.exec.units.some(u=>!!person(u.managerId)&&u.staffIds.some(id=>id!==u.managerId));
+  checks.push({label:"Deliver 3 projects in an existing business",met:previous,detail:S.exec.lines.reduce((n,x)=>Math.max(n,x.delivered||0),0)+"/3 best line"});
+  checks.push({label:"Operate one GM-led team with a specialist",met:gm,detail:gm?"Ready":"Organize a purchased line, appoint a GM and staff it"});
+  checks.push({label:"Keep 30 payroll days after launch",met:S.cash>=120+payroll*30,detail:biCurrency(S.cash)+" / "+biCurrency(120+payroll*30)});
+ }
+ if(owned>=2){const mature=S.exec.lines.some(x=>(x.delivered||0)>=10),review=S.exec.units.some(u=>u.reviews.length>0);
+  const manager=S.org.progression.appointments.some(n=>["manager","senior","director"].includes(n.level));
+  checks.push({label:"Deliver 10 projects in an existing business",met:mature,detail:"Demonstrate repeatable service delivery"});
+  checks.push({label:"Complete a measured GM performance review",met:review,detail:review?"Reviewed":"Wait for a real 30-day review"});
+  checks.push({label:"Appoint an experienced corporate Manager",met:manager,detail:manager?"Appointed":"Build three Team Leads and promote a qualified Manager"});
+ }
+ if(owned>=3){const units=S.exec.units.filter(u=>person(u.managerId));
+  const directors=S.org.progression.appointments.some(n=>n.level==="director");
+  checks.push({label:"Operate two GM-led units",met:units.length>=2,detail:units.length+"/2"});
+  checks.push({label:"Build a Director-level leadership bench",met:directors,detail:directors?"Ready":"Develop qualified senior management"});
+  checks.push({label:"Keep 60 payroll days after launch",met:S.cash>=120+payroll*60,detail:biCurrency(S.cash)+" / "+biCurrency(120+payroll*60)});
+ }
+ return{ready:checks.every(c=>c.met),checks,owned:false,chapter:owned===0?"First new business":owned===1?"Second business":owned===2?"Third business":"Fourth business"};
+}
+function companyDirection(){
+ const available=Object.keys(SERVICE_LINES).filter(k=>!S.exec.lines.some(x=>x.key===k));
+ const selected=$("service-line-select")?.value;
+ const key=available.includes(selected)?selected:available[0];
+ const leadership=S.org.progression.appointments;
+ const stage=leadership.some(n=>n.level==="director")?"Corporate Group":
+  leadership.some(n=>n.level==="manager")?"Managed Company":
+  leadership.some(n=>n.level==="lead")?"Team Builder":"Founder";
+ if(!key)return{stage,title:"Manage and improve your business group",detail:"All four service portfolios are owned. Improve GM results, profitability, succession and stable operating capacity.",unmet:[],view:"growth"};
+ const readiness=companyLaunchReadiness(key),missing=readiness.checks.filter(c=>!c.met);
+ const blocked=missing[0],title=readiness.ready?"Approve your next business launch":"Next unlock: "+readiness.chapter;
+ return{stage,title,detail:blocked?blocked.label+" — "+blocked.detail:
+  "All milestones achieved. The CEO may invest $120; launch does not guarantee demand.",unmet:missing,view:blocked&&/Team Lead|Manager/.test(blocked.label)?"team":"growth",key};
+}
 function orgLeaderTitle(p){
 if(!p)return"Department Manager";
 const isDepartmentHead=S.org?.departments[p.department]?.managerId===p.id;
@@ -2099,7 +2166,7 @@ function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
 function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
-function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();unitAutonomousDay();ladderDay();worldDay();let dirty=false,ideaDirty=false;
+function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();unitAutonomousDay();ladderDay();managementReviewMonth();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
 if(unitDelegateWork())dirty=true;
 if(delegateWork())dirty=true;
@@ -2268,10 +2335,10 @@ $("business-units").addEventListener("click",e=>{
 });
 $("launch-service-line").addEventListener("click",()=>{
  const result=executiveLaunch($("service-line-select").value);
- if(result&&typeof result.then==="function")result.then(ok=>{if(ok)refresh();});
- else if(result)refresh();
+ if(result&&typeof result.then==="function")result.then(ok=>{if(ok)refresh();else renderLaunchGuide();});
+ else refresh();
 });
-$("service-line-select").addEventListener("change",()=>{S.ui.selectedService=$("service-line-select").value;save();executiveShow();});
+$("service-line-select").addEventListener("change",()=>{S.ui.selectedService=$("service-line-select").value;save();renderLaunchGuide();executiveShow();});
 $("game-primary").addEventListener("click",()=>{const b=$("game-primary"),view=b.dataset.go||"work";
 navigate(view,b.dataset.project?Number(b.dataset.project):undefined);
 if(view==="today")requestAnimationFrame(()=>{const panel=$("ea-weekly-report");if(panel){panel.open=true;renderExecutiveWeekly();if(typeof panel.scrollIntoView==="function")panel.scrollIntoView({behavior:"smooth",block:"start"});}});
@@ -2874,7 +2941,7 @@ if(editableInteractionPending())return;
 }
 
 function executiveLaunch(key){
-if(!SERVICE_LINES[key]||S.exec.lines.some(x=>x.key===key)||S.cash<120||S.ev)return false;
+if(!SERVICE_LINES[key]||S.exec.lines.some(x=>x.key===key)||S.cash<120||S.ev||!companyLaunchReadiness(key).ready)return false;
 if(saveConflict)return false;
 const old=localStorage.getItem(KEY);if(old){try{const r=JSON.parse(old);if((Number(r._saveRevision)||0)>persistedRevision){save();return false;}}catch{}}
 // Do not report a purchase until the primary save is durable.
@@ -2993,9 +3060,13 @@ function renderExecutiveWeekly(){
   if(x.last&&Number.isFinite(x.last.revenue)&&x.last.revenueTarget>0&&x.last.revenue<x.last.revenueTarget)risks.push(SERVICE_LINES[x.u.key].name+" revenue "+biCurrency(x.last.revenue)+" below target "+biCurrency(x.last.revenueTarget));
  }
  if(!risks.length)risks.push("No important cross-department escalation identified");
+ const direction=companyDirection();
+ if(direction.unmet.length)priorities.push("Next company stage: "+direction.unmet[0].label);
  if(live.pipeline)priorities.push("Convert "+live.pipeline+" existing leads");
  else priorities.push("Build a qualified customer pipeline");
  priorities.push("Review delivery quality and capacity","Develop the next service capability");
+ const corpReviews=managementOps().scorecards.filter((x,i,a)=>a.findIndex(y=>y.personId===x.personId)===i).slice(0,8);
+ const reviewHtml=corpReviews.map(x=>'<p class="small">'+esc(person(x.personId)?.n||"Former leader")+' · '+esc(x.role)+' · Day '+x.day+' · '+x.teamSize+' functional colleagues · '+(x.completed===null?"delivery baseline established":x.completed+" completed assignments since prior review")+' · '+x.stressed+' stressed · '+x.unattended+' unassigned · '+esc(x.status)+'</p>').join("");
  const dept=live.dept.map(d=>'<p class="small"><b>'+esc(DEPARTMENTS[d.key].name)+'</b> · '+esc(d.head)+' · '+d.staff+' reports · last measured review: '+esc(d.review||"no review yet")+(d.reading?' ('+esc(d.reading)+')':'')+' · delegated spend '+biCurrency(d.spent)+' of '+biCurrency(d.limit)+' · remaining '+biCurrency(Math.max(0,d.limit-d.spent))+(S.day>=d.expiry?' · authority inactive':' · valid through Day '+d.expiry)+'</p>').join("");
  const recent=(kind)=>live.recentDecisions.filter(x=>(x.action==="delegated")===kind);
  const actions=arr=>arr.length?'<ul>'+arr.slice(0,4).map(x=>'<li>Day '+x.day+' · '+esc(x.result||x.proposal||x.action)+'</li>').join("")+'</ul>':'<p class="small">No recorded actions in this seven-day window.</p>';
@@ -3004,7 +3075,7 @@ function renderExecutiveWeekly(){
  $("ea-weekly-body").innerHTML='<p class="small"><b>'+esc(a?.n||"Founder")+'</b> · Day '+S.day+(since?' · last scheduled meeting Day '+since:' · no scheduled meeting yet')+'</p>'+
  '<p class="small"><b>Last '+live.periodDays+' tracked days:</b> revenue '+biCurrency(live.revenue)+' · operating costs '+biCurrency(live.costs)+' · operating '+(live.operatingProfit>=0?'profit ':'loss ')+biCurrency(Math.abs(live.operatingProfit))+'. Cash received '+biCurrency(live.cashIn)+' · cash paid '+biCurrency(live.cashOut)+' · net cash movement '+biCurrency(live.cashChange)+' · balance '+biCurrency(S.cash)+'. Investments affect cash, not operating profit.</p>'+
  '<p class="small"><b>Sales &amp; delivery:</b> '+live.wins+' wins · '+live.pipeline+' open leads · '+live.delivered+' delivered · '+live.missed+' missed · '+live.active+' active jobs.</p>'+
- '<b>Direct-report briefing</b><b>Department leaders, reviews &amp; budgets</b>'+dept+
+ '<b>Direct-report briefing</b><b>Department leaders, reviews &amp; budgets</b>'+dept+(reviewHtml?'<b>Corporate leader monthly scorecards</b>'+reviewHtml:'')+
  (units.length?'<b>General Managers · unit outcomes</b>'+units.map(x=>'<p class="small">'+esc(SERVICE_LINES[x.u.key].name)+' · '+esc(x.gm?.n||"Vacant GM")+' · '+x.active+' live contracts · '+(x.last?'Last Day '+x.last.day+' review '+esc(x.last.result)+(Number.isFinite(x.last.revenue)?' · Revenue '+biCurrency(x.last.revenue)+' · Billable '+(x.last.utilization===null?'no capacity':x.last.utilization+'%'):''):'Awaiting 30-day evidence')+'</p>').join(""):'')+
  '<b>Managers acted autonomously (last seven days)</b>'+actions(recent(true))+
  '<b>Earlier CEO decisions (last seven days)</b>'+actions(recent(false))+
@@ -3132,7 +3203,7 @@ $("business-lines").innerHTML=lines.map(x=>{
  const quality=x.delivered?Math.round((x.qualityTotal||0)/x.delivered)+'%':'Not yet measured';
  return '<div class="service-line"><b>'+esc(SERVICE_LINES[x.key].name)+'</b><div class="small">Opened Day '+x.since+' · '+(x.delivered||0)+' delivered · '+(x.missed||0)+' missed · Revenue '+biCurrency(x.revenue||0)+' · Contribution '+biCurrency(x.contribution||0)+'</div><div class="small">Offering: '+esc(offers[level][0])+' · Tier '+(level+1)+'/3 · Quality '+quality+' · '+specialists+' specialist(s)</div>'+(level<2?'<div class="small">'+((level===0?3:10)-(x.delivered||0))+' further deliveries unlock '+esc(offers[level+1][0])+'</div>':'')+(!x.delivered&&S.day-x.since>=30?'<p class="small risk-watch">No deliveries since launch. Review demand, staffing and active opportunities.</p>':'')+'</div>';
 }).join("");
-$("launch-service-line").disabled=!!S.ev||S.cash<120||S.exec.lines.some(x=>x.key===$("service-line-select").value);
+$("launch-service-line").disabled=!!S.ev||S.cash<120||!companyLaunchReadiness($("service-line-select").value).ready;
  renderBusinessUnits();
 }
 
@@ -3154,6 +3225,7 @@ function renderLadder(){
  const step=next?.ready?'<button type="button" data-ladder-action="approve" data-level="'+next.level+'" data-person="'+next.candidateId+'" '+(!cashReady?'disabled title="Requires 14 days payroll in cash"':'')+'>Approve '+esc(next.role)+(needBudget?' · CEO payroll exception':' now')+'</button>'+(!cashReady?'<p class="small">Funding gate: build enough cash to cover 14 days of payroll before this new appointment.</p>':''):
   '<p class="small">Milestone is locked until its documented requirements are met.</p>';
  const ops=managementOps(),pending=ops.requests.filter(r=>r.status==="open");
+ const reviewed=ops.scorecards.filter((x,i,a)=>a.findIndex(y=>y.personId===x.personId)===i).slice(0,8);
  const roster=g.appointments.map(n=>{
   const personN=person(n.id),reports=ladderCorporate().filter(x=>g.reportTo[x.id]===n.id);
   const trainee=person(n.successorId);
@@ -3178,16 +3250,21 @@ function renderLadder(){
  '<button type="button" data-ladder-action="hire-policy">Approve recruiting limits</button>'+
  '<p class="small">'+ops.hires+'/'+ops.hireSlots+' hires · '+biCurrency(ops.hireSpent)+' / '+biCurrency(ops.hireBudget)+' used · '+(S.day>=ops.since+ops.days?"EXPIRED":"Through Day "+(ops.since+ops.days))+'. Each hire also needs 21 days of payroll cash.</p>'+
  (pending.map(r=>'<div class="exec-proposal"><b>'+esc(DEPARTMENTS[r.dept].name)+' manager request</b><p>'+esc(person(r.managerId)?.n||"Manager unavailable")+' · '+esc(r.reason)+' One-time '+biCurrency(r.cost)+' and estimated '+biCurrency(r.payroll)+'/day wages.</p><div class="buttons"><button type="button" data-ladder-action="staff-approve" data-request-id="'+r.id+'" '+(!managementCashReady(r)?"disabled":"")+'>Approve hire</button><button type="button" data-ladder-action="staff-decline" data-request-id="'+r.id+'">Decline</button></div></div>').join("")||'<p class="small">No corporate manager requests pending.</p>')+'</details>'+
- '<details class="aux-details"><summary>Reporting lines and successors</summary>'+(roster||'<p class="small">Founder-led team. Reporting groups appear as you promote leaders.</p>')+'</details>'+
+ '<details class="aux-details"><summary>Reporting lines and successors</summary>'+(roster||'<p class="small">Founder-led team. Reporting groups appear as you promote leaders.</p>')+'</details>'+ 
+ '<details class="aux-details"><summary>Measured manager accountability</summary>'+(reviewed.map(x=>'<p class="small">Day '+x.day+' · '+esc(person(x.personId)?.n||"Former leader")+' ('+esc(x.role)+') · '+x.teamSize+' functional colleagues · '+(x.completed===null?'first baseline':'completed '+x.completed)+' · '+x.stressed+' stressed · '+x.unattended+' unassigned · '+esc(x.status)+'</p>').join('')||'<p class="small">Monthly evidence starts after real leadership practice. No historic reviews are invented.</p>')+'</details>'+
  '<p class="small">Next business-line readiness: '+launch.checks.filter(c=>c.met).length+'/'+launch.checks.length+' criteria met. Unmet: '+esc(launch.checks.filter(c=>!c.met).map(c=>c.label).join(" · ")||"none")+'.</p>';
  [...target.querySelectorAll("details.aux-details")].forEach((d,i)=>{if(opened[i])d.open=true;});
 }
 function renderLaunchGuide(){
  const t=$("company-unlock-guide");if(!t||editableInteractionPending())return;
- const s=ladderLaunchReadiness();
- t.textContent=(s.ready?"Company readiness achieved.":"Recommended prerequisites for expanding to another business: ")+
- s.checks.map(c=>(c.met?"✓ ":"○ ")+c.label+" ("+c.detail+")").join(" · ")+
- ". Existing purchased services remain valid; launching a new one still requires $120 and does not guarantee demand.";
+ const key=$("service-line-select").value,check=companyLaunchReadiness(key);
+ const rows=check.checks.map(c=>'<li>'+(c.met?"✓ ":"○ ")+esc(c.label)+': '+esc(c.detail)+'</li>').join("");
+ const html='<b>'+esc(check.chapter||"Business readiness")+' — '+(check.ready?"Ready":"Locked")+'</b>'+
+ '<p class="small">Each launch needs demonstrated achievements. Past purchases stay available, with no extra cost.</p><ul class="small">'+rows+'</ul>';
+ if(t.innerHTML!==html)t.innerHTML=html;
+ const button=$("launch-service-line");button.disabled=!!S.ev||!check.ready;
+ $("company-launch-status").textContent=check.owned?"Already owned — never buy the same portfolio twice.":check.ready?
+  "CEO approval available · $120 once; verified save required.":"Locked: "+check.checks.filter(c=>!c.met).map(c=>c.label).join(" · ");
 }
 
 function gameChapter(){const n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;return n>=100&&S.rep>=100?(S.team.length>=12&&leaders===2?"Established company":"Established specialist firm"):n>=30&&leaders===2?"Growing company":n>=12&&S.team.length>=6?"Small company":n>=3?"Small agency":"Founder";}
@@ -3213,9 +3290,13 @@ return["Lead your next strategic chapter",CEO_PRIORITIES[S.exec.priority].explai
 let lastGameEvent=null,toastTimeout=0;
 function gameToast(message){const t=$("game-toast");if(!t)return;t.textContent=message;t.hidden=false;clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>t.hidden=true,2400);}
 function gameRender(){
-const [title,hint,value,max,view,project]=gamePlan(),event={delivered:S.market.completed||0,wins:S.world?.stats?.won||0,built:S.built.length};
+const [title,hint,value,max,view,project]=gamePlan(),direction=companyDirection(),event={delivered:S.market.completed||0,wins:S.world?.stats?.won||0,built:S.built.length};
 if(lastGameEvent){if(event.delivered>lastGameEvent.delivered)gameToast("Client project completed — great work!");else if(event.built>lastGameEvent.built)gameToast("You unlocked a company capability!");else if(event.wins>lastGameEvent.wins)gameToast("Competitive contract won!");}lastGameEvent=event;
-$("game-chapter").textContent=gameChapter()+" · Day "+S.day;
+const legacyChapter=gameChapter();$("game-chapter").textContent=(legacyChapter===direction.stage?direction.stage:legacyChapter+" · "+direction.stage)+" · Day "+S.day;
+ const stageHtml='<div class="lead"><b>Company direction · '+esc(direction.stage)+'</b></div>'+
+ '<p class="small"><b>'+esc(direction.title)+'</b> · '+esc(direction.detail)+'</p>'+
+ '<p class="small">'+(direction.unmet.length?direction.unmet.length+" remaining growth requirements":"Next company milestone ready or under management")+'</p>';
+ if($("company-stage-today").innerHTML!==stageHtml)$("company-stage-today").innerHTML=stageHtml;
 $("game-goal").textContent=title;$("game-goal-hint").textContent=hint;$("game-goal-progress").textContent=value+" / "+max;$("game-goal-bar").style.width=Math.min(100,Math.max(0,value/Math.max(1,max)*100))+"%";
 $("game-primary").textContent=(project?"Open this project":view==="work"?"See client work":view==="team"?"Meet your team":view==="today"?"Read executive briefing":"Explore Growth")+" →";
 $("game-primary").dataset.go=view;if(project)$("game-primary").dataset.project=String(project);else delete $("game-primary").dataset.project;
@@ -3236,6 +3317,7 @@ const stressed=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35);
 const atRiskMoney=S.cash<S.team.reduce((sum,p)=>sum+dailySalary(p),0)*7;
 const unitRequests=(S.exec?.unitRequests||[]).filter(x=>x.status==="open"),unitShortages=(S.exec?.units||[]).filter(u=>S.deals.some(d=>d.unitKey===u.key&&!d.w));
 const managerRequests=managementOps().requests.filter(r=>r.status==="open");
+const direction=companyDirection();
 const actionable=urgent.length+stressed.length+(atRiskMoney?1:0)+unitRequests.length+unitShortages.length+managerRequests.length+(S.team.length>=5&&leadership?.level==="lead"?1:0);
 $("brief-headline").textContent=actionable?actionable+" area"+(actionable===1?"":"s")+" to review":"Your company is on track";
 $("brief-summary").textContent=actionable?"Your Executive Assistant has highlighted decisions requiring CEO attention. Routine work continues without intervention.":"Projects and development are moving forward. You're free to focus on strategy.";
@@ -3260,6 +3342,7 @@ notices.push('<div class="card"><h3>'+label+'</h3><p>'+esc(f.d.cl)+' — '+info+
 if(stressed.length)notices.push('<div class="card"><h3>Team wellbeing</h3><p>'+stressed.length+' employee'+(stressed.length===1?"":"s")+' under high stress. Review workload and recovery.</p><button type="button" data-go="team">Review team →</button></div>');
 if(atRiskMoney)notices.push('<div class="card"><h3>Cash runway</h3><p>Available cash covers fewer than seven days of payroll. Check delivery and new contracts.</p><button type="button" data-go="work">Review work →</button></div>');
 
+if(notices.length<3&&direction.unmet.length)notices.push('<div class="card"><h3>Executive Assistant · company milestone</h3><p>'+esc(direction.title)+' · '+esc(direction.detail)+'</p><button type="button" data-go="'+direction.view+'">Review progression →</button></div>');
 if(!notices.length)notices.push('<div class="card"><h3>No urgent decisions</h3><p>Employees are handling routine activities. Check Work or Growth when you want to make strategic decisions.</p></div>');
 const markup=notices.slice(0,3).join("");if(markup!==attentionSignature){attentionSignature=markup;$("attention-list").innerHTML=markup;}
 for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)days.textContent=f.d.dl+" days";}

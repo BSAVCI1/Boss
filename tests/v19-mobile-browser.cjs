@@ -16,13 +16,17 @@ document.addEventListener("DOMContentLoaded",async()=>{
   // v22.4D browser acceptance for simplified but still accessible management.
   const strategy=byId("today-ceo-tools"),story=byId("company-story");
   result.checks.simplifiedToday=!!strategy&&!strategy.open&&!!story&&!story.open&&byId("game-forward")?.getClientRects().length>0&&!!byId("ceo-action-center");
-  if(strategy){strategy.open=true;result.checks.disclosureOpens=document.querySelector("#executive-officers-panel")?.getClientRects().length>0;strategy.open=false;}
+  if(strategy){
+   strategy.open=true;
+   result.checks.disclosureOpens=document.querySelector("#executive-officers-panel")?.getClientRects().length>0;
+   const officeCards=[...document.querySelectorAll(".ceo-office-grid > div")];
+   const first=officeCards[0]?.getBoundingClientRect(),second=officeCards[1]?.getBoundingClientRect();
+   result.checks.ceoHierarchyStacked=officeCards.length===2&&first.height>0&&second.height>0&&second.top>=first.bottom-1;
+   strategy.open=false;
+  }
   const customer=byId("work-customers"),rivals=byId("growth-rivals"),archive=byId("upgrade-archive");
   result.checks.simplifiedManagement=!!customer&&!customer.open&&!!rivals&&!rivals.open&&!!archive&&!archive.open&&!!byId("ideas");
   result.checks.noDuplicatedQuickActions=document.querySelectorAll("#game-forward,#game-primary").length===2;
-   const officeGrid=document.querySelector(".ceo-office-grid");
-   const officeCards=officeGrid?[...officeGrid.children]:[];
-   result.checks.ceoHierarchyStacked=officeCards.length===2&&officeCards[1].getBoundingClientRect().top>=officeCards[0].getBoundingClientRect().bottom-1;
   const navRect=nav?.getBoundingClientRect();
   result.checks.navInViewport=!!navRect&&navRect.top>=0&&navRect.bottom<=window.innerHeight+3;
   for(const view of ["today","team","growth","work"]){

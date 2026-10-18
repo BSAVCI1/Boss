@@ -266,6 +266,10 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
+<section class="card" id="ceo-priority-card" aria-label="CEO command center">
+<div class="lead"><b>CEO command center</b><span class="small">Decisions and delegated work</span></div>
+<div id="ceo-priority-content"><p class="small">Preparing your company priorities.</p></div>
+</section>
 <div class="card ceo-office"><div class="eyebrow">CEO · COMPANY IDENTITY</div><h2 id="company-name">Business Services Group</h2><p id="company-identity"></p><div class="ceo-office-grid"><div><b>My direct reports</b><div id="ceo-direct-reports"></div></div><div><b>Executive Assistant</b><div id="ceo-assistant"></div></div></div></div>
 <div class="card" id="executive-officers-panel"><div class="lead"><b>Executive leadership · HR, CFO &amp; COO</b><span id="executive-officer-count" class="small">Founder-led</span></div><p class="small">Appoint proven employees only after business milestones. Actual payroll changes begin after CEO approval; delegated authority begins inactive until expressly granted.</p><div id="executive-officers"></div><p id="executive-officer-action-status" class="small" role="status"></p></div><div class="card ceo-direction"><div class="lead"><b>Your 90-day direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p><p id="ceo-direction-confirm" class="small" role="status" aria-live="polite"></p></div>
 <div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><details class="aux-details" id="ea-weekly-report"><summary>Executive Assistant · weekly business briefing</summary><div id="ea-weekly-body"></div></details><div id="ceo-action-center" aria-label="CEO approvals and exceptions"></div><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
@@ -1100,6 +1104,21 @@ function worldStrategy(){return WORLD_STRATEGIES[S.world.strategy]||WORLD_STRATE
 function worldDemand(){return economyPressure().factor*(S.day<=S.world.shockUntil?.92:1);}
 function worldRivalFor(lead){const rivals=S.world.rivals,ix=(lead.id*7+lead.sector.length)%rivals.length;
 const expert=rivals.find(r=>r.sector===lead.sector);return expert||rivals[ix];}
+// v22.4: quote model uses signed-deal modifiers, without pretending the final scope is fixed.
+function worldIndicativeFee(lead){
+ const tier=dealTier(),diff=1+(tier-1)*.32+.2;
+ let base=66+Math.floor(diff*13)+(tier-1)*17;
+ const lines=S.exec.lines.filter(x=>x&&SERVICE_OFFERS[x.key]&&x.since<=S.day)
+  .sort((a,b)=>((a.delivered||0)+S.deals.filter(d=>d.serviceLine===a.key).length)-
+                ((b.delivered||0)+S.deals.filter(d=>d.serviceLine===b.key).length)||a.since-b.since);
+ if(lines.length){const line=lines[0],level=line.delivered>=10?2:line.delivered>=3?1:0;
+  base=Math.round(base*SERVICE_OFFERS[line.key][level][1]);}
+ const draft={sector:lead.sector,base,pricingVersion:23,
+  priceFactor:({standard:1,competitive:.94,premium:1.10}[S.economy.pricing]||1),
+  termPriceFactor:S.day===0?1:({0:.96,7:1,14:1.04,30:1.08}[S.economy.terms]||1),
+  worldPriceFactor:S.day===0?1:worldStrategy().price};
+ return estimatedFee(draft);
+}
 function worldTenderPreview(lead){const rival=worldRivalFor(lead),policy=worldStrategy(),loyalty=S.market.customers[lead.client]?.loyalty||0;
 const pricePosition=S.economy.pricing,clientNeed=lead.preference||(["price","quality","speed","trust"][(lead.id+lead.client.length)%4]);
 const pos=({premium:1.1,competitive:.94,standard:1}[pricePosition]||1)*policy.price;
@@ -1112,7 +1131,7 @@ const specialist=lead.sector===S.market.focus?.035:0;
 const opponent=lead.sector===rival.sector?.06:0;
 const base=.77+needEdge+specialist-opponent+policy.win+(loyalty>=60?.075:0)+(S.day<=S.world.researchUntil?.06:0)+({0:-.04,7:0,14:.035,30:.065}[S.economy.terms]||0);
 const chance=Math.max(.48,Math.min(.94,base*worldDemand()));
-const feeHint=Math.floor((84+(Math.max(0,dealTier()-1)*18))*(SECTORS[lead.sector]?.premium||1)*pos);
+const feeHint=worldIndicativeFee(lead);
 return{chance,rival,clientNeed,feeHint,rivalIndex:rival.pricing,playerPosition:pos,reason:clientNeed==="price"?"competing mainly on price":clientNeed==="quality"?"comparing quality and reputation":clientNeed==="speed"?"prioritizing reliable delivery":"prioritizing trusted suppliers"};}
 function worldResolveTender(lead){const preview=worldTenderPreview(lead);
 const won=Math.random()<preview.chance;
@@ -2325,7 +2344,7 @@ function renderPipeline(){const stages=["prospect","qualified","proposal","negot
 $("pipeline-summary").textContent=S.pipeline.closed+" won · "+S.pipeline.leads.length+" open";
 $("pipeline-stages").innerHTML=stages.map((k,i)=>'<div class="pipestage"><strong>'+S.pipeline.leads.filter(l=>l.stage===k).length+'</strong>'+labels[i]+'</div>').join("");
 $("pipeline-details").innerHTML=S.pipeline.leads.slice(0,7).map(l=>{const t=l.stage==="negotiation"?worldTenderPreview(l):null;
-return '<div class="queue-item">'+esc(l.client)+' · '+SECTORS[l.sector].name+' · '+labels[stages.indexOf(l.stage)]+' · '+(S.day-l.created)+' days in pipeline'+(t?'<div class="small">Bid comparison: '+esc(t.rival.name)+' · Customer values '+esc(t.clientNeed)+' · Our estimated win chance '+Math.round(t.chance*100)+'% · Indicative fee '+biCurrency(t.feeHint)+' (not signed). No guaranteed outcome.</div>':'')+'</div>';}).join("")||'<div class="empty">No leads yet. A salesperson or marketer can build the next opportunity.</div>';}
+return '<div class="queue-item">'+esc(l.client)+' · '+SECTORS[l.sector].name+' · '+labels[stages.indexOf(l.stage)]+' · '+(S.day-l.created)+' days in pipeline'+(t?'<div class="small">Bid comparison: '+esc(t.rival.name)+' · Customer values '+esc(t.clientNeed)+' · Our estimated win chance '+Math.round(t.chance*100)+'% · Estimated signed-fee range '+biCurrency(Math.floor(t.feeHint*.85))+'–'+biCurrency(Math.ceil(t.feeHint*1.15))+' (scope dependent, not signed). No guaranteed outcome.</div>':'')+'</div>';}).join("")||'<div class="empty">No leads yet. A salesperson or marketer can build the next opportunity.</div>';}
 function renderSkillMap(){if(!$("skills-panel").open)return;const rows=KEYS.map(k=>{const sorted=S.team.slice().sort((a,b)=>b.s[k]-a.s[k]),best=sorted[0],learner=sorted[sorted.length-1];
 const coverage=S.team.filter(p=>p.s[k]>=2.6).length,demand=S.deals.filter(d=>d.need===k).length;
 const guidance=!coverage?(demand?"Capacity gap: develop a specialist or recruit before demand rises.":"No advanced specialist yet: prepare a trainee before expanding."):coverage===1?"Single-person dependency: build a backup.":"Multiple experienced specialists available.";
@@ -2575,6 +2594,14 @@ $("ceo-action-center").addEventListener("click",e=>{
  else if(b.dataset.ceoAction==="opportunity"){result=worldEventChoice(b.dataset.result);}
  if(result&&typeof result.then==="function")result.then(ok=>{if(!ok)$("ceo-action-status").textContent="Decision was not saved. Check the available cash and game state.";else renderCEODecisions();});
  else if(!result)$("ceo-action-status").textContent="Decision not completed. Review the cash reserve, eligibility, or saved game state.";
+});
+$("ceo-priority-card").addEventListener("click",e=>{
+ const button=e.target.closest("button[data-ceo-nav]");if(!button)return;
+ const target=button.dataset.ceoNav;
+ if(target==="property"){
+  $("property-options").open=true;navigate("growth");
+  requestAnimationFrame(()=>$("property-panel").scrollIntoView({block:"start"}));
+ }else if(target==="growth")navigate("growth");
 });
 $("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
 $("property-location").addEventListener("change",()=>{
@@ -3866,6 +3893,35 @@ if($("game-rivals").innerHTML!==rivalText)$("game-rivals").innerHTML=rivalText;
 }
 function gameAdvanceDays(){if(S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev||indexedWriteCount>0;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
 
+// Strategic advice is not a pending CEO approval. No money moves here.
+function ceoPremisesOpportunity(){
+ const people=propertyPeople().length,capacity=propertyCapacity();
+ if(people<=capacity)return null;
+ const types=["office","building","hq"].filter(k=>PROPERTY_TYPES[k].capacity>capacity);
+ const ready=types.filter(k=>propertyReadiness(k).ready),best=ready[0]||null;
+ return{people,capacity,best,quote:best?propertyQuote(best):null,options:ready.length};
+}
+function renderCEOFocus(){
+ const root=$("ceo-priority-content");if(!root||editableInteractionPending())return;
+ const office=ceoPremisesOpportunity();
+ const corporateRequests=managementOps().requests.filter(x=>x.status==="open").length;
+ const unitRequests=S.exec.unitRequests.filter(x=>x.status==="open").length;
+ const actualApprovals=corporateRequests+unitRequests;
+ const unitsWithMissingWork=S.exec.units.filter(u=>S.deals.some(d=>d.unitKey===u.key&&!d.w)).length;
+ const delegated=Object.keys(EXECUTIVE_ROLES).filter(k=>!!executiveOfficer(k,"active"));
+ const upcoming=companyDirection();
+ const priority=office?
+  '<h3>Strategic opportunity · Resolve workplace crowding</h3><p>'+office.people+' people are using '+office.capacity+' corporate seats. This reduces work efficiency and mood. '+
+  (office.best?'A qualified '+esc(PROPERTY_TYPES[office.best].name)+' offers '+PROPERTY_TYPES[office.best].capacity+' seats at '+biCurrency(office.quote.price)+' setup or purchase and '+biCurrency(office.quote.dayCost)+'/game-day ongoing cost.':'Expansion is locked: review missing property milestones.')+'</p>'+
+  '<button type="button" data-ceo-nav="property">Compare premises and decide →</button>':
+  '<h3>Strategic chapter · '+esc(upcoming.title)+'</h3><p>'+esc(upcoming.detail)+'</p><button type="button" data-ceo-nav="growth">Review next growth milestone →</button>';
+ const html='<div class="unit-metrics"><span>'+biCurrency(S.cash)+' cash</span><span>'+S.team.length+' colleagues</span><span>'+actualApprovals+' CEO staffing requests</span></div>'+
+ '<div class="exec-proposal">'+priority+'</div>'+
+ '<p class="small"><b>Management is handling:</b> '+(delegated.length?delegated.map(k=>EXECUTIVE_ROLES[k].short).join(', ')+' with active mandates':'Existing managers within approved authority')+
+ (unitsWithMissingWork?' · '+unitsWithMissingWork+' GM unit(s) coordinating unassigned work':'')+
+ '. Routine operations do not require CEO approval unless a real exception is raised.</p>';
+ if(root.innerHTML!==html)root.innerHTML=html;
+}
 function renderCEODecisions(){
  const root=$("ceo-action-center");if(!root||editableInteractionPending())return;
  const hiring=managementOps().requests.filter(x=>x.status==="open");
@@ -3897,10 +3953,9 @@ function renderCEODecisions(){
  (worldOfferEligibility(offer).allowed?"":"disabled")+'>Take opportunity</button><button type="button" data-ceo-action="opportunity" data-result="pass">Pass</button></div></div>');
  const escalation=requests.length;const cfoGuard=executiveOfficer("cfo","protect")&&!executiveFinanceGuard(0);
  const highHeadcount=S.team.length>=15,units=S.exec.units.length;
- const leadership=highHeadcount||units>=2?'<p class="small"><b>Executive structure recommendation:</b> '+(units>=2?
-  "COO to coordinate GMs, capacity and delivery; ":"")+(highHeadcount?
-  "HR/People Director for recruiting, succession and retention; CFO/Finance Director for forecasts, cash and capital. ":"")+
-  "Qualified internal executives can be appointed in Executive leadership above. Appointment adds future salary; explicit 90-day mandate is needed to delegate authority.</p>":"";
+ const unfilled=Object.keys(EXECUTIVE_ROLES).filter(k=>!person(S.exec.officers[k]?.id));
+ const recommendations=unfilled.filter(k=>(k==="coo"&&units>=2)||(k==="hr"&&highHeadcount)||(k==="cfo"&&S.market.completed>=20));
+ const leadership=recommendations.length?'<p class="small"><b>Unfilled executive offices:</b> '+recommendations.map(k=>EXECUTIVE_ROLES[k].short).join(', ')+'. Review qualification milestones before appointing a real colleague; no spending rights are implicit.</p>':"";
  const execOverdue=Object.entries(S.exec.officers).filter(([role,o])=>person(o.id)&&o.mandate&&S.day>=o.authoritySince+90);
  const upcoming=execOverdue.length?'<p class="small">Expired executive mandates: '+execOverdue.map(([role])=>EXECUTIVE_ROLES[role].short).join(', ')+'. Renew explicitly in Executive leadership before managers resume delegated decisions.</p>':'';
  const markup='<div class="lead"><b>CEO decision center</b><span class="small">'+escalation+' actionable decisions</span></div>'+
@@ -3949,7 +4004,7 @@ for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)day
 }
 function refresh(){
 if(editableInteractionPending())return;
-renderLadder();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
+renderLadder();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);

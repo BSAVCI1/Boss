@@ -1531,6 +1531,14 @@ function ensureProgression(state){
  if(!Number.isFinite(g.authorityDaily)||g.authorityDaily<0)g.authorityDaily=0;
  if(!Array.isArray(g.events))g.events=[];g.events=g.events.slice(-60);
  if(!Number.isFinite(g.lastChecked))g.lastChecked=-1;
+ if(!g.operations||typeof g.operations!=="object")g.operations={since:state.day,days:90,hireBudget:0,hireSpent:0,hireSlots:0,hires:0,perHire:0,requests:[],sequence:1,lastAsked:{},history:[],shared:[]};
+ const o=g.operations;
+ for(const [k,v] of Object.entries({since:state.day,days:90,hireBudget:0,hireSpent:0,hireSlots:0,hires:0,perHire:0,sequence:1}))if(!Number.isFinite(o[k])||o[k]<0)o[k]=v;
+ if(!Array.isArray(o.requests))o.requests=[];if(!Array.isArray(o.history))o.history=[];if(!Array.isArray(o.shared))o.shared=[];
+ if(!o.lastAsked||typeof o.lastAsked!=="object")o.lastAsked={};
+ o.requests=o.requests.filter(r=>r&&Number.isInteger(r.id)&&["open","approved","declined","delegated","withdrawn"].includes(r.status)).slice(-45);
+ o.history=o.history.slice(-55);
+ o.shared=o.shared.filter(a=>a&&Number.isInteger(a.employeeId)&&state.team.some(p=>p.id===a.employeeId)&&state.exec?.units?.some(u=>u.key===a.unitKey)).slice(-40);
 }
 function ladderNode(id){return S.org?.progression?.appointments?.find(n=>n.id===id)||null;}
 function ladderCorporate(){
@@ -1538,6 +1546,81 @@ function ladderCorporate(){
  !DEPT_KEYS.some(k=>orgManager(k)?.id===p.id||DEPARTMENTS[k].skills.some(role=>orgSubManager(k,role)?.id===p.id)));
 }
 function ladderPremium(p){const n=p&&ladderNode(p.id);return n?LADDER[n.level].bonus:0;}
+
+const MANAGEMENT_HIRE_COST=20;
+let managementHiringDraft=null;
+function managementOps(){return S.org.progression.operations;}
+function managementLead(dept){
+ const rank={manager:1,senior:2,director:3};
+ const candidates=S.org.progression.appointments.filter(n=>rank[n.level]&&person(n.id)?.department===dept&&!unitOfPerson(n.id)&&n.id!==S.ops.assistantId);
+ return person(candidates.sort((a,b)=>rank[b.level]-rank[a.level]||a.id-b.id)[0]?.id)||null;
+}
+function managementWorkload(dept){
+ const roles=dept==="commercial"?["sales","mkt"]:["prod","ops"];
+ const staff=ladderCorporate().filter(p=>p.department===dept&&!ladderNode(p.id));
+ const jobs=S.deals.filter(d=>!d.unitKey&&roles.includes(d.need));
+ const unattended=jobs.filter(d=>!d.w).length,busy=staff.filter(p=>p.t.startsWith("d")).length;
+ return{staff,unattended,busy,overloaded:unattended>=2||jobs.length>=Math.max(2,staff.length)&&busy>=Math.max(1,staff.length-1)};
+}
+function managementHiringAvailable(r){
+ const o=managementOps();return S.day<o.since+o.days&&o.hires<o.hireSlots&&o.hireSpent+r.cost<=o.hireBudget&&r.cost<=o.perHire;
+}
+function managementCashReady(r){return S.cash>=r.cost+(S.team.reduce((n,p)=>n+dailySalary(p),0)+r.payroll)*21;}
+function managementHire(r,authority){
+ if(!r||r.status!=="open"||managementLead(r.dept)?.id!==r.managerId||!managementCashReady(r)||
+ (authority==="delegated"&&!managementHiringAvailable(r)))return false;
+ const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);
+ p.department=r.dept;p.role.primary=r.skill;p.s[r.skill]=Math.max(2,p.s[r.skill]);p.role.auto=true;
+ S.team.push(p);S.cash-=r.cost;biMoney("recruiting",r.cost,"Corporate "+authority+" staffing");
+ r.status=authority;r.decided=S.day;r.hiredId=p.id;
+ const o=managementOps();if(authority==="delegated"){o.hireSpent+=r.cost;o.hires++;}
+ o.history.unshift({day:S.day,kind:"hire",dept:r.dept,managerId:r.managerId,employeeId:p.id,approval:authority,cost:r.cost,payroll:dailySalary(p)});
+ o.history=o.history.slice(0,55);structural="";ladderSignature="";
+ logIt(person(r.managerId).n+" "+(authority==="delegated"?"hired within authority":"received CEO approval to hire")+" "+p.n+" for "+biCurrency(r.cost)+" plus recurring "+biCurrency(dailySalary(p))+"/day.");return true;
+}
+function managementReview(){
+ const o=managementOps();
+ for(const dept of DEPT_KEYS){
+  const manager=managementLead(dept),x=managementWorkload(dept);
+  if(!manager||!x.overloaded||o.requests.some(r=>r.dept===dept&&r.status==="open")||S.day-(o.lastAsked[dept]??-999)<30)continue;
+  const choices=dept==="commercial"?["sales","mkt"]:["prod","ops"];
+  const gap=k=>S.deals.filter(d=>!d.unitKey&&!d.w&&d.need===k).length-x.staff.filter(p=>p.role.primary===k).length;
+  const skill=choices.sort((a,b)=>gap(b)-gap(a))[0];
+  const r={id:o.sequence++,day:S.day,dept,managerId:manager.id,status:"open",skill,cost:MANAGEMENT_HIRE_COST,payroll:1.5*S.mod.cost,reason:x.unattended+" unassigned contracts; "+x.busy+"/"+x.staff.length+" busy. "+ROLE_NAMES[skill]+" recommended."};
+  o.lastAsked[dept]=S.day;o.requests.unshift(r);o.requests=o.requests.slice(0,45);
+  if(managementHiringAvailable(r)&&managementCashReady(r))managementHire(r,"delegated");
+  else logIt(manager.n+" requested a "+ROLE_NAMES[skill]+" hire; requires CEO decision.");
+ }
+}
+function managementSetHiringPolicy(amount,slots){
+ if(!Number.isInteger(amount)||amount<0||amount>10000||!Number.isInteger(slots)||slots<0||slots>20)return false;
+ return unitCommit(()=>{const o=managementOps();o.since=S.day;o.days=90;o.hireBudget=amount;o.hireSpent=0;o.hireSlots=slots;o.hires=0;o.perHire=amount>=20?20:0;
+ o.history.unshift({day:S.day,kind:"authorization",limit:amount,slots});managementHiringDraft=null;ladderSignature="";
+ logIt("CEO approved corporate recruiting up to "+slots+" hires and "+biCurrency(amount)+" for 90 days; no upfront cost.");return true;});
+}
+function managementRequestDecision(id,decision){
+ const o=managementOps(),r=o.requests.find(x=>x.id===id&&x.status==="open");
+ if(!r||!["approve","decline"].includes(decision)||decision==="approve"&&!managementCashReady(r))return false;
+ return unitCommit(()=>decision==="decline"?(r.status="declined",r.decided=S.day,o.history.unshift({day:S.day,kind:"declined",request:id}),true):managementHire(r,"approved"));
+}
+function managementSharedCandidates(key){
+ const o=managementOps(),u=S.exec.units.find(x=>x.key===key);if(!u||!person(u.managerId))return[];
+ return ladderCorporate().filter(p=>!ladderNode(p.id)&&!S.deals.some(d=>d.w===p.id)&&
+ !o.shared.some(a=>a.employeeId===p.id&&a.until>S.day&&a.status==="active"));
+}
+function managementShareStaff(key,id){
+ const p=person(id),o=managementOps(),u=S.exec.units.find(x=>x.key===key);
+ if(!u||!person(u.managerId)||!p||!managementSharedCandidates(key).some(x=>x.id===id))return false;
+ return unitCommit(()=>{o.shared.push({unitKey:key,employeeId:id,since:S.day,until:S.day+30,status:"active"});
+ o.shared=o.shared.slice(-40);o.history.unshift({day:S.day,kind:"shared",unitKey:key,employeeId:id,until:S.day+30});
+ unitRecord(key,"shared","CEO allocated "+p.n+" for 30 days of future unit contracts; primary reporting and salary unchanged.");unitViewSignature="";return true;});
+}
+function managementSupportAllowed(d,p){
+ if(!d?.unitKey||!p||unitOfPerson(p.id)||ladderNode(p.id)||p.id===S.ops.assistantId)return false;
+ return managementOps().shared.some(a=>a.unitKey===d.unitKey&&a.employeeId===p.id&&a.until>S.day&&a.status==="active")&&
+ !DEPT_KEYS.some(k=>orgManager(k)?.id===p.id||DEPARTMENTS[k].skills.some(role=>orgSubManager(k,role)?.id===p.id));
+}
+
 function ladderPayroll(){return ladderCorporate().reduce((sum,p)=>sum+ladderPremium(p)*S.mod.cost,0);}
 function ladderEvaluation(level){
  const rule=LADDER[level],g=S.org.progression;if(!rule)return null;
@@ -1620,6 +1703,7 @@ function ladderDay(){
   try{ladderPromote(next.level,next.candidateId,false);}finally{inDailyTick=false;}
  }
  ladderCoachSuccessors();
+ managementReview();
 }
 
 function ladderCoachSuccessors(){
@@ -1999,7 +2083,7 @@ function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
 function release(p){if(!p)return;for(const d of S.deals)if(d.w===p.id)d.w=null;p.t="idle";}
 function removePerson(p){if(S.team.length<=1)return false;for(const u of S.exec?.units||[]){if(u.managerId===p.id){u.managerId=null;for(const req of S.exec.unitRequests||[])if(req.key===u.key&&req.status==="open"){req.status="withdrawn";req.decidedAt=S.day;}}u.staffIds=u.staffIds.filter(id=>id!==p.id);}if(S.ops.assistantId===p.id)S.ops.assistantId=null;for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===p.id)S.org.departments[k].managerId=null;release(p);S.team=S.team.filter(x=>x.id!==p.id);
- if(S.org?.progression){const g=S.org.progression;g.appointments=g.appointments.filter(n=>n.id!==p.id);delete g.reportTo[p.id];for(const id of Object.keys(g.reportTo))if(g.reportTo[id]===p.id)delete g.reportTo[id];ladderReassign();ladderSignature="";}
+ if(S.org?.progression){const g=S.org.progression;g.appointments=g.appointments.filter(n=>n.id!==p.id);delete g.reportTo[p.id];for(const id of Object.keys(g.reportTo))if(g.reportTo[id]===p.id)delete g.reportTo[id];if(g.operations){g.operations.shared=g.operations.shared.filter(a=>a.employeeId!==p.id);for(const r of g.operations.requests)if(r.managerId===p.id&&r.status==="open")r.status="withdrawn";}ladderReassign();ladderSignature="";}
  avatars.delete(p.id);return true;}
 function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S.seeds.includes(k));if(!unused.length)return false;
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
@@ -2047,10 +2131,10 @@ if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5=
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
 labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev||(d.w!==p.id&&!unitAssignmentAllowed(d,p)))return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;performanceAssign(d,p);}save();renderStructure();refresh();}
-function unitAssignmentAllowed(d,p){const owner=unitOfPerson(p.id);if(owner?.managerId===p.id)return false;return d.unitKey?owner?.key===d.unitKey:!owner;}
+function unitAssignmentAllowed(d,p){const owner=unitOfPerson(p.id);if(owner?.managerId===p.id)return false;return d.unitKey?owner?.key===d.unitKey||managementSupportAllowed(d,p):!owner;}
 function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;
  const u=d.unitKey?unitOfPerson(p.id):null;
- const unitFit=d.unitKey?(u?.key===d.unitKey?1.08:u?.key?.88:1):1;
+ const unitFit=d.unitKey?(u?.key===d.unitKey?1.08:managementSupportAllowed(d,p)?.96:u?.key?.88:1):1;
  return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*unitFit);}
 function bestIdle(d,department=null){return S.team.filter(p=>(!department||p.department===department)&&unitAssignmentAllowed(d,p)&&p.id!==S.ops.assistantId&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&!(S.exec?.units||[]).some(u=>u.managerId===p.id)&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
 function forecast(d){const assigned=person(d.w);const candidate=assigned||bestIdle(d);const speed=workerSpeed(candidate,d);const remaining=Math.max(0,d.work-d.prog);const eta=speed?Math.ceil(remaining/speed):null;const slack=eta===null?null:d.dl-eta;const risk=!assigned?"unassigned":slack<0?"critical":slack<=4?"watch":"ok";return{d,assigned,candidate,eta,slack,risk,fit:speed};}

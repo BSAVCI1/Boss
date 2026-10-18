@@ -3220,7 +3220,10 @@ if(editableInteractionPending())return;
  // Preserve it across redraws without prematurely changing the saved company.
  const selectedChoices=new Map([...target.querySelectorAll('select[id^="unit-"]')].map(el=>[el.id,el.value]));
  for(const [id,value] of Object.entries(S.ui.unitSelectDrafts))if(!selectedChoices.has(id))selectedChoices.set(id,value);
- const openAuthority=new Set([...target.querySelectorAll('details[data-unit-open]')].filter(el=>el.querySelector('details.aux-details')?.open).map(el=>el.dataset.unitOpen));
+ // Preserve every nested accordion, not just the first one; CEO authority is often the third section.
+ const openNested=new Map([...target.querySelectorAll('details[data-unit-open]')].map(el=>[
+  el.dataset.unitOpen,[...el.querySelectorAll('details.aux-details')].flatMap((d,i)=>d.open?[i]:[])
+ ]));
  const signature=JSON.stringify({units:S.exec.units,requests:S.exec.unitRequests,shared:managementOps().shared,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id]),draftSelections:S.ui.unitSelectDrafts});
  if(signature===unitViewSignature)return;unitViewSignature=signature;
  const choices=S.exec.lines.map(l=>{
@@ -3272,7 +3275,10 @@ if(editableInteractionPending())return;
  target.innerHTML='<h3>Operating units</h3><p class="small">Build an independent management structure from a service you already purchased; no second launch fee. Managers and dedicated employees affect future work, while all cash and signed contract history remain consolidated.</p>'+choices;
  for(const [id,value] of selectedChoices){const el=$(id);if(el&&[...el.options].some(option=>option.value===value))el.value=value;}
  for(const l of S.exec.lines){const d=S.ui.unitFieldDrafts[l.key];if(!d)continue;for(const [field,value] of Object.entries(d)){const el=target.querySelector('input[data-unit-key="'+l.key+'"][data-unit-field="'+field+'"]');if(el)el.value=value;}}
- for(const el of target.querySelectorAll('details[data-unit-open]'))if(openAuthority.has(el.dataset.unitOpen)){const nested=el.querySelector('details.aux-details');if(nested)nested.open=true;}
+ for(const el of target.querySelectorAll('details[data-unit-open]')){
+  const children=[...el.querySelectorAll('details.aux-details')];
+  for(const index of openNested.get(el.dataset.unitOpen)||[])if(children[index])children[index].open=true;
+ }
 }
 
 function executiveLaunch(key){

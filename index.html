@@ -1643,7 +1643,7 @@ function managementRequestDecision(id,decision){
 }
 function managementSharedCandidates(key){
  const o=managementOps(),u=S.exec.units.find(x=>x.key===key);if(!u||!person(u.managerId))return[];
- return ladderCorporate().filter(p=>!ladderNode(p.id)&&!S.deals.some(d=>d.w===p.id)&&
+ return ladderCorporate().filter(p=>!ladderNode(p.id)&&!executiveRoleOf(p.id)&&!S.deals.some(d=>d.w===p.id)&&
  !o.shared.some(a=>a.employeeId===p.id&&a.until>S.day&&a.status==="active"));
 }
 function managementShareStaff(key,id){
@@ -2076,7 +2076,7 @@ logIt("CEO renewed "+DEPARTMENTS[dept].name+" budgets until Day "+(p.since+p.day
 orgControlsSignature="";save();renderOrganization();refresh();return true;
 }
 function orgManager(key){const id=S.org.departments[key]?.managerId;const p=person(id);return p&&p.department===key&&p.role.primary==="lead"&&p.id!==S.ops.assistantId?p:null;}
-function orgReports(key){const mgr=orgManager(key);return S.team.filter(p=>p.department===key&&p.id!==mgr?.id&&p.id!==S.ops.assistantId&&!unitOfPerson(p.id));}
+function orgReports(key){const mgr=orgManager(key);return S.team.filter(p=>p.department===key&&p.id!==mgr?.id&&p.id!==S.ops.assistantId&&!executiveRoleOf(p.id)&&!unitOfPerson(p.id));}
 function orgPeriod(){for(const key of DEPT_KEYS){const d=S.org.departments[key];if(S.day-d.periodStart>=30){
 const v=d.stats,attempts=v.delivered+(v.missed||0),hasEvidence=key==="commercial"?(v.leads>0||v.wins>0):attempts>=3;
 const achieved=key==="commercial"?(v.leads>=d.target.leads||v.wins>=Math.max(2,Math.ceil(d.target.leads/2))):attempts>=3&&Math.round(100*v.onTime/attempts)>=d.target.onTime;
@@ -2116,7 +2116,7 @@ structural="";save();renderStructure();renderOrganization();refresh();return tru
 }
 function orgChooseManager(dept,id){if(S.ev||!DEPARTMENTS[dept])return;const d=S.org.departments[dept];const before=coachSnap(id||S.org.departments[dept].managerId);
 if(!id){const prior=orgManager(dept);d.managerId=null;if(prior){orgRestoreSpecialist(prior);logIt(prior.n+" stepped down as "+DEPARTMENTS[dept].name+" manager.");}}
-else{const p=person(id);if(!p||p.department!==dept||p.id===S.ops.assistantId||unitOfPerson(p.id)||!(p.career.rank>=1||p.career.xp>=10))return;
+else{const p=person(id);if(!p||p.department!==dept||p.id===S.ops.assistantId||executiveRoleOf(p.id)||unitOfPerson(p.id)||!(p.career.rank>=1||p.career.xp>=10))return;
 for(const key of DEPT_KEYS){if(S.org.departments[key].managerId===id)S.org.departments[key].managerId=null;for(const role of DEPARTMENTS[key].skills)if(S.org.departments[key].subManagers?.[role]===id)S.org.departments[key].subManagers[role]=null;}
 const former=orgManager(dept);if(former&&former.id!==id)orgRestoreSpecialist(former);
 for(const d of S.deals)if(d.w===p.id)d.w=null;
@@ -2125,7 +2125,7 @@ p.t="idle";p.role.primary="lead";p.role.auto=true;p.role.autoTask=false;
 d.managerId=id;logIt(p.n+" now manages "+DEPARTMENTS[dept].name+". Salary rises by $0.75/day; direct delivery time is reduced.");}
 coachDecision(DEPARTMENTS[dept].name+" management change",before,"Reporting lines and supervisor salary/capacity have changed. Review department outcomes after 30 days.",id||null,30);
 structural="";save();renderStructure();renderOrganization();refresh();}
-function orgChangeDepartment(pid,dept){if(S.ev||!DEPARTMENTS[dept])return;const p=person(pid);if(!p||p.id===S.ops.assistantId||unitOfPerson(pid)||p.department===dept)return;const before=coachSnap(pid);
+function orgChangeDepartment(pid,dept){if(S.ev||!DEPARTMENTS[dept])return;const p=person(pid);if(!p||p.id===S.ops.assistantId||executiveRoleOf(pid)||unitOfPerson(pid)||p.department===dept)return;const before=coachSnap(pid);
 let wasManager=false;for(const key of DEPT_KEYS)if(S.org.departments[key].managerId===pid){S.org.departments[key].managerId=null;wasManager=true;}
 if(wasManager)orgRestoreSpecialist(p);p.department=dept;if(!p.t.startsWith("d")){p.t="idle";p.role.autoTask=false;}
 logIt(p.n+" moved to "+DEPARTMENTS[dept].name+" department.");coachDecision("Move "+p.n+" to "+DEPARTMENTS[dept].name,before,"Changed reporting lines, responsibility and manager support.",pid,30);structural="";save();renderStructure();renderOrganization();refresh();}
@@ -3733,7 +3733,9 @@ $("company-name").textContent="Business Services Group";
 const primary=SECTORS[S.market.focus]?.name||"Services",strategy=worldStrategy().name;
 $("company-identity").textContent="B2B client services · Serving "+primary+" and "+S.market.open.length+" industries · "+strategy+".";
 const expanded=new Set([...$("ceo-direct-reports").querySelectorAll("details[data-ceo-team]")].filter(x=>x.open).map(x=>x.dataset.ceoTeam));
-$("ceo-direct-reports").innerHTML=DEPT_KEYS.map(key=>{
+$("ceo-direct-reports").innerHTML=Object.entries(S.exec.officers).filter(([role,o])=>person(o.id)).map(([role,o])=>
+ '<div class="ceo-report"><b>'+esc(EXECUTIVE_ROLES[role].short)+' · Direct report</b><div>'+esc(person(o.id).n)+
+ ' · '+esc(EXECUTIVE_ROLES[role].title)+' · '+(executiveOfficer(role,"act")?"Authorized through Day "+(o.authoritySince+90):"No current delegated mandate")+'</div></div>').join("")+DEPT_KEYS.map(key=>{
 const chief=orgManager(key),staff=orgReports(key),direct=orgDirectReports(key);
 const managed=DEPARTMENTS[key].skills.map(role=>{const head=orgSubManager(key,role);
 return head?'<div class="small"><b>'+esc(ROLE_NAMES[role])+' Manager · '+esc(head.n)+' (#'+head.id+')</b> · '+orgSubReports(key,role).length+' reports'+orgSubReports(key,role).map(p=>'<div class="small">↳ '+esc(p.n)+' (#'+p.id+')</div>').join("")+'</div>':"";}).join("");

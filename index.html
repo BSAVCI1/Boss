@@ -2408,6 +2408,12 @@ S.pipeline.leads=S.pipeline.leads.filter(l=>{if(l.age>=100){biFunnel("lost",l);r
 function chooseAutoTask(p){const policy=S.pipeline.mode,qualified=qualifiedPipeline();
 const shortage=qualified<S.pipeline.target,stress=p.career.stress;
 if(stress>=63||p.career.burnout>=35)return"rest";
+// A ladder-appointed manager with actual direct reports should lead people, not endlessly do specialist work.
+const node=ladderNode(p.id);
+if(node&&["manager","senior","director"].includes(node.level)){
+ const reports=ladderCorporate().filter(x=>S.org.progression.reportTo[x.id]===p.id);
+ if(reports.length)return reports.some(x=>x.career.stress>55)?"coachteam":"teach";
+}
 if(p.role.primary==="sales")return shortage?"prospect":policy==="innovation"?"study":S.pipeline.leads.length>pipelineCapacity()+S.pipeline.target?"teach":"prospect";
 if(p.role.primary==="mkt")return shortage?"market":policy==="innovation"?"exp":S.pipeline.leads.length>pipelineCapacity()+S.pipeline.target?"study":"market";
 if(p.role.primary==="lead"){const reports=orgReports(p.department);return reports.some(x=>x.career.stress>55)?"coachteam":"teach";}
@@ -2423,7 +2429,7 @@ if(p.id===S.ops.assistantId||!p.role.auto||p.t.startsWith("d")||p.career.recover
 if(p.t==="idle"||p.role.autoTask&&S.day%5===0){
 const next=chooseAutoTask(p);if(p.t!==next){p.t=next;changed=true;}p.role.autoTask=true;}}
 return changed;}
-function mentorDay(lead){const pool=lead.role.primary==="lead"?orgReports(lead.department):S.team.filter(x=>x.id!==lead.id);const others=pool.filter(x=>x.career.recoveryDays===0).sort((a,b)=>a.s[strongest(lead)]-b.s[strongest(lead)]);
+function mentorDay(lead){const pool=ladderNode(lead.id)?ladderCorporate().filter(x=>S.org.progression.reportTo[x.id]===lead.id):(lead.role.primary==="lead"?orgReports(lead.department):S.team.filter(x=>x.id!==lead.id));const others=pool.filter(x=>x.career.recoveryDays===0).sort((a,b)=>a.s[strongest(lead)]-b.s[strongest(lead)]);
 const target=others[0];if(target){const k=strongest(lead);if(lead.s[k]>target.s[k]){target.s[k]+=.13*S.mod.learn;target.career.xp+=.12;lead.role.mentored++;target.career.stress=clamp(target.career.stress-1.6);}}
 }
 function capabilityProgress(){let n=0;for(const r of RECIPES){if(S.built.some(b=>b[0]===r[2]))continue;

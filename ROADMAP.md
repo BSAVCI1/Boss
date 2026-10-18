@@ -10,6 +10,13 @@ This roadmap now operates **one version or small batch per new development chat*
 
 **Known initial state (verify live before each action):** v22.2 is deployed; [v22.3 draft PR #39](https://github.com/BSAVCI1/Boss/pull/39) and [v22.4 draft PR #44](https://github.com/BSAVCI1/Boss/pull/44) are not. The latest v22.4 CI pass at its development branch [#39120661653](https://github.com/BSAVCI1/Boss/actions/runs/39120661653) is not a production release.
 
+## v22.3C3 — organic leadership competency (IN DEVELOPMENT / DRAFT, 18 October 2026)
+
+- **Root cause proved in code:** initialized leadership skills had no reliable high-rank growth through observed real ladder reporting lines; a fresh organically grown Manager could remain below 65 and a Senior below 70 indefinitely despite payroll-funded years of productive management. This is separate from the intact 45/55/65/70 thresholds and company milestones.
+- **Draft implementation:** observed productive supervision develops planning/delegation; active coaching and existing 14-day successor mentoring develop people skills at all ladder ranks. A CEO-authorized $12, 14-Study-day, once-per-rank course is an optional bounded development path. All ranks, reporting lines, appointments, salaries, hiring, promotion cash/reserve checks, delegation authority, economic terms and old-save values remain governed by existing rules.
+- **Evidence still required:** new real-engine Day-0-to-Day-1460 replay, earned Senior and Director actual eligibility, 20-corporate/two-GM/50-delivery HQ readiness, no unauthorised purchase, full 730-day economic and old-save/mobile/IndexedDB CI, latest SHA GitHub Actions, and owner's original Safari acceptance. A Director and headquarters purchase must NEVER be claimed on cash alone. Draft [PR #39](https://github.com/BSAVCI1/Boss/pull/39) and open [issue #40](https://github.com/BSAVCI1/Boss/issues/40); see [C3 implementation and QA record](docs/V22_3C3_ORGANIC_LEADERSHIP.md).
+- **Status:** PARTIAL pending exact-head strict CI and organic Director/HQ proof; v22.3 overall stays unreleased, production v22.2; parallel PR #44 unchanged. No merge/deployment.
+
 ## Approved CEO-first experience roadmap — 18 October 2026
 
 **Product direction:** evolve the default experience from founder (hands-on) to business leader (delegate) to group CEO (strategic direction, executive exceptions, capital). Player approved findings from four Day-4704 Today/Work/Team/Growth screenshots. The authoritative [product audit and acceptance criteria](docs/V22_4_CEO_EXPERIENCE_AND_PRODUCT_AUDIT.md) accompany Boss [Notion](https://app.notion.com/p/3fbff3ed9aa581e29a02cba3dfcad323). Never reset the iPhone company or silently reprice history.

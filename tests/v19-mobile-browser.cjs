@@ -232,6 +232,16 @@ document.addEventListener("DOMContentLoaded",async()=>{
    qualityField.value="88";qualityField.dispatchEvent(new Event("input",{bubbles:true}));qualityField.blur();
    await new Promise(r=>setTimeout(r,1000));
    result.checks.unitAuthorityDisclosureRetained=byId("unit-quality-technology")?.closest("details.aux-details")?.open===true;
+   // v22.0.1: more than one nested operating-unit accordion must survive several real game ticks.
+   const unitBefore=document.querySelector('#business-units details[data-unit-open="technology"]');
+   const supportBefore=unitBefore?.querySelector("details.aux-details");
+   const scorecardBefore=byId("unit-quality-technology")?.closest("details.aux-details");
+   if(supportBefore&&scorecardBefore){supportBefore.open=true;scorecardBefore.open=true;}
+   await new Promise(r=>setTimeout(r,2500)); // Three live 3x game-day timers should request a unit re-render.
+   const unitAfter=document.querySelector('#business-units details[data-unit-open="technology"]');
+   const nestedAfter=[...(unitAfter?.querySelectorAll("details.aux-details")||[])];
+   result.checks.allGMAuthoritySectionsRetained=!!unitAfter?.open&&nestedAfter.length>=3&&
+    nestedAfter[0].open===true&&!!byId("unit-quality-technology")?.closest("details.aux-details")?.open;
    // v21.4c: corporate manager budget remains editable throughout a live mobile refresh.
    document.querySelector('.bottom-nav button[data-view="team"]').click();
    const hiringField=byId("management-hire-budget"),slotsField=byId("management-hire-slots");
@@ -346,6 +356,7 @@ async function runBrowser(){
   assert.equal(outcome.checks.partialUnitNumericProtected,true,"Partial unit budget edits must not be overwritten mid-typing");
   assert.equal(outcome.checks.teammateDraftSurvivesRepaint,true,"Chosen teammate must remain selected until Transfer is clicked");
   assert.equal(outcome.checks.unitAuthorityDisclosureRetained,true,"Editing must not collapse the authority panel");
+  assert.equal(outcome.checks.allGMAuthoritySectionsRetained,true,"All open GM subsections must remain expanded across live repaints");
   assert.equal(outcome.checks.managerHiringDraftStable,true,"Manager recruitment budget must allow uninterrupted multi-digit typing");
   assert.equal(outcome.checks.managerHiringStillRequiresApply,true,"Manager policy disclosure and slots must remain editable");
   assert.equal(outcome.checks.managerHiringBudgetNotAutoCommitted,true,"Typing manager hiring budget must not authorize money until Apply is pressed");

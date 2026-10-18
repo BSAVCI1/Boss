@@ -1834,7 +1834,9 @@ function ensureProperties(state){
   if(!x||!Number.isInteger(x.id)||used.has(x.id)||!PROPERTY_TYPES[x.type])return false;
   if(x.unitKey&&(!SERVICE_LINES[x.unitKey]||!validUnits.has(x.unitKey)))return false;
   used.add(x.id);
-  if(!["active","inactive","closed"].includes(x.status))x.status="inactive";
+  if(!["active","inactive","closed","sold"].includes(x.status))x.status="inactive";
+  if(!Number.isFinite(x.book)||x.book<0)x.book=x.investment||0;
+  if(!Number.isFinite(x.lastDepreciation))x.lastDepreciation=x.since;
   if(!Number.isFinite(x.arrears)||x.arrears<0)x.arrears=0;
   if(!Number.isFinite(x.since))x.since=state.day;
   return true;
@@ -1860,7 +1862,7 @@ function propertyReadiness(type,unitKey=null){
  const def=PROPERTY_TYPES[type];
  if(!def)return{ready:false,checks:[{label:"Select an available premise",met:false}]};
  const corp=propertyPeople().length,leaders=S.org.progression.appointments,manager=leaders.some(n=>["manager","senior","director"].includes(n.level));
- const owned=S.exec.property.sites.some(x=>x.type===type&&x.status!=="closed"&&!x.unitKey);
+ const owned=S.exec.property.sites.some(x=>x.type===type&&!["closed","sold"].includes(x.status)&&!x.unitKey);
  const payroll=S.team.reduce((sum,p)=>sum+dailySalary(p),0);
  const checks=[];
  if(type==="studio"){checks.push({label:"At least five teammates",met:corp>=5});checks.push({label:"Five completed projects",met:S.market.completed>=5});}
@@ -1891,7 +1893,7 @@ function propertyOpen(type,unitKey=null){
   const old=propertyActive(unitKey);
   if(old)old.status=old.type==="building"||old.type==="hq"?"inactive":"closed";
   const entry={id:state.seq++,type,unitKey,status:"active",since:S.day,
-   investment:def.kind==="owned"?def.price:0,setup:def.kind==="lease"?def.price:0,arrears:0};
+   investment:def.kind==="owned"?def.price:0,setup:def.kind==="lease"?def.price:0,arrears:0,book:def.kind==="owned"?def.price:0,lastDepreciation:S.day};
   state.sites.push(entry);
   S.cash-=def.price;biMoney(def.kind==="owned"?"investment":"office_setup",def.price,
    (def.kind==="owned"?"Buy ":"Set up ")+def.name+(unitKey?" for "+SERVICE_LINES[unitKey].name:""));
@@ -1918,6 +1920,19 @@ function propertyClose(id){
   logIt("CEO ended the "+def.name+" lease. Future rent stops; unpaid obligations remain.");return true;
  });
 }
+function propertySell(id){
+ const x=S.exec.property.sites.find(q=>q.id===id),def=x&&PROPERTY_TYPES[x.type];
+ if(!x||def.kind!=="owned"||x.status!=="inactive"||x.arrears>=.01)return false;
+ return unitCommit(()=>{
+  const book=x.book,proceeds=Math.round(book*.92*100)/100,loss=Math.max(0,book-proceeds);
+  x.status="sold";x.book=0;S.cash=+(S.cash+proceeds).toFixed(2);
+  biAdd("cashIn",proceeds);biEvent("property_sale",proceeds,"Sold inactive "+def.name,proceeds);
+  if(loss>.001)biMoney("asset_disposal_loss",loss,"Noncash loss on property disposal",0);
+  S.exec.property.events.unshift({day:S.day,action:"sale",id,book,proceeds,loss});
+  logIt("Sold unused "+def.name+" and received "+biCurrency(proceeds)+". Recorded "+biCurrency(loss)+" noncash disposal loss.");
+  propertyViewSignature="";return true;
+ });
+}
 function propertyArrears(){return S.exec.property.sites.reduce((sum,x)=>sum+x.arrears,0);}
 function propertyPayArrears(){
  const owed=propertyArrears(),payment=Math.min(S.cash,owed);
@@ -1931,8 +1946,14 @@ function propertyPayArrears(){
  });
 }
 function propertyDay(){
+ for(const x of S.exec.property.sites){
+  if(x.investment<=0||x.status==="sold"||S.day-x.lastDepreciation<90||x.book<=0)continue;
+  const drop=Math.min(x.book,Math.round(x.investment*.015*100)/100);
+  if(drop>.001){x.book=+(x.book-drop).toFixed(2);x.lastDepreciation=S.day;
+   biMoney("depreciation",drop,PROPERTY_TYPES[x.type].name+" quarterly noncash depreciation",0);}
+ }
  for(const x of S.exec.property.sites){if(x.status!=="active")continue;
-  const def=PROPERTY_TYPES[x.type],paid=Math.min(S.cash,def.dayCost);
+  const def=PROPERTY_TYPES[x.type],paid=Math.max(0,Math.min(S.cash,def.dayCost));
   if(paid>0)S.cash=+(S.cash-paid).toFixed(2);
   biMoney("property",def.dayCost,def.name+" daily "+(def.kind==="lease"?"rent":"upkeep"),paid);
   if(paid<def.dayCost)x.arrears=+(x.arrears+def.dayCost-paid).toFixed(2);
@@ -1941,7 +1962,7 @@ function propertyDay(){
 function propertySummary(){
  const active=S.exec.property.sites.filter(x=>x.status==="active");
  return{sites:active.length,capacity:propertyCapacity()+S.exec.units.reduce((n,u)=>n+propertyCapacity(u.key),0),
-  arrears:propertyArrears(),book:S.exec.property.sites.filter(x=>x.investment>0).reduce((n,x)=>n+x.investment,0),
+  arrears:propertyArrears(),book:S.exec.property.sites.filter(x=>x.investment>0&&x.status!=="sold").reduce((n,x)=>n+x.book,0),
   daily:active.reduce((n,x)=>n+PROPERTY_TYPES[x.type].dayCost,0)};
 }
 function propertyWarnings(){
@@ -1963,14 +1984,15 @@ function renderProperties(){
  const room=(name,people,capacity,type)=>'<div class="property-room"><div class="lead"><b>'+esc(name)+'</b><span class="small">'+people.length+'/'+capacity+' seats</span></div>'+
  '<div class="property-people">'+people.slice(0,20).map(x=>'<span title="'+esc(x.n)+'">'+(x.id===S.ops.assistantId?"📋":x.t.startsWith("d")?"💻":"👤")+'</span>').join("")+
  (people.length>20?'<span>+'+(people.length-20)+'</span>':'')+'</div></div>';
- board.innerHTML='<div class="unit-metrics"><span>Daily premises cost '+biCurrency(summary.daily)+'</span><span>Owned acquisition cost '+biCurrency(summary.book)+'</span><span>Unpaid bills '+biCurrency(summary.arrears)+'</span></div>'+
+ board.innerHTML='<div class="unit-metrics"><span>Daily premises cost '+biCurrency(summary.daily)+'</span><span>Owned carrying value '+biCurrency(summary.book)+'</span><span>Unpaid bills '+biCurrency(summary.arrears)+'</span></div>'+
  '<div class="property-map">'+room(headquarters?PROPERTY_TYPES[headquarters.type].name:"Distributed headquarters",members,corporateCapacity,"corporate")+
  unitSites.map(u=>room(SERVICE_LINES[u.key].name+" · "+(propertyActive(u.key)?"Satellite":"Distributed team"),propertyPeople(u.key),propertyCapacity(u.key),u.key)).join("")+'</div>'+
  (propertyWarnings().length?'<p class="risk-watch small">'+propertyWarnings().map(esc).join(" · ")+'</p>':'')+
  (summary.arrears>=.01?'<button type="button" data-property-action="arrears" '+(S.cash<.01?"disabled":"")+'>Settle unpaid premises costs</button>':'')+
- '<div class="small">Owned acquisition cost is historical investment cash outflow, not a guaranteed resale valuation. Premises bonuses affect future work only; employees retain their reporting owners. Daily rent and upkeep appear in the consolidated operating ledger.</div>';
+ '<div class="small">Owned properties depreciate forward as noncash expense; book value is an accounting measure, not a guaranteed resale valuation. Selling an unused building recovers 92% of its current book value. Premises bonuses affect future work only; employees retain their reporting owners. Daily rent and upkeep appear in the consolidated operating ledger.</div>';
  const existing=p.sites.filter(x=>x.status!=="closed").map(x=>{const def=PROPERTY_TYPES[x.type];return '<div class="property-choice"><b>'+esc(def.name)+'</b> · '+esc(x.unitKey?SERVICE_LINES[x.unitKey].name:"Headquarters")+' · '+x.status+
  ' · '+biCurrency(x.arrears)+' unpaid'+(x.status==="inactive"&&def.kind==="owned"?'<button type="button" data-property-action="activate" data-property-key="'+x.id+'">Move to owned property</button>':'')+
+ (x.status==="inactive"&&def.kind==="owned"?'<button type="button" data-property-action="sell" data-property-key="'+x.id+'" '+(x.arrears>0?"disabled":"")+'>Sell for '+biCurrency(Math.round(x.book*.92*100)/100)+'</button>':'')+
  (x.status==="active"&&def.kind==="lease"?'<button type="button" data-property-action="close" data-property-key="'+x.id+'">End lease</button>':'')+'</div>';}).join("");
  const button=(type,unitKey=null)=>{
   const def=PROPERTY_TYPES[type],check=propertyReadiness(type,unitKey),current=propertyActive(unitKey)?.type===type,scope=unitKey?SERVICE_LINES[unitKey].name:"Headquarters";
@@ -2499,7 +2521,7 @@ $("property-panel").addEventListener("click",e=>{
  const b=e.target.closest("button[data-property-action]");if(!b)return;
  const action=b.dataset.propertyAction,key=b.dataset.propertyKey,unit=b.dataset.propertyUnit;
  const result=action==="open"?propertyOpen(key,unit||null):action==="activate"?propertyActivate(Number(key)):
-  action==="close"?propertyClose(Number(key)):action==="arrears"?propertyPayArrears():false;
+  action==="close"?propertyClose(Number(key)):action==="sell"?propertySell(Number(key)):action==="arrears"?propertyPayArrears():false;
  if(result&&typeof result.then==="function")result.then(ok=>{if(!ok){$("property-status").textContent="Property decision failed or could not be saved.";renderProperties();}});
  else if(!result)$("property-status").textContent="Property decision blocked; review the milestones or balance.";
 });

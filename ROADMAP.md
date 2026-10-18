@@ -1,5 +1,13 @@
 # Boss — simulation development roadmap
 
+## Released v21.4c — Autonomous managers and controlled central staffing
+
+- Corporate managers review actual capacity needs weekly, consider idle staff first, and propose hiring only when overloaded. The Executive Assistant surfaces pending exceptions on Today and weekly reports.
+- CEO can approve each $20 hire or delegate 90-day recruiting dollars and hiring slots; delegated authority defaults to zero, expires automatically and requires enough cash for 21 days of future payroll. All employees have unique IDs and recurring single-company wages.
+- Temporary 30-day CEO-authorized corporate specialist access lets GMs cover real delivery needs without a permanent staff transfer. The person remains corporate, and unit costs attribute actual shared workdays from existing payroll, not extra costs.
+- Regression verified on merged `e2e368c`: [GitHub Actions](https://github.com/BSAVCI1/Boss/actions/runs/39105167550) · [Pages](https://github.com/BSAVCI1/Boss/actions/runs/39105167176) · [PR #30](https://github.com/BSAVCI1/Boss/pull/30).
+- **Remaining v21.5:** enforced new-service and new-business progression requirements, clearer corporate divisional autonomy and headquarters/asset readiness. v22 property, v23 acquisitions/investments, v24 factories remain future work.
+
 ## Released v21.4b — Evidence-based leadership stages
 
 - New-game ladder: five people → Team Lead, then 3 Team Leads → Manager, 5 Team Leads → Senior Manager, 3 Managers → Director; further Team Leads need three more people each. Skills, work/practice days and unfinished contracts affect candidate selection.

@@ -9,7 +9,7 @@ function el(id){if(!els.has(id))els.set(id,{id,innerHTML:"",textContent:"",value
 const sandbox={document:{getElementById:el,querySelector:()=>el("x"),querySelectorAll:()=>[],body:el("body"),documentElement:el("html"),activeElement:null,addEventListener(){}},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},setTimeout:()=>1,clearTimeout(){},clearInterval(){},requestAnimationFrame:()=>1,getComputedStyle:()=>({getPropertyValue:()=>""}),Date,Math,JSON,Set,Map,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exposed="fresh,get:()=>S,set:v=>S=v,load,save,createDeal,feeFor,estimatedFee,worldIndicativeFee,worldTenderPreview,renderPipeline,renderCEODecisions,renderCEOFocus,renderBriefing,renderExecutiveWeekly,ceoPremisesOpportunity,propertyCapacity,propertyPeople,propertyReadiness,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary";
+const exposed="fresh,get:()=>S,set:v=>S=v,load,save,createDeal,feeFor,estimatedFee,worldIndicativeFee,worldTenderPreview,renderPipeline,renderCEODecisions,renderCEOFocus,ceoDecisionInventory,managementOps,renderBriefing,renderExecutiveWeekly,ceoPremisesOpportunity,propertyCapacity,propertyPeople,propertyReadiness,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exposed+"};})();",sandbox,{timeout:5000});
 const G=sandbox.G;
 function fresh(){store.clear();G.fresh();return G.get();}
@@ -79,4 +79,35 @@ test("operational review topics do not call themselves CEO approval requests",()
  assert.ok(heading.includes("operational")||heading.includes("on track"));
  money(s);
 });
-console.log("v22.4 first CEO experience regression passed");
+test("CEO headline includes true required reviews without counting optional bids",()=>{
+ const s=fresh(),cash=s.cash,headcount=s.team.length,oldFees=s.deals.map(G.feeFor);
+ G.renderCEOFocus();assert.ok(el("ceo-priority-content").innerHTML.includes("0 CEO approvals pending"));
+ const ops=G.managementOps();
+ ops.requests.push({id:991,status:"open",cost:20,payroll:1.5,dept:"commercial",reason:"new work"});
+ s.exec.unitRequests.push({id:992,key:"marketing",status:"open",cost:20,payroll:1.5,managerId:null,reason:"staffing request"});
+ s.exec.proposals.push({id:993,type:"training",dept:"commercial",cost:8,benefit:"Skill growth",risk:"Uncertain"});
+ let inv=G.ceoDecisionInventory();assert.equal(inv.approvals,3);
+ G.renderCEOFocus();
+ const html=el("ceo-priority-content").innerHTML;
+ assert.ok(html.includes("3 CEO approvals pending"));
+ assert.ok(html.includes('data-ceo-nav="decisions"'));
+ assert.ok(!html.includes("optional market opportunity"));
+ s.world.activeEvent={id:1,type:"referrals",opened:s.day,until:s.day+20,sector:"hospitality"};
+ inv=G.ceoDecisionInventory();assert.equal(inv.approvals,3);
+ assert.equal(inv.optional,true);
+ G.renderCEOFocus();const marketHTML=el("ceo-priority-content").innerHTML;
+ assert.ok(marketHTML.includes("3 CEO approvals pending"));
+ assert.ok(marketHTML.includes("1 optional market opportunity"));
+ assert.equal(s.cash,cash);assert.equal(s.team.length,headcount);
+ assert.deepEqual(s.deals.map(G.feeFor),oldFees);money(s);
+});
+test("Optional market opportunity is excluded from mandatory approval count",()=>{
+ const s=fresh();
+ s.world.activeEvent={id:1,type:"referrals",opened:s.day,until:s.day+20,sector:"hospitality"};
+ G.renderCEODecisions();const html=el("ceo-action-center").innerHTML;
+ assert.ok(html.includes("0 approvals here · 1 optional opportunity"));
+ assert.ok(html.includes("Market opportunity · optional"));
+ assert.equal(G.ceoDecisionInventory().approvals,0);
+ money(s);
+});
+console.log("v22.4 CEO experience batches 1-3 regression passed");

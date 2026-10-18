@@ -1,5 +1,9 @@
 # Boss
 
+## Boss v21.5 — Earned company growth (release candidate)
+
+New business-line purchases now require measured achievements, qualified leadership, available specialists and real cash runway; later expansions also depend on operating-unit delivery, staffed General Managers and leadership depth. Previously purchased lines never disappear or incur a second fee. Today explains your next company-stage milestone; Growth lists the specific missing requirements. Corporate managers earn monthly, cost-neutral evidence-based scorecards that the Executive Assistant summarizes in weekly briefings. CEO approval is still required before a $120 purchase. [Full rules](docs/V21_5_GROWTH.md). Production release is pending CI/Pages verification; do not assume the owner's private iPhone save has been inspected.
+
 ## Boss v21.4c — Autonomous management (released 2026-10-18)
 
 **Play:** Team → Leadership journey → Corporate staffing decisions. Qualified corporate managers review delivery backlogs and recommend hiring when existing staff cannot cover work. The CEO may approve individual hires or authorize 90-day hiring limits and slots. Without authority managers only propose; budgets default to zero on existing saves. Recruiting costs $20 per hire once and new employee wages recur, with 21 days of payroll runway required. Permissions do not spend cash.

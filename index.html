@@ -2397,6 +2397,7 @@ function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
 function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();orgAutonomousTeamDay();unitAutonomousDay();ladderDay();managementReviewMonth();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
+if(unitStaffingDay())dirty=true;
 if(unitDelegateWork())dirty=true;
 if(delegateWork())dirty=true;
 if(autonomousWork())dirty=true;
@@ -3067,6 +3068,86 @@ function unitCareerReadiness(u){
   successorReady:!!successor&&managerCompetence(successor)>=55&&(u.plan.successionSessions||0)>=3,
   managementReady:!!gm&&reviews>=2&&!!successor&&managerCompetence(gm)>=60};
 }
+// v22: a GM negotiates scarce capacity with the functional department leader.
+// Reassigning a corporate specialist for 30 days never creates new payroll or permanent ownership.
+function unitStaffingDay(){
+ let changed=false;
+ for(const u of S.exec.units){
+  const gm=person(u.managerId),p=u.plan;
+  if(!gm||gm.career.recoveryDays>0||gm.career.autoRest)continue;
+  const unassigned=S.deals.filter(d=>d.unitKey===u.key&&!d.w).sort((a,b)=>a.dl-b.dl);
+  if(!unassigned.length)continue;
+  const role=SERVICE_LINES[u.key].need,dept=["sales","mkt"].includes(role)?"commercial":"delivery";
+  const leader=managementLead(dept)||orgManager(dept);
+  const activeShared=managementOps().shared.filter(a=>a.unitKey===u.key&&a.until>S.day&&a.status==="active");
+  // Existing grant covers the demand while the worker is idle; avoid duplicate loans.
+  const availableGrant=activeShared.some(a=>{const w=person(a.employeeId);return w?.t==="idle"&&w.career.recoveryDays===0;});
+  const gap=unassigned.length-availableGrant;
+  if(gap<=0)continue;
+  const needsStaff=unassigned.length>=2||S.deals.filter(d=>d.unitKey===u.key).length>=u.staffIds.length;
+  if(!needsStaff)continue;
+  // Capacity negotiations are bounded: one new shared allocation per unit per 14 game days.
+  if(leader&&S.day-(p.lastSharedNegotiation??-999)>=14){
+   const candidates=managementSharedCandidates(u.key).filter(w=>w.department===dept&&w.role.auto&&w.t==="idle"&&
+      w.career.recoveryDays<=0&&!w.career.autoRest&&w.s[role]>=2);
+   const chosen=candidates.sort((a,b)=>b.s[role]-a.s[role]||a.id-b.id)[0];
+   if(chosen){
+    const o=managementOps();o.shared.push({unitKey:u.key,employeeId:chosen.id,since:S.day,until:S.day+30,status:"active",approvedBy:leader.id,reason:"GM/dept capacity negotiation"});
+    o.shared=o.shared.slice(-40);p.lastSharedNegotiation=S.day;
+    o.history.unshift({day:S.day,kind:"shared",unitKey:u.key,employeeId:chosen.id,approvedBy:leader.id,until:S.day+30});
+    o.history=o.history.slice(0,55);
+    unitRecord(u.key,"negotiation",gm.n+" and "+leader.n+" temporarily allocated "+chosen.n+" for 30 days; no second salary or permanent transfer.");
+    logIt(gm.n+" coordinated with "+leader.n+" for shared unit specialist "+chosen.n+" (30 days, no extra payroll).");
+    changed=true;continue;
+   }
+  }
+  const current=S.exec.unitRequests.find(x=>x.key===u.key&&x.status==="open");
+  if(current){
+   if(unitDelegatedHireReady(current,leader)&&unitHireFromRequest(current,"delegated"))changed=true;
+   continue;
+  }
+  // Request no more than once every seven game days, and allow declined requests a 14-day cooldown.
+  if(S.day-(p.lastHiringAsk??-999)<14||S.day-(p.lastStaffingReview??-999)<7)continue;
+  p.lastStaffingReview=S.day;
+  if(u.staffIds.length>=Math.min(25,p.staffingTarget||5))continue;
+  const request={id:S.exec.unitRequestSeq++,key:u.key,managerId:gm.id,department:dept,leaderId:leader?.id||null,
+   day:S.day,status:"open",kind:"hire",cost:20,payroll:1.5*S.mod.cost,role,
+   reason:"GM "+gm.n+" and "+(leader?.n||"unfilled functional leadership")+" reviewed "+unassigned.length+
+    " unassigned projects, "+Math.max(0,u.staffIds.length-1)+" dedicated specialists. No qualified idle departmental specialist available."};
+  p.lastHiringAsk=S.day;S.exec.unitRequests.push(request);
+  if(unitDelegatedHireReady(request,leader)&&unitHireFromRequest(request,"delegated"))changed=true;
+  else{unitRecord(u.key,"exception",gm.n+" escalated shortage to CEO; recruiting requires verified delegation or approval.");changed=true;}
+ }
+ return changed;
+}
+function unitDelegatedHireReady(req,leader){
+ const u=S.exec.units.find(x=>x.key===req.key);
+ if(!u||!leader||!person(u.managerId)||req.status!=="open"||u.staffIds.length>=Math.min(25,u.plan.staffingTarget||5))return false;
+ return managementHiringAvailable(req)&&managementCashReady(req);
+}
+function unitHireFromRequest(req,authority){
+ const u=S.exec.units.find(x=>x.key===req.key);
+ if(!u||req.status!=="open"||req.managerId!==u.managerId||!person(u.managerId)||
+  u.staffIds.length>=Math.min(25,u.plan.staffingTarget||5)||!managementCashReady(req))return false;
+ if(authority==="delegated"){
+  const leader=managementLead(req.department)||orgManager(req.department);
+  if(!unitDelegatedHireReady(req,leader))return false;
+ }
+ const employee=createPerson();ensureCareer(employee);ensureRole(employee);ensureDepartment(employee);ensurePerformance(employee,S.day);
+ employee.role.primary=req.role||SERVICE_LINES[u.key].need;
+ employee.s[employee.role.primary]=Math.max(2,employee.s[employee.role.primary]);employee.role.auto=true;
+ employee.department=req.department||(["sales","mkt"].includes(employee.role.primary)?"commercial":"delivery");
+ S.team.push(employee);u.staffIds.push(employee.id);
+ S.cash-=req.cost;biMoney("recruiting",req.cost,SERVICE_LINES[u.key].name+" "+authority+" unit specialist: "+employee.n);
+ u.developmentCost+=req.cost;req.status=authority;req.decidedAt=S.day;req.hiredId=employee.id;
+ if(authority==="delegated"){const o=managementOps();o.hires++;o.hireSpent+=req.cost;o.history.unshift({day:S.day,kind:"unit-hire",unitKey:u.key,dept:req.department,employeeId:employee.id,approval:"delegated",cost:req.cost});
+  o.history=o.history.slice(0,55);}
+ unitRecord(u.key,"staffing",employee.n+" (#"+employee.id+") hired by "+(authority==="delegated"?"manager within CEO limits":"CEO exception")+
+  "; "+biCurrency(req.cost)+" recruiting expense and "+biCurrency(dailySalary(employee))+"/day corporate payroll.");
+ logIt("Unit GM staffing: "+employee.n+" hired for "+SERVICE_LINES[u.key].name+" within "+authority+" authority.");
+ structural="";unitViewSignature="";
+ return true;
+}
 function unitAutonomousDay(){
  for(const u of S.exec.units){
   const p=u.plan,gm=person(u.managerId);
@@ -3097,30 +3178,18 @@ function unitAutonomousDay(){
   u.reviews.push({day:S.day,delivered,missed,quality,result,goal:p.qualityTarget,managerId:gm.id,headcount:u.staffIds.length,spent:p.spent,revenue,costs,operating:revenue-costs,utilization,revenueTarget:p.revenueTarget,utilizationTarget:p.utilizationTarget,qualityMet,revenueMet,utilizationMet,focus:p.focus});
   u.reviews=u.reviews.slice(-6);
   p.lastReview=S.day;p.baselineDelivered=u.delivered;p.baselineQuality=u.qualityTotal;p.baselineMissed=u.missed;p.baselineRevenue=u.revenue;p.baselineCosts=u.directCost+u.sharedLaborCost+u.payrollCost+u.developmentCost;p.baselineStaffDays=u.staffDays;p.baselineBillableDays=u.billableDays;
-  const active=S.deals.filter(d=>d.unitKey===u.key).length;
-  if(active>=Math.max(1,u.staffIds.length-1)&&u.staffIds.length<Math.min(25,p.staffingTarget||5)&&!S.exec.unitRequests.some(r=>r.key===u.key&&r.status==="open")){
-   const request={id:S.exec.unitRequestSeq++,key:u.key,managerId:gm.id,day:S.day,status:"open",kind:"hire",cost:20,payroll:1.5*S.mod.cost,role:SERVICE_LINES[u.key].need,reason:"Capacity: "+active+" active unit projects / "+Math.max(0,u.staffIds.length-1)+" specialists. Recruit "+SERVICE_LINES[u.key].need+" expertise; payroll continues after approval."};
-   S.exec.unitRequests.push(request);unitRecord(u.key,"proposal",gm.n+" requested one specialist hire. CEO approval required.");
-  }
+  // Staffing pressure and approvals are now assessed weekly by unitStaffingDay().
   unitRecord(u.key,"review",gm.n+" 30-day review: "+result+(quality===null?" · no deliveries":" · delivered quality "+quality+"% / goal "+p.qualityTarget+"%")+".");
  }
 }
 function unitRequestDecision(id,action){
  const req=S.exec.unitRequests.find(r=>r.id===id&&r.status==="open"),u=S.exec.units.find(x=>x.key===req?.key);
  if(!req||!u||req.managerId!==u.managerId||!["approve","decline"].includes(action))return false;
- if(action==="approve"&&(S.cash<req.cost||u.staffIds.length>=Math.min(25,u.plan.staffingTarget||5)||!person(u.managerId)))return false;
+ if(action==="approve"&&!managementCashReady(req))return false;
  return unitCommit(()=>{
-  req.status=action==="approve"?"approved":"declined";req.decidedAt=S.day;
-  if(action==="approve"){
-   const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);
-   p.role.primary=req.role||SERVICE_LINES[u.key].need;p.s[p.role.primary]=Math.max(2,p.s[p.role.primary]);
-   p.department=["sales","mkt"].includes(p.role.primary)?"commercial":"delivery";
-   S.team.push(p);u.staffIds.push(p.id);
-   S.cash-=req.cost;biMoney("recruiting",req.cost,SERVICE_LINES[u.key].name+" CEO-approved unit hire: "+p.n);
-   u.developmentCost+=req.cost;
-   unitRecord(u.key,"CEO hire","CEO approved "+p.n+" (#"+p.id+") for "+biCurrency(req.cost)+" and ongoing payroll "+biCurrency(dailySalary(p))+"/day.");
-   logIt(p.n+" hired into "+SERVICE_LINES[u.key].name+" after CEO approval.");
-  }else unitRecord(u.key,"CEO decision","CEO declined specialist hire proposed by "+(person(req.managerId)?.n||"General Manager")+".");
+  if(action==="approve")return unitHireFromRequest(req,"approved");
+  req.status="declined";req.decidedAt=S.day;
+  unitRecord(u.key,"CEO decision","CEO declined specialist hire proposed by "+(person(req.managerId)?.n||"General Manager")+".");
   return true;
  });
 }

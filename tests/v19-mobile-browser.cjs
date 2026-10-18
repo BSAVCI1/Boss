@@ -242,6 +242,15 @@ document.addEventListener("DOMContentLoaded",async()=>{
    const nestedAfter=[...(unitAfter?.querySelectorAll("details.aux-details")||[])];
    result.checks.allGMAuthoritySectionsRetained=!!unitAfter?.open&&nestedAfter.length>=3&&
     nestedAfter[0].open===true&&!!byId("unit-quality-technology")?.closest("details.aux-details")?.open;
+   // v22.2: new CEO executive controls preserve nested disclosure state while game days advance.
+   document.querySelector('.bottom-nav button[data-view="today"]').click();
+   const executivePanels=[...document.querySelectorAll('#executive-officers details[data-executive-panel]')];
+   if(executivePanels.length!==3)throw Error("Expected three earned executive leadership sections");
+   executivePanels[0].open=true;executivePanels[1].open=true;
+   await new Promise(r=>setTimeout(r,2000));
+   const preserved=[...document.querySelectorAll('#executive-officers details[data-executive-panel]')];
+   result.checks.executivePanelsStable=preserved.length===3&&preserved[0].open===true&&preserved[1].open===true;
+   result.checks.executiveNoAutomaticCEOAppointment=!!byId("executive-officer-count")?.textContent?.includes("0/3 appointed");
    // v21.4c: corporate manager budget remains editable throughout a live mobile refresh.
    document.querySelector('.bottom-nav button[data-view="team"]').click();
    const hiringField=byId("management-hire-budget"),slotsField=byId("management-hire-slots");
@@ -357,6 +366,8 @@ async function runBrowser(){
   assert.equal(outcome.checks.teammateDraftSurvivesRepaint,true,"Chosen teammate must remain selected until Transfer is clicked");
   assert.equal(outcome.checks.unitAuthorityDisclosureRetained,true,"Editing must not collapse the authority panel");
   assert.equal(outcome.checks.allGMAuthoritySectionsRetained,true,"All open GM subsections must remain expanded across live repaints");
+  assert.equal(outcome.checks.executivePanelsStable,true,"HR and CFO executive panels must remain open through simulated mobile game ticks");
+  assert.equal(outcome.checks.executiveNoAutomaticCEOAppointment,true,"A migrated company must not invent CEO-approved executive appointments");
   assert.equal(outcome.checks.managerHiringDraftStable,true,"Manager recruitment budget must allow uninterrupted multi-digit typing");
   assert.equal(outcome.checks.managerHiringStillRequiresApply,true,"Manager policy disclosure and slots must remain editable");
   assert.equal(outcome.checks.managerHiringBudgetNotAutoCommitted,true,"Typing manager hiring budget must not authorize money until Apply is pressed");

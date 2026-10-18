@@ -110,12 +110,74 @@ function simulate(seed,model){
  if(!purchase)assert.equal(s.exec.property.sites.some(x=>x.type==='hq'&&x.status!=='sold'),false,'no HQ may appear without the actual permitted purchase');
  return {model,seed,first,purchase,checkpoints,decisions:decisions.slice(0,125),closingBlocker:G.propertyReadiness('hq').checks.filter(x=>!x.met)};
 }
+
+/* A second ACTUAL game-engine strategy is allowed to concentrate on corporate leaders
+   before launching GMs. No staff, cash, skill, title, contract or achievement is injected. */
+function proveDirectorFromFounder(){
+ const {G,el}=makeEngine(20261018,'balanced');G.fresh();const state=G.get();
+ assert.equal(state.day,0);assert.equal(state.cash,90);assert.equal(state.team.length,3);
+ state.nextEv=99999999;state.world.nextEvent=99999999;
+ state.pipeline.mode='growth';state.pipeline.target=6;
+ state.world.strategy='volume';state.economy.pricing='competitive';state.economy.terms=14;
+ G.assign(state.deals[0].id,state.team[1].id);G.assign(state.deals[1].id,state.team[2].id);
+ const first={lead:null,manager:null,senior:null,director:null},evidence=[],originalIds=state.team.map(p=>p.id);
+ let hires=0,courseStarts=0;
+ for(let day=1;day<=730;day++){
+  if(day===1||day%3===0){
+   let assigned=0;
+   for(const d of state.deals.filter(d=>!d.w)){
+    if(assigned>=3)break;const p=G.bestIdle(d);
+    if(p){G.assign(d.id,p.id);if(d.w===p.id)assigned++;}
+   }
+  }
+  if(day%20===0&&state.team.length<42&&state.cash>600+
+    state.team.reduce((v,p)=>v+G.dailySalary(p),0)*60){
+   el('hire-skill').value=['prod','mkt','sales','ops'][Math.floor(state.team.length/2)%4];
+   G.searchCandidates();const c=state.hr.pool[0];
+   if(c&&state.cash>c.fee+state.team.reduce((v,p)=>v+G.dailySalary(p),0)*60){
+    const before=state.team.length,cash=state.cash;
+    G.hireCandidate(c.id);
+    if(state.team.length===before+1){hires++;assert.ok(state.cash<cash,'recruitment must cost real cash');}
+   }
+  }
+  if(day%63===0){
+   const trainee=state.org.progression.appointments.map(x=>state.team.find(p=>p.id===x.id))
+    .find(p=>p&&G.ladderTrainingEligible(p));
+   if(trainee){assert.equal(G.ladderStartTraining(trainee.id),true);courseStarts++;}
+  }
+  if(day%7===0){
+   const x=G.ladderNext();
+   if(x?.ready&&G.ladderPromote(x.level,x.candidateId,true)){
+    if(first[x.level]===null)first[x.level]=day;
+    evidence.push({day,level:x.level,person:x.candidateId,score:+G.managerCompetence(state.team.find(p=>p.id===x.candidateId)).toFixed(2)});
+   }
+  }
+  const n=state.day;G.tick();assert.equal(state.day,n+1);
+  if(day%30===0)cashCheck(state);
+  assert.equal(new Set(state.team.map(p=>p.id)).size,state.team.length,'no duplicate workers');
+  assert.equal(state.bi.openingCash,90,'never inject corporate capital');
+ }
+ assert.ok(first.lead!==null&&first.manager!==null&&first.senior!==null&&first.director!==null,
+  'Director must be earned through real internal promotion gates without injected prerequisites: '+JSON.stringify(first));
+ assert.ok(first.lead<first.manager&&first.manager<first.senior&&first.senior<first.director);
+ assert.ok(hires>0&&courseStarts>0,'only real paid hiring and CEO courses can progress');
+ assert.ok(state.team.every(p=>p.career.rank>=0),'original career grades preserved');
+ assert.ok(originalIds.every(id=>state.team.some(p=>p.id===id)),'original three founder IDs preserved');
+ assert.ok(state.org.progression.appointments.filter(n=>n.level==='director').length<=
+  Math.max(1,Math.floor(state.team.length/20)),'director staffing needs real organization span');
+ assert.ok(!G.propertyReadiness('hq').ready,'no HQ without two real business unit GMs');
+ verifyReload(G,state);cashCheck(state);
+ return{first,hires,courseStarts,day:state.day,openingCash:state.bi.openingCash,
+  corporate:state.team.length,cash:+state.cash.toFixed(2),delivered:state.market.completed,
+  events:evidence,hqBlocks:G.propertyReadiness('hq').checks.filter(c=>!c.met).map(c=>c.label)};
+}
 function stats(values){const a=values.filter(Number.isFinite).sort((x,y)=>x-y);return a.length?{mean:+(a.reduce((p,q)=>p+q,0)/a.length).toFixed(2),median:+a[Math.floor(a.length/2)].toFixed(2),min:a[0],max:a.at(-1)}:null;}
 const out={meta:{version:'v22.3C3',source:'Actual production Boss index.html and tick()',openingCapital:90,models,seeds,horizons,policy:'Explicit CEO growth strategy and paid periodic hires; 80-day salary reserve, paid $120 launches, real promotion/GM eligibility, no synthetic employees or milestones',ownerSafariTested:false},runs:[],summary:[],failures:[]};
 for(const model of models)for(const seed of seeds){
  try{const r=simulate(seed,model);out.runs.push(r);console.log('ORGANIC',JSON.stringify({model,seed,first:r.first,final:r.checkpoints.at(-1),blocker:r.closingBlocker}));}
  catch(error){out.failures.push({model,seed,error:String(error.stack||error)});}
 }
+out.organicDirectorProof=proveDirectorFromFounder();
 assert.equal(out.failures.length,0,JSON.stringify(out.failures,null,2));
 assert.equal(out.runs.length,1);
 for(const model of models)for(const elapsed of horizons){
@@ -127,4 +189,4 @@ for(const model of models)for(const elapsed of horizons){
 }
 fs.mkdirSync('reports',{recursive:true});
 fs.writeFileSync('reports/v22-3c3-organic-leadership.json',JSON.stringify(out,null,2)+'\n');
-console.log('PASS v22.3C3: one actual-engine 1460d earned-only founder replay, four checkpoints, strict milestone and finance audit; HQ cannot be purchased without full gates');
+console.log('PASS v22.3C3: actual-engine 1460-day HQ-blocker and earned Day-0-to-Director 730-day scenarios; zero fake cash, staff or titles');

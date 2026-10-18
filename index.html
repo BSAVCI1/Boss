@@ -255,6 +255,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .unit-panel .filter-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
 @media(max-width:430px){.unit-panel .filter-grid{grid-template-columns:1fr}.unit-panel{padding:9px}}
 @media(max-width:700px){.ceo-office-grid{grid-template-columns:minmax(0,1fr)}.ceo-office-grid>div{min-width:0}.ceo-office-grid>div:last-child{padding:9px 11px}.ceo-report{overflow-wrap:anywhere}.ceo-report button{max-width:100%}}
+.property-map{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px;margin:12px 0}.property-room{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--accentWash);min-width:0}.property-room .lead{gap:6px}.property-room b{font-size:13px}.property-people{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.property-people span{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:26px;border-radius:7px;background:var(--bar);font-size:15px}.property-choice{border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0}.property-choice p{margin:6px 0}.property-choice button{width:100%;margin:4px 0}.property-choice .small{overflow-wrap:anywhere}@media(max-width:430px){.property-map{grid-template-columns:1fr}.property-choice{padding:9px}}
 </style>
 </head>
 <body>
@@ -1806,6 +1807,185 @@ function companyDirection(){
  return{stage,title,detail:blocked?blocked.label+" — "+blocked.detail:
   "All milestones achieved. The CEO may invest $120; launch does not guarantee demand.",unmet:missing,view:blocked&&/Team Lead|Manager/.test(blocked.label)?"team":"growth",key};
 }
+/* v22: property assets, portfolio premises and strictly game-day recurring obligations. */
+const PROPERTY_TYPES={
+ studio:{name:"Serviced office suite",kind:"lease",capacity:12,price:75,dayCost:1.5,boost:1.025},
+ office:{name:"Regional office lease",kind:"lease",capacity:24,price:220,dayCost:3,boost:1.04},
+ building:{name:"Owned office building",kind:"owned",capacity:40,price:1800,dayCost:1.2,boost:1.06},
+ hq:{name:"Group headquarters",kind:"owned",capacity:80,price:7200,dayCost:3,boost:1.09},
+ satellite:{name:"Operating-unit satellite",kind:"lease",capacity:10,price:100,dayCost:1.1,boost:1.04}
+};
+let propertyViewSignature="";
+function ensureProperties(state){
+ const e=state.exec;if(!e.property||typeof e.property!=="object"){
+  // Forward-only migration: avoid suddenly crowding a 2,000-day established save.
+  const corporate=state.team.filter(p=>!e.units?.some(u=>u.staffIds?.includes(p.id))).length;
+  const baseline={};for(const u of e.units||[])baseline[u.key]=Math.max(6,u.staffIds?.length||0);
+  e.property={since:state.day,seq:1,baselineCapacity:Math.max(8,corporate),unitBaseline:baseline,sites:[],events:[]};
+ }
+ const p=e.property;
+ if(!Array.isArray(p.sites))p.sites=[];if(!Array.isArray(p.events))p.events=[];
+ if(!p.unitBaseline||typeof p.unitBaseline!=="object")p.unitBaseline={};
+ if(!Number.isFinite(p.baselineCapacity)||p.baselineCapacity<8)p.baselineCapacity=Math.max(8,state.team.length);
+ for(const u of e.units||[])if(!Number.isFinite(p.unitBaseline[u.key]))p.unitBaseline[u.key]=Math.max(6,u.staffIds?.length||0);
+ if(!Number.isInteger(p.seq)||p.seq<1)p.seq=Math.max(1,...p.sites.map(x=>(x.id||0)+1));
+ const validUnits=new Set((e.units||[]).map(u=>u.key)),used=new Set();
+ p.sites=p.sites.filter(x=>{
+  if(!x||!Number.isInteger(x.id)||used.has(x.id)||!PROPERTY_TYPES[x.type])return false;
+  if(x.unitKey&&(!SERVICE_LINES[x.unitKey]||!validUnits.has(x.unitKey)))return false;
+  used.add(x.id);
+  if(!["active","inactive","closed"].includes(x.status))x.status="inactive";
+  if(!Number.isFinite(x.arrears)||x.arrears<0)x.arrears=0;
+  if(!Number.isFinite(x.since))x.since=state.day;
+  return true;
+ }).slice(-40);
+ p.events=p.events.slice(-50);
+}
+function propertyScope(unitKey=null){return unitKey?"unit:"+unitKey:"corporate";}
+function propertyActive(unitKey=null){return S.exec.property.sites.find(x=>x.status==="active"&&propertyScope(x.unitKey||null)===propertyScope(unitKey));}
+function propertyPeople(unitKey=null){return unitKey?S.team.filter(p=>unitOfPerson(p.id)?.key===unitKey):
+ S.team.filter(p=>!unitOfPerson(p.id));}
+function propertyCapacity(unitKey=null){const p=S.exec.property;const active=propertyActive(unitKey);
+ return active?PROPERTY_TYPES[active.type].capacity:unitKey?(p.unitBaseline[unitKey]||6):p.baselineCapacity;}
+function propertyOccupancy(personN){const unitKey=unitOfPerson(personN.id)?.key||null;
+ const count=propertyPeople(unitKey).length,capacity=propertyCapacity(unitKey);
+ return{unitKey,count,capacity,overloaded:count>capacity,active:propertyActive(unitKey)};
+}
+function propertyWorkMultiplier(personN){
+ const x=propertyOccupancy(personN),bonus=x.active?PROPERTY_TYPES[x.active.type].boost:1;
+ // Space affects only future assignments and workdays, not signed fees or past days.
+ return bonus*(x.overloaded?Math.max(.76,x.capacity/Math.max(1,x.count)):1);
+}
+function propertyReadiness(type,unitKey=null){
+ const def=PROPERTY_TYPES[type];
+ if(!def)return{ready:false,checks:[{label:"Select an available premise",met:false}]};
+ const corp=propertyPeople().length,leaders=S.org.progression.appointments,manager=leaders.some(n=>["manager","senior","director"].includes(n.level));
+ const owned=S.exec.property.sites.some(x=>x.type===type&&x.status!=="closed"&&!x.unitKey);
+ const payroll=S.team.reduce((sum,p)=>sum+dailySalary(p),0);
+ const checks=[];
+ if(type==="studio"){checks.push({label:"At least five teammates",met:corp>=5});checks.push({label:"Five completed projects",met:S.market.completed>=5});}
+ if(type==="office"){checks.push({label:"At least ten corporate teammates",met:corp>=10});
+  checks.push({label:"Appoint a Team Lead",met:leaders.some(n=>n.level==="lead")});checks.push({label:"15 delivered projects",met:S.market.completed>=15});}
+ if(type==="building"){checks.push({label:"At least twelve corporate teammates",met:corp>=12});
+  checks.push({label:"Corporate Manager appointed",met:manager});checks.push({label:"25 delivered projects",met:S.market.completed>=25});}
+ if(type==="hq"){checks.push({label:"At least twenty corporate teammates",met:corp>=20});
+  checks.push({label:"Director appointed",met:leaders.some(n=>n.level==="director")});
+  checks.push({label:"Two managed operating units",met:S.exec.units.filter(u=>person(u.managerId)).length>=2});
+  checks.push({label:"50 delivered projects",met:S.market.completed>=50});}
+ if(type==="satellite"){const u=S.exec.units.find(u=>u.key===unitKey);
+  checks.push({label:"Operating unit exists",met:!!u});
+  checks.push({label:"General Manager appointed",met:!!u&&!!person(u.managerId)});
+  checks.push({label:"Dedicated specialist assigned",met:!!u&&u.staffIds.some(id=>id!==u.managerId)});
+ }
+ checks.push({label:"Already own this property type",met:!owned}); // Prevent duplicate property purchases, not leases.
+ const reserveDays=def.kind==="owned"?30:21;
+ const available=S.cash>=def.price+reserveDays*(payroll+def.dayCost);
+ checks.push({label:"Cash for purchase and "+reserveDays+" payroll / premises days",met:available});
+ return{ready:checks.every(c=>c.met),checks,required:def.price+reserveDays*(payroll+def.dayCost)};
+}
+function propertyOpen(type,unitKey=null){
+ const def=PROPERTY_TYPES[type],state=S.exec.property,check=propertyReadiness(type,unitKey);
+ if(!def||!check.ready||propertyActive(unitKey)?.type===type)return false;
+ return unitCommit(()=>{
+  if(!propertyReadiness(type,unitKey).ready)return false;
+  const old=propertyActive(unitKey);
+  if(old)old.status=old.type==="building"||old.type==="hq"?"inactive":"closed";
+  const entry={id:state.seq++,type,unitKey,status:"active",since:S.day,
+   investment:def.kind==="owned"?def.price:0,setup:def.kind==="lease"?def.price:0,arrears:0};
+  state.sites.push(entry);
+  S.cash-=def.price;biMoney(def.kind==="owned"?"investment":"office_setup",def.price,
+   (def.kind==="owned"?"Buy ":"Set up ")+def.name+(unitKey?" for "+SERVICE_LINES[unitKey].name:""));
+  state.events.unshift({day:S.day,action:"open",id:entry.id,type,unitKey,cost:def.price});
+  state.events=state.events.slice(0,50);
+  logIt("CEO "+(def.kind==="owned"?"bought ":"leased ")+def.name+" for "+biCurrency(def.price)+"; recurring "+biCurrency(def.dayCost)+"/day.");
+  propertyViewSignature="";return true;
+ });
+}
+function propertyActivate(id){
+ const site=S.exec.property.sites.find(x=>x.id===id),def=site&&PROPERTY_TYPES[site.type];
+ if(!site||def.kind!=="owned"||site.status!=="inactive")return false;
+ return unitCommit(()=>{
+  const old=propertyActive(site.unitKey||null);if(old)old.status=old.type==="building"||old.type==="hq"?"inactive":"closed";
+  site.status="active";S.exec.property.events.unshift({day:S.day,action:"activate",id});propertyViewSignature="";
+  logIt("CEO moved headquarters into the already-owned "+def.name+"; no new acquisition charge.");return true;
+ });
+}
+function propertyClose(id){
+ const site=S.exec.property.sites.find(x=>x.id===id),def=site&&PROPERTY_TYPES[site.type];
+ if(!site||site.status!=="active"||def.kind!=="lease")return false;
+ return unitCommit(()=>{
+  site.status="closed";S.exec.property.events.unshift({day:S.day,action:"close",id});propertyViewSignature="";
+  logIt("CEO ended the "+def.name+" lease. Future rent stops; unpaid obligations remain.");return true;
+ });
+}
+function propertyArrears(){return S.exec.property.sites.reduce((sum,x)=>sum+x.arrears,0);}
+function propertyPayArrears(){
+ const owed=propertyArrears(),payment=Math.min(S.cash,owed);
+ if(payment<.01)return false;
+ return unitCommit(()=>{
+  let remaining=payment;for(const x of S.exec.property.sites){const n=Math.min(x.arrears,remaining);x.arrears=+(x.arrears-n).toFixed(2);remaining-=n;if(remaining<.001)break;}
+  S.cash=+(S.cash-payment).toFixed(2);biAdd("cashOut",payment);
+  biEvent("property_arrears",payment,"Pay previously expensed premises obligations",payment);
+  S.exec.property.events.unshift({day:S.day,action:"settle",payment});propertyViewSignature="";
+  logIt("Settled "+biCurrency(payment)+" of existing unpaid property bills (no second expense).");return true;
+ });
+}
+function propertyDay(){
+ for(const x of S.exec.property.sites){if(x.status!=="active")continue;
+  const def=PROPERTY_TYPES[x.type],paid=Math.min(S.cash,def.dayCost);
+  if(paid>0)S.cash=+(S.cash-paid).toFixed(2);
+  biMoney("property",def.dayCost,def.name+" daily "+(def.kind==="lease"?"rent":"upkeep"),paid);
+  if(paid<def.dayCost)x.arrears=+(x.arrears+def.dayCost-paid).toFixed(2);
+ }
+}
+function propertySummary(){
+ const active=S.exec.property.sites.filter(x=>x.status==="active");
+ return{sites:active.length,capacity:propertyCapacity()+S.exec.units.reduce((n,u)=>n+propertyCapacity(u.key),0),
+  arrears:propertyArrears(),book:S.exec.property.sites.filter(x=>x.investment>0).reduce((n,x)=>n+x.investment,0),
+  daily:active.reduce((n,x)=>n+PROPERTY_TYPES[x.type].dayCost,0)};
+}
+function propertyWarnings(){
+ const out=[],p=propertySummary();
+ for(const key of [null,...S.exec.units.map(u=>u.key)]){
+  const people=propertyPeople(key).length,cap=propertyCapacity(key);
+  if(people>cap)out.push((key?SERVICE_LINES[key].name:"Corporate office")+" over capacity: "+people+"/"+cap+" seats. Productivity and mood are affected.");
+ }
+ if(p.arrears>.01)out.push("Unpaid office bills "+biCurrency(p.arrears)+" need a payment decision.");
+ return out;
+}
+function renderProperties(){
+ const board=$("property-overview");if(!board||editableInteractionPending())return;
+ const p=S.exec.property,summary=propertySummary(),members=propertyPeople(),unitSites=S.exec.units;
+ const signature=JSON.stringify([S.day,Math.floor(S.cash),members.length,unitSites.map(u=>[u.key,u.staffIds.length,u.managerId]),p.sites,Math.floor(S.market.completed/5),S.org.progression.appointments.length]);
+ if(signature===propertyViewSignature)return;propertyViewSignature=signature;
+ $("property-summary").textContent=summary.sites+" active · "+summary.capacity+" seats · owned cost "+biCurrency(summary.book);
+ const headquarters=propertyActive(),corporateCapacity=propertyCapacity();
+ const room=(name,people,capacity,type)=>'<div class="property-room"><div class="lead"><b>'+esc(name)+'</b><span class="small">'+people.length+'/'+capacity+' seats</span></div>'+
+ '<div class="property-people">'+people.slice(0,20).map(x=>'<span title="'+esc(x.n)+'">'+(x.id===S.ops.assistantId?"📋":x.t.startsWith("d")?"💻":"👤")+'</span>').join("")+
+ (people.length>20?'<span>+'+(people.length-20)+'</span>':'')+'</div></div>';
+ board.innerHTML='<div class="unit-metrics"><span>Daily premises cost '+biCurrency(summary.daily)+'</span><span>Owned acquisition cost '+biCurrency(summary.book)+'</span><span>Unpaid bills '+biCurrency(summary.arrears)+'</span></div>'+
+ '<div class="property-map">'+room(headquarters?PROPERTY_TYPES[headquarters.type].name:"Distributed headquarters",members,corporateCapacity,"corporate")+
+ unitSites.map(u=>room(SERVICE_LINES[u.key].name+" · "+(propertyActive(u.key)?"Satellite":"Distributed team"),propertyPeople(u.key),propertyCapacity(u.key),u.key)).join("")+'</div>'+
+ (propertyWarnings().length?'<p class="risk-watch small">'+propertyWarnings().map(esc).join(" · ")+'</p>':'')+
+ (summary.arrears>=.01?'<button type="button" data-property-action="arrears" '+(S.cash<.01?"disabled":"")+'>Settle unpaid premises costs</button>':'')+
+ '<div class="small">Owned acquisition cost is historical investment cash outflow, not a guaranteed resale valuation. Premises bonuses affect future work only; employees retain their reporting owners. Daily rent and upkeep appear in the consolidated operating ledger.</div>';
+ const existing=p.sites.filter(x=>x.status!=="closed").map(x=>{const def=PROPERTY_TYPES[x.type];return '<div class="property-choice"><b>'+esc(def.name)+'</b> · '+esc(x.unitKey?SERVICE_LINES[x.unitKey].name:"Headquarters")+' · '+x.status+
+ ' · '+biCurrency(x.arrears)+' unpaid'+(x.status==="inactive"&&def.kind==="owned"?'<button type="button" data-property-action="activate" data-property-key="'+x.id+'">Move to owned property</button>':'')+
+ (x.status==="active"&&def.kind==="lease"?'<button type="button" data-property-action="close" data-property-key="'+x.id+'">End lease</button>':'')+'</div>';}).join("");
+ const button=(type,unitKey=null)=>{
+  const def=PROPERTY_TYPES[type],check=propertyReadiness(type,unitKey),current=propertyActive(unitKey)?.type===type,scope=unitKey?SERVICE_LINES[unitKey].name:"Headquarters";
+  return '<div class="property-choice"><b>'+esc(def.name)+'</b> · '+esc(scope)+
+   '<p class="small">'+def.capacity+' seats · '+(def.kind==="lease"?"Setup":"Purchase")+' '+biCurrency(def.price)+' once · '+biCurrency(def.dayCost)+'/day '+(def.kind==="lease"?"rent":"upkeep")+
+   ' · future work bonus '+Math.round((def.boost-1)*100)+'%</p>'+
+   '<p class="small">'+check.checks.map(c=>(c.met?"✓ ":"○ ")+esc(c.label)).join(" · ")+'</p>'+
+   '<button type="button" data-property-action="open" data-property-key="'+type+'" '+(unitKey?'data-property-unit="'+esc(unitKey)+'" ':'')+
+    (!check.ready||current||!!S.ev?'disabled':'')+'> '+(current?"Currently active":check.ready?(def.kind==="owned"?"Buy property":"Sign lease"):"Milestones incomplete")+'</button></div>';
+ };
+ $("property-purchase-options").innerHTML=(existing?'<h3>Current premises &amp; owned buildings</h3>'+existing:'')+
+ '<h3>Corporate premises</h3>'+["studio","office","building","hq"].map(k=>button(k)).join("")+
+ (unitSites.length?'<h3>Operating unit offices</h3>'+unitSites.map(u=>button("satellite",u.key)).join(""):'');
+}
+
 function orgLeaderTitle(p){
 if(!p)return"Department Manager";
 const isDepartmentHead=S.org?.departments[p.department]?.managerId===p.id;

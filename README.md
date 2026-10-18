@@ -1,5 +1,9 @@
 # Boss
 
+## Boss v22.2 — HR, CFO & COO executive leadership (candidate)
+
+CEO may appoint proven **existing** employees as HR/Chief People Officer, CFO and COO from **Today → Executive leadership** after measurable stage, competence and 30-day payroll-reserve gates. Each adds only actual future payroll and begins with all delegation disabled. CEO may authorize a separate 90-day mandate: HR can process already-budgeted recruiting and recovery for idle stressed staff, CFO can protect 30 days of payroll/office runway from delegated discretionary spending, and COO can coordinate GM staffing when a functional department manager is unavailable. No CFO/HR/COO may authorize new spending ceilings or invent employees, office holdings, reporting history, or revenues. [Details](docs/V22_2_EXECUTIVES.md). Pending production checks; do not assume the owner's private Safari save was tested.
+
 ## Boss v22 — Offices, Buildings and Pacing (released 2026-10-18)
 
 Buy owned office buildings, lease serviced or regional offices, acquire a group HQ, and rent separate GM satellite sites from **Growth → Offices & company property**. Every property requires measurable company readiness, available reserves, actual purchase/setup cash and ongoing rent or maintenance. Choose city center, business park or regional hub for different price/productivity combinations. Previously purchased businesses and staffing remain yours; older saves migrate with enough grandfathered distributed workspace not to create an immediate capacity penalty. Owned property has forward-only noncash depreciation, an audited book value and optional sale of an inactive building; unpaid rent accrues once and can be settled without double expenses. The CEO gets a responsive office floor overview, the EA flags capacity shortfalls, and the animated office is capped at 20 FPS with persistent show/hide.

@@ -1,5 +1,12 @@
 # Boss — simulation development roadmap
 
+## v22.2 — C-suite authority (candidate)
+
+- CEO can appoint an existing qualified, idle colleague as HR/Chief People Officer, CFO or COO after explicit company, experience and payroll-runway gates; retain one employee identity and normal historic payroll.
+- A 90-day, separate, revocable delegation controls each officer; default OFF in both fresh and migrated saves. HR handles only existing approved recruiting envelopes and idle-staff recovery; CFO can veto delegated discretionary spend below 30 days of full cash runway; COO coordinates shared GM support without new staff ownership or payroll.
+- All appointments, mandate controls, evidence-backed 30-day reviews and CEO exceptions appear on Today and in EA weekly briefings. [Executive authority and safeguards](docs/V22_2_EXECUTIVES.md).
+- This does **not** implement v23 acquisitions, manufacturing, invented executives or retroactive company revaluation. The separate reputation/pricing inflation issue must be analyzed before v23 finance expansion.
+
 ## Released v22 — Property, Company Campus & Simulation Pacing
 
 - New CEO premises board: serviced and regional leases; owned offices/group HQ; GM-specific satellite leases; real upfront and per-day cash mechanics and premises capacity effects, aligned with reported teams.

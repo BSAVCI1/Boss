@@ -233,7 +233,7 @@ test("v22 CEO decision center offers a working escalation when recruitment slots
  money(s);
 });
 
-function qualified(s,id){const p=s.team.find(x=>x.id===id);p.perf.days=60;p.career.rank=1;
+function qualified(s,id){const p=s.team.find(x=>x.id===id);p.perf.days=60;p.career.rank=1;p.management=p.management||{};
  for(const k of ["planning","delegation","coaching","communication"])p.management[k]=75;
  p.t="idle";p.role.auto=true;return p;}
 test("v22.2 migration leaves all C-suite roles unappointed and authorizes no new expenses",()=>{

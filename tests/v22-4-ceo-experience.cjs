@@ -28,7 +28,7 @@ test("established 4704-day game shows price estimate near real new signed deal n
  const s=fresh();s.day=4704;s.rep=3657;s.cash+=4_000_000;s.bi.openingCash+=4_000_000;s.market.completed=689;
  s.market.open=["hospitality","retail","creative"];s.market.focus="creative";
  s.exec.lines=[{key:"product",since:200,delivered:130},{key:"marketing",since:250,delivered:127}];
- const lead={id:19,client:"Atlas Print",sector:"creative",preference:"quality"};
+ const lead={id:19,client:"Atlas Print",sector:"creative",preference:"quality",stage:"negotiation",created:4700};
  const preview=G.worldTenderPreview(lead),originalCash=s.cash;
  const d=G.createDeal("Atlas Print",0,"creative"),fee=G.feeFor(d);
  assert.ok(preview.feeHint>1000,"bid estimate must include reputation and service modifiers");

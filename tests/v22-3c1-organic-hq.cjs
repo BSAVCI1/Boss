@@ -61,7 +61,7 @@ function simulate(seed,model){
  for(let n=1;n<=730;n++){
   // Real CEO review at three-day intervals, using production job suitability and authorization.
   if(n===1||n%3===0){let approvals=0;for(const d of s.deals.filter(x=>!x.w)){
-   if(approvals>=3)break;const p=G.bestIdle(d);if(p&&G.assign(d.id,p.id))approvals++;
+   if(approvals>=3)break;const p=G.bestIdle(d);if(p){G.assign(d.id,p.id);if(d.w===p.id)approvals++;}
   }}
   // No artificial employees: search real candidate pool, pay hiring fees, keep 80 payroll days in liquid cash.
   if(n%25===0&&s.team.length<27&&s.cash>750+s.team.reduce((v,p)=>v+G.dailySalary(p),0)*80){
@@ -105,7 +105,7 @@ function simulate(seed,model){
   if(horizons.includes(n)){checkpoints.push(view(G,s,model,seed,n));verifyReload(G,s);}
  }
  assert.deepEqual(s.team.filter(p=>originalIds.includes(p.id)).map(p=>p.id),originalIds.filter(id=>s.team.some(p=>p.id===id)),'original IDs remain unless real departure');
- if(!purchase)assert.equal(G.propertyReadiness('hq').ready,false,'NO fabricated HQ purchase before meeting gates');
+ if(!purchase)assert.equal(s.exec.property.sites.some(x=>x.type==='hq'&&x.status!=='sold'),false,'no HQ may appear without the actual permitted purchase');
  return {model,seed,first,purchase,checkpoints,decisions:decisions.slice(0,125),closingBlocker:G.propertyReadiness('hq').checks.filter(x=>!x.met)};
 }
 function stats(values){const a=values.filter(Number.isFinite).sort((x,y)=>x-y);return a.length?{mean:+(a.reduce((p,q)=>p+q,0)/a.length).toFixed(2),median:+a[Math.floor(a.length/2)].toFixed(2),min:a[0],max:a.at(-1)}:null;}

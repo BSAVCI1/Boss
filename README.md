@@ -1,5 +1,13 @@
 # Boss
 
+## Boss v21.4c — Autonomous management (released 2026-10-18)
+
+**Play:** Team → Leadership journey → Corporate staffing decisions. Qualified corporate managers review delivery backlogs and recommend hiring when existing staff cannot cover work. The CEO may approve individual hires or authorize 90-day hiring limits and slots. Without authority managers only propose; budgets default to zero on existing saves. Recruiting costs $20 per hire once and new employee wages recur, with 21 days of payroll runway required. Permissions do not spend cash.
+
+**Cross-unit capacity:** Growth → Operating units → Temporary corporate support. The CEO can authorize up to 30 days of unit work for a central specialist without transferring primary reporting ownership. Actual shared labor is attributed to unit operating costs as a slice of existing wages—never a second payroll charge.
+
+**Verified:** [PR #30](https://github.com/BSAVCI1/Boss/pull/30) merged at `e2e368c27e40074b41d64407da89418079b34a97`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39105167550) and [GitHub Pages](https://github.com/BSAVCI1/Boss/actions/runs/39105167176) passed. Automated 390/414px Chromium, save migration, 730-day and financial checks passed; owner's private Safari save was not accessed. [Technical scope](docs/V21_4C_AUTONOMY.md).
+
 ## Boss v21.4b — Leadership milestones and managed company growth (released 2026-10-17)
 
 Start a company with three colleagues. At five, Today and the Executive Assistant surface a qualified first Team Lead candidate, explain blockers and offer the CEO a Team view to approve. A Team Lead can supervise up to three uniquely owned staff members; every additional lead requires another three people. Three Team Leads open the Manager path, five Team Leads the Senior Manager path, and three Managers the Director path. Every actual appointment is gated by career evidence, real role/practice days, leadership competency, contract availability and sufficient cash runway. The EA and Team panel show the next unmet requirement.

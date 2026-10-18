@@ -11,7 +11,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,innerHTML:"",textConten
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const methods="fresh,load,get:()=>S,set:x=>S=x,save,executiveLaunch,companyLaunchReadiness,companyDirection,renderLaunchGuide,gameRender,renderBriefing,renderExecutiveWeekly,unitActivate,unitAppoint,unitTransfer,dailySalary,createDeal,feeFor,tick,propertyOpen,propertyClose,propertyActivate,propertyPayArrears,propertyDay,propertySummary,propertyReadiness,propertyWorkMultiplier,propertyOccupancy,propertyCapacity,renderProperties,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance";
+const methods="fresh,load,get:()=>S,set:x=>S=x,save,executiveLaunch,companyLaunchReadiness,companyDirection,renderLaunchGuide,gameRender,renderBriefing,renderExecutiveWeekly,unitActivate,unitAppoint,unitTransfer,dailySalary,createDeal,feeFor,tick,propertyOpen,propertyClose,propertyActivate,propertyPayArrears,propertyDay,propertySell,propertySummary,propertyReadiness,propertyQuote,propertyWorkMultiplier,propertyOccupancy,propertyCapacity,renderProperties,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+methods+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function fresh(){store.clear();G.fresh();el("service-line-select").value="product";return G.get();}
@@ -108,6 +108,51 @@ test("asset roadmap shows floorplan, ownership, exact costs and capacity without
  assert.ok(el("property-purchase-options").innerHTML.includes("Serviced office suite"));
  const cash=s.cash;G.renderProperties();assert.equal(s.cash,cash);money(s);
 });
+
+test("office location quotes preserve actual signed prices and future-work effects",()=>{
+ const s=fresh();fund(s,2000);staff(s,5);s.market.completed=5;
+ s.ui.propertyLocation="central";assert.equal(G.propertyQuote("studio").price,94);
+ assert.equal(G.propertyQuote("studio").dayCost,1.95);
+ assert.equal(G.propertyOpen("studio"),true);
+ const site=s.exec.property.sites[0],benefit=G.propertyWorkMultiplier(s.team[2]);
+ assert.equal(site.location,"central");assert.equal(site.price,94);
+ assert.equal(site.dayCost,1.95);assert.ok(benefit>1.04);
+ s.ui.propertyLocation="regional";assert.equal(G.propertyQuote("studio").price,64);
+ assert.equal(site.price,94);assert.equal(site.dayCost,1.95,"existing lease cannot be repriced by changing future selection");
+ const cash=s.cash;G.propertyDay();assert.ok(Math.abs(s.cash-(cash-1.95))<.001);money(s);
+});
+test("property depreciates without cash charge, then sold unused asset records cash receipt and book loss",()=>{
+ const s=fresh();fund(s,12000);staff(s,13);s.market.completed=30;
+ s.org.progression.appointments.push({id:s.team[0].id,level:"manager",since:0},{id:s.team[1].id,level:"lead",since:0});
+ assert.equal(G.propertyOpen("building"),true);
+ s.day=90;const cash=s.cash,op=s.bi.totals.costs,invest=s.bi.totals.investments;
+ G.propertyDay();const site=s.exec.property.sites[0];
+ assert.equal(site.book,1773);assert.equal(s.bi.totals.investments,invest);
+ assert.ok(Math.abs(s.cash-(cash-1.2))<.001);
+ assert.ok(Math.abs(s.bi.totals.costs-op-28.2)<.001);
+ assert.equal(G.propertyOpen("office"),true);assert.equal(site.status,"inactive");
+ const before=s.cash,cost=s.bi.totals.costs,received=s.bi.totals.cashIn;
+ assert.equal(G.propertySell(site.id),true);
+ assert.equal(site.status,"sold");assert.equal(site.book,0);
+ assert.ok(Math.abs(s.cash-before-1631.16)<.001);
+ assert.ok(Math.abs(s.bi.totals.cashIn-received-1631.16)<.001);
+ assert.ok(Math.abs(s.bi.totals.costs-cost-141.84)<.001);
+ assert.equal(G.propertySell(site.id),false);
+ assert.equal(G.propertySummary().book,0);money(s);
+});
+test("730-day rented headquarters books exactly one daily property expense without duplicate salaries",()=>{
+ const s=fresh();fund(s,150000);staff(s,13);s.market.completed=35;s.flow.focus=true;s.nextEv=999999;s.deals=[];
+ s.org.progression.appointments.push({id:s.team[0].id,level:"lead",since:0});
+ assert.equal(G.propertyOpen("office"),true);
+ const teamCount=s.team.length,rent=3;
+ const before=s.bi.categoryTotals.property||0;
+ for(let i=0;i<730;i++)G.tick();
+ assert.equal(s.day,730);assert.equal(s.team.length,teamCount);
+ assert.ok(Math.abs((s.bi.categoryTotals.property||0)-before-730*rent)<.001);
+ assert.equal(G.propertySummary().daily,3);
+ money(s);G.save();assert.equal(G.load().day,730);
+});
+
 test("v22 game pace runs 30 game days in 72/24/9 seconds at 1×/3×/8×",()=>{
  assert.ok(script.includes("2400/spd"));
  assert.ok(script.includes("S.day-S.flow.lastInterruptDay>=28"));

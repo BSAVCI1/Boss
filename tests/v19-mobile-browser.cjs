@@ -386,9 +386,12 @@ async function runBrowser(){
   fs.mkdirSync(evidenceDir,{recursive:true});
   async function capturePeople(width,height,kind){
     await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+    // Navigation scrolls to top asynchronously. Wait before scrolling to evidence.
+    await send("Runtime.evaluate",{expression:"document.querySelector('.bottom-nav button[data-view=\"team\"]').click()",returnByValue:true});
+    await sleep(240);
     const prep=await send("Runtime.evaluate",{expression:kind==="organization"?
-     "(()=>{document.querySelector('.bottom-nav button[data-view=\"team\"]').click();const root=document.getElementById('org-explorer');root.scrollIntoView({block:'start'});return {people:document.querySelectorAll('#people details[data-employee-id]').length,tree:root.textContent.includes('CEO'),width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6}})()":
-     "(()=>{document.querySelector('.bottom-nav button[data-view=\"team\"]').click();const g=document.querySelector('#people details[data-team-group]');if(g)g.open=true;const p=g?.querySelector('details[data-employee-id]');if(p)p.open=true;const c=p?.querySelector('details[data-career-id]');if(c)c.open=true;const x=p?.querySelector('.org-career-glance');if(x)x.scrollIntoView({block:'start'});return {people:document.querySelectorAll('#people details[data-employee-id]').length,career:!!x&&x.textContent.includes('Employment grade'),width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,blockedPromotionHidden:!p?.querySelector('button[data-career=\"promote\"]')||p.querySelector('button[data-career=\"promote\"]').hidden}})()",
+     "(()=>{const root=document.getElementById('org-explorer');return {people:document.querySelectorAll('#people details[data-employee-id]').length,tree:!!root&&root.textContent.includes('CEO'),width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6}})()":
+     "(()=>{const g=document.querySelector('#people details[data-team-group]');if(g)g.open=true;const p=g?.querySelector('details[data-employee-id]');if(p)p.open=true;const c=p?.querySelector('details[data-career-id]');if(c)c.open=true;const x=p?.querySelector('.org-career-glance');return {people:document.querySelectorAll('#people details[data-employee-id]').length,career:!!x&&x.textContent.includes('Employment grade'),width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,blockedPromotionHidden:!p?.querySelector('button[data-career=\"promote\"]')||p.querySelector('button[data-career=\"promote\"]').hidden}})()",
       returnByValue:true});
     const info=prep.result?.value;
     assert.equal(info.width,width,"Wrong mobile screenshot viewport");
@@ -396,7 +399,16 @@ async function runBrowser(){
     assert.ok(info.people>0,"Actual browser roster is empty");
     assert.equal(info[kind==="organization"?"tree":"career"],true,"Actual people view missing "+kind);
     if(kind==="career")assert.equal(info.blockedPromotionHidden,true,"Unmet promotion must be hidden");
-    await sleep(200);
+    await sleep(140);
+    const selector=kind==="organization"?"#org-explorer":"#people .org-career-glance";
+    const scrollExpression="(()=>{const target=document.querySelector("+JSON.stringify(selector)+");if(!target)return null;document.documentElement.style.scrollBehavior='auto';document.body.style.scrollBehavior='auto';const y=window.scrollY+target.getBoundingClientRect().top-165;window.scrollTo({top:Math.max(0,y),behavior:'instant'});const b=target.getBoundingClientRect();return{scrollY:window.scrollY,targetTop:b.top,targetBottom:b.bottom,viewport:innerHeight}})()";
+    const scroll=await send("Runtime.evaluate",{expression:scrollExpression,returnByValue:true});
+    assert.ok(scroll.result?.value,"Screenshot target not found");
+    await sleep(250);
+    const visibility=await send("Runtime.evaluate",{expression:"(()=>{const b=document.querySelector("+JSON.stringify(selector)+")?.getBoundingClientRect();return b?{top:b.top,bottom:b.bottom,scrollY:window.scrollY}:null})()",returnByValue:true});
+    const rect=visibility.result?.value;
+    assert.ok(rect&&rect.top>=0&&rect.top<height-105,"Screenshot target must actually be visible: "+JSON.stringify(rect));
+    if(kind==="career")assert.ok(rect.scrollY>400,"Career screenshot cannot be the top of Team view");
     const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
     const filename=path.join(evidenceDir,"boss-"+kind+"-"+width+"px.png");
     assert.ok(shot.data?.length>1500,"Empty Chromium evidence");

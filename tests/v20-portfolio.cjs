@@ -79,8 +79,8 @@ test("reporting-line groups contain each colleague once and retain optional hier
  const groups=G.teamReportingGroups(),seen=groups.flatMap(x=>x.people.map(p=>p.id));
  assert.equal(seen.length,s.team.length);assert.equal(new Set(seen).size,s.team.length);
  assert.equal(groups[0].title,"CEO · direct reports");
- assert.ok(groups.some(x=>x.id==="commercial-sales"&&x.people.some(p=>p.id===worker.id)));G.renderStructure();
- assert.ok(el("people").innerHTML.includes("commercial-sales"));reconcile(s);
+ assert.ok(groups.some(x=>x.id==="report-"+manager.id&&x.people.some(p=>p.id===worker.id)),"The worker must report to the actually appointed Sales Manager");G.renderStructure();
+ assert.ok(el("people").innerHTML.includes("report-"+manager.id));reconcile(s);
 });
 test("a scheduled leadership week generates an actual read-only report",()=>{
  const s=init();s.day=7;s.exec.nextMeeting=7;

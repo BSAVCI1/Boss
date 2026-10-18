@@ -261,6 +261,6 @@ function mainB(){
  fs.mkdirSync('reports',{recursive:true});fs.writeFileSync('reports/v22-3b-economic-calibration.json',JSON.stringify(out,null,2)+'\n');
  console.log('PASS v22.3B actual-engine 96 comparative replays / 288 reconciled snapshots; founder viable');
  console.log('BASIC',JSON.stringify({baselineMatureMargin:baseline.groupProfit.mean/baseline.revenue.mean,chosenMatureMargin:calibrated.groupProfit.mean/calibrated.revenue.mean,founderProfit:founder.groupProfit.mean}));
- for(const row of out.summary.filter(r=>r.policy==='balanced'&&r.elapsed===730))console.log('SUMMARY',JSON.stringify(row));
+ for(const row of out.summary.filter(r=>r.policy==='balanced'))console.log('SUMMARY',JSON.stringify(row));
 }
 mainB();

@@ -1333,7 +1333,7 @@ function biProjectEnd(d,success,payout=0){if(d.biCompleted)return;contractProcur
 biAdd("laborAllocated",labor);biAdd("directAllocated",direct);
 if(success){economyInvoice(d,payout);if(d.biBooked){biAdd("bookedDelivered",d.bookVal);biAdd("realizedComparable",payout);}biAdd("delivered",1);if(d.dl>=0)biAdd("onTime",1);biAdd("qualityTotal",quality);biAdd("projectContribution",payout-labor-direct);biSector(d.sector,{delivered:1,revenue:payout,qualityTotal:quality,contribution:payout-labor-direct});}
 else{biAdd("missed",1);biAdd("projectContribution",-labor-direct);biSector(d.sector,{missed:1,contribution:-labor-direct});}
-const item={day:S.day,client:d.cl,sector:d.sector,fee:payout,booked:d.biBooked?d.bookVal:null,quality:Math.round(quality),labor:+labor.toFixed(2),direct:+direct.toFixed(2),margin:+(payout-labor-direct).toFixed(2),success,onTime:success&&d.dl>=0,source:d.leadSource||"untracked"};
+const item={day:S.day,client:d.cl,sector:d.sector,fee:payout,booked:d.biBooked?d.bookVal:null,quality:Math.round(quality),labor:+labor.toFixed(2),laborRaw:labor,direct:+direct.toFixed(2),margin:+(payout-labor-direct).toFixed(2),success,onTime:success&&d.dl>=0,source:d.leadSource||"untracked"};
 S.bi.projects.unshift(item);if(S.bi.projects.length>120)S.bi.projects.length=120;}
 function biPeriod(){if(S.bi.range==="all")return{values:S.bi.totals,sources:S.bi.sourceTotals,sectors:S.bi.sectorTotals,categories:S.bi.categoryTotals,from:S.bi.since,days:Math.max(1,S.day-S.bi.since),limited:false};
 const days=Number(S.bi.range)||30,from=Math.max(S.bi.since,S.day-days+1),selected=S.bi.daily.filter(b=>b.day>=from);

@@ -71,7 +71,24 @@ The rate and external units are modeling hypotheses representing outside fulfilm
 
 ### Measured before-and-after results / decision
 
-**PENDING final verified same-head Actions output:** copy measured 30/180/730 summaries and proof links into this section only after CI has produced reconciled artifacts. Initial work and code commits alone do not constitute a passing result. Preserve the prior exact v22.3A figures in their original report. Model choice is provisional **Balanced**, not approved for release until comparisons and founder viability are proven.
+**Verification checkpoint, 18 October 2026 — PARTIAL, not an accepted release.** At [failed run #39129419349](https://github.com/BSAVCI1/Boss/actions/runs/39129419349), actual-engine 96-replay/288-checkpoint four-model calibration ran to completion, and prospective contract/integrity tests passed, but the subsequent seven-fixture sensitivity failed its strict stored-labor reconciliation. Completed project history deliberately rounded labor for UI while cumulative production labor retained its fractional precision. This verification batch adds the *unrounded* project-history audit field without changing payroll, profit, contracts, cash or save migration; the test continues requiring exact reconciliation rather than relaxing the assertion. The new code/documentation HEAD requires a fresh mandatory CI pass. Adverse/organic/low-demand/capacity datasets and Chromium/IndexedDB from the failed run cannot be counted as passed.
+
+**Observed balanced-policy 730-day group operating profit, mean of three seeds (in-game $), from successfully executed calibration sub-suite at #39129419349:**
+
+| Stage | Baseline | Minimal cost | Balanced cost | Higher pressure |
+| --- | ---: | ---: | ---: | ---: |
+| Founder A, starting $90 | $29,624 | $26,808 | **$22,274** | $13,644 |
+| Developing B, synthetic $4,800 start | $255,134 | $236,008 | **$181,730** | $146,621 |
+| Mature C, synthetic $3.3m start | $368,281 | $341,791 | **$266,204** | $218,059 |
+| Grandfathered D, synthetic $275k start | $346,476 | $321,719 | **$250,971** | $206,074 |
+
+At C +730, selected Balanced: mean revenue $400,264 (median $422,946, range $325,695–$452,152), mean group profit $266,204 (median $283,321, range $209,815–$305,477), mean procurement expense $102,077 (median $107,358, range $84,124–$114,749), mean closing cash $3,555,574 (median $3,572,828, range $3,498,921–$3,594,973, **including $3.3m synthetic opening capital**), payroll $28,929, property recurring $2,190, utilization 4.27%. Mean operating margin is approximately **66.5%** (baseline 92.0%, minimal 85.4%, pressure 54.5%). Revenue and utilization change little between variants; profit reduction is overwhelmingly an assumed external-procurement cost, **not** proved improvement in customer demand/capacity realism. For A +730, selected group profit $22,274 (median $22,340, range $21,830–$22,651), cash $21,909 (median $21,754, range $21,232–$22,741), procurement $7,350 and payroll $2,589. These observations support founder viability under the tested active-CEO policy only, not survival under all adverse conditions.
+
+**Model decision: Balanced remains a provisional candidate, NOT RELEASE-ACCEPTED.** Its direction is economically measurable and it preserves the observed active founder, but ~66.5% synthetic mature margin, ~4.3% delivery-role utilization, non-market-validated vendor price assumptions and missing adverse/organic distributions are insufficient for unconditional acceptance. Do not replace it with the high-pressure formula merely to hit an arbitrary profit target. Do not claim that changing procurement prices alone resolves mature-capacity realism.
+
+**Organic HQ gap:** fixture E begins as a real new founder with $90 and permits player-approved recruitment only while headcount is below 14, whereas HQ eligibility requires at least 20 corporate employees plus a director, two managed units and 50 deliveries. Consequently E cannot demonstrate a genuinely earned and HQ-eligible acquisition even if its cash exceeds the HQ's $7,200 price plus reserves. Assess cash-only threshold separately from milestone readiness; complete a fully organic eligibility/payback replay before property repricing is treated as approved.
+
+**Deferred employee/property conclusion:** Full senior-pay/new-hire redesign is not required to verify procurement recognition; mature baseline 730-day payroll $28,929 versus revenue $400,264 gives a clear underspending signal, but salary changes require immutable per-hire terms and explicit HR/GM/CEO budget authority. Future HQ pricing is not supported by synthetic C's $3.3m opening balance; current HQ quote $7,200 and $3/day upkeep should stay unchanged for existing sites. Defer both future-only repricing proposals until organic cost/payback evidence and authority-safe versioned terms exist. This deferral is safe for historical integrity; v22.3 release still needs satisfactory economic realism evidence and owner acceptance. **The 30/180-day v22.3B distributions remain an open reporting gate until final-head evidence is complete.**
 
 ### Scope deliberately deferred
 

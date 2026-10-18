@@ -197,7 +197,7 @@ function run(kind,policy,seed){
   const before=s.day;G.tick();assert.equal(s.day,before+1,'a game day must advance exactly once');
   // Real completed-project records preserve allocated delivery effort; BI_FIELDS.laborAllocated is not populated by the current engine.
   // Collect the newly completed records EVERY DAY before the built-in 120-project history truncation.
-  for(const p of s.bi.projects.filter(p=>p.day===s.day)){deliveryLabor+=p.labor||0;deliveryDirect+=p.direct||0;}
+  for(const p of s.bi.projects.filter(p=>p.day===s.day)){assert.ok(Number.isFinite(p.laborRaw),'exact project labor must be retained before UI rounding');deliveryLabor+=p.laborRaw;deliveryDirect+=p.direct||0;}
   if(new Set(s.team.map(p=>p.id)).size!==s.team.length)throw Error('duplicate staff IDs');
   const status={building:G.propertyReadiness('building').ready,hq:G.propertyReadiness('hq').ready,hr:G.executiveEligibility('hr').ready,cfo:G.executiveEligibility('cfo').ready,coo:G.executiveEligibility('coo').ready};
   for(const [k,v] of Object.entries(status))if(v&&first[k]===null)first[k]=n;

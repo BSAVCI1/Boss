@@ -268,7 +268,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
 <div class="card ceo-office"><div class="eyebrow">CEO · COMPANY IDENTITY</div><h2 id="company-name">Business Services Group</h2><p id="company-identity"></p><div class="ceo-office-grid"><div><b>My direct reports</b><div id="ceo-direct-reports"></div></div><div><b>Executive Assistant</b><div id="ceo-assistant"></div></div></div></div>
 <div class="card ceo-direction"><div class="lead"><b>Your 90-day direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p><p id="ceo-direction-confirm" class="small" role="status" aria-live="polite"></p></div>
-<div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><details class="aux-details" id="ea-weekly-report"><summary>Executive Assistant · weekly business briefing</summary><div id="ea-weekly-body"></div></details><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
+<div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><details class="aux-details" id="ea-weekly-report"><summary>Executive Assistant · weekly business briefing</summary><div id="ea-weekly-body"></div></details><div id="ceo-action-center" aria-label="CEO approvals and exceptions"></div><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
 <div class="card game-desk" id="game-desk">
 <div class="lead"><span class="eyebrow">YOUR COMPANY STORY</span><span class="game-chapter" id="game-chapter">Founder</span></div>
 <h2 id="brief-headline">Your company at a glance</h2><p class="overview-copy" id="brief-summary">Your team is getting started.</p>
@@ -2539,6 +2539,19 @@ $("ceo-set-direction").addEventListener("click",()=>{
 const priority=ceoDraftPriority??$("ceo-priority").value;
 if(!ceoDirection(priority))$("ceo-direction-confirm").textContent=S.ev?"Resolve the current CEO decision before changing direction.":"Direction unchanged. Choose a different strategy or wait for the next review.";
 });
+$("ceo-action-center").addEventListener("click",e=>{
+ const b=e.target.closest("button[data-ceo-action]");if(!b)return;
+ let result=false;
+ if(b.dataset.ceoAction==="unit-approve"||b.dataset.ceoAction==="unit-decline")
+  result=unitRequestDecision(Number(b.dataset.id),b.dataset.ceoAction==="unit-approve"?"approve":"decline");
+ else if(b.dataset.ceoAction==="manager-approve"||b.dataset.ceoAction==="manager-decline")
+  result=managementRequestDecision(Number(b.dataset.id),b.dataset.ceoAction==="manager-approve"?"approve":"decline");
+ else if(b.dataset.ceoAction==="promotion")
+  result=ladderPromote(b.dataset.level,Number(b.dataset.id),true);
+ else if(b.dataset.ceoAction==="opportunity"){result=worldEventChoice(b.dataset.result);}
+ if(result&&typeof result.then==="function")result.then(ok=>{if(!ok)$("ceo-action-status").textContent="Decision was not saved. Check the available cash and game state.";else renderCEODecisions();});
+ else if(!result)$("ceo-action-status").textContent="Decision not completed. Review the cash reserve, eligibility, or saved game state.";
+});
 $("exec-inbox").addEventListener("click",e=>{const p=e.target.closest("button[data-exec-action]");if(p)executiveDecision(Number(p.dataset.execId),p.dataset.execAction);else{const opportunity=e.target.closest("button[data-world-event]");if(opportunity)worldEventChoice(opportunity.dataset.worldEvent);else{const go=e.target.closest("button[data-go]");if(go)navigate(go.dataset.go);}}});
 $("property-location").addEventListener("change",()=>{
  const choice=$("property-location").value;if(!PROPERTY_LOCATIONS[choice])return;
@@ -3644,6 +3657,46 @@ if($("game-rivals").innerHTML!==rivalText)$("game-rivals").innerHTML=rivalText;
 }
 function gameAdvanceDays(){if(S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev||indexedWriteCount>0;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
 
+function renderCEODecisions(){
+ const root=$("ceo-action-center");if(!root||editableInteractionPending())return;
+ const hiring=managementOps().requests.filter(x=>x.status==="open");
+ const unit=S.exec.unitRequests.filter(x=>x.status==="open");
+ const offer=S.world.activeEvent,step=ladderNext();
+ const payroll=S.team.reduce((n,p)=>n+dailySalary(p),0);
+ const promotion=step?.ready&&S.cash>=(payroll+step.incremental*S.mod.cost)*14?step:null;
+ const requests=[];
+ for(const req of unit){const u=S.exec.units.find(x=>x.key===req.key);
+  const eligible=managementCashReady(req)&&!!u&&u.managerId===req.managerId&&u.staffIds.length<Math.min(25,u.plan.staffingTarget||5);
+  requests.push('<div class="exec-proposal"><b>Operating unit · staffing exception</b><p>'+
+   esc(SERVICE_LINES[req.key]?.name||"Unknown unit")+' · '+esc(req.reason)+' · Recruiting '+biCurrency(req.cost)+
+   ' once + '+biCurrency(req.payroll)+'/day payroll. '+(eligible?"21-day payroll reserve verified.":"Insufficient cash runway or unit staffing limit reached.")+'</p>'+
+   '<div class="buttons"><button type="button" data-ceo-action="unit-approve" data-id="'+req.id+'" '+(eligible?'':'disabled')+'>Approve unit hire</button>'+
+   '<button type="button" data-ceo-action="unit-decline" data-id="'+req.id+'">Decline</button></div></div>');
+ }
+ for(const req of hiring){const eligible=managementCashReady(req);
+  requests.push('<div class="exec-proposal"><b>Corporate department · staffing exception</b><p>'+
+   esc(DEPARTMENTS[req.dept]?.name||"Department")+' · '+esc(req.reason)+
+   ' · One-time '+biCurrency(req.cost)+' + '+biCurrency(req.payroll)+'/day; 21 days payroll required.</p>'+
+   '<div class="buttons"><button type="button" data-ceo-action="manager-approve" data-id="'+req.id+'" '+(eligible?'':'disabled')+'>Approve corporate hire</button>'+
+   '<button type="button" data-ceo-action="manager-decline" data-id="'+req.id+'">Decline</button></div></div>');
+ }
+ if(promotion)requests.push('<div class="exec-proposal"><b>Leadership promotion · CEO authority</b><p>Candidate '+esc(promotion.candidateName)+
+  ' · '+esc(promotion.role)+' · additional recurring payroll '+biCurrency(promotion.incremental*S.mod.cost)+'/day.</p>'+
+  '<button type="button" data-ceo-action="promotion" data-id="'+promotion.candidateId+'" data-level="'+promotion.level+'">Approve promotion</button></div>');
+ if(offer)requests.push('<div class="exec-proposal"><b>Market opportunity · optional</b><p>Offer through Day '+offer.until+
+ '. No compulsory penalty for declining.</p><div class="buttons"><button type="button" data-ceo-action="opportunity" data-result="act" '+
+ (worldOfferEligibility(offer).allowed?"":"disabled")+'>Take opportunity</button><button type="button" data-ceo-action="opportunity" data-result="pass">Pass</button></div></div>');
+ const escalation=requests.length;
+ const highHeadcount=S.team.length>=15,units=S.exec.units.length;
+ const leadership=highHeadcount||units>=2?'<p class="small"><b>Executive structure recommendation:</b> '+(units>=2?
+  "COO to coordinate GMs, capacity and delivery; ":"")+(highHeadcount?
+  "HR/People Director for recruiting, succession and retention; CFO/Finance Director for forecasts, cash and capital. ":"")+
+  "These are recommendations, not appointments or automatic payroll. Future delegated authority must be explicitly approved.</p>':"";
+ const markup='<div class="lead"><b>CEO decision center</b><span class="small">'+escalation+' actionable decisions</span></div>'+
+ (requests.length?requests.join(""):'<p class="small">No CEO exceptions requiring an approval. GMs and department managers continue within authorized limits.</p>')+
+ leadership+'<p class="small" id="ceo-action-status" role="status">Approving any request posts real costs only after durable saving.</p>';
+ if(root.innerHTML!==markup)root.innerHTML=markup;
+}
 function renderBriefing(){
 const urgent=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"||f.risk==="watch");
 const leadership=ladderNext();
@@ -3684,7 +3737,7 @@ for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)day
 }
 function refresh(){
 if(editableInteractionPending())return;
-renderLadder();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();executiveShow();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
+renderLadder();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);

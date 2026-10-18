@@ -9,7 +9,7 @@ function el(id){if(!els.has(id))els.set(id,{id,innerHTML:"",textContent:"",value
 const sandbox={document:{getElementById:el,querySelector:()=>el("x"),querySelectorAll:()=>[],body:el("body"),documentElement:el("html"),activeElement:null,addEventListener(){}},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},setTimeout:()=>1,clearTimeout(){},clearInterval(){},requestAnimationFrame:()=>1,getComputedStyle:()=>({getPropertyValue:()=>""}),Date,Math,JSON,Set,Map,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exposed="fresh,get:()=>S,set:v=>S=v,load,save,createDeal,feeFor,estimatedFee,worldIndicativeFee,worldTenderPreview,renderPipeline,renderCEODecisions,renderCEOFocus,ceoPremisesOpportunity,propertyCapacity,propertyPeople,propertyReadiness,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary";
+const exposed="fresh,get:()=>S,set:v=>S=v,load,save,createDeal,feeFor,estimatedFee,worldIndicativeFee,worldTenderPreview,renderPipeline,renderCEODecisions,renderCEOFocus,renderBriefing,renderExecutiveWeekly,ceoPremisesOpportunity,propertyCapacity,propertyPeople,propertyReadiness,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exposed+"};})();",sandbox,{timeout:5000});
 const G=sandbox.G;
 function fresh(){store.clear();G.fresh();return G.get();}
@@ -59,5 +59,24 @@ test("oversized corporate office appears as CEO strategic decision and never aut
  assert.ok(text.includes("workplace crowding"));assert.ok(text.includes("19 people"));assert.ok(text.includes("Compare premises and decide"));
  assert.equal(s.cash,cash);assert.equal(s.exec.property.sites.length,0);
  G.save();const after=G.load();assert.equal(after.day,4704);assert.equal(after.cash,cash);money(after);
+});
+test("EA weekly report starts decision-first; complete performance remains an optional disclosure",()=>{
+ const s=fresh();el("ea-weekly-report").open=true;
+ G.renderExecutiveWeekly();
+ const html=el("ea-weekly-body").innerHTML;
+ assert.ok(html.includes("Executive summary"));
+ assert.ok(html.includes("Top recommendations"));
+ assert.ok(html.includes("Full operating report"));
+ assert.ok(html.includes("data-ea-full"));
+ assert.ok(!html.includes("data-ea-full open"),"full report should initially be collapsed");
+ money(s);
+});
+test("operational review topics do not call themselves CEO approval requests",()=>{
+ const s=fresh();
+ s.deals[0].w=null;G.renderBriefing();
+ const intro=el("brief-summary").textContent,heading=el("brief-headline").textContent;
+ assert.ok(!intro.includes("decisions requiring CEO attention"));
+ assert.ok(heading.includes("operational")||heading.includes("on track"));
+ money(s);
 });
 console.log("v22.4 first CEO experience regression passed");

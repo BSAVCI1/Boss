@@ -1,5 +1,10 @@
 # Boss
 
+## Next release candidate — v22.3 Economic Balancing
+
+Work is staged on `feature/v22-3-economic-balancing` and **not production**. Only new unsigned offers will have diminishing reputation-price returns above 600; previously saved quotes, signed cash, employees, roles, buildings and mandates remain intact. Unit contribution now states its pre-corporate-overhead basis. See [economic balancing design](docs/V22_3_ECONOMIC_BALANCING.md) and [roadmap](ROADMAP.md). All historical and mobile tests are required before merging.
+
+
 ## Boss v22.2 — HR, CFO & COO executive leadership (released 2026-10-18)
 
 CEO may appoint proven **existing** employees as HR/Chief People Officer, CFO and COO from **Today → Executive leadership** after measurable stage, competence and 30-day payroll-reserve gates. Each adds only actual future payroll and begins with all delegation disabled. CEO may authorize a separate 90-day mandate: HR can process already-budgeted recruiting and recovery for idle stressed staff, CFO can protect 30 days of payroll/office runway from delegated discretionary spending, and COO can coordinate GM staffing when a functional department manager is unavailable. No CFO/HR/COO may authorize new spending ceilings or invent employees, office holdings, reporting history, or revenues. [Details](docs/V22_2_EXECUTIVES.md). Production checks passed: [PR #38](https://github.com/BSAVCI1/Boss/pull/38) merged `f189a529b`; [regression](https://github.com/BSAVCI1/Boss/actions/runs/39113283639) and [Pages](https://github.com/BSAVCI1/Boss/actions/runs/39113283272) both succeeded at that exact commit. The owner's private Safari save was not directly inspected.

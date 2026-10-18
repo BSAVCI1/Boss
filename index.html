@@ -1930,13 +1930,22 @@ number("perAction","Maximum cost per delegated decision ($)",p.perAction)+number
 '</div>';
 }).join("");
 }
-$("leadership-growth").addEventListener("input",e=>{if(e.target?.id==="leadership-budget")ladderBudgetDraft=e.target.value;});
+$("leadership-growth").addEventListener("input",e=>{
+ const id=e.target?.id;if(id==="leadership-budget")ladderBudgetDraft=e.target.value;
+ if(id==="management-hire-budget"||id==="management-hire-slots")managementHiringDraft={amount:$("management-hire-budget")?.value??"",slots:$("management-hire-slots")?.value??""};
+});
 $("leadership-growth").addEventListener("click",e=>{
  const button=e.target.closest("button[data-ladder-action]");if(!button)return;
  if(button.dataset.ladderAction==="budget"){
   const value=Number($("leadership-budget")?.value);
   if(Number.isFinite(value)&&$("leadership-budget").value.trim()!=="")ladderSetAuthority(value);
  }else if(button.dataset.ladderAction==="approve")ladderPromote(button.dataset.level,Number(button.dataset.person),true);
+ else if(button.dataset.ladderAction==="hire-policy"){
+  const a=$("management-hire-budget")?.value,b=$("management-hire-slots")?.value;
+  if(a!==""&&b!=="")managementSetHiringPolicy(Number(a),Number(b));
+ }else if(button.dataset.ladderAction==="staff-approve"||button.dataset.ladderAction==="staff-decline"){
+  managementRequestDecision(Number(button.dataset.requestId),button.dataset.ladderAction==="staff-approve"?"approve":"decline");
+ }
 });
 function roleAction(id,action){if(S.ev)return;const p=person(id);if(!p)return;const before=coachSnap(id);const r=p.role;
 if(action==="resume"){if(p.id===S.ops.assistantId)return;r.auto=true;if(!p.t.startsWith("d")){p.t="idle";r.autoTask=false;}logIt(p.n+" returned to the team work plan.");}
@@ -3119,8 +3128,8 @@ let ladderSignature="",ladderBudgetDraft=null;
 function renderLadder(){
  const target=$("leadership-growth");if(!target||editableInteractionPending())return;
  const g=S.org.progression,next=ladderNext(),salary=ladderPayroll(),launch=ladderLaunchReadiness();
- const authorityOpen=target.querySelector("details.aux-details")?.open;
- const sig=JSON.stringify({authority:g.authorityDaily,roles:g.appointments,reporting:g.reportTo,
+ const opened=[...target.querySelectorAll("details.aux-details")].map(d=>d.open);
+ const sig=JSON.stringify({authority:g.authorityDaily,operations:g.operations,roles:g.appointments,reporting:g.reportTo,
   team:S.team.map(p=>[p.id,p.perf?.days,p.career?.rank,p.career?.xp,p.t]),week:Math.floor(S.day/7),
   ready:next?.ready,blocked:next?.reasons,cash:Math.floor(S.cash)});
  if(ladderSignature===sig)return;ladderSignature=sig;
@@ -3131,6 +3140,7 @@ function renderLadder(){
  const cashReady=next?.ready&&S.cash>=(S.team.reduce((v,x)=>v+dailySalary(x),0)+next.incremental*S.mod.cost)*14;
  const step=next?.ready?'<button type="button" data-ladder-action="approve" data-level="'+next.level+'" data-person="'+next.candidateId+'" '+(!cashReady?'disabled title="Requires 14 days payroll in cash"':'')+'>Approve '+esc(next.role)+(needBudget?' · CEO payroll exception':' now')+'</button>'+(!cashReady?'<p class="small">Funding gate: build enough cash to cover 14 days of payroll before this new appointment.</p>':''):
   '<p class="small">Milestone is locked until its documented requirements are met.</p>';
+ const ops=managementOps(),pending=ops.requests.filter(r=>r.status==="open");
  const roster=g.appointments.map(n=>{
   const personN=person(n.id),reports=ladderCorporate().filter(x=>g.reportTo[x.id]===n.id);
   const trainee=person(n.successorId);
@@ -3148,9 +3158,16 @@ function renderLadder(){
  '<input type="number" min="0" max="100" step="0.25" inputmode="decimal" id="leadership-budget" value="'+esc(ladderBudgetDraft===null?g.authorityDaily:ladderBudgetDraft)+'">'+
  '<button type="button" data-ladder-action="budget">Approve payroll ceiling</button>'+
  '<p class="small">Additional leadership payroll '+biCurrency(salary)+'/day of '+biCurrency(g.authorityDaily)+'/day approved. A budget limit authorizes future actions; it does not spend money immediately.</p></details>'+
+ '<details class="aux-details"><summary>Corporate staffing decisions</summary>'+
+ '<p class="small">Managers review corporate capacity every seven days. A hire costs $20 once plus ongoing payroll. Delegated recruiting is $0 by default. Budget approval is not a cash expense.</p>'+
+ '<div class="filter-grid"><div><label for="management-hire-budget">90-day hiring budget ($)</label><input id="management-hire-budget" type="number" inputmode="numeric" min="0" max="10000" value="'+esc(managementHiringDraft?.amount??ops.hireBudget)+'"></div>'+
+ '<div><label for="management-hire-slots">Maximum hires</label><input id="management-hire-slots" type="number" inputmode="numeric" min="0" max="20" value="'+esc(managementHiringDraft?.slots??ops.hireSlots)+'"></div></div>'+
+ '<button type="button" data-ladder-action="hire-policy">Approve recruiting limits</button>'+
+ '<p class="small">'+ops.hires+'/'+ops.hireSlots+' hires · '+biCurrency(ops.hireSpent)+' / '+biCurrency(ops.hireBudget)+' used · '+(S.day>=ops.since+ops.days?"EXPIRED":"Through Day "+(ops.since+ops.days))+'. Each hire also needs 21 days of payroll cash.</p>'+
+ (pending.map(r=>'<div class="exec-proposal"><b>'+esc(DEPARTMENTS[r.dept].name)+' manager request</b><p>'+esc(person(r.managerId)?.n||"Manager unavailable")+' · '+esc(r.reason)+' One-time '+biCurrency(r.cost)+' and estimated '+biCurrency(r.payroll)+'/day wages.</p><div class="buttons"><button type="button" data-ladder-action="staff-approve" data-request-id="'+r.id+'" '+(!managementCashReady(r)?"disabled":"")+'>Approve hire</button><button type="button" data-ladder-action="staff-decline" data-request-id="'+r.id+'">Decline</button></div></div>').join("")||'<p class="small">No corporate manager requests pending.</p>')+'</details>'+
  '<details class="aux-details"><summary>Reporting lines and successors</summary>'+(roster||'<p class="small">Founder-led team. Reporting groups appear as you promote leaders.</p>')+'</details>'+
  '<p class="small">Next business-line readiness: '+launch.checks.filter(c=>c.met).length+'/'+launch.checks.length+' criteria met. Unmet: '+esc(launch.checks.filter(c=>!c.met).map(c=>c.label).join(" · ")||"none")+'.</p>';
- if(authorityOpen){const details=target.querySelector("details.aux-details");if(details)details.open=true;}
+ [...target.querySelectorAll("details.aux-details")].forEach((d,i)=>{if(opened[i])d.open=true;});
 }
 function renderLaunchGuide(){
  const t=$("company-unlock-guide");if(!t||editableInteractionPending())return;

@@ -81,6 +81,7 @@ test("CEO Today and Growth explain the next actual missing milestone",()=>{
 });
 test("monthly corporate leadership scorecards start at baseline and remain cost-neutral",()=>{
  const s=fresh();fund(s,1000);const mgr=s.team[0],worker=s.team[1];
+ worker.department=mgr.department; // Scorecard scope is the leader's own functional department.
  s.org.progression.appointments.push({id:mgr.id,level:"manager",since:0});
  s.day=30;const cash=s.cash,costs=s.bi.totals.cashOut;
  G.managementReviewMonth();

@@ -13,4 +13,12 @@ jobs:
         with:
           node-version: '20'
       - name: Run standalone game regression checks
-        run: node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs && node tests/v17-game.cjs && node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v20-portfolio.cjs && node tests/v21-5-growth.cjs && node tests/v22-property-pace.cjs && node tests/v22-2-executive-leadership.cjs && node tests/v22-3-economic-balancing.cjs && node --experimental-websocket tests/v19-mobile-browser.cjs
+        run: node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs && node tests/v17-game.cjs && node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v20-portfolio.cjs && node tests/v21-5-growth.cjs && node tests/v22-property-pace.cjs && node tests/v22-2-executive-leadership.cjs && node tests/v22-3-economic-balancing.cjs && node tests/v22-3a-economic-proof.cjs && node --experimental-websocket tests/v19-mobile-browser.cjs
+
+      - name: Upload v22.3A economic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v22-3a-economic-proof
+          path: reports/v22-3a-economic-proof.json
+          if-no-files-found: warn

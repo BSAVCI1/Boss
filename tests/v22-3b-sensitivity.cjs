@@ -37,10 +37,8 @@ function engine(seed){
  const sandbox={document:{getElementById:el,querySelector:()=>el('x'),querySelectorAll:()=>[],documentElement:el('html'),body:el('body'),activeElement:null,addEventListener(){}},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>''}),Math:rng,Date,JSON,Set,Map,console};
  vm.createContext(sandbox);
  const names='fresh,load,save,get:()=>S,set:s=>S=s,createDeal,tick,assign,bestIdle,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,propertySummary,propertyQuote,propertyReadiness,propertyOpen,companyLaunchReadiness,executiveLaunch,unitActivate,unitAppoint,unitTransfer,executiveEligibility,executiveAppoint,executiveMandate,feeFor,reputationPriceFactor,contractProcurementQuote,contractProcurementClose,contractProcurementSettle,biProjectEnd,ceoLineFinish,searchCandidates,hireCandidate,biMoney';
- // Archive the v22.3A no-procurement baseline even when executed on a later draft branch.
- // Never reinterpret the historic 108-snapshot report as a post-calibration forecast.
- const historic=script.replace('function contractProcurementQuote(d){','function contractProcurementQuote(d){return 0;');
- vm.runInContext(historic.slice(0,historic.indexOf('S=load();if(!S)fresh();'))+'globalThis.G={'+names+'};})();',sandbox,{timeout:10000});
+ // Run the requested prospective model, not the historical v22.3A-only override.
+ vm.runInContext(script.slice(0,boot)+'globalThis.G={'+names+'};})();',sandbox,{timeout:10000});
  return{G:sandbox.G,store};
 }
 function money(s){const t=s.bi.totals;const mismatch=s.bi.openingCash+t.cashIn-t.cashOut-s.cash;assert.ok(Math.abs(mismatch)<.065,'one cash ledger discrepancy '+mismatch+' day '+s.day);return +mismatch.toFixed(3);}
@@ -104,7 +102,7 @@ function seeded(G,kind,policy){
  for(let i=0;i<(mature?4:3);i++)G.createDeal();
  if(kind==='D'){
   // v22.2 saved contracts: missing version with immutable signed fee and original payment terms.
-  for(const d of s.deals.slice(0,2)){delete d.pricingVersion;d.agreedFee=d.agreedFee+80;d.bookVal=d.agreedFee;d.paymentTerms=30;}
+  for(const d of s.deals.slice(0,2)){delete d.economicVersion;delete d.externalProcurementQuote;delete d.pricingVersion;d.agreedFee=d.agreedFee+80;d.bookVal=d.agreedFee;d.paymentTerms=30;}
   s.bi.totals.booked=s.deals.reduce((n,d)=>n+d.bookVal,0);
  }
  for(const d of [...s.deals]){const worker=s.team.find(p=>p.t==='idle'&&p.role.auto&&!s.exec.units.some(u=>u.managerId===p.id)&&(!d.unitKey||s.exec.units.find(u=>u.key===d.unitKey)?.staffIds.includes(p.id)));

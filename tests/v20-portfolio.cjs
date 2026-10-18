@@ -909,7 +909,7 @@ test("v21.4c autonomous manager hiring respects 90-day slots, budget, cash and n
  assert.equal(G.save(),true,"the model must commit the autonomous hire before reload");
  const reloaded=G.load().org.progression.operations;
  assert.equal(reloaded.hireBudget,20);assert.equal(reloaded.hires,1);
- assert.equal(reloaded.requests[0].hiredId,first.hiredId);
+ assert.equal(reloaded.requests.find(r=>r.id===first.id).hiredId,first.hiredId,"autonomous hire retains its stable request ID even after later CEO exceptions");
  reconcile(s);
 });
 test("v21.4c explicit temporary central support fulfills GM contracts without double salary",()=>{

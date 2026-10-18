@@ -1531,6 +1531,14 @@ function ensureProgression(state){
  if(!Number.isFinite(g.authorityDaily)||g.authorityDaily<0)g.authorityDaily=0;
  if(!Array.isArray(g.events))g.events=[];g.events=g.events.slice(-60);
  if(!Number.isFinite(g.lastChecked))g.lastChecked=-1;
+ if(!g.operations||typeof g.operations!=="object")g.operations={since:state.day,days:90,hireBudget:0,hireSpent:0,hireSlots:0,hires:0,perHire:0,requests:[],sequence:1,lastAsked:{},history:[],shared:[]};
+ const o=g.operations;
+ for(const [k,v] of Object.entries({since:state.day,days:90,hireBudget:0,hireSpent:0,hireSlots:0,hires:0,perHire:0,sequence:1}))if(!Number.isFinite(o[k])||o[k]<0)o[k]=v;
+ if(!Array.isArray(o.requests))o.requests=[];if(!Array.isArray(o.history))o.history=[];if(!Array.isArray(o.shared))o.shared=[];
+ if(!o.lastAsked||typeof o.lastAsked!=="object")o.lastAsked={};
+ o.requests=o.requests.filter(r=>r&&Number.isInteger(r.id)&&["open","approved","declined","delegated","withdrawn"].includes(r.status)).slice(-45);
+ o.history=o.history.slice(-55);
+ o.shared=o.shared.filter(a=>a&&Number.isInteger(a.employeeId)&&state.team.some(p=>p.id===a.employeeId)&&state.exec?.units?.some(u=>u.key===a.unitKey)).slice(-40);
 }
 function ladderNode(id){return S.org?.progression?.appointments?.find(n=>n.id===id)||null;}
 function ladderCorporate(){
@@ -1538,6 +1546,82 @@ function ladderCorporate(){
  !DEPT_KEYS.some(k=>orgManager(k)?.id===p.id||DEPARTMENTS[k].skills.some(role=>orgSubManager(k,role)?.id===p.id)));
 }
 function ladderPremium(p){const n=p&&ladderNode(p.id);return n?LADDER[n.level].bonus:0;}
+
+const MANAGEMENT_HIRE_COST=20;
+let managementHiringDraft=null;
+function managementOps(){return S.org.progression.operations;}
+function managementLead(dept){
+ const rank={manager:1,senior:2,director:3};
+ const candidates=S.org.progression.appointments.filter(n=>rank[n.level]&&person(n.id)?.department===dept&&!unitOfPerson(n.id)&&n.id!==S.ops.assistantId);
+ return person(candidates.sort((a,b)=>rank[b.level]-rank[a.level]||a.id-b.id)[0]?.id)||null;
+}
+function managementWorkload(dept){
+ const roles=dept==="commercial"?["sales","mkt"]:["prod","ops"];
+ const staff=ladderCorporate().filter(p=>p.department===dept&&!ladderNode(p.id));
+ const jobs=S.deals.filter(d=>!d.unitKey&&roles.includes(d.need));
+ const unattended=jobs.filter(d=>!d.w).length,busy=staff.filter(p=>p.t.startsWith("d")).length;
+ const ready=staff.filter(p=>p.t==="idle"&&p.role.auto&&!p.career.autoRest&&p.career.recoveryDays===0&&jobs.some(d=>!d.w&&d.need===orgWorkRole(p))).length;
+ return{staff,unattended,busy,ready,overloaded:unattended>=2&&unattended>ready||jobs.length>staff.length&&busy>=Math.max(1,staff.length-1)};
+}
+function managementHiringAvailable(r){
+ const o=managementOps();return S.day<o.since+o.days&&o.hires<o.hireSlots&&o.hireSpent+r.cost<=o.hireBudget&&r.cost<=o.perHire;
+}
+function managementCashReady(r){return S.cash>=r.cost+(S.team.reduce((n,p)=>n+dailySalary(p),0)+r.payroll)*21;}
+function managementHire(r,authority){
+ if(!r||r.status!=="open"||managementLead(r.dept)?.id!==r.managerId||!managementCashReady(r)||
+ (authority==="delegated"&&!managementHiringAvailable(r)))return false;
+ const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);
+ p.department=r.dept;p.role.primary=r.skill;p.s[r.skill]=Math.max(2,p.s[r.skill]);p.role.auto=true;
+ S.team.push(p);S.cash-=r.cost;biMoney("recruiting",r.cost,"Corporate "+authority+" staffing");
+ r.status=authority;r.decided=S.day;r.hiredId=p.id;
+ const o=managementOps();if(authority==="delegated"){o.hireSpent+=r.cost;o.hires++;}
+ o.history.unshift({day:S.day,kind:"hire",dept:r.dept,managerId:r.managerId,employeeId:p.id,approval:authority,cost:r.cost,payroll:dailySalary(p)});
+ o.history=o.history.slice(0,55);structural="";ladderSignature="";
+ logIt(person(r.managerId).n+" "+(authority==="delegated"?"hired within authority":"received CEO approval to hire")+" "+p.n+" for "+biCurrency(r.cost)+" plus recurring "+biCurrency(dailySalary(p))+"/day.");return true;
+}
+function managementReview(){
+ const o=managementOps();
+ for(const dept of DEPT_KEYS){
+  const manager=managementLead(dept),x=managementWorkload(dept);
+  if(!manager||!x.overloaded||o.requests.some(r=>r.dept===dept&&r.status==="open")||S.day-(o.lastAsked[dept]??-999)<30)continue;
+  const choices=dept==="commercial"?["sales","mkt"]:["prod","ops"];
+  const gap=k=>S.deals.filter(d=>!d.unitKey&&!d.w&&d.need===k).length-x.staff.filter(p=>p.role.primary===k).length;
+  const skill=choices.sort((a,b)=>gap(b)-gap(a))[0];
+  const r={id:o.sequence++,day:S.day,dept,managerId:manager.id,status:"open",skill,cost:MANAGEMENT_HIRE_COST,payroll:1.5*S.mod.cost,reason:x.unattended+" unassigned contracts; "+x.busy+"/"+x.staff.length+" busy. "+ROLE_NAMES[skill]+" recommended."};
+  o.lastAsked[dept]=S.day;o.requests.unshift(r);o.requests=o.requests.slice(0,45);
+  if(managementHiringAvailable(r)&&managementCashReady(r))managementHire(r,"delegated");
+  else logIt(manager.n+" requested a "+ROLE_NAMES[skill]+" hire; requires CEO decision.");
+ }
+}
+function managementSetHiringPolicy(amount,slots){
+ if(!Number.isInteger(amount)||amount<0||amount>10000||!Number.isInteger(slots)||slots<0||slots>20)return false;
+ return unitCommit(()=>{const o=managementOps();o.since=S.day;o.days=90;o.hireBudget=amount;o.hireSpent=0;o.hireSlots=slots;o.hires=0;o.perHire=amount>=20?20:0;
+ o.history.unshift({day:S.day,kind:"authorization",limit:amount,slots});managementHiringDraft=null;ladderSignature="";
+ logIt("CEO approved corporate recruiting up to "+slots+" hires and "+biCurrency(amount)+" for 90 days; no upfront cost.");return true;});
+}
+function managementRequestDecision(id,decision){
+ const o=managementOps(),r=o.requests.find(x=>x.id===id&&x.status==="open");
+ if(!r||!["approve","decline"].includes(decision)||decision==="approve"&&!managementCashReady(r))return false;
+ return unitCommit(()=>decision==="decline"?(r.status="declined",r.decided=S.day,o.history.unshift({day:S.day,kind:"declined",request:id}),true):managementHire(r,"approved"));
+}
+function managementSharedCandidates(key){
+ const o=managementOps(),u=S.exec.units.find(x=>x.key===key);if(!u||!person(u.managerId))return[];
+ return ladderCorporate().filter(p=>!ladderNode(p.id)&&!S.deals.some(d=>d.w===p.id)&&
+ !o.shared.some(a=>a.employeeId===p.id&&a.until>S.day&&a.status==="active"));
+}
+function managementShareStaff(key,id){
+ const p=person(id),o=managementOps(),u=S.exec.units.find(x=>x.key===key);
+ if(!u||!person(u.managerId)||!p||!managementSharedCandidates(key).some(x=>x.id===id))return false;
+ return unitCommit(()=>{o.shared.push({unitKey:key,employeeId:id,since:S.day,until:S.day+30,status:"active"});
+ o.shared=o.shared.slice(-40);o.history.unshift({day:S.day,kind:"shared",unitKey:key,employeeId:id,until:S.day+30});
+ unitRecord(key,"shared","CEO allocated "+p.n+" for 30 days of future unit contracts; primary reporting and salary unchanged.");unitViewSignature="";return true;});
+}
+function managementSupportAllowed(d,p){
+ if(!d?.unitKey||!p||unitOfPerson(p.id)||ladderNode(p.id)||p.id===S.ops.assistantId)return false;
+ return managementOps().shared.some(a=>a.unitKey===d.unitKey&&a.employeeId===p.id&&a.until>S.day&&a.status==="active")&&
+ !DEPT_KEYS.some(k=>orgManager(k)?.id===p.id||DEPARTMENTS[k].skills.some(role=>orgSubManager(k,role)?.id===p.id));
+}
+
 function ladderPayroll(){return ladderCorporate().reduce((sum,p)=>sum+ladderPremium(p)*S.mod.cost,0);}
 function ladderEvaluation(level){
  const rule=LADDER[level],g=S.org.progression;if(!rule)return null;
@@ -1620,6 +1704,7 @@ function ladderDay(){
   try{ladderPromote(next.level,next.candidateId,false);}finally{inDailyTick=false;}
  }
  ladderCoachSuccessors();
+ managementReview();
 }
 
 function ladderCoachSuccessors(){
@@ -1846,13 +1931,22 @@ number("perAction","Maximum cost per delegated decision ($)",p.perAction)+number
 '</div>';
 }).join("");
 }
-$("leadership-growth").addEventListener("input",e=>{if(e.target?.id==="leadership-budget")ladderBudgetDraft=e.target.value;});
+$("leadership-growth").addEventListener("input",e=>{
+ const id=e.target?.id;if(id==="leadership-budget")ladderBudgetDraft=e.target.value;
+ if(id==="management-hire-budget"||id==="management-hire-slots")managementHiringDraft={amount:$("management-hire-budget")?.value??"",slots:$("management-hire-slots")?.value??""};
+});
 $("leadership-growth").addEventListener("click",e=>{
  const button=e.target.closest("button[data-ladder-action]");if(!button)return;
  if(button.dataset.ladderAction==="budget"){
   const value=Number($("leadership-budget")?.value);
   if(Number.isFinite(value)&&$("leadership-budget").value.trim()!=="")ladderSetAuthority(value);
  }else if(button.dataset.ladderAction==="approve")ladderPromote(button.dataset.level,Number(button.dataset.person),true);
+ else if(button.dataset.ladderAction==="hire-policy"){
+  const a=$("management-hire-budget")?.value,b=$("management-hire-slots")?.value;
+  if(a!==""&&b!=="")managementSetHiringPolicy(Number(a),Number(b));
+ }else if(button.dataset.ladderAction==="staff-approve"||button.dataset.ladderAction==="staff-decline"){
+  managementRequestDecision(Number(button.dataset.requestId),button.dataset.ladderAction==="staff-approve"?"approve":"decline");
+ }
 });
 function roleAction(id,action){if(S.ev)return;const p=person(id);if(!p)return;const before=coachSnap(id);const r=p.role;
 if(action==="resume"){if(p.id===S.ops.assistantId)return;r.auto=true;if(!p.t.startsWith("d")){p.t="idle";r.autoTask=false;}logIt(p.n+" returned to the team work plan.");}
@@ -1999,7 +2093,7 @@ function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
 function release(p){if(!p)return;for(const d of S.deals)if(d.w===p.id)d.w=null;p.t="idle";}
 function removePerson(p){if(S.team.length<=1)return false;for(const u of S.exec?.units||[]){if(u.managerId===p.id){u.managerId=null;for(const req of S.exec.unitRequests||[])if(req.key===u.key&&req.status==="open"){req.status="withdrawn";req.decidedAt=S.day;}}u.staffIds=u.staffIds.filter(id=>id!==p.id);}if(S.ops.assistantId===p.id)S.ops.assistantId=null;for(const k of DEPT_KEYS)if(S.org.departments[k].managerId===p.id)S.org.departments[k].managerId=null;release(p);S.team=S.team.filter(x=>x.id!==p.id);
- if(S.org?.progression){const g=S.org.progression;g.appointments=g.appointments.filter(n=>n.id!==p.id);delete g.reportTo[p.id];for(const id of Object.keys(g.reportTo))if(g.reportTo[id]===p.id)delete g.reportTo[id];ladderReassign();ladderSignature="";}
+ if(S.org?.progression){const g=S.org.progression;g.appointments=g.appointments.filter(n=>n.id!==p.id);delete g.reportTo[p.id];for(const id of Object.keys(g.reportTo))if(g.reportTo[id]===p.id)delete g.reportTo[id];if(g.operations){g.operations.shared=g.operations.shared.filter(a=>a.employeeId!==p.id);for(const r of g.operations.requests)if(r.managerId===p.id&&r.status==="open")r.status="withdrawn";}ladderReassign();ladderSignature="";}
  avatars.delete(p.id);return true;}
 function discover(who,preferred=[]){const unused=Object.keys(IDEAS).filter(k=>!S.seeds.includes(k));if(!unused.length)return false;
 const matches=preferred.filter(k=>unused.includes(k)),key=matches.length?pick(matches):pick(unused);S.seeds.push(key);logIt(who+" discovered: "+IDEAS[key]+".");capabilityProgress();return true;}
@@ -2018,7 +2112,7 @@ if((p.t.startsWith("d")||p.t==="assist"||p.t==="exp")&&p.career.stress>=92&&p.ca
 p.career.recoveryDays=4;logIt(p.n+" took a four-day recovery pause after sustained workload.");}
 const recovering=p.career.recoveryDays>0;
 if(recovering){p.career.recoveryDays--;dm=1.5;}
-else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const owned=unitOfPerson(p.id),unitMode=owned&&owned.key===d.unitKey?owned.plan?.focus:"balanced";const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*(S.economy.invested.operations?1.06:1)*(1+S.improvements.operations)*(d.serviceLine&&S.exec.lines.some(x=>x.key===d.serviceLine)?1.05:1);d.prog+=e*(unitMode==="speed"?1.10:unitMode==="quality"?.94:1);d.laborCost=(d.laborCost||0)+dailySalary(p);
+else if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));if(d&&d.w===p.id){const owned=unitOfPerson(p.id),unitMode=owned&&owned.key===d.unitKey?owned.plan?.focus:"balanced";const aligned=LIKED_SKILLS[d.need].includes(p.interest);const e=clamp(p.s[d.need]/d.diff,.3,1.6)*mf*lb*(p.trait==="Diligent"?1.15:1)*S.mod.speed*(aligned?1.1:1)*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*(S.economy.invested.operations?1.06:1)*(1+S.improvements.operations)*(d.serviceLine&&S.exec.lines.some(x=>x.key===d.serviceLine)?1.05:1);d.prog+=e*(unitMode==="speed"?1.10:unitMode==="quality"?.94:1);const unitWage=dailySalary(p);d.laborCost=(d.laborCost||0)+unitWage;const activeUnit=S.exec?.units?.find(u=>u.key===d.unitKey);if(activeUnit&&!activeUnit.staffIds.includes(p.id))d.unitSharedLaborCost=(d.unitSharedLaborCost||0)+unitWage;
 d.quality=clamp(d.quality+S.improvements.product*.06+(p.s[d.need]>=d.diff?.28:-.08)+(p.mood>65?.08:-.1)-(p.career.stress>=75?.25:0)-(p.career.burnout>=45?.18:0)+.12*orgEffective("delivery")+(unitMode==="quality"?.14:unitMode==="speed"?-.08:0));
 for(const [index,limit,name] of [[1,.34,"Plan approved"],[2,.73,"Build completed"]])if(d.milestone<index&&d.prog>=d.work*limit){d.milestone=index;logIt(d.cl+": "+name+" ("+Math.round(d.quality)+"% quality).");}
 p.s[d.need]+=.05*S.mod.learn*(aligned?1.12:1);dm=(e>=.9?.4:-.3)+(aligned?.15:0);}else{p.t="idle";dm=-.2;dirty=true;}}
@@ -2047,10 +2141,10 @@ if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5=
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&Date.now()-S.flow.lastInterruptAt>=45000)startDilemma();
 labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
 function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev||(d.w!==p.id&&!unitAssignmentAllowed(d,p)))return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;performanceAssign(d,p);}save();renderStructure();refresh();}
-function unitAssignmentAllowed(d,p){const owner=unitOfPerson(p.id);if(owner?.managerId===p.id)return false;return d.unitKey?owner?.key===d.unitKey:!owner;}
+function unitAssignmentAllowed(d,p){const owner=unitOfPerson(p.id);if(owner?.managerId===p.id)return false;return d.unitKey?owner?.key===d.unitKey||managementSupportAllowed(d,p):!owner;}
 function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;
  const u=d.unitKey?unitOfPerson(p.id):null;
- const unitFit=d.unitKey?(u?.key===d.unitKey?1.08:u?.key?.88:1):1;
+ const unitFit=d.unitKey?(u?.key===d.unitKey?1.08:managementSupportAllowed(d,p)?.96:u?.key?.88:1):1;
  return Math.max(.15,clamp(p.s[d.need]/d.diff,.3,1.6)*mood*loyal*(p.trait==="Diligent"?1.15:1)*S.mod.speed*matched*(d.sector===S.market.focus?1.12:1)*stressFactor(p)*goalFactor(p,d)*(1+p.career.rank*.1)*orgManagerBoost(p)*unitFit);}
 function bestIdle(d,department=null){return S.team.filter(p=>(!department||p.department===department)&&unitAssignmentAllowed(d,p)&&p.id!==S.ops.assistantId&&!DEPT_KEYS.some(k=>orgManager(k)?.id===p.id)&&!(S.exec?.units||[]).some(u=>u.managerId===p.id)&&p.career.stress<72&&p.career.recoveryDays===0&&!p.career.autoRest&&p.role.auto&&(p.t==="idle"||p.role.autoTask&&!p.t.startsWith("d"))).sort((a,b)=>workerSpeed(b,d)-workerSpeed(a,d))[0]||null;}
 function forecast(d){const assigned=person(d.w);const candidate=assigned||bestIdle(d);const speed=workerSpeed(candidate,d);const remaining=Math.max(0,d.work-d.prog);const eta=speed?Math.ceil(remaining/speed):null;const slack=eta===null?null:d.dl-eta;const risk=!assigned?"unassigned":slack<0?"critical":slack<=4?"watch":"ok";return{d,assigned,candidate,eta,slack,risk,fit:speed};}
@@ -2154,6 +2248,7 @@ $("business-units").addEventListener("click",e=>{
  else if(action==="manager")unitAppoint(key,Number($("unit-gm-"+key)?.value)||null);
  else if(action==="transfer")unitTransfer(key,Number($("unit-employee-"+key)?.value)||null);
  else if(action==="release")unitRelease(key,Number($("unit-release-"+key)?.value)||null);
+ else if(action==="share")managementShareStaff(key,Number($("unit-share-"+key)?.value)||null);
  else if(action==="renew")unitRenewAuthority(key);
  else if(action==="apply-draft"){const ok=unitApplyDraft(key);const status=$("unit-settings-status-"+key);if(status)status.textContent=ok?"Budget and objectives saved.":"Invalid numbers; no settings changed.";}
  else if(action==="preset"){const tier=$("unit-preset-"+key)?.value;const ok=unitApplyPreset(key,tier);const status=$("unit-settings-status-"+key);if(status)status.textContent=ok?"Preset approved; no upfront spending.":"Select a preset or choose Custom.";}
@@ -2468,7 +2563,9 @@ function ceoLineFinish(d,success,payout=0){
  if(u){
   u.revenue+=success?payout:0;
   u.directCost+=d.directCost||0;
-  if(d.w&&!u.staffIds.includes(d.w))u.sharedLaborCost+=d.laborCost||0;
+  // Attribute only actual corporate support labor, not wages worked earlier by dedicated staff.
+  // Old contracts without the optional field retain their historic fallback at completion.
+  u.sharedLaborCost+=Number.isFinite(d.unitSharedLaborCost)?d.unitSharedLaborCost:(d.w&&!u.staffIds.includes(d.w)?d.laborCost||0:0);
   if(success){u.delivered++;u.qualityTotal+=Number(d.quality)||75;}else u.missed++;
  }
 }
@@ -2496,7 +2593,8 @@ function unitGMEligible(p,key){
 function unitStaffEligible(p,key){
  if(!p||p.id===S.ops.assistantId)return false;
  if(DEPT_KEYS.some(k=>orgManager(k)?.id===p.id||DEPARTMENTS[k].skills.some(role=>orgSubManager(k,role)?.id===p.id)))return false;
- const other=unitOfPerson(p.id);return !other||other.key===key;
+ const other=unitOfPerson(p.id);if(managementOps().shared.some(a=>a.employeeId===p.id&&a.until>S.day&&a.status==="active"))return false;
+ return !other||other.key===key;
 }
 function unitRecord(key,type,detail){S.exec.unitEvents.push({key,day:S.day,type,detail});S.exec.unitEvents=S.exec.unitEvents.slice(-80);}
 function unitRestore(checkpoint){
@@ -2721,7 +2819,7 @@ if(editableInteractionPending())return;
  // Preserve it across redraws without prematurely changing the saved company.
  const selectedChoices=new Map([...target.querySelectorAll('select[id^="unit-"]')].map(el=>[el.id,el.value]));
  const openAuthority=new Set([...target.querySelectorAll('details[data-unit-open]')].filter(el=>el.querySelector('details.aux-details')?.open).map(el=>el.dataset.unitOpen));
- const signature=JSON.stringify({units:S.exec.units,requests:S.exec.unitRequests,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id])});
+ const signature=JSON.stringify({units:S.exec.units,requests:S.exec.unitRequests,shared:managementOps().shared,people:S.team.map(p=>[p.id,p.n,p.career.rank,Math.floor(p.career.xp),p.t]),jobs:S.deals.map(d=>[d.w,d.id])});
  if(signature===unitViewSignature)return;unitViewSignature=signature;
  const choices=S.exec.lines.map(l=>{
   const u=S.exec.units.find(x=>x.key===l.key);
@@ -2730,6 +2828,7 @@ if(editableInteractionPending())return;
   const candidates=S.team.filter(p=>unitGMEligible(p,l.key)&&p.id!==u.managerId&&!S.deals.some(d=>d.w===p.id));
   const transfers=S.team.filter(p=>unitStaffEligible(p,l.key)&&!u.staffIds.includes(p.id)&&!S.deals.some(d=>d.w===p.id));
   const releasing=staff.filter(p=>p.id!==u.managerId&&!S.deals.some(d=>d.w===p.id));
+  const shared=managementSharedCandidates(l.key),grants=managementOps().shared.filter(a=>a.unitKey===l.key&&a.until>S.day);
   const result=u.revenue-u.directCost-u.sharedLaborCost-u.payrollCost-u.developmentCost;
   const p=u.plan||{},requests=S.exec.unitRequests.filter(q=>q.key===u.key&&q.status==="open"),last=u.reviews.at(-1),career=unitCareerReadiness(u);
   const authority='<details class="aux-details"><summary>CEO authority &amp; GM scorecard</summary><p class="small">Dedicated operating-unit authority; Commercial and Delivery budgets are not shared with this unit. Default delegation is $0; recruiting requires CEO approval.</p>'+
@@ -2758,6 +2857,11 @@ if(editableInteractionPending())return;
    '<div><label for="unit-employee-'+l.key+'">Dedicated employee</label><select id="unit-employee-'+l.key+'"><option value="">Choose available teammate</option>'+transfers.map(p=>'<option value="'+p.id+'">'+esc(p.n)+' (#'+p.id+')</option>').join("")+'</select><button type="button" data-unit-action="transfer" data-unit-key="'+l.key+'" '+(!transfers.length?"disabled":"")+'>Transfer to unit</button></div></div>'+
    (releasing.length?'<label for="unit-release-'+l.key+'">Return employee to shared services</label><select id="unit-release-'+l.key+'">'+releasing.map(p=>'<option value="'+p.id+'">'+esc(p.n)+' (#'+p.id+')</option>').join("")+'</select><button type="button" data-unit-action="release" data-unit-key="'+l.key+'">Return to shared team</button>':"")+
    '<p class="small">Active customer contracts finish before transfers. Each employee has one primary unit; departmental spending authority remains shared.</p>'+
+   '<details class="aux-details"><summary>Temporary corporate support · CEO authorization</summary>'+
+   '<p class="small">Grant 30-day access to corporate specialists for future unit contracts. Payroll and reporting stay corporate; finished unit jobs attribute existing labor expenses, without charging salaries twice.</p>'+
+   '<label for="unit-share-'+l.key+'">Corporate specialist allocation</label><select id="unit-share-'+l.key+'"><option value="">Choose available corporate colleague</option>'+shared.map(p=>'<option value="'+p.id+'">'+esc(p.n)+' (#'+p.id+') · '+esc(ROLE_NAMES[orgWorkRole(p)]||"Specialist")+'</option>').join("")+'</select>'+
+   '<button type="button" data-unit-action="share" data-unit-key="'+l.key+'" '+(!gm||!shared.length?"disabled":"")+'>Authorize 30-day support</button>'+
+   '<p class="small">'+(grants.map(a=>esc(person(a.employeeId)?.n||"Former colleague")+" through Day "+a.until).join(" · ")||"No current temporary support")+'</p></details>'+
    '<details class="aux-details"><summary>Manager career &amp; succession plan</summary><p class="small">Successor: '+(career.successor?esc(career.successor.n)+" (#"+career.successor.id+")":"Awaiting an eligible team member")+' · Trained sessions '+career.sessions+' / 3 · '+career.reviews+' successful 30-day reviews · '+career.people+' direct specialists.</p>'+
    '<p class="small">'+esc(career.next)+'.'+(career.successorReady?" Successor development threshold reached; promotion requires CEO approval and a real reporting structure.":" Training uses approved budget only.")+'</p>'+
    '<p class="small">Career path: Specialist → Team Lead (3 specialists) → Manager (up to five leads) → Senior Manager (three or more managers) → Director. Growth requires evidence and a trained replacement, not headcount alone.</p></details>'+
@@ -2858,7 +2962,7 @@ function executiveWeeklySnapshot(){
  });
  return{day:S.day,periodDays:rows.length,revenue,costs,operatingProfit:revenue-costs,cashIn,cashOut,cashChange:cashIn-cashOut,
  wins:sum("wins"),delivered:sum("delivered"),missed:sum("missed"),active:S.deals.length,pipeline:S.pipeline.leads.length,
- proposals:S.exec.proposals.length+(S.exec.unitRequests||[]).filter(q=>q.status==="open").length,risks:S.deals.filter(d=>d.dl<=5&&d.prog<d.work).length,
+ proposals:S.exec.proposals.length+(S.exec.unitRequests||[]).filter(q=>q.status==="open").length+managementOps().requests.filter(r=>r.status==="open").length,risks:S.deals.filter(d=>d.dl<=5&&d.prog<d.work).length,
  staff:S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35).length,dept,
  services:S.exec.lines.map(x=>({key:x.key,delivered:x.delivered||0,days:S.day-x.since,revenue:x.revenue||0,contribution:x.contribution||0})),
  recentDecisions:S.exec.history.filter(x=>x.day>S.day-7&&x.day<=S.day)};
@@ -2872,7 +2976,9 @@ function renderExecutiveWeekly(){
  const panel=$("ea-weekly-report");if(!panel||!panel.open)return;
  const live=executiveWeeklySnapshot(),since=S.exec.weeklyReports[0]?.day,a=person(S.ops.assistantId),units=S.exec.units.map(u=>({u,gm:person(u.managerId),last:u.reviews.at(-1),active:S.deals.filter(d=>d.unitKey===u.key).length}));
  const risks=[],priorities=[];
- const ladder=ladderNext();if(ladder&&S.team.length>=5){const reason=ladder.ready?"Ready for CEO approval or within-budget promotion":ladder.reasons.join(" · ");risks.push(ladder.role+" progression: "+reason);priorities.push("Review "+ladder.role+" succession and organization span");}
+ const ladder=ladderNext(),managerRequests=managementOps().requests.filter(r=>r.status==="open");
+ if(managerRequests.length){risks.push(managerRequests.length+" corporate staffing exceptions");priorities.push("Review manager hiring decisions and payroll");}
+ if(ladder&&S.team.length>=5){const reason=ladder.ready?"Ready for CEO approval or within-budget promotion":ladder.reasons.join(" · ");risks.push(ladder.role+" progression: "+reason);priorities.push("Review "+ladder.role+" succession and organization span");}
  if(live.proposals){risks.push(live.proposals+" CEO approvals pending");priorities.push("Decide on "+live.proposals+" management proposals");}
  if(live.risks){risks.push(live.risks+" client deadlines at risk");priorities.push("Resolve "+live.risks+" threatened delivery deadlines");}
  if(live.staff){risks.push(live.staff+" stressed colleagues");priorities.push("Rebalance workload for "+live.staff+" colleagues");}
@@ -3035,8 +3141,8 @@ let ladderSignature="",ladderBudgetDraft=null;
 function renderLadder(){
  const target=$("leadership-growth");if(!target||editableInteractionPending())return;
  const g=S.org.progression,next=ladderNext(),salary=ladderPayroll(),launch=ladderLaunchReadiness();
- const authorityOpen=target.querySelector("details.aux-details")?.open;
- const sig=JSON.stringify({authority:g.authorityDaily,roles:g.appointments,reporting:g.reportTo,
+ const opened=[...target.querySelectorAll("details.aux-details")].map(d=>d.open);
+ const sig=JSON.stringify({authority:g.authorityDaily,operations:g.operations,roles:g.appointments,reporting:g.reportTo,
   team:S.team.map(p=>[p.id,p.perf?.days,p.career?.rank,p.career?.xp,p.t]),week:Math.floor(S.day/7),
   ready:next?.ready,blocked:next?.reasons,cash:Math.floor(S.cash)});
  if(ladderSignature===sig)return;ladderSignature=sig;
@@ -3047,6 +3153,7 @@ function renderLadder(){
  const cashReady=next?.ready&&S.cash>=(S.team.reduce((v,x)=>v+dailySalary(x),0)+next.incremental*S.mod.cost)*14;
  const step=next?.ready?'<button type="button" data-ladder-action="approve" data-level="'+next.level+'" data-person="'+next.candidateId+'" '+(!cashReady?'disabled title="Requires 14 days payroll in cash"':'')+'>Approve '+esc(next.role)+(needBudget?' · CEO payroll exception':' now')+'</button>'+(!cashReady?'<p class="small">Funding gate: build enough cash to cover 14 days of payroll before this new appointment.</p>':''):
   '<p class="small">Milestone is locked until its documented requirements are met.</p>';
+ const ops=managementOps(),pending=ops.requests.filter(r=>r.status==="open");
  const roster=g.appointments.map(n=>{
   const personN=person(n.id),reports=ladderCorporate().filter(x=>g.reportTo[x.id]===n.id);
   const trainee=person(n.successorId);
@@ -3064,9 +3171,16 @@ function renderLadder(){
  '<input type="number" min="0" max="100" step="0.25" inputmode="decimal" id="leadership-budget" value="'+esc(ladderBudgetDraft===null?g.authorityDaily:ladderBudgetDraft)+'">'+
  '<button type="button" data-ladder-action="budget">Approve payroll ceiling</button>'+
  '<p class="small">Additional leadership payroll '+biCurrency(salary)+'/day of '+biCurrency(g.authorityDaily)+'/day approved. A budget limit authorizes future actions; it does not spend money immediately.</p></details>'+
+ '<details class="aux-details"><summary>Corporate staffing decisions</summary>'+
+ '<p class="small">Managers review corporate capacity every seven days. A hire costs $20 once plus ongoing payroll. Delegated recruiting is $0 by default. Budget approval is not a cash expense.</p>'+
+ '<div class="filter-grid"><div><label for="management-hire-budget">90-day hiring budget ($)</label><input id="management-hire-budget" type="number" inputmode="numeric" min="0" max="10000" value="'+esc(managementHiringDraft?.amount??ops.hireBudget)+'"></div>'+
+ '<div><label for="management-hire-slots">Maximum hires</label><input id="management-hire-slots" type="number" inputmode="numeric" min="0" max="20" value="'+esc(managementHiringDraft?.slots??ops.hireSlots)+'"></div></div>'+
+ '<button type="button" data-ladder-action="hire-policy">Approve recruiting limits</button>'+
+ '<p class="small">'+ops.hires+'/'+ops.hireSlots+' hires · '+biCurrency(ops.hireSpent)+' / '+biCurrency(ops.hireBudget)+' used · '+(S.day>=ops.since+ops.days?"EXPIRED":"Through Day "+(ops.since+ops.days))+'. Each hire also needs 21 days of payroll cash.</p>'+
+ (pending.map(r=>'<div class="exec-proposal"><b>'+esc(DEPARTMENTS[r.dept].name)+' manager request</b><p>'+esc(person(r.managerId)?.n||"Manager unavailable")+' · '+esc(r.reason)+' One-time '+biCurrency(r.cost)+' and estimated '+biCurrency(r.payroll)+'/day wages.</p><div class="buttons"><button type="button" data-ladder-action="staff-approve" data-request-id="'+r.id+'" '+(!managementCashReady(r)?"disabled":"")+'>Approve hire</button><button type="button" data-ladder-action="staff-decline" data-request-id="'+r.id+'">Decline</button></div></div>').join("")||'<p class="small">No corporate manager requests pending.</p>')+'</details>'+
  '<details class="aux-details"><summary>Reporting lines and successors</summary>'+(roster||'<p class="small">Founder-led team. Reporting groups appear as you promote leaders.</p>')+'</details>'+
  '<p class="small">Next business-line readiness: '+launch.checks.filter(c=>c.met).length+'/'+launch.checks.length+' criteria met. Unmet: '+esc(launch.checks.filter(c=>!c.met).map(c=>c.label).join(" · ")||"none")+'.</p>';
- if(authorityOpen){const details=target.querySelector("details.aux-details");if(details)details.open=true;}
+ [...target.querySelectorAll("details.aux-details")].forEach((d,i)=>{if(opened[i])d.open=true;});
 }
 function renderLaunchGuide(){
  const t=$("company-unlock-guide");if(!t||editableInteractionPending())return;
@@ -3121,7 +3235,8 @@ const leadership=ladderNext();
 const stressed=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35);
 const atRiskMoney=S.cash<S.team.reduce((sum,p)=>sum+dailySalary(p),0)*7;
 const unitRequests=(S.exec?.unitRequests||[]).filter(x=>x.status==="open"),unitShortages=(S.exec?.units||[]).filter(u=>S.deals.some(d=>d.unitKey===u.key&&!d.w));
-const actionable=urgent.length+stressed.length+(atRiskMoney?1:0)+unitRequests.length+unitShortages.length+(S.team.length>=5&&leadership?.level==="lead"?1:0);
+const managerRequests=managementOps().requests.filter(r=>r.status==="open");
+const actionable=urgent.length+stressed.length+(atRiskMoney?1:0)+unitRequests.length+unitShortages.length+managerRequests.length+(S.team.length>=5&&leadership?.level==="lead"?1:0);
 $("brief-headline").textContent=actionable?actionable+" area"+(actionable===1?"":"s")+" to review":"Your company is on track";
 $("brief-summary").textContent=actionable?"Your Executive Assistant has highlighted decisions requiring CEO attention. Routine work continues without intervention.":"Projects and development are moving forward. You're free to focus on strategy.";
 $("brief-projects").textContent=S.deals.length+" active project"+(S.deals.length===1?"":"s");
@@ -3133,6 +3248,7 @@ if(S.team.length>=5&&leadership?.level==="lead"){
  const note=leadership.ready?"Ready to appoint "+esc(leadership.candidateName)+" as Team Lead.":"Team Lead milestone: "+esc(leadership.reasons.join(" · "));
  notices.push('<div class="card"><h3>Executive Assistant · build your first leader</h3><p>'+note+' The first Team Lead becomes available at five employees; experience and salary authority still apply.</p><button type="button" data-go="team">Review leadership plan →</button></div>');
 }
+if(managerRequests.length)notices.push('<div class="card"><h3>CEO decision · Corporate manager staffing</h3><p>'+managerRequests.length+' manager recruitment requests await an authorization or CEO decision.</p><button type="button" data-go="team">Review staffing →</button></div>');
 if(unitRequests.length)notices.push('<div class="card"><h3>CEO decision · GM staffing</h3><p>'+unitRequests.length+' specialist recruitment proposal(s) require CEO approval before any expense or new payroll.</p><button type="button" data-go="growth">Review GM proposals →</button></div>');
 if(S.world.activeEvent)notices.push('<div class="card"><h3>Optional market opportunity</h3><p>A market offer is available until Day '+S.world.activeEvent.until+'. The CEO can act or pass in Growth.</p><button type="button" data-go="growth">Review opportunity →</button></div>');
 if(unitShortages.length)notices.push('<div class="card"><h3>GM capacity exception</h3><p>'+unitShortages.length+' operating unit(s) have unassigned work. Review GM appointments and dedicated staff.</p><button type="button" data-go="growth">Review unit capacity →</button></div>');

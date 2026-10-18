@@ -20,9 +20,16 @@ function engine(seed,variant='balanced'){
  const names='fresh,load,save,get:()=>S,set:s=>S=s,createDeal,tick,assign,bestIdle,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,propertySummary,propertyQuote,propertyReadiness,propertyOpen,companyLaunchReadiness,executiveLaunch,unitActivate,unitAppoint,unitTransfer,executiveEligibility,executiveAppoint,executiveMandate,feeFor,reputationPriceFactor';
  // Actual engine/tick() for every model; only the new-contract procurement quote is
  // varied in this diagnostic harness. No second simulated accounting implementation.
- const override={baseline:'return 0;',minimal:'return +(feeFor(d)*.06+(d.work||0)*(d.diff||1)*.35).toFixed(2);',pressure:'return +(feeFor(d)*.34+(d.work||0)*(d.diff||1)*2).toFixed(2);'}[variant];
- const tested=override?script.replace('function contractProcurementQuote(d){','function contractProcurementQuote(d){'+override):script;
- assert.ok(!override||tested!==script,'test override inserted');
+ assert.ok(['baseline','minimal','balanced','pressure'].includes(variant),'known economic model');
+ const productionRate='const rate=d.serviceLine?(d.serviceTier>=3?.24:.20):(d.tier>=3?.18:.10);';
+ const productionUnits='const externalUnits=d.serviceLine?1.1:.65;';
+ assert.ok(script.includes(productionRate)&&script.includes(productionUnits),'production pricing anchors');
+ let tested=script;
+ if(variant==='baseline')tested=script.replace('function contractProcurementQuote(d){','function contractProcurementQuote(d){return 0;');
+ else if(variant==='minimal')tested=script.replace(productionRate,'const rate=d.serviceLine?.065:.035;').replace(productionUnits,'const externalUnits=.2;');
+ else if(variant==='pressure')tested=script.replace(productionRate,'const rate=d.serviceLine?(d.serviceTier>=3?.56:.48):(d.tier>=3?.42:.32);').replace(productionUnits,'const externalUnits=d.serviceLine?2.0:1.4;');
+ assert.ok(variant==='balanced'||tested!==script,'every sensitivity variation must apply');
+ // Keep the 96-replay evidence mathematically identical to the canonical seven-stage model rates.
  vm.runInContext(tested.slice(0,tested.indexOf('S=load();if(!S)fresh();'))+'globalThis.G={'+names+',contractProcurementQuote,contractProcurementClose,contractProcurementSettle};})();',sandbox,{timeout:10000});
  return{G:sandbox.G,store};
 }

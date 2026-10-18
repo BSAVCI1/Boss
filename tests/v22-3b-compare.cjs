@@ -7,6 +7,18 @@ const keys=['A','B','C','D','E','F','G'],policies=['conservative','balanced','gr
 function stats(values){const a=values.filter(Number.isFinite).sort((x,y)=>x-y);if(!a.length)return null;const mean=a.reduce((x,y)=>x+y,0)/a.length;return{n:a.length,mean:+mean.toFixed(2),min:+a[0].toFixed(2),median:+a[Math.floor(a.length/2)].toFixed(2),max:+a[a.length-1].toFixed(2)};}
 const metrics=['revenue','booked','cashCollections','groupProfit','payroll','procurementCosts','procurementPaid','procurementPayable','unitContribution','propertyCosts','depreciation','receivables','cash','workingCapital','runwayDays','utilization','backlog','missed','debtAndArrears'];
 const report={source:'Actual Boss index.html tick(); scenarios frozen per policy and seed',models:{},comparison:[],acceptance:{}};
+const calibration=JSON.parse(fs.readFileSync('reports/v22-3b-economic-calibration.json','utf8'));
+assert.equal(calibration.rows.length,288,'96-replay calibration evidence retained');
+let paired=0;
+for(const r of calibration.rows){
+ const candidates=all[r.variant].rows.filter(x=>x.scenario===r.scenario&&x.policy===r.policy&&x.seed===r.seed&&x.elapsed===r.elapsed);
+ assert.equal(candidates.length,1,'uniquely matched canonical rate replay '+JSON.stringify([r.variant,r.scenario,r.policy,r.seed,r.elapsed]));
+ const x=candidates[0];
+ for(const [k,other] of [['revenue','revenue'],['booked','booked'],['cash','cash'],['groupProfit','groupProfit'],['payroll','payroll'],['procurementCost','procurementCosts'],['unitContribution','unitContribution'],['receivables','receivables']])
+  assert.ok(Math.abs(r[k]-x[other])<.065,'same economic model across independent runners '+JSON.stringify({variant:r.variant,stage:r.scenario,policy:r.policy,seed:r.seed,day:r.elapsed,metric:k,calibration:r[k],sensitivity:x[other]}));
+ paired++;
+}
+assert.equal(paired,288,'all four-model 30/180/730 comparisons reproduce same rate policy');
 for(const m of models){
  const t=all[m];assert.equal(t.meta.model,m);assert.equal(t.rows.length,189,'all 7 x 3 x 3 x 3 checkpoints exist in '+m);
  assert.equal(t.failures.length,0,'simulation failures in '+m);
@@ -44,7 +56,7 @@ assert.ok(selected.procurementCosts.mean>0,'prospective procurement is recorded'
 assert.ok(selected.margin.mean<old.margin.mean,'mature margin must improve over baseline');
 assert.ok(founder.revenue.mean>0&&founder.groupProfit.mean>0,'founder growth remains viable');
 assert.ok(organic.revenue.mean>0,'organically funded founder earns revenue');
-report.acceptance={matureBaselineMargin:old.margin,matureSelectedMargin:selected.margin,founder730:founder.groupProfit,organic730:organic.groupProfit,organicCash:organic.cash,organicOwnedOrRentedPremises:organic.survival,adverse730:adverse.groupProfit,financialProofPassed:true,privateSafariTested:false,employeeFutureBandsImplemented:false,propertyFutureBandsImplemented:false,releaseGate:'PARTIAL until further calibration, all latest CI checks, owner Safari'};
+report.acceptance={pairedCrossRunnerChecks:paired,matureBaselineMargin:old.margin,matureSelectedMargin:selected.margin,founder730:founder.groupProfit,organic730:organic.groupProfit,organicCash:organic.cash,organicOwnedOrRentedPremises:organic.survival,adverse730:adverse.groupProfit,financialProofPassed:true,privateSafariTested:false,employeeFutureBandsImplemented:false,propertyFutureBandsImplemented:false,releaseGate:'PARTIAL until further calibration, all latest CI checks, owner Safari'};
 fs.writeFileSync('reports/v22-3b-comparison.json',JSON.stringify(report,null,2)+'\n');
 console.log('PASS v22.3B 4 models x 189 actual-engine checkpoints; 7 stages and 3 policies x 3 seeds x 30/180/730 days');
 console.log('MATURE_BASELINE',JSON.stringify(old));

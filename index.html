@@ -557,6 +557,8 @@ const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"
 let S,spd=1,paused=false,selected=[],ideaMessage="",avatars=new Map(),clock,structural="",lastIdeas="",logSignature="",sectorSignature="",customerSignature="";
 const projectExpanded=new Set(),employeeExpanded=new Set(),careerExpanded=new Set(),roadmapExpanded=new Set(),peopleGroupExpanded=new Set(["ceo"]);
 function ensureViewState(s){if(!s.ui||typeof s.ui!=="object")s.ui={};for(const k of ["employees","careers","roadmaps"])if(!Array.isArray(s.ui[k]))s.ui[k]=[];s.ui.productivityOpen=!!s.ui.productivityOpen;s.ui.campusOpen=s.ui.campusOpen!==false;if(![1,3,8].includes(s.ui.speed))s.ui.speed=1;if(!["park","central","regional"].includes(s.ui.propertyLocation))s.ui.propertyLocation="park";
+ if(!s.ui.execCandidateDrafts||typeof s.ui.execCandidateDrafts!=="object")s.ui.execCandidateDrafts={};
+ if(!s.ui.execPanelsOpen||typeof s.ui.execPanelsOpen!=="object")s.ui.execPanelsOpen={};
  if(!s.ui.unitFieldDrafts||typeof s.ui.unitFieldDrafts!=="object"||Array.isArray(s.ui.unitFieldDrafts))s.ui.unitFieldDrafts={};
  if(!s.ui.unitSelectDrafts||typeof s.ui.unitSelectDrafts!=="object"||Array.isArray(s.ui.unitSelectDrafts))s.ui.unitSelectDrafts={};
  if(!s.ui.authorityDrafts||typeof s.ui.authorityDrafts!=="object"||Array.isArray(s.ui.authorityDrafts))s.ui.authorityDrafts={};
@@ -2541,6 +2543,23 @@ $("ceo-set-direction").addEventListener("click",()=>{
 const priority=ceoDraftPriority??$("ceo-priority").value;
 if(!ceoDirection(priority))$("ceo-direction-confirm").textContent=S.ev?"Resolve the current CEO decision before changing direction.":"Direction unchanged. Choose a different strategy or wait for the next review.";
 });
+$("executive-officers-panel").addEventListener("change",e=>{
+ const el=e.target;if(!el?.matches?.("select[data-executive-select]"))return;
+ S.ui.execCandidateDrafts[el.dataset.executiveSelect]=el.value;savePendingDraftSoon();
+});
+$("executive-officers-panel").addEventListener("toggle",e=>{
+ const el=e.target;if(!el?.matches?.("details[data-executive-panel]"))return;
+ S.ui.execPanelsOpen[el.dataset.executivePanel]=el.open;savePendingDraftSoon();
+},true);
+$("executive-officers-panel").addEventListener("click",e=>{
+ const b=e.target.closest("button[data-exec-office]");if(!b)return;
+ const role=b.dataset.role,action=b.dataset.execOffice;
+ const result=action==="appoint"?executiveAppoint(role,Number($("executive-select-"+role)?.value)):
+  action==="mandate"?executiveMandate(role,b.dataset.enable==="true"):
+  action==="vacate"?executiveUnappoint(role):false;
+ if(result&&typeof result.then==="function")result.then(ok=>{if(!ok)saveState("Executive decision not saved; check qualifications or company cash.",true);else refresh();});
+ else if(!result)saveState("Executive decision unavailable. Review criteria and save status.",true);
+});
 $("ceo-action-center").addEventListener("click",e=>{
  const b=e.target.closest("button[data-ceo-action]");if(!b)return;
  let result=false;
@@ -2930,7 +2949,7 @@ function executiveOfficerDay(){
   if(hired||recovery){o.history.unshift({day:S.day,action:"people",hired,recovery});
    logIt(hr.n+" executed HR mandate: "+hired+" approved hires and "+recovery+" idle-employee recovery assignments.");}
  }
- const coo=executiveOfficer("coo","coordinate"),cfo=executiveOfficer("cfo","protect");
+
  for(const role of Object.keys(EXECUTIVE_ROLES)){
   const o=S.exec.officers[role],leader=person(o.id);
   if(!leader||S.day-o.lastReview<30)continue;
@@ -3556,6 +3575,10 @@ function renderExecutiveWeekly(){
  const payroll=S.team.reduce((n,p)=>n+dailySalary(p),0);
  if(payroll>0&&S.cash<payroll*7){risks.push("Cash covers fewer than seven payroll days");priorities.push("Protect the coming week's payroll");}
  for(const d of live.dept)if(d.staff>5&&!DEPARTMENTS[d.key].skills.some(role=>orgSubManager(d.key,role)))risks.push(DEPARTMENTS[d.key].name+" has a wide reporting span");
+ for(const [role,meta] of Object.entries(EXECUTIVE_ROLES)){const o=S.exec.officers[role],p=person(o.id);if(!p)continue;
+  priorities.push(meta.short+" · "+p.n+": "+(executiveOfficer(role,"active")?"delegation active":"delegation inactive or expired"));
+  if(role==="cfo"&&executiveOfficer("cfo","protect")&&!executiveFinanceGuard(0))risks.push("CFO protecting 30 days of payroll and property cash from delegated spending");
+ }
  for(const line of live.services)if(line.days>=30&&!line.delivered)risks.push(SERVICE_LINES[line.key].name+" has no attributed delivery since launch");
  for(const x of units){
   if(x.active&&!x.gm){risks.push(SERVICE_LINES[x.u.key].name+" needs a General Manager");priorities.push("Appoint a GM to "+SERVICE_LINES[x.u.key].name);}
@@ -3584,6 +3607,9 @@ function renderExecutiveWeekly(){
  '<p class="small"><b>Sales &amp; delivery:</b> '+live.wins+' wins · '+live.pipeline+' open leads · '+live.delivered+' delivered · '+live.missed+' missed · '+live.active+' active jobs.</p>'+
  '<b>Direct-report briefing</b><b>Department leaders, reviews &amp; budgets</b>'+dept+(reviewHtml?'<b>Corporate leader monthly scorecards</b>'+reviewHtml:'')+
  (units.length?'<b>General Managers · unit outcomes</b>'+units.map(x=>'<p class="small">'+esc(SERVICE_LINES[x.u.key].name)+' · '+esc(x.gm?.n||"Vacant GM")+' · '+x.active+' live contracts · '+(x.last?'Last Day '+x.last.day+' review '+esc(x.last.result)+(Number.isFinite(x.last.revenue)?' · Revenue '+biCurrency(x.last.revenue)+' · Billable '+(x.last.utilization===null?'no capacity':x.last.utilization+'%'):''):'Awaiting 30-day evidence')+'</p>').join(""):'')+
+ '<b>Executive officers</b>'+Object.entries(EXECUTIVE_ROLES).map(([role,meta])=>{const o=S.exec.officers[role],leader=person(o.id),review=o.reviews[0];
+  return '<p class="small">'+meta.short+' · '+esc(leader?.n||"Not appointed")+' · '+(leader?(executiveOfficer(role,"active")?"Mandate active":"Mandate off/expired"):"Qualified internal appointment required")+
+  (review?" · Last Day "+review.day+" evidence: "+review.unassigned+" unassigned · "+review.requests+" requests · "+review.runway+" days cash runway":" · No 30-day review yet")+'</p>'}).join("")+
  '<b>Managers acted autonomously (last seven days)</b>'+actions(recent(true))+
  '<b>Earlier CEO decisions (last seven days)</b>'+actions(recent(false))+
  '<b>Exceptions &amp; CEO approvals</b><ul>'+risks.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>'+pending+
@@ -3855,7 +3881,7 @@ function renderCEODecisions(){
  if(offer)requests.push('<div class="exec-proposal"><b>Market opportunity · optional</b><p>Offer through Day '+offer.until+
  '. No compulsory penalty for declining.</p><div class="buttons"><button type="button" data-ceo-action="opportunity" data-result="act" '+
  (worldOfferEligibility(offer).allowed?"":"disabled")+'>Take opportunity</button><button type="button" data-ceo-action="opportunity" data-result="pass">Pass</button></div></div>');
- const escalation=requests.length;
+ const escalation=requests.length;const cfoGuard=executiveOfficer("cfo","protect")&&!executiveFinanceGuard(0);
  const highHeadcount=S.team.length>=15,units=S.exec.units.length;
  const leadership=highHeadcount||units>=2?'<p class="small"><b>Executive structure recommendation:</b> '+(units>=2?
   "COO to coordinate GMs, capacity and delivery; ":"")+(highHeadcount?
@@ -3863,6 +3889,7 @@ function renderCEODecisions(){
   "These are recommendations, not appointments or automatic payroll. Future delegated authority must be explicitly approved.</p>":"";
  const markup='<div class="lead"><b>CEO decision center</b><span class="small">'+escalation+' actionable decisions</span></div>'+
  (requests.length?requests.join(""):'<p class="small">No CEO exceptions requiring an approval. GMs and department managers continue within authorized limits.</p>')+
+ (cfoGuard?'<p class="small risk-watch">CFO · cash protection: delegated spending paused until payroll + premises costs have 30 days of runway. CEO direct exceptions retain their existing eligibility rules.</p>':'')+
  leadership+'<p class="small" id="ceo-action-status" role="status">Approving any request posts real costs only after durable saving.</p>';
  if(root.innerHTML!==markup)root.innerHTML=markup;
 }

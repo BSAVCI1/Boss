@@ -1,5 +1,14 @@
 # Boss — simulation development roadmap
 
+## v22 — Property, Company Campus & Simulation Pacing (release candidate)
+
+- New CEO premises board: serviced and regional leases; owned offices/group HQ; GM-specific satellite leases; real upfront and per-day cash mechanics and premises capacity effects, aligned with reported teams.
+- Choose business-park, city-center or regional premises. Store contract prices and future-work modifiers on the acquired property; never reprice prior leases or old projects.
+- Office ledger includes noncash depreciation every 90 game days, explicit closed/unused asset accounting, sale of inactive owned property, and unpaid rental obligations with no double-charge settlement.
+- Forward-only migration preserves established company headcount at the starting distributed workspace; existing service lines, day counter, profit and personnel remain untouched.
+- Mobile-friendly workplace floor views, EA/CEO premises exceptions; existing live office animation limited to 20 FPS with persistent collapse option.
+- 1×/3×/8× playback calibrated to 2.4/0.8/0.3 real seconds per game day. Executive events use game-day spacing. Performance and fairness tests in [v22 documentation](docs/V22_PROPERTY_AND_PACE.md). Mark released only once merged production CI and Pages pass.
+
 ## Released v21.5 — Progression & Company Direction
 
 - Hard new-service launch gates (5 delivered / Team Lead / reputation / qualified specialist / 21-day payroll reserve); second, third, fourth businesses add actual service delivery, staffed GM units, month-end reviews and deeper leadership cash reserves.

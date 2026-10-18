@@ -997,7 +997,11 @@ test("v21.4c manager hiring policy respects cash runway, period, action and slot
  assert.equal(s.cash,before-20);assert.equal(s.bi.totals.cashOut,oldCosts+20);
  const employeeCount=s.team.length;
  G.managementReview();assert.equal(s.team.length,employeeCount);
- s.day+=100;G.managementReview();
+ s.day+=100;
+ // New genuine overload after the authorized period: all specialists busy and new jobs awaiting delivery.
+ for(const p of s.team.filter(p=>p.id!==manager.id)){p.t="d999";p.role.auto=false;}
+ for(let i=0;i<3;i++){const d=G.createDeal("Later capacity shortage "+i);d.need="prod";d.w=null;delete d.unitKey;}
+ G.managementReview();
  assert.equal(G.managementOps().hires,1,"90-day policy must not silently renew");
  assert.equal(s.team.length,employeeCount,"expired policy may propose, not hire");
  assert.ok(G.managementOps().requests.some(r=>r.status==="open"),"CEO receives exception after budget expiry");

@@ -1,5 +1,12 @@
 # Boss — simulation development roadmap
 
+## In development — v22.3 Economic Balancing (not released)
+
+- Preserve existing signed fees, cash, wages, business ownership and property; newly generated future deals use `pricingVersion:23` to smooth reputation price inflation above 600 while grandfathered deals retain legacy rules.
+- Clarify operating-unit contribution as before corporate overhead; benchmark pricing multiples, runway and 30/180/730-game-day scenarios; require all finance, migrations, mobile controls and IndexedDB regressions green before any production merge.
+- CFO/HR/COO qualification gates and delegated authority from v22.2 remain untouched. Site and labor recalibration must use measured economic impact, not retroactive changes. [v22.3 economic architecture](docs/V22_3_ECONOMIC_BALANCING.md).
+
+
 ## Released v22.2 — HR, CFO & COO executive leadership
 
 - CEO can appoint an existing qualified, idle colleague as HR/Chief People Officer, CFO or COO after explicit company, experience and payroll-runway gates; retain one employee identity and normal historic payroll.

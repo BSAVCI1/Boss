@@ -1,6 +1,6 @@
 # Boss v21.5 — Earned Business Progression & CEO Direction
 
-**Status:** v21.5 release candidate in PR #32. Only mark released after required production GitHub regression and Pages checks pass. Code: standalone `index.html`. The legacy `boss20` localStorage key, `BossSafeProgress` IndexedDB fallback and JSON backup are unchanged.
+**Status:** RELEASED 2026-10-18. [PR #32](https://github.com/BSAVCI1/Boss/pull/32) merged at `583ea00e31af82753d26f6bcc2873f3811c70047`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39107265404) and [Pages](https://github.com/BSAVCI1/Boss/actions/runs/39107264888) passed. Code: standalone `index.html`. The legacy `boss20` localStorage key, `BossSafeProgress` IndexedDB fallback and JSON backup are unchanged.
 
 ## Business progression: hard purchase gates
 

@@ -1,8 +1,8 @@
 # Boss
 
-## Boss v21.5 — Earned company growth (release candidate)
+## Boss v21.5 — Earned company growth (released 2026-10-18)
 
-New business-line purchases now require measured achievements, qualified leadership, available specialists and real cash runway; later expansions also depend on operating-unit delivery, staffed General Managers and leadership depth. Previously purchased lines never disappear or incur a second fee. Today explains your next company-stage milestone; Growth lists the specific missing requirements. Corporate managers earn monthly, cost-neutral evidence-based scorecards that the Executive Assistant summarizes in weekly briefings. CEO approval is still required before a $120 purchase. [Full rules](docs/V21_5_GROWTH.md). Production release is pending CI/Pages verification; do not assume the owner's private iPhone save has been inspected.
+New business-line purchases now require measured achievements, qualified leadership, available specialists and real cash runway; later expansions also depend on operating-unit delivery, staffed General Managers and leadership depth. Previously purchased lines never disappear or incur a second fee. Today explains your next company-stage milestone; Growth lists the specific missing requirements. Corporate managers earn monthly, cost-neutral evidence-based scorecards that the Executive Assistant summarizes in weekly briefings. CEO approval is still required before a $120 purchase. [Full rules](docs/V21_5_GROWTH.md). **Verified:** [PR #32](https://github.com/BSAVCI1/Boss/pull/32) merged at `583ea00e31af82753d26f6bcc2873f3811c70047`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39107265404) and [GitHub Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39107264888) passed. The owner's private iPhone Safari save remains uninspected.
 
 ## Boss v21.4c — Autonomous management (released 2026-10-18)
 

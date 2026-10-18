@@ -275,7 +275,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="overview-metrics"><span id="brief-projects">0 projects</span><span id="brief-pipeline">0 in pipeline</span><span id="brief-team">Team ready</span></div>
 <div class="game-mission" id="game-mission"><div class="eyebrow">NEXT CHALLENGE</div><strong id="game-goal">Build your company</strong><p id="game-goal-hint">Choose your next step.</p><div class="game-goal-track"><span id="game-goal-bar"></span></div><div class="game-goal-progress" id="game-goal-progress"></div></div>
 <p class="small" id="speed-explainer">Standard · 2.4 seconds per game day. Pause any time; Skip advances up to seven game days.</p><div class="game-actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
-<div class="game-scene"><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office with team members"></canvas></div></div><div class="game-story" id="game-story" aria-live="polite"></div><div id="company-stage-today" class="game-stage-direction" aria-live="polite"></div>
+<details class="aux-details" id="campus-visual" open><summary>Live company campus · hide animation to save battery</summary><div class="game-scene"><div class="card office"><canvas id="office" width="640" height="150" aria-label="Animated office showing active employees and work"></canvas></div></div></details><div class="game-story" id="game-story" aria-live="polite"></div><div id="company-stage-today" class="game-stage-direction" aria-live="polite"></div>
 <details class="aux-details" id="game-journey"><summary>My company journey</summary><div id="game-journey-map"></div></details>
 </div><div id="game-toast" class="game-toast" role="status" aria-live="polite" hidden></div>
 <details class="aux-details game-advanced" id="ceo-records"><summary>Coach &amp; company records</summary>
@@ -556,7 +556,7 @@ const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let S,spd=1,paused=false,selected=[],ideaMessage="",avatars=new Map(),clock,structural="",lastIdeas="",logSignature="",sectorSignature="",customerSignature="";
 const projectExpanded=new Set(),employeeExpanded=new Set(),careerExpanded=new Set(),roadmapExpanded=new Set(),peopleGroupExpanded=new Set(["ceo"]);
-function ensureViewState(s){if(!s.ui||typeof s.ui!=="object")s.ui={};for(const k of ["employees","careers","roadmaps"])if(!Array.isArray(s.ui[k]))s.ui[k]=[];s.ui.productivityOpen=!!s.ui.productivityOpen;if(![1,3,8].includes(s.ui.speed))s.ui.speed=1;if(!["park","central","regional"].includes(s.ui.propertyLocation))s.ui.propertyLocation="park";}
+function ensureViewState(s){if(!s.ui||typeof s.ui!=="object")s.ui={};for(const k of ["employees","careers","roadmaps"])if(!Array.isArray(s.ui[k]))s.ui[k]=[];s.ui.productivityOpen=!!s.ui.productivityOpen;s.ui.campusOpen=s.ui.campusOpen!==false;if(![1,3,8].includes(s.ui.speed))s.ui.speed=1;if(!["park","central","regional"].includes(s.ui.propertyLocation))s.ui.propertyLocation="park";}
 let orgControlsSignature="";let activeView="today";const viewScroll={today:0,work:0,team:0,growth:0};let attentionSignature="";
 let canvas=$("office"),ctx=canvas.getContext("2d");
 const LAB_TOPICS={
@@ -2586,6 +2586,8 @@ if(view==="today")requestAnimationFrame(()=>{const panel=$("ea-weekly-report");i
 $("ea-weekly-report").addEventListener("toggle",()=>renderExecutiveWeekly());
 $("game-forward").addEventListener("click",gameAdvanceDays);
 $("game-journey").addEventListener("toggle",()=>{if($("game-journey").open)gameRender();});
+$("campus-visual").addEventListener("toggle",()=>{if(S.ui.campusOpen===$("campus-visual").open)return;
+ S.ui.campusOpen=$("campus-visual").open;save();});
 $("attention-list").addEventListener("click",e=>{const b=e.target.closest("button[data-go]");if(b)navigate(b.dataset.go,b.dataset.project?Number(b.dataset.project):undefined);});
 $("lab-today-open").addEventListener("click",()=>{navigate("growth");$("lab-panel").open=true;renderLab(true);});
 $("lab-panel").addEventListener("toggle",()=>{if($("lab-panel").open)renderLab(true);});
@@ -3706,7 +3708,12 @@ function showModal(){const m=$("modal");if(!S.ev){m.hidden=true;document.body.cl
 // 1× 2.4 seconds/day, 3× 0.8 seconds/day, 8× 0.3 seconds/day. The economy continues in game days.
 function schedule(){clearTimeout(clock);if(!paused&&!S.ev&&!saveConflict&&!saveErrorReason&&indexedWriteCount===0)clock=setTimeout(()=>{tick();schedule();},2400/spd);}
 function bubble(id,emoji,frames){let a=avatars.get(id);if(!a){a={x:0,y:0,tx:0,ty:0,away:false,hold:0,emoji:"",frames:0};avatars.set(id,a);}a.emoji=emoji||"💬";a.frames=frames;}
-function avatarDraw(){if(activeView!=="today"){requestAnimationFrame(avatarDraw);return;}const rows=Math.ceil(S.team.length/5),h=Math.max(150,80*rows+50);if(canvas.height!==h)canvas.height=h;const style=getComputedStyle(document.documentElement);const bar=style.getPropertyValue("--bar").trim(),ink=style.getPropertyValue("--ink").trim(),muted=style.getPropertyValue("--muted").trim();ctx.clearRect(0,0,640,h);ctx.fillStyle=bar;ctx.fillRect(0,0,640,h);
+let lastCampusFrame=-1000;
+function avatarDraw(now=0){
+ if(activeView!=="today"||!$("campus-visual").open){requestAnimationFrame(avatarDraw);return;}
+ // Cap animated canvas work at 20 FPS even on 8×; strategic game-day simulation runs separately.
+ if(now>0&&now-lastCampusFrame<50){requestAnimationFrame(avatarDraw);return;}
+ if(now>0)lastCampusFrame=now;const rows=Math.ceil(S.team.length/5),h=Math.max(150,80*rows+50);if(canvas.height!==h)canvas.height=h;const style=getComputedStyle(document.documentElement);const bar=style.getPropertyValue("--bar").trim(),ink=style.getPropertyValue("--ink").trim(),muted=style.getPropertyValue("--muted").trim();ctx.clearRect(0,0,640,h);ctx.fillStyle=bar;ctx.fillRect(0,0,640,h);
 ctx.fillStyle="#b7d7e8";ctx.fillRect(611,(h-32)/2,22,32);ctx.fillStyle="#224b67";ctx.font="9px system-ui";ctx.textAlign="center";ctx.fillText("water",622,(h-32)/2+19);
 S.team.forEach((p,i)=>{const dx=60+(i%5)*130,dy=40+Math.floor(i/5)*80;ctx.fillStyle=muted;ctx.globalAlpha=.33;ctx.fillRect(dx-26,dy-10,52,20);ctx.globalAlpha=1;let a=avatars.get(p.id);if(!a){a={x:dx,y:dy+34,tx:dx,ty:dy+34,away:false,hold:0,emoji:"",frames:0};avatars.set(p.id,a);}
 if(p.t==="idle"||p.t==="rest"){if(!a.away&&Math.random()<.004){a.away=true;a.hold=170+R(130);}if(a.away){a.tx=596;a.ty=h/2+29;if(Math.abs(a.x-a.tx)<7){a.hold--;if(a.hold<=0)a.away=false;}}if(!a.away){a.tx=dx;a.ty=dy+34;}}
@@ -3738,6 +3745,7 @@ async function bootstrapBoss(){
  if(S.ui?.pendingCEO&&CEO_PRIORITIES[S.ui.pendingCEO])ceoDraftPriority=S.ui.pendingCEO;
  spd=[1,3,8].includes(S.ui?.speed)?S.ui.speed:1;
  if(S.ui?.selectedService&&SERVICE_LINES[S.ui.selectedService])$("service-line-select").value=S.ui.selectedService;
+ $("campus-visual").open=S.ui.campusOpen!==false;
  if(loadFailed){saveConflict=true;paused=true;saveError("UnreadableSave","An existing company could not be loaded. Stored versions have NOT been overwritten.");}
  window.addEventListener("storage",event=>{if(event.key===KEY&&event.newValue){
   let rev=0;try{rev=Number(JSON.parse(event.newValue)._saveRevision)||0;}catch{}

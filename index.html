@@ -1560,7 +1560,8 @@ function managementWorkload(dept){
  const staff=ladderCorporate().filter(p=>p.department===dept&&!ladderNode(p.id));
  const jobs=S.deals.filter(d=>!d.unitKey&&roles.includes(d.need));
  const unattended=jobs.filter(d=>!d.w).length,busy=staff.filter(p=>p.t.startsWith("d")).length;
- return{staff,unattended,busy,overloaded:unattended>=2||jobs.length>=Math.max(2,staff.length)&&busy>=Math.max(1,staff.length-1)};
+ const ready=staff.filter(p=>p.t==="idle"&&p.role.auto&&!p.career.autoRest&&p.career.recoveryDays===0&&jobs.some(d=>!d.w&&d.need===orgWorkRole(p))).length;
+ return{staff,unattended,busy,ready,overloaded:unattended>=2&&unattended>ready||jobs.length>staff.length&&busy>=Math.max(1,staff.length-1)};
 }
 function managementHiringAvailable(r){
  const o=managementOps();return S.day<o.since+o.days&&o.hires<o.hireSlots&&o.hireSpent+r.cost<=o.hireBudget&&r.cost<=o.perHire;

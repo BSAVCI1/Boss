@@ -1,13 +1,13 @@
 # Boss — simulation development roadmap
 
-## v22 — Property, Company Campus & Simulation Pacing (release candidate)
+## Released v22 — Property, Company Campus & Simulation Pacing
 
 - New CEO premises board: serviced and regional leases; owned offices/group HQ; GM-specific satellite leases; real upfront and per-day cash mechanics and premises capacity effects, aligned with reported teams.
 - Choose business-park, city-center or regional premises. Store contract prices and future-work modifiers on the acquired property; never reprice prior leases or old projects.
 - Office ledger includes noncash depreciation every 90 game days, explicit closed/unused asset accounting, sale of inactive owned property, and unpaid rental obligations with no double-charge settlement.
 - Forward-only migration preserves established company headcount at the starting distributed workspace; existing service lines, day counter, profit and personnel remain untouched.
 - Mobile-friendly workplace floor views, EA/CEO premises exceptions; existing live office animation limited to 20 FPS with persistent collapse option.
-- 1×/3×/8× playback calibrated to 2.4/0.8/0.3 real seconds per game day. Executive events use game-day spacing. Performance and fairness tests in [v22 documentation](docs/V22_PROPERTY_AND_PACE.md). Mark released only once merged production CI and Pages pass.
+- 1×/3×/8× playback calibrated to 2.4/0.8/0.3 real seconds per game day. Executive events use game-day spacing. Performance and fairness tests in [v22 documentation](docs/V22_PROPERTY_AND_PACE.md). **Release verified:** [PR #33](https://github.com/BSAVCI1/Boss/pull/33) merged at `921c2ee5378d1957d7b300a902de038445fe0ed1`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39111129733) and [Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39111128958) passed on that commit.
 
 ## Released v21.5 — Progression & Company Direction
 

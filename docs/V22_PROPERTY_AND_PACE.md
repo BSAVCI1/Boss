@@ -1,6 +1,6 @@
 # Boss v22 — Offices, Property, Campus & Game Speed
 
-**Status:** v22 release candidate in PR #33. Do not label released until both production regression and Pages pass on exact merged main commit.
+**Status:** RELEASED 2026-10-18. [PR #33](https://github.com/BSAVCI1/Boss/pull/33) merged at `921c2ee5378d1957d7b300a902de038445fe0ed1`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39111129733) and [Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39111128958) passed on that commit.
 
 ## Property roadmap delivered
 

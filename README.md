@@ -1,10 +1,10 @@
 # Boss
 
-## Boss v22 — Offices, Buildings and Pacing (release candidate)
+## Boss v22 — Offices, Buildings and Pacing (released 2026-10-18)
 
 Buy owned office buildings, lease serviced or regional offices, acquire a group HQ, and rent separate GM satellite sites from **Growth → Offices & company property**. Every property requires measurable company readiness, available reserves, actual purchase/setup cash and ongoing rent or maintenance. Choose city center, business park or regional hub for different price/productivity combinations. Previously purchased businesses and staffing remain yours; older saves migrate with enough grandfathered distributed workspace not to create an immediate capacity penalty. Owned property has forward-only noncash depreciation, an audited book value and optional sale of an inactive building; unpaid rent accrues once and can be settled without double expenses. The CEO gets a responsive office floor overview, the EA flags capacity shortfalls, and the animated office is capped at 20 FPS with persistent show/hide.
 
-**Game-speed calibration:** 1× standard is now 2.4 seconds/game day, 3× is 0.8 and 8× is 0.3. The saved speed multiplier does not change, financial mechanics still run per game day, and executive interruptions use game days instead of real-time gating. [Full design, safeguards and benchmarks](docs/V22_PROPERTY_AND_PACE.md). Release pending exact-main CI and Pages verification; the actual owner's private iPhone Safari game has not been read.
+**Game-speed calibration:** 1× standard is now 2.4 seconds/game day, 3× is 0.8 and 8× is 0.3. The saved speed multiplier does not change, financial mechanics still run per game day, and executive interruptions use game days instead of real-time gating. [Full design, safeguards and benchmarks](docs/V22_PROPERTY_AND_PACE.md). **Release verified:** [PR #33](https://github.com/BSAVCI1/Boss/pull/33) merged at `921c2ee5378d1957d7b300a902de038445fe0ed1`; [production regression](https://github.com/BSAVCI1/Boss/actions/runs/39111129733) and [Pages deployment](https://github.com/BSAVCI1/Boss/actions/runs/39111128958) passed on that commit. The owner's actual private iPhone Safari save has not been accessed.
 
 ## Boss v21.5 — Earned company growth (released 2026-10-18)
 

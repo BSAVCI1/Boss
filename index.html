@@ -1712,6 +1712,10 @@ function ladderEvaluation(level){
  const tenure=p?(from?Math.max(0,S.day-from.since):(p.perf?.days||0)):0;
  const competency=p?managerCompetence(p):0;
  const reasons=[];
+ // A Director role must reflect actual organizational span; retain existing historic appointees.
+ // The first corporate group leader needs the normal three-manager prerequisite. Further
+ // directors require another twenty real corporate colleagues, not title-only progression.
+ if(level==="director"&&current.filter(n=>n.level==="director").length>=Math.max(1,Math.floor(ladderCorporate().length/20)))reasons.push("Corporate director capacity: require at least 20 corporate employees per Director after the first");
  const needed=level==="lead"?5+3*current.filter(n=>n.level==="lead").length:rule.required;
  if(count<needed)reasons.push("Need "+needed+" "+(level==="lead"?"company employees to form another three-person team":level==="director"?"managers":"Team Leads")+"; currently "+count);
  if(!p)reasons.push("No internal successor ready");

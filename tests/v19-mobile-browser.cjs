@@ -460,6 +460,26 @@ async function runBrowser(){
   await captureCEO(390,844,"property");
   await captureCEO(414,896,"today");
   await captureCEO(414,896,"property");
+  // v22.4D real Chromium screenshots at both required mobile widths.
+  const uxDir=path.join("reports","v22-4d-mobile");fs.mkdirSync(uxDir,{recursive:true});
+  for(const [width,height] of [[390,844],[414,896]]){
+   await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+   for(const tab of ["today","growth"]){
+    const selector=tab==="today"?"#ceo-priority-card":"#ideas";
+    const navSelector='.bottom-nav button[data-view="'+tab+'"]';
+    await send("Runtime.evaluate",{expression:"document.querySelector("+JSON.stringify(navSelector)+").click()",returnByValue:true});
+    await sleep(240);
+    const expression="(()=>{const t=document.querySelector("+JSON.stringify(selector)+");if(!t)return null;document.documentElement.style.scrollBehavior='auto';window.scrollTo({top:Math.max(0,window.scrollY+t.getBoundingClientRect().top-12),behavior:'instant'});return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,top:t.getBoundingClientRect().top,archiveOpen:document.getElementById('upgrade-archive').open,active:!!document.getElementById('ideas').textContent}})()";
+    const state=await send("Runtime.evaluate",{expression,returnByValue:true}),check=state.result?.value;
+    assert.ok(check&&check.width===width&&!check.overflow&&check.active,"v22.4D mobile target invalid "+JSON.stringify(check));
+    await sleep(210);
+    const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+    assert.ok(shot.data?.length>1500,"Missing v22.4D screenshot");
+    const filename=path.join(uxDir,"boss-simplified-"+tab+"-"+width+"px.png");
+    fs.writeFileSync(filename,Buffer.from(shot.data,"base64"));
+    console.log("PASS v22.4D real screenshot "+filename+" "+JSON.stringify(check));
+   }
+  }
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }

@@ -551,7 +551,7 @@ async function runBrowser(){
    await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
    for(const stage of ["selection","comparison","approval"]){
     const expression=String.raw`(()=>{
-     const stage=__BOSS_STAGE__;
+     const stage=__BOSS_STAGE__,preset=innerWidth===390?"balanced":"aggressive";
      document.querySelector('.bottom-nav button[data-view="today"]').click();
      const qa=window.__bossQA;qa.pause();qa.resetEditShield();
      const s=qa.state(),root=document.getElementById("management-policy-center");
@@ -596,7 +596,7 @@ async function runBrowser(){
      }else if(stage==="comparison"){
        const prior=window.__policyUiProof;
        if(!prior)throw Error("Selection baseline not captured");
-       button('button[data-management-preset="balanced"]');
+       button('button[data-management-preset="'+preset+'"]');
        if(!root.textContent.includes("Proposed limits")||
           !root.textContent.includes("Maximum possible new commitments"))
           throw Error("CEO financial comparison not shown");
@@ -608,7 +608,7 @@ async function runBrowser(){
        button('button[data-management-action="cancel"]');
        if(scopes(s)!==prior.liveScopes||scopes(saved())!==prior.savedScopes)
           throw Error("Cancel changed saved or in-memory management permissions");
-       button('button[data-management-preset="balanced"]');
+       button('button[data-management-preset="'+preset+'"]');
        if(!root.querySelector('button[data-management-action="approve"]'))
           throw Error("CEO approval action missing from comparison");
      }else{
@@ -616,8 +616,8 @@ async function runBrowser(){
        if(!prior)throw Error("Comparison baseline missing");
        button('button[data-management-action="approve"]');
        const savedNow=saved();
-       if(s.org.managementPolicy?.preset!=="balanced"||
-          savedNow.org.managementPolicy?.preset!=="balanced")
+       if(s.org.managementPolicy?.preset!==preset||
+          savedNow.org.managementPolicy?.preset!==preset)
           throw Error("CEO confirmation did not durably authorize Balanced policy");
        if(history(s)!==prior.liveHistory||history(savedNow)!==prior.savedHistory)
           throw Error("Approval incorrectly spent money or changed historic company records");

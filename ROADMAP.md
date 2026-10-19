@@ -1,5 +1,8 @@
 # Boss — simulation development roadmap
 
+> **v22.4.1 CEO Decision Clarity — DRAFT PR #53, 19 October 2026.** Targeted working changes on `feature/v22-4-1-ceo-decision-clarity`: one authoritative optional market Take/Pass decision, stable in-place CEO details, one earned business launch prompt with deep link, and mandate-aware data-grounded Executive Assistant 90-day strategy review. [Issue #51](https://github.com/BSAVCI1/Boss/issues/51) · [Draft PR #53](https://github.com/BSAVCI1/Boss/pull/53) · [full exact-head Actions](https://github.com/BSAVCI1/Boss/actions/runs/39222124999). **QA pending:** all existing 730-day and mobile save/IndexedDB tests remain required, plus new 390/414 real Chromium evidence. Not merged, not deployed; broader [#52](https://github.com/BSAVCI1/Boss/issues/52) / v22.5A deferred.
+
+
 > **v22.3C4 integrated Day-0 HQ proof (18 October 2026) — IN DEVELOPMENT / PARTIAL, not deployed.** The [three-strategy actual-engine runner](tests/v22-3c4-integrated-growth.cjs) compares paid corporate-first, balanced business-unit and earlier GM growth from $90/three real employees, measures genuine 20-corporate/Director/two-GM-unit/50-delivery/cash/HQ readiness, and tests explicit CEO purchase only when authorized. [Specification and exact verification gate](docs/V22_3C4_INTEGRATED_ORGANIC_GROWTH.md). C3 proved Director separately but not coexisting with the operating units. v22.3 remains [draft PR #39](https://github.com/BSAVCI1/Boss/pull/39) / [open #40](https://github.com/BSAVCI1/Boss/issues/40); production v22.2 and parallel v22.4 PR #44 remain untouched. Final results and latest-head mandatory CI pending.
 
 

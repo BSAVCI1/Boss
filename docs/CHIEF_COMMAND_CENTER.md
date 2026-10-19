@@ -1,4 +1,11 @@
 # BOSS — CHIEF COMMAND CENTER
+
+## Latest development handoff — v22.4.1 (19 October 2026, DRAFT / CI RUNNING)
+- Source baseline revalidated: `main` `ef947b958d93e5e3bd7c97c01d1f5c0ae5c9d77a` (deployed combined v22.3/v22.4), no existing development PR; opened [draft PR #53](https://github.com/BSAVCI1/Boss/pull/53) on dedicated `feature/v22-4-1-ceo-decision-clarity`. [Issue #51](https://github.com/BSAVCI1/Boss/issues/51) is targeted; v22.5 [#52](https://github.com/BSAVCI1/Boss/issues/52) is out of scope.
+- Implemented in code: CEO action center owns a single market Take/Pass pair; other offer summaries are read-only. No change to actual `worldEventChoice` ledger, $10 acceptance or $0 pass. Reconcile CEO Today DOM without remounting unchanged disclosures/focus; deduplicate eligible $120 company-launch decision and deep-link into real Growth requirements; Executive Assistant strategy briefing displays real CFO/COO/HR facts only as active-mandate reports, otherwise labeled company data.
+- Targeted VM tests and real 21-day Chromium disclosure tests added to existing mandatory full suite. Exact-head [CI #39222124999](https://github.com/BSAVCI1/Boss/actions/runs/39222124999) pending final verification; mobile screenshots not yet verified. Do not mark CI PASSED until success on final SHA; no merge, Pages publish or owner Safari sign-off performed.
+- Next planned phase after separate owner authorization: v22.5A CEO Management Policies and Work/Team/Growth simplification. Keep v22.5B/C and broader investment economics separately scoped.
+
 **Owner-approved master development program · 18 October 2026**
 **Scope:** Planning, release governance, progress audits and self-contained prompts for independent development chats. This command center does **not** edit gameplay by default.
 **Project:** https://github.com/BSAVCI1/Boss

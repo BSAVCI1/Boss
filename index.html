@@ -312,7 +312,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="ceo-quick-actions game-actions" aria-label="Quick simulation actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
 <details class="management-pane" id="today-ceo-tools"><summary>CEO strategy, executive appointments &amp; company identity</summary>
 <div class="card ceo-office"><div class="eyebrow">CEO · COMPANY IDENTITY</div><h2 id="company-name">Business Services Group</h2><p id="company-identity"></p><div class="ceo-office-grid"><div><b>My direct reports</b><div id="ceo-direct-reports"></div></div><div><b>Executive Assistant</b><div id="ceo-assistant"></div></div></div></div>
-<div class="card" id="executive-officers-panel"><div class="lead"><b>Executive leadership · HR, CFO &amp; COO</b><span id="executive-officer-count" class="small">Founder-led</span></div><p class="small">Appoint proven employees only after business milestones. Actual payroll changes begin after CEO approval; delegated authority begins inactive until expressly granted.</p><div id="executive-officers"></div><p id="executive-officer-action-status" class="small" role="status"></p></div><div class="card ceo-direction"><div class="lead"><b>Your 90-day direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p><p id="ceo-direction-confirm" class="small" role="status" aria-live="polite"></p></div>
+<div class="card" id="executive-officers-panel"><div class="lead"><b>Executive leadership · HR, CFO &amp; COO</b><span id="executive-officer-count" class="small">Founder-led</span></div><p class="small">Appoint proven employees only after business milestones. Actual payroll changes begin after CEO approval; delegated authority begins inactive until expressly granted.</p><div id="executive-officers"></div><p id="executive-officer-action-status" class="small" role="status"></p></div><div class="card ceo-direction"><div class="lead"><b>CEO 90-day company direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p><p id="ceo-direction-confirm" class="small" role="status" aria-live="polite"></p></div>
 </details>
 <div class="card executive-inbox" id="executive-inbox-panel"><div class="lead"><b>Executive meeting &amp; decisions</b><span id="exec-count" class="small">No pending decisions</span></div><p class="small" id="executive-meeting-summary"></p><details class="aux-details" id="ea-weekly-report"><summary>Executive Assistant · weekly business briefing</summary><div id="ea-weekly-body"></div></details><div id="ceo-action-center" aria-label="CEO approvals and exceptions"></div><div id="exec-inbox"></div><details class="aux-details"><summary>Meeting history</summary><div id="exec-history"></div></details></div>
 <details class="management-pane" id="company-story"><summary>Company journey, milestones &amp; live campus</summary><div class="card game-desk" id="game-desk">
@@ -416,7 +416,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </section>
 <section id="view-growth" class="app-view" data-page="growth" aria-label="Strategy and capabilities" hidden>
 <div class="view-intro"><h2>Growth</h2><p>Industries, investments and company knowledge</p></div>
-<section aria-labelledby="market-title"><h2 id="market-title">Choose your direction</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><details class="aux-details" id="sector-explore"><summary>Explore customer markets</summary><div id="sector-options" class="sector-buttons"></div></details><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
+<section aria-labelledby="market-title"><h2 id="market-title">Target customer sector</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><details class="aux-details" id="sector-explore"><summary>Explore customer markets</summary><div id="sector-options" class="sector-buttons"></div></details><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
 
 <section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Purchased service lines start as shared service portfolios. You can now organize a purchased line into an operating unit below, appoint a General Manager and allocate dedicated employees. These units are internal operating divisions, not independent subsidiaries or separate bank accounts. Company cash and financial records remain consolidated; unit results only track future work. Shared department budgets and advanced unit delegations evolve in later releases. Revenue is never counted twice.</p><div id="company-unlock-guide" class="filter-note"></div><p id="company-launch-status" class="small" role="status"></p><div id="business-lines"></div><div id="business-units" aria-label="Operating unit management"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">New launches require proven delivery, leadership, qualified staffing and financial runway. Previously purchased lines remain yours. No future revenue is guaranteed.</p></details></section>
 <section class="card" id="property-panel" aria-label="Company offices and buildings"><div class="lead"><b>Offices &amp; company property</b><span class="small" id="property-summary">Distributed work</span></div>
@@ -1263,7 +1263,7 @@ $("world-rivals").innerHTML=w.rivals.map(r=>'<div class="coach-row"><b>'+esc(r.n
 $("world-tenders").innerHTML=w.tenders.slice(0,7).map(t=>'<div class="coach-row"><b>'+esc(t.client)+'</b> · '+(t.result==="won"?"Won":"Lost")+' against '+esc(t.rival)+'<div class="coach-mini">Day '+t.day+' · '+esc(t.priority)+' buyer · '+esc(t.strategy)+' strategy · Estimated win chance '+Math.round(100*t.probability)+'%. Probability is a game model, not a guarantee.</div></div>').join("")||'<p class="small">No competitive tender outcomes recorded yet. New bids will accumulate as Sales converts prospects.</p>';
 $("world-market-info").textContent=economyPressure().name+" · "+(45-S.day%45)+" days until next market cycle · "+(S.day<=w.shockUntil?"Additional competitor-driven slowdown through Day "+w.shockUntil+". ":"")+"Bid outcomes depend on customer needs, competitive offers, reputation and your strategy.";
 const brief=w.activeEvent,labels={tender:"A major customer is accepting bids",referrals:"Customers are open to referrals",slowdown:"Competitive pressure is rising",retention:"A trusted customer may renew"};
-$("world-event").innerHTML=brief?'<div class="coach-row coach-amber"><b>'+labels[brief.type]+'</b><div class="coach-mini">Decision window: through Day '+brief.until+'. '+esc(worldOfferTerms(brief).description)+'</div>'+(worldOfferEligibility(brief).allowed?'':'<div class="risk-watch small">Unavailable: '+esc(worldOfferEligibility(brief).reason)+'</div>')+'<div class="buttons"><button type="button" data-world-event="act" '+(worldOfferEligibility(brief).allowed?'':'disabled')+'>Take opportunity</button><button type="button" data-world-event="pass">Pass</button></div></div>':'<p class="small">No action required. Next optional market brief around Day '+w.nextEvent+'.</p>';
+$("world-event").innerHTML=brief?'<div class="coach-row coach-amber"><b>'+labels[brief.type]+'</b><div class="coach-mini">Available through Day '+brief.until+'. '+esc(worldOfferTerms(brief).description)+'</div><p class="small">Optional offer. Take or Pass in Today → CEO decision center; no second action here.</p></div>':'<p class="small">No action required. Next optional market brief around Day '+w.nextEvent+'.</p>';
 }
 
 function load(rawOverride){try{const raw=rawOverride===undefined?(localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY)||localStorage.getItem("boss18")||localStorage.getItem("boss17")||localStorage.getItem("boss161")||localStorage.getItem("boss16")||localStorage.getItem("boss151")||localStorage.getItem("boss15")||localStorage.getItem("boss141")||localStorage.getItem("boss14")||localStorage.getItem("boss13")||localStorage.getItem("boss12")||localStorage.getItem("boss10")||localStorage.getItem("boss9")||localStorage.getItem("boss8")||localStorage.getItem("boss7")||localStorage.getItem("boss6")||localStorage.getItem("boss5")||localStorage.getItem("tl3")):rawOverride;if(!raw)return null;const s=JSON.parse(raw);
@@ -2839,6 +2839,11 @@ $("ceo-priority-card").addEventListener("click",e=>{
  const button=e.target.closest("button[data-ceo-nav]");if(!button)return;
  const target=button.dataset.ceoNav;
  if(target==="property"){$("property-options").open=true;navigate("growth");requestAnimationFrame(()=>$("property-panel").scrollIntoView({block:"start"}));}
+ else if(target==="launch"){navigate("growth");$("business-line-create").open=true;renderLaunchGuide();requestAnimationFrame(()=>$("company-unlock-guide").scrollIntoView({block:"start"}));}
+ else if(target==="strategy"){$("today-ceo-tools").open=true;requestAnimationFrame(()=>$("ceo-priority").scrollIntoView({block:"center"}));}
+ else if(target==="commercial"){navigate("growth");$("world-panel").open=true;worldRender();requestAnimationFrame(()=>$("world-strategy").scrollIntoView({block:"center"}));}
+ else if(target==="sector"){navigate("growth");$("sector-explore").open=true;requestAnimationFrame(()=>$("sector-focus-name").scrollIntoView({block:"center"}));}
+ else if(target==="unit"){navigate("growth");requestAnimationFrame(()=>$("business-units").scrollIntoView({block:"start"}));}
  else if(target==="decisions")$("ceo-action-center").scrollIntoView({block:"start"});
  else if(target==="proposals")$("exec-inbox").scrollIntoView({block:"start"});
  else if(["growth","team","work","today"].includes(target))navigate(target);
@@ -4180,7 +4185,7 @@ $("ceo-set-direction").disabled=!!S.ev;
 const inbox=S.exec.proposals,ev=S.world.activeEvent;
 $("exec-count").textContent=inbox.length+" manager requests"+(ev?" · 1 market brief":"");
 $("executive-meeting-summary").textContent="Weekly manager proposals, monthly performance reviews, and CEO approvals. Routine work stays delegated.";
-const brief=ev?'<div class="exec-proposal exec-opportunity"><b>Market opportunity — '+esc(ev.type)+'</b><p>Available through Day '+ev.until+'. '+esc(worldOfferTerms(ev).description)+'</p>'+(worldOfferEligibility(ev).allowed?'':'<p class="risk-watch">Unavailable: '+esc(worldOfferEligibility(ev).reason)+'</p>')+'<div class="buttons"><button type="button" data-world-event="act" '+(worldOfferEligibility(ev).allowed?'':'disabled')+'>Take opportunity</button><button type="button" data-world-event="pass">Pass</button></div></div>':"";
+const brief=ev?'<div class="exec-proposal exec-opportunity"><b>Market opportunity · optional · '+esc(ev.type)+'</b><p>'+esc(worldOfferTerms(ev).description)+' · Decide only in the CEO decision center above.</p>'+(worldOfferEligibility(ev).allowed?'':'<p class="risk-watch">Unavailable: '+esc(worldOfferEligibility(ev).reason)+'</p>')+'</div>':"";
 $("exec-inbox").innerHTML=brief+(inbox.map(p=>{
 const chief=person(p.managerId),cost=biCurrency(p.cost),affordable=S.cash>=p.cost;
 return '<div class="exec-proposal"><b>'+esc(chief?.n||"Director")+' · '+esc(DEPARTMENTS[p.dept].name)+'</b><p>'+esc(p.benefit)+' · '+cost+' one-time'+(p.type==="hire"?" + salary $1.50/day":p.type==="raise"?" · salary +$0.25/day":p.type==="line"?" · new service-line investment":"")+'</p><p><b>Risk:</b> '+esc(p.risk)+'</p><div class="buttons"><button data-exec-action="approve" data-exec-id="'+p.id+'" '+(affordable?"":"disabled")+' type="button">Approve</button><button data-exec-action="decline" data-exec-id="'+p.id+'" type="button">Decline</button></div></div>';}).join("")||(!ev?'<p class="small">No CEO approvals needed. Your managers continue running their departments.</p>':""));
@@ -4340,9 +4345,76 @@ function ceoDecisionInventory(){
  return{hiring,unit,proposals,promotion,optional:!!S.world.activeEvent,
   approvals:hiring.length+unit.length+proposals.length};
 }
+
+/* v22.4.1: update in-place to preserve open details, focus and browser scroll while simulation ticks. */
+function reconcileCEOContent(root,markup){
+ if(typeof document.createElement!=="function"){if(root.innerHTML!==markup)root.innerHTML=markup;return;}
+ const source=document.createElement("template");source.innerHTML=markup;
+ function sync(a,b){
+  if(a.nodeType!==b.nodeType||a.nodeName!==b.nodeName){a.replaceWith(b.cloneNode(true));return;}
+  if(a.nodeType===3){if(a.nodeValue!==b.nodeValue)a.nodeValue=b.nodeValue;return;}
+  if(a.nodeType!==1)return;
+  const disclosure=a.tagName==="DETAILS",active=a===document.activeElement;
+  for(const attr of [...a.attributes])if(!(disclosure&&attr.name==="open")&&!b.hasAttribute(attr.name))a.removeAttribute(attr.name);
+  for(const attr of [...b.attributes])if(!(disclosure&&attr.name==="open")&&!(active&&["value","checked"].includes(attr.name))&&a.getAttribute(attr.name)!==attr.value)a.setAttribute(attr.name,attr.value);
+  syncChildren(a,b);
+ }
+ function syncChildren(a,b){
+  const nodes=[...b.childNodes];
+  nodes.forEach((child,i)=>{const old=a.childNodes[i];if(old)sync(old,child);else a.appendChild(child.cloneNode(true));});
+  while(a.childNodes.length>nodes.length)a.lastChild.remove();
+ }
+ syncChildren(root,source.content);
+}
+// Advisory presentation is a pure projection; it never changes the saved state.
+function ceoStrategyReview(){
+ const priority=S.exec.priority,elapsed=Math.max(0,S.day-S.exec.priorityDay);
+ const payroll=S.team.reduce((n,p)=>n+dailySalary(p),0),fixed=propertySummary().daily;
+ const daily=payroll+fixed,runway=daily>0?S.cash/daily:null;
+ const unassigned=S.deals.filter(d=>!d.w).length,atRisk=S.deals.filter(d=>d.dl<=3).length;
+ const stressed=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35).length;
+ const leads=S.pipeline.leads.length,deliveries=S.market.completed;
+ const available=Object.keys(SERVICE_LINES).filter(k=>!S.exec.lines.some(x=>x.key===k));
+ const expansion=available.some(k=>companyLaunchReadiness(k).ready);
+ let suggested=priority,reason="Current facts do not justify changing the company direction.";
+ let trigger=elapsed>=90?"90-day review is due":"Next scheduled review at Day "+(S.exec.priorityDay+90);
+ if(runway!==null&&runway<14){
+  suggested="profit";trigger="Material cash runway pressure";
+  reason="Cash covers "+runway.toFixed(1)+" days of current payroll and premises; this is not a full future cash forecast.";
+ }else if(unassigned&&atRisk){
+  suggested="people";trigger="Project delivery pressure";
+  reason=unassigned+" projects unassigned, with "+atRisk+" deadlines within 3 days; review capacity and accountable leadership.";
+ }else if(leads===0&&deliveries>=5&&runway!==null&&runway>=30&&S.deals.length<3){
+  suggested="grow";trigger="Customer pipeline depleted";
+  reason="No leads, "+S.deals.length+" projects in progress and "+deliveries+" delivered historically.";
+ }else if(expansion&&priority==="newline"){
+  trigger="Earned launch opportunity";
+  reason="An additional service qualifies under the existing launch gates; the $120 approval and future demand remain uncertain.";
+ }else if(expansion&&elapsed>=90&&priority==="grow"){
+  trigger="90-day review and eligible expansion";
+  suggested="newline";
+  reason="A new service meets real launch eligibility, but it requires a separate $120 CEO investment.";
+ }else if(stressed&&elapsed>=90&&priority==="people"){
+  reason=stressed+" high-stress or burnout flags remain; continuing leadership development requires close workload review.";
+ }
+ const change=suggested!==priority;
+ const officer=(role,facts)=>executiveOfficer(role,"active")?
+  EXECUTIVE_ROLES[role].short+" · active mandate — "+facts:
+  "EA company data (no active "+EXECUTIVE_ROLES[role].short+" mandate) — "+facts;
+ return{priority,suggested,elapsed,change,trigger,reason,
+ evidence:[
+  officer("cfo","cash "+biCurrency(S.cash)+"; payroll + premises "+biCurrency(daily)+"/day; "+(runway===null?"no current fixed cost":runway.toFixed(1)+" days of cover")),
+  officer("coo",S.deals.length+" active projects; "+unassigned+" unassigned; "+atRisk+" deadlines within 3 days; "+leads+" pipeline leads"),
+  officer("hr",S.team.length+" staff; "+stressed+" stress/burnout alerts; "+S.org.progression.appointments.length+" recorded leader appointments")
+ ],
+ risks:change?
+  "Changing CEO direction shifts future department proposals and pipeline mode; no existing financial mandate is renewed or expanded, and results are uncertain.":
+  "Maintaining direction does not guarantee revenue or prevent missed deadlines; monitor performance and change only on meaningful new evidence."};
+}
+
 function renderCEOFocus(){
  const root=$("ceo-priority-content");if(!root||editableInteractionPending())return;
- const inventory=ceoDecisionInventory(),direction=companyDirection(),office=ceoPremisesOpportunity(),warnings=propertyWarnings();
+ const inventory=ceoDecisionInventory(),direction=companyDirection(),office=ceoPremisesOpportunity(),warnings=propertyWarnings(),review=ceoStrategyReview();
  const payroll=S.team.reduce((n,p)=>n+dailySalary(p),0),siteDaily=propertySummary().daily;
  const currentProfit=(S.bi.totals.revenue||0)-(S.bi.totals.costs||0),daily=payroll+siteDaily;
  const days=daily>0?S.cash/daily:null,risky=days!==null&&days<7;
@@ -4371,7 +4443,9 @@ function renderCEOFocus(){
   {title:"Protect payroll and operating runway",why:severity,go:"work",label:"Review cash and collections →"}:
   office?{title:"Resolve workplace crowding",why:severity,go:"property",label:"Compare premises and decide →"}:
   first?{title:"Resolve a pending manager request",why:first.name+" · "+first.reason,go:first.location,label:"Review approval and consequences →"}:
-  {title:direction.title,why:direction.detail,go:direction.view==="team"?"team":"growth",label:"Open the next company milestone →"};
+  direction.key&&companyLaunchReadiness(direction.key).ready?
+   {title:"Launch another business",why:"All existing requirements satisfied · $120 one-time investment to expand the portfolio. New demand and revenue are not guaranteed.",go:"launch",label:"Review business launch →"}:
+   {title:"Review the current CEO direction",why:CEO_PRIORITIES[S.exec.priority].name+" · "+review.reason,go:"strategy",label:"Read CEO strategy review →"};
  const prerequisiteChecks=direction.key?companyLaunchReadiness(direction.key).checks:[];
  const completed=prerequisiteChecks.filter(x=>x.met).length;
  const milestone=direction.unmet.length?
@@ -4396,13 +4470,25 @@ function renderCEOFocus(){
  '<button type="button" data-ceo-nav="'+main.go+'">'+esc(main.label)+'</button></div>'+
  '<div class="ceo-today-section"><h3>Managed by my team</h3>'+
  (managed.length?managed.slice(0,2).map(x=>'<p class="small">'+esc(x)+'</p>').join("")+
- (managed.length>2?'<details><summary>More accountable leaders</summary>'+managed.slice(2).map(x=>'<p>'+esc(x)+'</p>').join("")+'</details>':''):
+ (managed.length>2?'<details id="ceo-more-accountable"><summary>More accountable leaders</summary>'+managed.slice(2).map(x=>'<p>'+esc(x)+'</p>').join("")+'</details>':''):
  '<p class="small">Founder-led operations. No appointed leader with recorded delegated work.</p>')+
  '<p class="small">Exceptions: '+(inventory.hiring.length+inventory.unit.length)+' staffing request(s); '+(S.exec.units||[]).filter(u=>S.deals.some(d=>d.unitKey===u.key&&!d.w)).length+' GM unit(s) with unassigned work.</p></div>'+
- '<div class="ceo-today-section"><h3>Next company chapter · '+esc(direction.title)+'</h3><p>'+esc(milestone)+'</p>'+
- '<button type="button" data-ceo-nav="'+(direction.view==="team"?"team":"growth")+'">View actual milestone requirements →</button></div>'+
+ (main.go==="launch"?'':'<div class="ceo-today-section"><h3>Next company chapter · '+esc(direction.title)+'</h3><p>'+esc(milestone)+'</p>'+
+ '<button type="button" data-ceo-nav="'+(direction.view==="team"?"team":"launch")+'">View actual milestone requirements →</button></div>')+
+ '<div class="ceo-today-section" id="ceo-strategy-review"><h3>Executive Assistant · strategy review</h3>'+
+ '<p><b>CEO direction:</b> '+esc(CEO_PRIORITIES[review.priority].name)+' · Day '+review.elapsed+' of 90. '+esc(review.trigger)+'.</p>'+
+ '<p><b>EA recommendation:</b> '+(review.change?'Consider '+esc(CEO_PRIORITIES[review.suggested].name):'Maintain '+esc(CEO_PRIORITIES[review.priority].name))+'. '+esc(review.reason)+'</p>'+
+ '<p class="small"><b>Trade-offs and risks:</b> '+esc(review.risks)+'</p>'+
+ '<details id="ceo-strategy-evidence"><summary>Why: finance, delivery and people evidence</summary>'+review.evidence.map(x=>'<p class="small">'+esc(x)+'</p>').join("")+'</details>'+
+ '<details id="ceo-strategy-controls"><summary>Four strategy controls — what each changes</summary>'+
+ '<p class="small"><b>CEO 90-day direction:</b> guides future department proposals and pipeline mode; spending mandates remain separate. Review when due or after material change.</p>'+
+ '<p class="small"><b>Commercial acquisition approach:</b> changes future win odds, price and scope of newly won contracts. 30-day cooldown; signed fees are preserved.</p>'+
+ '<p class="small"><b>Target customer sector:</b> changes sector specialization in prospecting and tenders; expanding eligible markets has separate costs.</p>'+
+ '<p class="small"><b>GM unit strategy:</b> sets unit delivery/quality focus and targets, not the group-wide strategy.</p>'+
+ '<div class="buttons"><button type="button" data-ceo-nav="commercial">Commercial approach →</button><button type="button" data-ceo-nav="sector">Customer sector →</button><button type="button" data-ceo-nav="unit">GM plan →</button></div></details>'+
+ '<button type="button" data-ceo-nav="strategy">'+(review.change?'Review proposed CEO direction →':'Review 90-day CEO direction →')+'</button></div>'+
  (decisionFeedback?'<p class="ceo-result" role="status" aria-live="polite">'+esc(decisionFeedback)+'</p>':'');
- if(root.innerHTML!==html)root.innerHTML=html;
+ reconcileCEOContent(root,html);
 }
 function renderCEODecisions(){
  const root=$("ceo-action-center");if(!root||editableInteractionPending())return;
@@ -4427,8 +4513,8 @@ function renderCEODecisions(){
  if(promotion)requests.push('<div class="exec-proposal"><b>Leadership promotion · CEO authority</b><p>Candidate '+esc(promotion.candidateName)+
   ' · '+esc(promotion.role)+' · additional recurring payroll '+biCurrency(promotion.incremental*S.mod.cost)+'/day.</p>'+
   '<button type="button" data-ceo-action="promotion" data-id="'+promotion.candidateId+'" data-level="'+promotion.level+'">Approve promotion</button></div>');
- if(offer)requests.push('<div class="exec-proposal"><b>Market opportunity · optional</b><p>Offer through Day '+offer.until+
- '. No compulsory penalty for declining.</p><div class="buttons"><button type="button" data-ceo-action="opportunity" data-result="act" '+
+ if(offer)requests.push('<div class="exec-proposal"><b>Market opportunity · optional · '+esc(offer.type)+'</b><p>Available through Day '+offer.until+
+ '. '+esc(worldOfferTerms(offer).description)+' Passing costs $0; conversion and revenue are never guaranteed.</p><div class="buttons"><button type="button" data-ceo-action="opportunity" data-result="act" '+
  (worldOfferEligibility(offer).allowed?"":"disabled")+'>Take opportunity</button><button type="button" data-ceo-action="opportunity" data-result="pass">Pass</button></div></div>');
  const escalation=decisions.approvals;const cfoGuard=executiveOfficer("cfo","protect")&&!executiveFinanceGuard(0);
  const highHeadcount=S.team.length>=15,units=S.exec.units.length;

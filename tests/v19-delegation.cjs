@@ -12,7 +12,7 @@ function el(id){if(!els.has(id))els.set(id,{id,innerHTML:"",textContent:"",value
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){}},window:{scrollY:0,innerWidth:390,addEventListener(){},scrollTo(){}},localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v),removeItem:k=>saved.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout:()=>{},getComputedStyle:()=>({getPropertyValue:()=>""}),clearInterval:()=>{},Math,Date,Map,Set,JSON,console};
 vm.createContext(sandbox);
 const boot=js.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exportNames="fresh,load,get:()=>S,set:x=>S=x,save,tick,refresh,orgPlan,orgChangePolicy,orgChooseManager,orgChooseSubManager,orgSubManager,orgSubReports,orgDirectReports,orgManager,orgEffective,orgFunds,orgSpend,orgBudgetPeriod,orgRenewPlan,orgManagerDay,orgAutonomousTeamDay,executiveWeek,executiveProposal,executiveDecision,executiveAutonomous,executiveShow,worldNewEvent,worldOfferTerms,worldOfferEligibility,worldEventChoice,worldRender,dailySalary,feeFor";
+const exportNames="fresh,load,get:()=>S,set:x=>S=x,save,tick,refresh,orgPlan,orgChangePolicy,orgChooseManager,orgChooseSubManager,orgSubManager,orgSubReports,orgDirectReports,orgManager,orgEffective,orgFunds,orgSpend,orgBudgetPeriod,orgRenewPlan,orgManagerDay,orgAutonomousTeamDay,executiveWeek,executiveProposal,executiveDecision,executiveAutonomous,executiveShow,renderCEODecisions,worldNewEvent,worldOfferTerms,worldOfferEligibility,worldEventChoice,worldRender,dailySalary,feeFor";
 vm.runInContext(js.slice(0,boot)+"globalThis.G={"+exportNames+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -132,10 +132,15 @@ test("large reputation increases tender preparation cost; expenses reconcile",()
  assert.ok(G.worldEventChoice("act"));assert.equal(s.cash,cash-quote.cost);
  assert.equal(s.pipeline.leads.at(-1).source,"major tender");balanced(s);
 });
-test("Today inbox offers inline market Act and Pass",()=>{
+test("Today provides one authorized market Act and Pass, not duplicate inbox buttons",()=>{
  const s=fresh();fund(s,25);s.world.activeEvent={id:7,type:"referrals",opened:7,until:70};
- G.executiveShow();const txt=el("exec-inbox").innerHTML;
- assert.ok(txt.includes('data-world-event="act"'));assert.ok(txt.includes('data-world-event="pass"'));assert.ok(!txt.includes("Review opportunity →"));
+ G.executiveShow();G.renderCEODecisions();
+ const summary=el("exec-inbox").innerHTML,actions=el("ceo-action-center").innerHTML;
+ assert.ok(summary.includes("Market opportunity"),"Market brief stays visible as read-only context");
+ assert.ok(!summary.includes('data-world-event="act"')&&!summary.includes('data-world-event="pass"'),"Secondary inbox cannot duplicate a market action");
+ assert.equal((actions.match(/data-ceo-action="opportunity"/g)||[]).length,2,"Exactly one Act/Pass pair");
+ assert.ok(actions.includes('data-result="act"')&&actions.includes('data-result="pass"'));
+ assert.ok(actions.includes("$10")&&actions.includes("30 game days"),"Actionable cost, duration and uncertainty must be visible");
 });
 test("730-day autonomous simulated activity keeps cash reconciled, no hidden revenue",()=>{
  const s=fresh();const m=manager(s,"commercial",s.team[0]),p=s.team[1];p.department="commercial";p.role.primary="sales";

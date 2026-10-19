@@ -297,7 +297,8 @@ document.addEventListener("DOMContentLoaded",async()=>{
 });
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
-fs.writeFileSync(file,html.replace("</body>","<script>"+instrumentation+"</script></body>"));
+const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,tick,renderCEOFocus,renderCEODecisions,pause:()=>{paused=true;clearTimeout(clock)},speed:value=>{spd=value}};S=load();if(!S)fresh();`);
+fs.writeFileSync(file,qaHtml.replace("</body>","<script>"+instrumentation+"</script></body>"));
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),"boss-cdp-"));
 const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--remote-debugging-port=0","--user-data-dir="+profile,"about:blank"];
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -482,6 +483,58 @@ async function runBrowser(){
     const filename=path.join(uxDir,"boss-simplified-"+tab+"-"+width+"px.png");
     fs.writeFileSync(filename,Buffer.from(shot.data,"base64"));
     console.log("PASS v22.4D real screenshot "+filename+" "+JSON.stringify(check));
+   }
+  }
+
+  // v22.4.1: actual game engine and DOM nodes through 21 live day ticks at three speeds.
+  const ceoDir=path.join("reports","v22-4-1-mobile");fs.mkdirSync(ceoDir,{recursive:true});
+  for(const [width,height] of [[390,844],[414,896]]){
+   await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+   const logic=String.raw`(async()=>{
+    document.querySelector('.bottom-nav button[data-view="today"]').click();
+    const qa=window.__bossQA,s=qa.state();qa.pause();
+    if(s.team.length<7)throw Error("Synthetic CEO browser fixture requires 7 actual employees");
+    s.day=4900;s.nextEv=999999;s.world.nextEvent=999999;s.ev=null;
+    s.cash+=10000;s.bi.openingCash+=10000;
+    for(const [i,role] of ["hr","cfo","coo"].entries()){
+     const o=s.exec.officers[role];o.id=s.team[4+i].id;o.mandate=true;o.authoritySince=4895;
+    }
+    s.world.activeEvent={id:4900,opened:4900,until:4950,type:"referrals",sector:s.market.focus};
+    qa.renderCEOFocus();qa.renderCEODecisions();
+    const panel=document.getElementById("ceo-more-accountable");
+    if(!panel)throw Error("More accountable leaders missing");
+    const summaries=document.querySelectorAll("#ceo-action-center button[data-ceo-action=opportunity]");
+    if(summaries.length!==2||document.querySelectorAll("#exec-inbox button[data-world-event]").length)
+     throw Error("Duplicate market decisions");
+    panel.open=true;
+    const summary=panel.querySelector("summary");summary.setAttribute("tabindex","0");summary.focus();
+    const day=s.day;
+    const checks=[];
+    for(const speed of [1,3,8]){
+     qa.speed(speed);
+     for(let n=0;n<7;n++)qa.tick();
+     checks.push({speed,day:s.day,open:panel.open,same:document.getElementById("ceo-more-accountable")===panel,focus:document.activeElement===summary});
+    }
+    return{checks,advanced:s.day-day===21,stillOpen:panel.open,same:document.getElementById("ceo-more-accountable")===panel,focus:document.activeElement===summary,
+      overflow:document.documentElement.scrollWidth>innerWidth+6,review:!!document.getElementById("ceo-strategy-review"),
+      actionable:document.querySelectorAll("#ceo-action-center button[data-ceo-action=opportunity]").length};
+   })()`;
+   const response=await send("Runtime.evaluate",{expression:logic,returnByValue:true,awaitPromise:true});
+   if(response.exceptionDetails)throw Error("v22.4.1 browser fixture failure: "+JSON.stringify(response.exceptionDetails));
+   const result=response.result?.value;console.log("v22.4.1 actual browser CEO ticks",JSON.stringify(result));
+   assert.ok(result?.advanced&&result.stillOpen&&result.same&&result.focus&&!result.overflow&&result.review,
+     "CEO disclosures/focus/overflow failed after 21 real game days");
+   assert.ok(result.checks.every(x=>x.open&&x.same&&x.focus),"A 1x/3x/8x tick unmounted leaders panel");
+   assert.equal(result.actionable,2,"Only one market acceptance/rejection pair allowed");
+   for(const kind of ["overview","strategy"]){
+    const selector=kind==="overview"?"#ceo-priority-card":"#ceo-strategy-review";
+    await send("Runtime.evaluate",{expression:"(()=>{const t=document.querySelector("+JSON.stringify(selector)+");const y=window.scrollY+t.getBoundingClientRect().top-8;window.scrollTo(0,Math.max(0,y));return t.getBoundingClientRect().top})()",returnByValue:true});
+    await sleep(200);
+    const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+    assert.ok(shot.data?.length>1500,"Missing real Chromium screenshot");
+    const filename=path.join(ceoDir,"boss-"+kind+"-"+width+"px.png");
+    fs.writeFileSync(filename,Buffer.from(shot.data,"base64"));
+    console.log("PASS v22.4.1 screenshot "+filename);
    }
   }
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");

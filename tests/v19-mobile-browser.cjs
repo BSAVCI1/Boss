@@ -297,7 +297,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
 });
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
-const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,pause:()=>{paused=true;clearTimeout(clock)},speed:value=>{spd=value},grow:n=>{while(S.team.length<n){const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);S.team.push(p);}structural='';renderStructure();refresh()}};S=load();if(!S)fresh();`);
+const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,pause:()=>{paused=true;clearTimeout(clock)},speed:value=>{spd=value},resetEditShield:()=>{editingActive=false;editingControl=null;editingCooldownUntil=0;if(document.activeElement?.matches?.(EDITABLE_CONTROL))document.activeElement.blur()},grow:n=>{while(S.team.length<n){const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);S.team.push(p);}structural='';renderStructure();refresh()}};S=load();if(!S)fresh();`);
 fs.writeFileSync(file,qaHtml.replace("</body>","<script>"+instrumentation+"</script></body>"));
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),"boss-cdp-"));
 const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--remote-debugging-port=0","--user-data-dir="+profile,"about:blank"];
@@ -492,7 +492,7 @@ async function runBrowser(){
    await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
    const logic=String.raw`(async()=>{
     document.querySelector('.bottom-nav button[data-view="today"]').click();
-    const qa=window.__bossQA,s=qa.state();qa.pause();
+    const qa=window.__bossQA,s=qa.state();qa.pause();qa.resetEditShield();
     qa.grow(9);
     s.day=4900;s.nextEv=999999;s.world.nextEvent=999999;s.ev=null;
     s.cash+=10000;s.bi.openingCash+=10000;

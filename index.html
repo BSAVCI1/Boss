@@ -4581,7 +4581,7 @@ function managementPolicyDetails(p){
  '<p class="small">Authorization is potential headroom, NOT money spent. Existing appointments, CEO manual exceptions, promotion qualifications and CFO safeguards still govern execution. No strategic purchase, acquisition or expansion is authorized.</p></details>';
 }
 function managementPolicyCustomForm(p){
- const field=(key,label,v,step="1")=>'<label>'+esc(label)+'<input type="number" inputmode="decimal" min="0" step="'+step+'" data-management-field="'+esc(key)+'" value="'+esc(v)+'"></label>';
+ const field=(key,label,v,step="1")=>'<label>'+esc(label)+'<input type="number" inputmode="decimal" min="0" step="'+step+'" data-management-field="'+esc(key)+'" value="'+esc(Number.isFinite(v)?v:"")+'"></label>';
  let inputs=field("hiring","Corporate recruiting $",p.hiring)+field("slots","Corporate hire slots",p.slots)+
  field("perHire","Per recruit $",p.perHire)+field("payroll","Leadership payroll cap $/day",p.payroll,"0.01")+
  field("assistant.total","Assistant total $",p.assistant.total)+field("assistant.perAction","Assistant per action $",p.assistant.perAction);
@@ -4629,12 +4629,12 @@ $("management-policy-center").addEventListener("click",e=>{
 $("management-policy-center").addEventListener("input",e=>{
  const key=e.target?.dataset?.managementField;
  if(!key||!managementPolicyDraft||managementPolicyDraft.preset!=="custom")return;
- const raw=e.target.value;if(raw.trim()==="")return;
+ const raw=e.target.value;
  const n=Number(raw),parts=key.split(".");
- if(!Number.isFinite(n))return;
+ if(raw.trim()!==""&&!Number.isFinite(n))return;
  let ref=managementPolicyDraft;
  for(const part of parts.slice(0,-1)){if(!ref[part])return;ref=ref[part];}
- ref[parts.at(-1)]=n;
+ ref[parts.at(-1)]=raw.trim()===""?NaN:n;
  // Keep native input focus/caret; update the comparison when focus is released.
 });
 $("management-policy-center").addEventListener("change",e=>{

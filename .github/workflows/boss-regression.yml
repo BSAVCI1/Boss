@@ -26,6 +26,13 @@ jobs:
           name: boss-v22-4-1-fast-mobile-proof
           path: reports/v22-4-1-mobile/*.png
           if-no-files-found: error
+      - name: Preserve v22.5A1 real mobile policy screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-v22-5a1-policy-mobile-proof
+          path: reports/v22-5a1-mobile/*.png
+          if-no-files-found: error
   ceo_clarity_fast:
     runs-on: ubuntu-latest
     steps:
@@ -34,7 +41,7 @@ jobs:
         with:
           node-version: '20'
       - name: Validate CEO decision clarity before long economic replays
-        run: node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs
+        run: node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-5a1-management-policy.cjs
   game:
     runs-on: ubuntu-latest
     steps:
@@ -43,7 +50,7 @@ jobs:
         with:
           node-version: '20'
       - name: Run standalone game regression checks
-        run: node tests/v22-3c4-integrated-growth.cjs && node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs && node tests/v17-game.cjs && node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v20-portfolio.cjs && node tests/v21-5-growth.cjs && node tests/v22-property-pace.cjs && node tests/v22-2-executive-leadership.cjs && node tests/v22-3-economic-balancing.cjs && node tests/v22-3a-economic-proof.cjs && node tests/v22-3b-economic-calibration.cjs && node tests/v22-3b-integrity.cjs && BOSS_ECONOMIC_MODEL=baseline node tests/v22-3b-sensitivity.cjs && BOSS_ECONOMIC_MODEL=minimal node tests/v22-3b-sensitivity.cjs && BOSS_ECONOMIC_MODEL=balanced node tests/v22-3b-sensitivity.cjs && BOSS_ECONOMIC_MODEL=pressure node tests/v22-3b-sensitivity.cjs && node tests/v22-3b-compare.cjs && node tests/v22-3c1-organic-hq.cjs && node tests/v22-3c3-organic-leadership.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-3-v22-4-integration.cjs && node --experimental-websocket tests/v19-mobile-browser.cjs
+        run: node tests/v22-3c4-integrated-growth.cjs && node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs && node tests/v17-game.cjs && node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v20-portfolio.cjs && node tests/v21-5-growth.cjs && node tests/v22-property-pace.cjs && node tests/v22-2-executive-leadership.cjs && node tests/v22-3-economic-balancing.cjs && node tests/v22-3a-economic-proof.cjs && node tests/v22-3b-economic-calibration.cjs && node tests/v22-3b-integrity.cjs && node tests/v22-5a1-management-policy.cjs && node tests/v22-3c1-organic-hq.cjs && node tests/v22-3c3-organic-leadership.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-3-v22-4-integration.cjs && node --experimental-websocket tests/v19-mobile-browser.cjs
 
       - name: Upload v22.3A economic evidence
         if: always()
@@ -59,20 +66,7 @@ jobs:
         with:
           name: v22-3b-economic-calibration
           path: reports/v22-3b-economic-calibration.json
-          if-no-files-found: warn
-
-      - name: Upload four-model 7-stage calibration comparison
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: v22-3b-sensitivity-evidence
-          path: |
-            reports/v22-3b-baseline.json
-            reports/v22-3b-minimal.json
-            reports/v22-3b-balanced.json
-            reports/v22-3b-pressure.json
-            reports/v22-3b-comparison.json
-          if-no-files-found: warn
+          if-no-files-found: error
 
       - name: Upload v22.3C1 actual-engine earned-only HQ progression proof
         if: always()
@@ -129,3 +123,82 @@ jobs:
           name: boss-v22-4-1-mobile-evidence
           path: reports/v22-4-1-mobile/*.png
           if-no-files-found: error
+
+  # Each sensitivity scenario uses independent simulated companies. Parallelize
+  # without discarding model results or reducing assertions.
+  economic_sensitivity:
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [baseline, minimal, balanced, pressure]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify exact source SHA
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+      - name: Run economic model — ${{ matrix.model }}
+        run: BOSS_ECONOMIC_MODEL=${{ matrix.model }} node tests/v22-3b-sensitivity.cjs
+      - name: Save model evidence — ${{ matrix.model }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: v22-3b-model-${{ matrix.model }}
+          path: reports/v22-3b-${{ matrix.model }}.json
+          if-no-files-found: error
+
+  economic_compare:
+    needs: [game, economic_sensitivity]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Gather all four independent model reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: v22-3b-model-*
+          path: reports
+          merge-multiple: true
+      - name: Download canonical calibration evidence from full game job
+        uses: actions/download-artifact@v4
+        with:
+          name: v22-3b-economic-calibration
+          path: reports
+      - name: Require five source artifacts and reconcile 288 checkpoints
+        run: |
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+          for model in baseline minimal balanced pressure; do test -s "reports/v22-3b-$model.json"; done
+          test -s "reports/v22-3b-economic-calibration.json"
+          node tests/v22-3b-compare.cjs
+      - name: Retain reconciled sensitivity results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v22-3b-sensitivity-evidence
+          path: |
+            reports/v22-3b-baseline.json
+            reports/v22-3b-minimal.json
+            reports/v22-3b-balanced.json
+            reports/v22-3b-pressure.json
+            reports/v22-3b-comparison.json
+          if-no-files-found: error
+
+  # One mandatory result rejects failed, cancelled and skipped jobs. PR runs
+  # are automatically superseded; main push validation is never cancelled.
+  exact_head_acceptance:
+    if: always()
+    needs: [ceo_mobile_fast, ceo_clarity_fast, game, economic_sensitivity, economic_compare]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all financial and mobile checks successful
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          node -e "const n=JSON.parse(process.env.NEEDS_JSON);for(const [k,v] of Object.entries(n)){if(v.result!=='success'){console.error(k+' ended '+v.result);process.exitCode=1}}"

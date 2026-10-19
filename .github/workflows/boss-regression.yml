@@ -5,6 +5,22 @@ on:
   pull_request:
     branches: [main]
 jobs:
+  ceo_mobile_fast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Real Chromium 390px and 414px CEO acceptance
+        run: node --experimental-websocket tests/v19-mobile-browser.cjs
+      - name: Preserve actual 390px and 414px CEO screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-v22-4-1-fast-mobile-proof
+          path: reports/v22-4-1-mobile/*.png
+          if-no-files-found: error
   ceo_clarity_fast:
     runs-on: ubuntu-latest
     steps:

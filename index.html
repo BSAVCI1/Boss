@@ -4513,7 +4513,7 @@ function renderCEODecisions(){
  if(promotion)requests.push('<div class="exec-proposal"><b>Leadership promotion · CEO authority</b><p>Candidate '+esc(promotion.candidateName)+
   ' · '+esc(promotion.role)+' · additional recurring payroll '+biCurrency(promotion.incremental*S.mod.cost)+'/day.</p>'+
   '<button type="button" data-ceo-action="promotion" data-id="'+promotion.candidateId+'" data-level="'+promotion.level+'">Approve promotion</button></div>');
- if(offer)requests.push('<div class="exec-proposal"><b>Optional market opportunity · '+esc(offer.type)+'</b><p>Available through Day '+offer.until+
+ if(offer)requests.push('<div class="exec-proposal"><b>Market opportunity · optional · '+esc(offer.type)+'</b><p>Available through Day '+offer.until+
  '. '+esc(worldOfferTerms(offer).description)+' Passing costs $0; conversion and revenue are never guaranteed.</p><div class="buttons"><button type="button" data-ceo-action="opportunity" data-result="act" '+
  (worldOfferEligibility(offer).allowed?"":"disabled")+'>Take opportunity</button><button type="button" data-ceo-action="opportunity" data-result="pass">Pass</button></div></div>');
  const escalation=decisions.approvals;const cfoGuard=executiveOfficer("cfo","protect")&&!executiveFinanceGuard(0);

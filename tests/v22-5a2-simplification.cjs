@@ -18,7 +18,7 @@ for(const id of ["work-finance-snapshot","work-owned-capabilities","work-project
  "growth-focus-summary","business-lines","business-units","property-panel","growth-research",
  "ideas","lab-panel","sector-options","world-strategy"])once(id);
 const i=id=>html.indexOf('id="'+id+'"');
-assert.ok(i("view-work")<i("work-finance-snapshot")&&i("work-finance-snapshot")<i("deals"));
+assert.ok(i("view-work")<i("work-finance-snapshot")&&i("deals")<i("work-finance-snapshot"));
 assert.ok(i("deals")<i("work-project-forecasts")&&i("work-project-forecasts")<i("pipeline-stages"));
 assert.ok(i("view-work")<i("assistant-priorities")&&i("assistant-priorities")<i("view-team"),
  "Project forecasts must live in Work only");

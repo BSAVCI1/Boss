@@ -1,7 +1,7 @@
 name: Boss offline regression checks
 on:
   push:
-    branches: [main, boss-v15-advanced-economy, boss-v15-1-career-pathways, boss-v16-living-business-world, boss-v16-1-balance-and-people, boss-v17-game-first, boss-v18-ceo-leadership, boss-v19-org-autonomy]
+    branches: [main, boss-v15-advanced-economy, boss-v15-1-career-pathways, boss-v16-living-business-world, boss-v16-1-balance-and-people, boss-v17-game-first, boss-v18-ceo-leadership, boss-v19-org-autonomy, integration/v22-3-v22-4-release-candidate]
   pull_request:
     branches: [main]
 jobs:
@@ -13,7 +13,7 @@ jobs:
         with:
           node-version: '20'
       - name: Run standalone game regression checks
-        run: node tests/v22-3c4-integrated-growth.cjs && node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs && node tests/v17-game.cjs && node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v20-portfolio.cjs && node tests/v21-5-growth.cjs && node tests/v22-property-pace.cjs && node tests/v22-2-executive-leadership.cjs && node tests/v22-3-economic-balancing.cjs && node tests/v22-3a-economic-proof.cjs && node tests/v22-3b-economic-calibration.cjs && node tests/v22-3b-integrity.cjs && BOSS_ECONOMIC_MODEL=baseline node tests/v22-3b-sensitivity.cjs && BOSS_ECONOMIC_MODEL=minimal node tests/v22-3b-sensitivity.cjs && BOSS_ECONOMIC_MODEL=balanced node tests/v22-3b-sensitivity.cjs && BOSS_ECONOMIC_MODEL=pressure node tests/v22-3b-sensitivity.cjs && node tests/v22-3b-compare.cjs && node tests/v22-3c1-organic-hq.cjs && node tests/v22-3c3-organic-leadership.cjs && node --experimental-websocket tests/v19-mobile-browser.cjs
+        run: node tests/v22-3c4-integrated-growth.cjs && node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs && node tests/v17-game.cjs && node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v20-portfolio.cjs && node tests/v21-5-growth.cjs && node tests/v22-property-pace.cjs && node tests/v22-2-executive-leadership.cjs && node tests/v22-3-economic-balancing.cjs && node tests/v22-3a-economic-proof.cjs && node tests/v22-3b-economic-calibration.cjs && node tests/v22-3b-integrity.cjs && BOSS_ECONOMIC_MODEL=baseline node tests/v22-3b-sensitivity.cjs && BOSS_ECONOMIC_MODEL=minimal node tests/v22-3b-sensitivity.cjs && BOSS_ECONOMIC_MODEL=balanced node tests/v22-3b-sensitivity.cjs && BOSS_ECONOMIC_MODEL=pressure node tests/v22-3b-sensitivity.cjs && node tests/v22-3b-compare.cjs && node tests/v22-3c1-organic-hq.cjs && node tests/v22-3c3-organic-leadership.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node --experimental-websocket tests/v19-mobile-browser.cjs
 
       - name: Upload v22.3A economic evidence
         if: always()
@@ -66,4 +66,28 @@ jobs:
         with:
           name: v22-3c4-integrated-growth
           path: reports/v22-3c4-integrated-growth.json
+          if-no-files-found: warn
+
+      - name: Upload v22.4B real Chromium screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-v22-4b-mobile-evidence
+          path: reports/v22-4b-mobile/*.png
+          if-no-files-found: warn
+
+      - name: Upload v22.4D simplified Today and research screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-v22-4d-mobile-evidence
+          path: reports/v22-4d-mobile/*.png
+          if-no-files-found: error
+
+      - name: Upload v22.4C actual CEO Today and property comparison screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-v22-4c-mobile-evidence
+          path: reports/v22-4c-mobile/*.png
           if-no-files-found: warn

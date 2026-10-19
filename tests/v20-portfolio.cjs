@@ -10,7 +10,7 @@ function el(id){if(!elements.has(id))elements.set(id,{id,open:false,innerHTML:""
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){},activeElement:null},window:{innerWidth:390,scrollY:0,scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout(){},clearInterval(){},getComputedStyle:()=>({getPropertyValue:()=>""}),Math,Date,Set,Map,JSON,console};
 vm.createContext(sandbox);
 const boot=script.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
-const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitStaffingDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,unitApplyPreset,unitApplyDraft,unitRecordInput,unitPresetValues,unitCareerReadiness,unitDevelopSuccessor,unitDevelopTeam,managementReview,managementLead,managementWorkload,managementSetHiringPolicy,managementRequestDecision,managementSharedCandidates,managementShareStaff,managementSupportAllowed,managementHiringAvailable,managementCashReady,managementOps,ladderEvaluation,ladderNext,ladderPromote,ladderSetAuthority,ladderDay,ladderPayroll,ladderLaunchReadiness,ladderReassign,dailySalary,managementOps,managementLead,managementWorkload,managementReview,managementSetHiringPolicy,managementRequestDecision,managementSharedCandidates,managementShareStaff,managementSupportAllowed,renderLadder,renderLaunchGuide,delegateWork,assign,beginEditableInteraction,finishEditableInteraction,editableInteractionPending,renderBusinessUnits,refresh,renderBriefing,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
+const exported="fresh,load,get:()=>S,set:x=>S=x,save,createDeal,feeFor,executiveLaunch,ceoLineFinish,chooseServiceOffer,teamReportingGroups,renderStructure,renderExecutiveWeekly,executiveShow,executiveWeek,executiveProposal,executiveAutonomous,orgSubManager,orgManager,orgReports,orgSubReports,orgDirectReports,orgPersonPosition,orgChooseManager,orgChangePolicy,unitActivate,unitAppoint,unitTransfer,unitRelease,unitOfPerson,unitPayrollDay,unitGMEligible,unitStaffEligible,unitAuthorize,unitRenewAuthority,unitAutonomousDay,unitStaffingDay,unitBudgetAllowed,unitRequestDecision,unitAssignmentAllowed,unitDelegateWork,unitSetFocus,unitApplyPreset,unitApplyDraft,unitRecordInput,unitPresetValues,unitCareerReadiness,unitDevelopSuccessor,unitDevelopTeam,managementReview,managementLead,managementWorkload,managementSetHiringPolicy,managementRequestDecision,managementSharedCandidates,managementShareStaff,managementSupportAllowed,managementHiringAvailable,managementCashReady,managementOps,ladderEvaluation,ladderNext,ladderPromote,ladderSetAuthority,ladderDay,ladderPayroll,ladderLaunchReadiness,ladderReassign,dailySalary,managementOps,managementLead,managementWorkload,managementReview,managementSetHiringPolicy,managementRequestDecision,managementSharedCandidates,managementShareStaff,managementSupportAllowed,renderLadder,renderLaunchGuide,delegateWork,assign,beginEditableInteraction,finishEditableInteraction,editableInteractionPending,renderBusinessUnits,refresh,renderBriefing,ceoDecisionInventory,draftExecutiveDirection,gameAdvanceDays,createPerson,ensureRole,ensureCareer,ensureDepartment,ensurePerformance,tick";
 vm.runInContext(script.slice(0,boot)+"globalThis.G={"+exported+"};})();",sandbox,{timeout:4000});
 const G=sandbox.G;
 function test(name,run){run();console.log("PASS",name)}
@@ -79,8 +79,8 @@ test("reporting-line groups contain each colleague once and retain optional hier
  const groups=G.teamReportingGroups(),seen=groups.flatMap(x=>x.people.map(p=>p.id));
  assert.equal(seen.length,s.team.length);assert.equal(new Set(seen).size,s.team.length);
  assert.equal(groups[0].title,"CEO · direct reports");
- assert.ok(groups.some(x=>x.id==="commercial-sales"&&x.people.some(p=>p.id===worker.id)));G.renderStructure();
- assert.ok(el("people").innerHTML.includes("commercial-sales"));reconcile(s);
+ assert.ok(groups.some(x=>x.id==="report-"+manager.id&&x.people.some(p=>p.id===worker.id)),"The worker must report to the actually appointed Sales Manager");G.renderStructure();
+ assert.ok(el("people").innerHTML.includes("report-"+manager.id));reconcile(s);
 });
 test("a scheduled leadership week generates an actual read-only report",()=>{
  const s=init();s.day=7;s.exec.nextMeeting=7;
@@ -249,9 +249,9 @@ test("appointed leadership position wins over functional Team lead while career 
  assert.equal(new Set(ids).size,s.team.length);
  G.renderStructure();
  const people=el("people").innerHTML;
- assert.ok(people.includes("Commercial Director · Career: Lead"),"Director title must show on Team");
- assert.ok(people.includes("Delivery Department Manager · Career: Associate"),"Appointment must not invent promotion");
- assert.ok(people.includes("Marketing Manager · Career: Associate"));
+ assert.ok(people.includes("Commercial Director · Grade Lead"),"Director title must show on Team");
+ assert.ok(people.includes("Delivery Department Manager · Grade Associate"),"Appointment must not invent promotion");
+ assert.ok(people.includes("Marketing Manager · Grade Associate"));
  assert.equal(anna.career.rank,2);reconcile(s);
 });
 test("CEO strategy overdue status is a review prompt, not Day 561/90",()=>{
@@ -609,7 +609,8 @@ test("v21.3 unit vacancy and market opportunity surface to CEO",()=>{
  s.world.activeEvent={type:"opportunity",until:s.day+20};
  G.renderBriefing();
  assert.ok(el("attention-list").innerHTML.includes("GM capacity exception"));
- assert.ok(el("attention-list").innerHTML.includes("Optional market opportunity"));
+ assert.equal(G.ceoDecisionInventory().optional,true,"Optional offer remains available in the authoritative CEO decisions inventory");
+ assert.ok(!el("attention-list").innerHTML.includes("Optional market opportunity"),"Optional offer must not duplicate operational alerts");
  el("ea-weekly-report").open=true;G.renderExecutiveWeekly();
  assert.ok(el("ea-weekly-body").innerHTML.includes("needs a General Manager"));
  reconcile(s);

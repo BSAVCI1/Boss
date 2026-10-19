@@ -58,7 +58,7 @@ test("mature team training improves skills without creating positions, income or
  assert.equal(s.team.length,27);assert.ok(payroll>0);ledger(s);
 });
 test("financial runway and missing money block culture choices",()=>{
- const s=fresh();s.cash=30;assert.equal(G.cultureEligibility("training").ready,false);
+ const s=fresh();s.cash=30;s.bi.openingCash=30;assert.equal(G.cultureEligibility("training").ready,false);
  assert.equal(G.runPeopleCulture("training"),false);
  assert.equal(s.hr.culture.history.length,0);ledger(s); // reset synthetic cash below
 });

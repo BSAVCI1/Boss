@@ -13,9 +13,20 @@ document.addEventListener("DOMContentLoaded",async()=>{
   const nav=document.querySelector(".bottom-nav");
   result.checks.bootstrapComplete=document.documentElement.dataset.bossReady==="true";
   result.checks.navPresent=!!nav;
-   const officeGrid=document.querySelector(".ceo-office-grid");
-   const officeCards=officeGrid?[...officeGrid.children]:[];
-   result.checks.ceoHierarchyStacked=officeCards.length===2&&officeCards[1].getBoundingClientRect().top>=officeCards[0].getBoundingClientRect().bottom-1;
+  // v22.4D browser acceptance for simplified but still accessible management.
+  const strategy=byId("today-ceo-tools"),story=byId("company-story");
+  result.checks.simplifiedToday=!!strategy&&!strategy.open&&!!story&&!story.open&&byId("game-forward")?.getClientRects().length>0&&!!byId("ceo-action-center");
+  if(strategy){
+   strategy.open=true;
+   result.checks.disclosureOpens=document.querySelector("#executive-officers-panel")?.getClientRects().length>0;
+   const officeCards=[...document.querySelectorAll(".ceo-office-grid > div")];
+   const first=officeCards[0]?.getBoundingClientRect(),second=officeCards[1]?.getBoundingClientRect();
+   result.checks.ceoHierarchyStacked=officeCards.length===2&&first.height>0&&second.height>0&&second.top>=first.bottom-1;
+   strategy.open=false;
+  }
+  const customer=byId("work-customers"),rivals=byId("growth-rivals"),archive=byId("upgrade-archive");
+  result.checks.simplifiedManagement=!!customer&&!customer.open&&!!rivals&&!rivals.open&&!!archive&&!archive.open&&!!byId("ideas");
+  result.checks.noDuplicatedQuickActions=document.querySelectorAll("#game-forward,#game-primary").length===2;
   const navRect=nav?.getBoundingClientRect();
   result.checks.navInViewport=!!navRect&&navRect.top>=0&&navRect.bottom<=window.innerHeight+3;
   for(const view of ["today","team","growth","work"]){
@@ -253,7 +264,8 @@ document.addEventListener("DOMContentLoaded",async()=>{
    result.checks.executiveNoAutomaticCEOAppointment=!!byId("executive-officer-count")?.textContent?.includes("0/3 appointed");
    // v21.4c: corporate manager budget remains editable throughout a live mobile refresh.
    document.querySelector('.bottom-nav button[data-view="team"]').click();
-   const hiringField=byId("management-hire-budget"),slotsField=byId("management-hire-slots");
+   const leadershipDetails=byId("leadership-details");if(leadershipDetails)leadershipDetails.open=true;
+    const hiringField=byId("management-hire-budget"),slotsField=byId("management-hire-slots");
    if(!hiringField||!slotsField)throw Error("Manager hiring authorization fields missing");
    const hiringPanel=hiringField.closest("details.aux-details");
    if(hiringPanel)hiringPanel.open=true;
@@ -336,6 +348,10 @@ async function runBrowser(){
   assert.equal(outcome.views.length,4,"All four tabs must navigate");
   assert.equal(outcome.checks.bootstrapComplete,true,"Boss asynchronous save recovery bootstrap must complete");
   assert.equal(outcome.checks.navPresent,true);
+   assert.equal(outcome.checks.simplifiedToday,true,"CEO dashboard and simulation actions visible without opening dossiers");
+   assert.equal(outcome.checks.disclosureOpens,true,"Advanced CEO offices must expand");
+   assert.equal(outcome.checks.simplifiedManagement,true,"Customer, rival and research archive should start collapsed");
+   assert.equal(outcome.checks.noDuplicatedQuickActions,true,"Only one set of fast simulation actions");
   assert.equal(outcome.checks.navInViewport,true);
   assert.equal(outcome.checks.ceoHierarchyStacked,true,"CEO hierarchy must stack as full-width mobile rows");
   assert.equal(outcome.checks.customBudgets,true);
@@ -379,6 +395,95 @@ async function runBrowser(){
   assert.equal(layout.result.value.stacked,true,"CEO reporting cards must remain stacked at 414px");
   assert.equal(layout.result.value.overflow,false,"No horizontal overflow at 414px");
   console.log("Boss 414px mobile layout verification:",JSON.stringify(layout.result.value));
+  // v22.4B: actual Chromium pixels, not synthetic or DOM-only screenshots.
+  // Existing input, tick, reload and IndexedDB assertions above remain mandatory.
+  const evidenceDir=path.join("reports","v22-4b-mobile");
+  fs.mkdirSync(evidenceDir,{recursive:true});
+  async function capturePeople(width,height,kind){
+    await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+    // Navigation scrolls to top asynchronously. Wait before scrolling to evidence.
+    await send("Runtime.evaluate",{expression:"document.querySelector('.bottom-nav button[data-view=\"team\"]').click()",returnByValue:true});
+    await sleep(240);
+    const prep=await send("Runtime.evaluate",{expression:kind==="organization"?
+     "(()=>{const root=document.getElementById('org-explorer');return {people:document.querySelectorAll('#people details[data-employee-id]').length,tree:!!root&&root.textContent.includes('CEO'),width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6}})()":
+     "(()=>{const g=document.querySelector('#people details[data-team-group]');if(g)g.open=true;const p=g?.querySelector('details[data-employee-id]');if(p)p.open=true;const c=p?.querySelector('details[data-career-id]');if(c)c.open=true;const x=p?.querySelector('.org-career-glance');return {people:document.querySelectorAll('#people details[data-employee-id]').length,career:!!x&&x.textContent.includes('Employment grade'),width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,blockedPromotionHidden:!p?.querySelector('button[data-career=\"promote\"]')||p.querySelector('button[data-career=\"promote\"]').hidden}})()",
+      returnByValue:true});
+    const info=prep.result?.value;
+    assert.equal(info.width,width,"Wrong mobile screenshot viewport");
+    assert.equal(info.overflow,false,"People view horizontal overflow");
+    assert.ok(info.people>0,"Actual browser roster is empty");
+    assert.equal(info[kind==="organization"?"tree":"career"],true,"Actual people view missing "+kind);
+    if(kind==="career")assert.equal(info.blockedPromotionHidden,true,"Unmet promotion must be hidden");
+    await sleep(140);
+    const selector=kind==="organization"?"#org-explorer":"#people .org-career-glance";
+    const scrollExpression="(()=>{const target=document.querySelector("+JSON.stringify(selector)+");if(!target)return null;document.documentElement.style.scrollBehavior='auto';document.body.style.scrollBehavior='auto';const y=window.scrollY+target.getBoundingClientRect().top-165;window.scrollTo({top:Math.max(0,y),behavior:'instant'});const b=target.getBoundingClientRect();return{scrollY:window.scrollY,targetTop:b.top,targetBottom:b.bottom,viewport:innerHeight}})()";
+    const scroll=await send("Runtime.evaluate",{expression:scrollExpression,returnByValue:true});
+    assert.ok(scroll.result?.value,"Screenshot target not found");
+    await sleep(250);
+    const visibility=await send("Runtime.evaluate",{expression:"(()=>{const b=document.querySelector("+JSON.stringify(selector)+")?.getBoundingClientRect();return b?{top:b.top,bottom:b.bottom,scrollY:window.scrollY}:null})()",returnByValue:true});
+    const rect=visibility.result?.value;
+    assert.ok(rect&&rect.top>=0&&rect.top<height-105,"Screenshot target must actually be visible: "+JSON.stringify(rect));
+    if(kind==="career")assert.ok(rect.scrollY>400,"Career screenshot cannot be the top of Team view");
+    const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+    const filename=path.join(evidenceDir,"boss-"+kind+"-"+width+"px.png");
+    assert.ok(shot.data?.length>1500,"Empty Chromium evidence");
+    fs.writeFileSync(filename,Buffer.from(shot.data,"base64"));
+    console.log("PASS screenshot "+filename+" · "+JSON.stringify(info));
+  }
+  await capturePeople(390,844,"organization");
+  await capturePeople(390,844,"career");
+  await capturePeople(414,896,"organization");
+  await capturePeople(414,896,"career");
+  // v22.4C actual mobile screenshot proof; the browser runs the real game and original save mechanics.
+  async function captureCEO(width,height,page){
+   await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+   const init=page==="today"?
+     "(()=>{document.querySelector('.bottom-nav button[data-view=\"today\"]').click();return document.getElementById('ceo-priority-content').textContent})()":
+     "(()=>{document.querySelector('.bottom-nav button[data-view=\"growth\"]').click();document.getElementById('property-options').open=true;const b=document.querySelector('#property-purchase-options button[data-property-action=\"preview\"][data-property-key=\"office\"]');if(!b)throw Error('No property comparison action');b.click();return document.getElementById('property-decision-preview').textContent})()";
+   const initResult=await send("Runtime.evaluate",{expression:init,returnByValue:true,awaitPromise:true});
+   const content=initResult.result?.value||"";
+   assert.ok(content.includes(page==="today"?"CEO approvals pending":"CEO approval preview"),"Missing real "+page+" decision experience: "+JSON.stringify(initResult).slice(0,700));
+   if(page==="property")assert.ok(content.includes("One-time cash out")&&content.includes("Payroll + premises runway after"),"No real quote breakdown");
+   await sleep(240);
+   const selector=page==="today"?"#ceo-priority-card":"#property-decision-preview";
+   const moved=await send("Runtime.evaluate",{expression:"(()=>{const t=document.querySelector("+JSON.stringify(selector)+");if(!t||t.hidden)return null;document.documentElement.style.scrollBehavior='auto';document.body.style.scrollBehavior='auto';window.scrollTo({top:Math.max(0,window.scrollY+t.getBoundingClientRect().top-12),behavior:'instant'});return{width:innerWidth,height:innerHeight,overflow:document.documentElement.scrollWidth>innerWidth+6}})()",returnByValue:true});
+   assert.ok(moved.result?.value,"Cannot scroll to "+page);
+   assert.equal(moved.result.value.overflow,false,"CEO "+page+" horizontal overflow "+width);
+   assert.equal(moved.result.value.width,width);
+   await sleep(200);
+   const rect=await send("Runtime.evaluate",{expression:"(()=>{const t=document.querySelector("+JSON.stringify(selector)+");const b=t.getBoundingClientRect();return {top:b.top,bottom:b.bottom,scrollY:window.scrollY}})()",returnByValue:true});
+   assert.ok(rect.result?.value?.top>=0&&rect.result.value.top<height-100,"CEO "+page+" screenshot target not in viewport "+JSON.stringify(rect.result?.value));
+   const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+   assert.ok(shot.data?.length>1500,"Screenshot absent "+page);
+   const dir=path.join("reports","v22-4c-mobile");fs.mkdirSync(dir,{recursive:true});
+   const filename=path.join(dir,"boss-"+(page==="today"?"ceo-today":"office-comparison")+"-"+width+"px.png");
+   fs.writeFileSync(filename,Buffer.from(shot.data,"base64"));
+   console.log("PASS v22.4C real screenshot "+filename+" "+JSON.stringify({viewport:width,target:rect.result.value}));
+  }
+  await captureCEO(390,844,"today");
+  await captureCEO(390,844,"property");
+  await captureCEO(414,896,"today");
+  await captureCEO(414,896,"property");
+  // v22.4D real Chromium screenshots at both required mobile widths.
+  const uxDir=path.join("reports","v22-4d-mobile");fs.mkdirSync(uxDir,{recursive:true});
+  for(const [width,height] of [[390,844],[414,896]]){
+   await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+   for(const tab of ["today","growth"]){
+    const selector=tab==="today"?"#ceo-priority-card":"#ideas";
+    const navSelector='.bottom-nav button[data-view="'+tab+'"]';
+    await send("Runtime.evaluate",{expression:"document.querySelector("+JSON.stringify(navSelector)+").click()",returnByValue:true});
+    await sleep(240);
+    const expression="(()=>{const t=document.querySelector("+JSON.stringify(selector)+");if(!t)return null;document.documentElement.style.scrollBehavior='auto';window.scrollTo({top:Math.max(0,window.scrollY+t.getBoundingClientRect().top-12),behavior:'instant'});return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,top:t.getBoundingClientRect().top,archiveOpen:document.getElementById('upgrade-archive').open,active:!!document.getElementById('ideas').textContent}})()";
+    const state=await send("Runtime.evaluate",{expression,returnByValue:true}),check=state.result?.value;
+    assert.ok(check&&check.width===width&&!check.overflow&&check.active,"v22.4D mobile target invalid "+JSON.stringify(check));
+    await sleep(210);
+    const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+    assert.ok(shot.data?.length>1500,"Missing v22.4D screenshot");
+    const filename=path.join(uxDir,"boss-simplified-"+tab+"-"+width+"px.png");
+    fs.writeFileSync(filename,Buffer.from(shot.data,"base64"));
+    console.log("PASS v22.4D real screenshot "+filename+" "+JSON.stringify(check));
+   }
+  }
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }

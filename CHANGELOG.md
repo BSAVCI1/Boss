@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — v22.3 Economic Balancing
+
+- **Prospective contracts:** a continuous, logarithmically tapering reputation fee factor applies only to new v22.3 quotes above 600 reputation; every existing deal is grandfathered and keeps its agreed fee and legacy repricing behavior.
+- **Clarity:** operating-unit results explicitly show contribution before corporate overhead, not group net profit.
+- **Controls:** isolated migration, quote-policy, 30/180/730-day economics and mandatory existing CI/mobile/ledger tests. No salary, property or historic finance repricing; production release requires validation. [Economics rationale](docs/V22_3_ECONOMIC_BALANCING.md).
+
+
 - 2026-10-18 — **Boss v22.2 (released, PR #38):** Earned appointment and 90-day scoped authority for existing HR, CFO and COO employees; executive payroll recurring from approved appointment, no retroactive charges. HR automates preauthorized recruiting/idle recovery; CFO protects delegated cash runway; COO coordinates GM capacity across units; CEO Today and EA show evidence-backed reviews. Includes full strict tests and safe-save migration. [Production regression](https://github.com/BSAVCI1/Boss/actions/runs/39113283639) and [Pages](https://github.com/BSAVCI1/Boss/actions/runs/39113283272) passed on merge commit `f189a529b39dc4d78a70394d00b58e92f0078cbf`. Actual private iPhone Safari save not inspected. [Architecture](docs/V22_2_EXECUTIVES.md).
 
 - 2026-10-18 — **Boss v22.1 (released):** Repaired live GM authority/scorecard nested disclosure restoration during mobile game ticks, and expanded regression for persisted-but-not-authorized leadership/GM budget drafts plus GM–department shared staffing negotiations and CEO escalation. No migration reset, extra payroll or new property charges. Production commit [`4171525`](https://github.com/BSAVCI1/Boss/commit/4171525120931c641b6bc5a1cceb3cbe94d5f029); [regression](https://github.com/BSAVCI1/Boss/actions/runs/39111432274) and [Pages](https://github.com/BSAVCI1/Boss/actions/runs/39111432172) both passed. The user's personal iPhone Safari save is not independently accessible.

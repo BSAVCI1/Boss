@@ -49,7 +49,7 @@ test("mature synthetic day 4900 preserves IDs, payroll and cash with zero-slot b
  assert.equal(s.org.progression.authorityDaily,0);assert.equal(s.org.progression.operations.hireBudget,100);
  assert.equal(s.org.progression.operations.hireSlots,0);
  assert.equal(G.managementHiringAvailable({cost:20}),false);
- assert.deepEqual(s.team.map(x=>x.id),ids);assert.equal(s.cash,cash);
+ assert.equal(s.team.map(x=>x.id).join(","),ids.join(","));assert.equal(s.cash,cash);
  assert.equal(s.org.departments.commercial.plan.limits.coaching,37);
  s.day=4991;assert.equal(G.managementHiringAvailable({cost:20}),false);ledger(s);
 });

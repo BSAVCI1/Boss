@@ -4185,7 +4185,7 @@ $("ceo-set-direction").disabled=!!S.ev;
 const inbox=S.exec.proposals,ev=S.world.activeEvent;
 $("exec-count").textContent=inbox.length+" manager requests"+(ev?" · 1 market brief":"");
 $("executive-meeting-summary").textContent="Weekly manager proposals, monthly performance reviews, and CEO approvals. Routine work stays delegated.";
-const brief=ev?'<div class="exec-proposal exec-opportunity"><b>Market opportunity · optional · '+esc(ev.type)+'</b><p>'+esc(worldOfferTerms(ev).description)+' · Decide only in the CEO decision center above.</p></div>':"";
+const brief=ev?'<div class="exec-proposal exec-opportunity"><b>Market opportunity · optional · '+esc(ev.type)+'</b><p>'+esc(worldOfferTerms(ev).description)+' · Decide only in the CEO decision center above.</p>'+(worldOfferEligibility(ev).allowed?'':'<p class="risk-watch">Unavailable: '+esc(worldOfferEligibility(ev).reason)+'</p>')+'</div>':"";
 $("exec-inbox").innerHTML=brief+(inbox.map(p=>{
 const chief=person(p.managerId),cost=biCurrency(p.cost),affordable=S.cash>=p.cost;
 return '<div class="exec-proposal"><b>'+esc(chief?.n||"Director")+' · '+esc(DEPARTMENTS[p.dept].name)+'</b><p>'+esc(p.benefit)+' · '+cost+' one-time'+(p.type==="hire"?" + salary $1.50/day":p.type==="raise"?" · salary +$0.25/day":p.type==="line"?" · new service-line investment":"")+'</p><p><b>Risk:</b> '+esc(p.risk)+'</p><div class="buttons"><button data-exec-action="approve" data-exec-id="'+p.id+'" '+(affordable?"":"disabled")+' type="button">Approve</button><button data-exec-action="decline" data-exec-id="'+p.id+'" type="button">Decline</button></div></div>';}).join("")||(!ev?'<p class="small">No CEO approvals needed. Your managers continue running their departments.</p>':""));

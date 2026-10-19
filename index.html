@@ -3361,6 +3361,7 @@ function executiveManagementDigest(){
  }
  const m=managementOps().history.filter(x=>x.day>=S.day-30&&["hire","unit-hire"].includes(x.kind)&&x.approval==="delegated");
  if(m.length)out.push("Managers/GM · "+m.length+" valid delegated recruits in 30 days; each charged to the existing recruiting ledger.");
+ if(!out.length)for(const dept of DEPT_KEYS){const manager=orgManager(dept);if(manager)out.push(manager.n+" · "+DEPARTMENTS[dept].name+" · "+(S.org.departments[dept]?.reviews?.at(-1)?.result||"no measured review yet")+"; no C-suite mandate implied.");}
  if(!out.length)out.push("Founder-led operations. No current executive mandate; existing authorized managers and assistant may continue their separate routine responsibilities.");
  return out;
 }

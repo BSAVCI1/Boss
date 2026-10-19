@@ -11,7 +11,7 @@ const el=id=>{if(!elements.has(id))elements.set(id,{id,innerHTML:"",textContent:
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){}},window:{scrollY:0,innerWidth:390,addEventListener(){},scrollTo(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout:()=>{},getComputedStyle:()=>({getPropertyValue:()=>""}),clearInterval:()=>{},Math,Date,Map,Set,JSON,console};
 vm.createContext(sandbox);
 const boot=javascript.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0,"Missing boot");
-vm.runInContext(javascript.slice(0,boot)+"globalThis.G={fresh,load,get:()=>S,set:x=>S=x,save,tick,gameChapter,gamePlan,gameRender,gameAdvanceDays,renderStructure,renderBriefing,refresh,navigate,ensureExecutive,executiveWeek,executiveProposal,executiveDecision,ceoDirection,draftExecutiveDirection,executiveShow,executiveLaunch,ceoLineFinish,createDeal,worldNewEvent,worldDay,worldEventChoice,renderIdeas,ideaProgressDay,delegateWork,orgChooseManager,feeFor,careerRoleSkill,orgChooseSubManager,orgSubManager,orgSubReports,orgDirectReports,orgChangePolicy,orgPlan,orgFunds,orgBudgetPeriod,orgRenewPlan,orgManagerDay,executiveAutonomous,assistantDecision,renderAssistantPolicy,choose,orgLeaderTitle,worldOfferTerms,worldOfferEligibility,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,renderOrganization};})();",sandbox,{timeout:3000});
+vm.runInContext(javascript.slice(0,boot)+"globalThis.G={fresh,load,get:()=>S,set:x=>S=x,save,tick,gameChapter,gamePlan,gameRender,gameAdvanceDays,renderStructure,renderBriefing,refresh,navigate,ensureExecutive,executiveWeek,executiveProposal,executiveDecision,ceoDirection,draftExecutiveDirection,executiveShow,renderCEODecisions,executiveLaunch,ceoLineFinish,createDeal,worldNewEvent,worldDay,worldEventChoice,renderIdeas,ideaProgressDay,delegateWork,orgChooseManager,feeFor,careerRoleSkill,orgChooseSubManager,orgSubManager,orgSubReports,orgDirectReports,orgChangePolicy,orgPlan,orgFunds,orgBudgetPeriod,orgRenewPlan,orgManagerDay,executiveAutonomous,assistantDecision,renderAssistantPolicy,choose,orgLeaderTitle,worldOfferTerms,worldOfferEligibility,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,dailySalary,renderOrganization};})();",sandbox,{timeout:3000});
 const G=sandbox.G;
 function fresh(){store.clear();G.fresh();el("lab-topic").value="learning";el("lab-duration").value="15";el("lab-forecast").value="25";el("lab-sector").value="hospitality";}
 
@@ -83,8 +83,13 @@ accounting(s);
 });
 test("market opportunity acts on Today, full pipeline disables only lead-producing decisions",()=>{
 fresh();const s=G.get();s.day=45;G.worldNewEvent();const ev=s.world.activeEvent;
-G.executiveShow();assert.ok(el("exec-inbox").innerHTML.includes('data-world-event="act"'));
-assert.ok(el("exec-inbox").innerHTML.includes('data-world-event="pass"'));
+G.executiveShow();G.renderCEODecisions();
+const actions=el("ceo-action-center").innerHTML,secondary=el("exec-inbox").innerHTML;
+assert.equal((actions.match(/data-ceo-action="opportunity"/g)||[]).length,2,"One Take/Pass pair in the CEO decision center");
+assert.ok(actions.includes('data-result="act"')&&actions.includes('data-result="pass"'));
+assert.ok(actions.includes("through Day")&&secondary.includes("Market opportunity"),"Keep deadline and read-only briefing");
+assert.ok(!secondary.includes('data-world-event="act"')&&!secondary.includes('data-world-event="pass"'),
+ "Executive inbox must never duplicate an actionable opportunity");
 s.pipeline.leads=Array.from({length:12},(_,i)=>({id:100+i,client:"Lead "+i,sector:"retail",stage:"prospect",created:s.day,age:1}));
 assert.equal(G.worldOfferEligibility(ev).allowed,false);assert.ok(G.worldOfferEligibility(ev).reason.includes("pipeline"));
 s.world.activeEvent={...ev,type:"referrals"};assert.equal(G.worldOfferEligibility(s.world.activeEvent).allowed,true);

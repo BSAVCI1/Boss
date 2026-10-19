@@ -173,7 +173,7 @@ test("v22.4B career prerequisites and blocked promotion are truthful and non-spe
  assert.ok(brief.includes("Employment grade:")&&brief.includes("Next legitimate action"));
  assert.ok(brief.includes("Time in current grade")||brief.includes("time in grade"));
  assert.ok(brief.includes("No leadership appointment"));
- assert.ok(brief.includes("unmerged v22.3 PR #39"));
+ assert.ok(brief.includes("CEO-approved $12 leadership courses"));assert.ok(!brief.includes("unmerged v22.3"));
  assert.equal(JSON.stringify(s),before);
  G.careerAction(p.id,"promote");
  assert.equal(p.career.rank,0);assert.equal(s.cash,90);money(s);

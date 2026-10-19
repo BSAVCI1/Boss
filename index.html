@@ -4595,7 +4595,7 @@ function managementPolicyCustomForm(p){
 }
 function renderManagementPolicies(force=false){
  const root=$("management-policy-center");if(!root||!S||(!force&&editableInteractionPending()))return;
- if(!force&&root.contains(document.activeElement)&&document.activeElement?.matches?.("input,select,textarea"))return;
+ if(!force&&root.contains?.(document.activeElement)&&document.activeElement?.matches?.("input,select,textarea"))return;
  const prior=root.querySelector("details[data-management-review]"),expanded=managementPolicyOpen||!!prior?.open;
  const now=managementPolicyCurrent(),expired=now.expires<=S.day,staff=S.team.length;
  const activeDepts=Object.entries(now.departments).filter(([,d])=>d.hasManager&&d.expires>S.day).length;

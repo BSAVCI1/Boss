@@ -544,6 +544,37 @@ async function runBrowser(){
     console.log("PASS v22.4.1 screenshot "+filename);
    }
   }
+  // v22.5A1 — real owner-sized Chromium selection, comparison and confirmed approval.
+  const policyDir=path.join("reports","v22-5a1-mobile");fs.mkdirSync(policyDir,{recursive:true});
+  for(const [width,height] of [[390,844],[414,896]]){
+   await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+   for(const stage of ["selection","comparison","approval"]){
+    const expression="(()=>{"+
+     "document.querySelector('.bottom-nav button[data-view=\\\"today\\\"]').click();"+
+     "window.__bossQA.pause();window.__bossQA.resetEditShield();"+
+     "const s=window.__bossQA.state(),cash=s.cash,team=s.team.length;"+
+     (stage==="comparison"?"managementPolicyPropose('balanced');":
+       stage==="approval"?"window.__policyApproved=managementPolicyApprove();":"managementPolicyCancel();")+
+     "renderManagementPolicies(true);"+
+     "const e=document.getElementById('management-policy-center');"+
+     "if(!e)throw Error('Missing management policy');"+
+     "const d=e.querySelector('details[data-management-review]');if(d)d.open=true;"+
+     "window.scrollTo({top:Math.max(0,window.scrollY+e.getBoundingClientRect().top-10)});"+
+     "return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,exists:!!e,stage:"+JSON.stringify(stage)+",approved:window.__policyApproved,team:s.team.length,cash:s.cash,hasPreview:!!e.querySelector('button[data-management-action=\\\"approve\\\"]'),hasCurrent:e.textContent.includes('Current:')};})()";
+    const state=await send("Runtime.evaluate",{expression,returnByValue:true});
+    if(state.exceptionDetails)throw Error("v22.5A1 browser: "+JSON.stringify(state.exceptionDetails));
+    const check=state.result?.value;
+    assert.ok(check?.exists&&!check.overflow&&check.hasCurrent&&check.width===width,"Policy viewport failed "+JSON.stringify(check));
+    if(stage==="comparison")assert.ok(check.hasPreview,"CEO did not receive a preview");
+    if(stage==="approval")assert.equal(check.approved,true,"Policy approval was not durable");
+    await sleep(180);
+    const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+    assert.ok(shot.data?.length>1500,"Policy screenshot missing");
+    const filename=path.join(policyDir,"boss-policy-"+stage+"-"+width+"px.png");
+    fs.writeFileSync(filename,Buffer.from(shot.data,"base64"));
+    console.log("PASS v22.5A1 real screenshot "+filename);
+   }
+  }
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }

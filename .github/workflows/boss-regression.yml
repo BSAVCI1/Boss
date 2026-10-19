@@ -17,6 +17,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Prepare main-branch before screenshots (not production changes)
+        run: |
+          mkdir -p reports
+          git fetch --depth=1 origin main
+          git show FETCH_HEAD:index.html > reports/v22-5a2-before.html
       - name: Real Chromium 390px and 414px CEO acceptance
         run: node --experimental-websocket tests/v19-mobile-browser.cjs
       - name: Preserve actual 390px and 414px CEO screenshots
@@ -33,6 +38,13 @@ jobs:
           name: boss-v22-5a1-policy-mobile-proof
           path: reports/v22-5a1-mobile/*.png
           if-no-files-found: error
+      - name: Preserve v22.5A2 390px / 414px Work Team Growth before-and-after screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-v22-5a2-before-after
+          path: reports/v22-5a2-mobile/*.png
+          if-no-files-found: error
   ceo_clarity_fast:
     runs-on: ubuntu-latest
     steps:
@@ -41,7 +53,7 @@ jobs:
         with:
           node-version: '20'
       - name: Validate CEO decision clarity before long economic replays
-        run: node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-5a1-management-policy.cjs
+        run: node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-5a1-management-policy.cjs && node tests/v22-5a2-simplification.cjs
   game:
     runs-on: ubuntu-latest
     steps:

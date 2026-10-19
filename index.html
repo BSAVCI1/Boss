@@ -3334,19 +3334,30 @@ function executiveManagementDigest(){
  const hr=executiveOfficer("hr","people"),cfo=executiveOfficer("cfo","protect"),coo=executiveOfficer("coo","coordinate");
  if(hr){
   const actions=S.exec.officers.hr.history.filter(x=>x.action==="people"&&x.day>=S.day-30);
+  const successor=ladderNext(),gaps=DEPT_KEYS.filter(key=>managementWorkload(key).overloaded).length;
   out.push("HR "+hr.n+" · active mandate: "+actions.reduce((v,x)=>v+(x.hired||0),0)+" delegated hires and "+
-   actions.reduce((v,x)=>v+(x.recovery||0),0)+" idle recovery assignments in 30 days; "+risks+" wellbeing risks remain.");
+   actions.reduce((v,x)=>v+(x.recovery||0),0)+" idle recovery assignments in 30 days; "+risks+
+   " wellbeing risks, "+gaps+" departments with measured capacity strain. "+
+   (successor?.ready?"Qualified leadership candidate "+successor.candidateName+"; promotion follows existing payroll/CEO authority.":"Succession remains subject to current career requirements."));
  }
  if(cfo){
-  const ar=economyOutstanding(),late=economyReceivables().filter(i=>S.day>i.due).length;
+  const ar=economyOutstanding(),late=economyReceivables().filter(i=>S.day>i.due).length,
+   profit=(S.bi.totals.revenue||0)-(S.bi.totals.costs||0),
+   reserve=dayCost*30;
   out.push("CFO "+cfo.n+" · reserve veto active: "+biCurrency(S.cash)+" cash, "+runway+
-   " days payroll/premises runway, "+biCurrency(ar)+" receivables ("+late+" overdue), "+
-   biCurrency(S.economy.loan+S.economy.interestDue)+" debt, "+biCurrency(S.bi.unpaidPayroll)+" unpaid wages. No automatic borrowing.");
+   " days payroll/premises runway, tracked operating "+(profit>=0?"profit ":"loss ")+biCurrency(Math.abs(profit))+
+   "; "+biCurrency(ar)+" receivables ("+late+" overdue), "+
+   biCurrency(S.economy.loan+S.economy.interestDue)+" debt, "+biCurrency(S.bi.unpaidPayroll)+
+   " unpaid wages. "+(S.cash<reserve?"Protect the 30-day reserve; block unsafe delegated expenses.":"Preserve 30-day reserve; no borrowing indicated by runway alone."));
  }
  if(coo){
-  const shares=managementOps().shared.filter(x=>x.approvedBy===coo.id&&x.since>=S.day-30).length;
+  const shares=managementOps().shared.filter(x=>x.approvedBy===coo.id&&x.since>=S.day-30).length,
+   pending=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"),
+   free=S.team.filter(p=>p.t==="idle"&&p.role.auto&&!p.career.autoRest&&p.career.recoveryDays===0).length;
   out.push("COO "+coo.n+" · active coordination: "+shares+" approved temporary specialist shares in 30 days; "+
-   S.deals.filter(d=>!d.w).length+" unassigned projects remain. GM staffing authority and real capacity still govern dispatch.");
+   pending.length+" critical/unowned delivery cases, "+free+" eligible idle colleagues. "+
+   (pending[0]?"Priority "+pending[0].d.cl+" ("+pending[0].d.dl+" days remaining). ":"")+
+   "GM staffing and actual capacity still govern dispatch.");
  }
  const m=managementOps().history.filter(x=>x.day>=S.day-30&&["hire","unit-hire"].includes(x.kind)&&x.approval==="delegated");
  if(m.length)out.push("Managers/GM · "+m.length+" valid delegated recruits in 30 days; each charged to the existing recruiting ledger.");

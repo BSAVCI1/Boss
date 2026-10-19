@@ -550,13 +550,29 @@ async function runBrowser(){
   for(const [width,height] of [[390,844],[414,896]]){
    await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
    for(const stage of ["selection","comparison","approval"]){
-    const expression=String.raw`(()=>{
+    const expression=String.raw`(async()=>{
      const stage=__BOSS_STAGE__,preset=innerWidth===390?"balanced":"aggressive";
      document.querySelector('.bottom-nav button[data-view="today"]').click();
      const qa=window.__bossQA;qa.pause();qa.resetEditShield();
      const s=qa.state(),root=document.getElementById("management-policy-center");
      if(!root)throw Error("Missing CEO Today management policy center");
-     const saved=()=>JSON.parse(localStorage.getItem("boss20"));
+     const saved=async()=>{
+       const local=JSON.parse(localStorage.getItem("boss20")||"null");
+       // Boss may have switched to its verified IndexedDB fallback earlier
+       // in this same real Chromium regression; localStorage is then stale.
+       const indexed=await new Promise(resolve=>{
+         const open=indexedDB.open("BossSafeProgress",1);
+         open.onerror=()=>resolve(null);
+         open.onsuccess=()=>{
+           const db=open.result;
+           if(!db.objectStoreNames.contains("game")){db.close();resolve(null);return;}
+           const req=db.transaction("game","readonly").objectStore("game").get("boss20");
+           req.onsuccess=()=>{let v=null;try{v=JSON.parse(req.result?.payload||"null")}catch{}db.close();resolve(v)};
+           req.onerror=()=>{db.close();resolve(null)};
+         };
+       });
+       return indexed&&Number(indexed._saveRevision)>Number(local?._saveRevision||0)?indexed:local;
+     };
      const scopes=x=>JSON.stringify({
        hiring:x.org.progression.operations.hireBudget,
        slots:x.org.progression.operations.hireSlots,
@@ -580,8 +596,10 @@ async function runBrowser(){
      // The only direct QA reads are state snapshots; every policy operation
      // must use real user-visible controls.
      if(stage==="selection"){
+       const priorSave=await saved();
+       if(!priorSave)throw Error("No durable company available before policy selection");
        window.__policyUiProof={
-         savedScopes:scopes(saved()),savedHistory:history(saved()),
+         savedScopes:scopes(priorSave),savedHistory:history(priorSave),
          liveScopes:scopes(s),liveHistory:history(s),saveRevision:s._saveRevision
        };
        const disclosure=review();
@@ -600,13 +618,15 @@ async function runBrowser(){
        if(!root.textContent.includes("Proposed limits")||
           !root.textContent.includes("Maximum possible new commitments"))
           throw Error("CEO financial comparison not shown");
+       const afterSelection=await saved();
        if(scopes(s)!==prior.liveScopes||history(s)!==prior.liveHistory||
-          scopes(saved())!==prior.savedScopes||history(saved())!==prior.savedHistory)
+          scopes(afterSelection)!==prior.savedScopes||history(afterSelection)!==prior.savedHistory)
           throw Error("Selecting a management preset changed active authorities or history");
        // Verify that the actual Cancel button leaves both saved and active
        // limits untouched. Re-select for the approval screenshot.
        button('button[data-management-action="cancel"]');
-       if(scopes(s)!==prior.liveScopes||scopes(saved())!==prior.savedScopes)
+       const afterCancel=await saved();
+       if(scopes(s)!==prior.liveScopes||scopes(afterCancel)!==prior.savedScopes)
           throw Error("Cancel changed saved or in-memory management permissions");
        button('button[data-management-preset="'+preset+'"]');
        if(!root.querySelector('button[data-management-action="approve"]'))
@@ -615,7 +635,10 @@ async function runBrowser(){
        const prior=window.__policyUiProof;
        if(!prior)throw Error("Comparison baseline missing");
        button('button[data-management-action="approve"]');
-       const savedNow=saved();
+       // Atomic approval can complete asynchronously after IndexedDB commits.
+       for(let n=0;n<40&&!root.textContent.includes("CEO policy saved");n++)
+         await new Promise(resolve=>setTimeout(resolve,100));
+       const savedNow=await saved();
        if(s.org.managementPolicy?.preset!==preset||
           savedNow.org.managementPolicy?.preset!==preset)
           throw Error("CEO confirmation did not durably authorize Balanced policy");
@@ -640,7 +663,7 @@ async function runBrowser(){
        current:root.textContent.includes("Current:"),
        preview:!!root.querySelector('button[data-management-action="approve"]'),
        approved:s.org.managementPolicy?.preset==="balanced",
-       policySaved:!!saved().org.managementPolicy,
+       policySaved:!!(await saved())?.org?.managementPolicy,
        errors:window.__mobileErrors||[]
      };
     })()`.replace("__BOSS_STAGE__",JSON.stringify(stage));

@@ -17,6 +17,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Prepare immutable v22.5A1 mobile screenshot baseline
+        run: |
+          set -euo pipefail
+          BASELINE=c7ea477261bf76cd5b700e2878d7dfed949ad4b2
+          mkdir -p reports
+          git fetch --no-tags --depth=1 origin "$BASELINE"
+          test "$(git rev-parse FETCH_HEAD)" = "$BASELINE"
+          git show "$BASELINE:index.html" > reports/v22-5a2-before.html
+          test -s reports/v22-5a2-before.html
+          test "$(git hash-object reports/v22-5a2-before.html)" = "1b5718949207cf5927dad14d754cdf764b54a7e9"
+          grep -q 'id="view-work"' reports/v22-5a2-before.html
+          grep -q 'id="view-team"' reports/v22-5a2-before.html
+          grep -q 'id="view-growth"' reports/v22-5a2-before.html
+          echo "Immutable v22.5A1 screenshot baseline verified: $BASELINE / 1b5718949207cf5927dad14d754cdf764b54a7e9"
       - name: Real Chromium 390px and 414px CEO acceptance
         run: node --experimental-websocket tests/v19-mobile-browser.cjs
       - name: Preserve actual 390px and 414px CEO screenshots
@@ -33,6 +47,13 @@ jobs:
           name: boss-v22-5a1-policy-mobile-proof
           path: reports/v22-5a1-mobile/*.png
           if-no-files-found: error
+      - name: Preserve v22.5A2 390px / 414px Work Team Growth before-and-after screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-v22-5a2-before-after
+          path: reports/v22-5a2-mobile/*.png
+          if-no-files-found: error
   ceo_clarity_fast:
     runs-on: ubuntu-latest
     steps:
@@ -41,7 +62,7 @@ jobs:
         with:
           node-version: '20'
       - name: Validate CEO decision clarity before long economic replays
-        run: node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-5a1-management-policy.cjs
+        run: node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-5a1-management-policy.cjs && node tests/v22-5a2-simplification.cjs
   game:
     runs-on: ubuntu-latest
     steps:
@@ -49,6 +70,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Prepare immutable v22.5A1 mobile screenshot baseline
+        run: |
+          set -euo pipefail
+          BASELINE=c7ea477261bf76cd5b700e2878d7dfed949ad4b2
+          mkdir -p reports
+          git fetch --no-tags --depth=1 origin "$BASELINE"
+          test "$(git rev-parse FETCH_HEAD)" = "$BASELINE"
+          git show "$BASELINE:index.html" > reports/v22-5a2-before.html
+          test -s reports/v22-5a2-before.html
+          test "$(git hash-object reports/v22-5a2-before.html)" = "1b5718949207cf5927dad14d754cdf764b54a7e9"
+          grep -q 'id="view-work"' reports/v22-5a2-before.html
+          grep -q 'id="view-team"' reports/v22-5a2-before.html
+          grep -q 'id="view-growth"' reports/v22-5a2-before.html
+          echo "Immutable v22.5A1 screenshot baseline verified: $BASELINE / 1b5718949207cf5927dad14d754cdf764b54a7e9"
       - name: Run standalone game regression checks
         run: node tests/v22-3c4-integrated-growth.cjs && node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs && node tests/v17-game.cjs && node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v20-portfolio.cjs && node tests/v21-5-growth.cjs && node tests/v22-property-pace.cjs && node tests/v22-2-executive-leadership.cjs && node tests/v22-3-economic-balancing.cjs && node tests/v22-3a-economic-proof.cjs && node tests/v22-3b-economic-calibration.cjs && node tests/v22-3b-integrity.cjs && node tests/v22-5a1-management-policy.cjs && node tests/v22-3c1-organic-hq.cjs && node tests/v22-3c3-organic-leadership.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-3-v22-4-integration.cjs && node --experimental-websocket tests/v19-mobile-browser.cjs
 

@@ -3367,7 +3367,7 @@ function executiveManagementDigest(){
 }
 function cultureRecommendationCard(){
  const need=peopleCultureNeed();if(!need||S.day-S.hr.culture.lastAny<20||S.day-S.hr.lastTeamDay<12)return"";
- const hr=executiveOfficer("hr","people"),lead=hr?"HR "+hr.n:"Executive Assistant · company wellbeing data";
+ const hr=executiveOfficer("hr","people"),ea=person(S.ops.assistantId),lead=hr?"HR "+hr.n:ea&&ea.t==="assist"?"Executive Assistant "+ea.n:"Founder briefing · people metrics";
  const first=cultureEligibility(need.kind);
  let html='<div class="exec-proposal" data-people-culture><b>People & culture · optional CEO decision</b>'+
   '<p class="small">'+esc(lead)+" recommends "+esc(PEOPLE_ACTIVITIES[need.kind].name)+

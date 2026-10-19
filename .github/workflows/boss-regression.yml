@@ -66,7 +66,7 @@ jobs:
         with:
           name: v22-3b-economic-calibration
           path: reports/v22-3b-economic-calibration.json
-          if-no-files-found: warn
+          if-no-files-found: error
 
       - name: Upload v22.3C1 actual-engine earned-only HQ progression proof
         if: always()
@@ -151,7 +151,7 @@ jobs:
           if-no-files-found: error
 
   economic_compare:
-    needs: [economic_sensitivity]
+    needs: [game, economic_sensitivity]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -166,10 +166,16 @@ jobs:
           pattern: v22-3b-model-*
           path: reports
           merge-multiple: true
-      - name: Require four models and reconcile economics
+      - name: Download canonical calibration evidence from full game job
+        uses: actions/download-artifact@v4
+        with:
+          name: v22-3b-economic-calibration
+          path: reports
+      - name: Require five source artifacts and reconcile 288 checkpoints
         run: |
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
           for model in baseline minimal balanced pressure; do test -s "reports/v22-3b-$model.json"; done
+          test -s "reports/v22-3b-economic-calibration.json"
           node tests/v22-3b-compare.cjs
       - name: Retain reconciled sensitivity results
         if: always()

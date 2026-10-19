@@ -5,6 +5,15 @@ on:
   pull_request:
     branches: [main]
 jobs:
+  ceo_clarity_fast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate CEO decision clarity before long economic replays
+        run: node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs
   game:
     runs-on: ubuntu-latest
     steps:

@@ -683,6 +683,45 @@ async function runBrowser(){
     console.log("PASS v22.5A1 owner-size browser "+filename+" "+JSON.stringify(check));
    }
   }
+
+  // v22.5A2: genuine Chromium before/after at both supported iPhone widths.
+  // Baseline comes from the exact main source fetched by CI; no fabricated mock.
+  const baselineFile=path.resolve("reports/v22-5a2-before.html");
+  assert.ok(fs.existsSync(baselineFile),"CI must preserve main-branch baseline HTML");
+  const simpleDir=path.resolve("reports/v22-5a2-mobile");
+  fs.mkdirSync(simpleDir,{recursive:true});
+  for(const [width,height] of [[390,844],[414,896]]){
+   await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+   for(const stage of ["before","after"]){
+    await send("Page.navigate",{url:"file://"+(stage==="before"?baselineFile:file)});
+    for(let i=0;i<100;i++){
+     const r=await send("Runtime.evaluate",{expression:"document.querySelector('.bottom-nav button[data-view=work]')!==null&&document.getElementById('cash')?.textContent!==null",returnByValue:true});
+     if(r.result?.value)break;
+     await sleep(100);
+    }
+    for(const [tab,selector] of [
+     ["work",stage==="before"?"#view-work section[aria-labelledby=deals-title]":"#work-finance-snapshot"],
+     ["team","#org-explorer"],
+     ["growth",stage==="before"?"#view-growth section[aria-labelledby=market-title]":"#growth-expand-businesses"]
+    ]){
+     const result=await send("Runtime.evaluate",{expression:"(()=>{const nav=document.querySelector('.bottom-nav button[data-view="+tab+"]');if(!nav)throw Error('Missing tab');nav.click();return true})()",returnByValue:true});
+     if(result.exceptionDetails)throw Error("Missing actual navigation "+tab);
+     await sleep(250);
+     const probe=await send("Runtime.evaluate",{expression:"(()=>{const el=document.querySelector("+JSON.stringify(selector)+");if(!el)return null;document.documentElement.style.scrollBehavior='auto';window.scrollTo({top:Math.max(0,window.scrollY+el.getBoundingClientRect().top-12),behavior:'instant'});const b=el.getBoundingClientRect();return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,visible:!!el.getClientRects().length,top:b.top,text:el.innerText.slice(0,180),uniqueIds:document.querySelectorAll('[id]').length===new Set([...document.querySelectorAll('[id]')].map(x=>x.id)).size,headings:[...document.querySelectorAll('#view-growth .boss-primary-section>h2')].map(x=>x.textContent),hierarchy:document.getElementById('org-explorer')?.innerText||''}})()",returnByValue:true});
+     const info=probe.result?.value;
+     assert.ok(info&&info.visible&&info.width===width&&!info.overflow&&info.uniqueIds,"v22.5A2 mobile layout: "+JSON.stringify(info));
+     if(stage==="after"&&tab==="work")assert.ok(info.text.includes("Cash")&&info.text.includes("Receivables"),"Work financial summary missing");
+     if(stage==="after"&&tab==="team")assert.ok(!info.hierarchy.includes(" #"),"Primary organization still exposes employee numbers");
+     if(stage==="after"&&tab==="growth")assert.deepEqual(info.headings,["1. Expand businesses","2. Markets and customers","3. Investments and property"]);
+     await sleep(170);
+     const screenshot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+     assert.ok(screenshot.data?.length>1500,"Empty v22.5A2 screenshot");
+     const name=path.join(simpleDir,"boss-"+stage+"-"+tab+"-"+width+"px.png");
+     fs.writeFileSync(name,Buffer.from(screenshot.data,"base64"));
+     console.log("PASS v22.5A2 actual "+name+" "+JSON.stringify({width,overflow:info.overflow,headings:info.headings}));
+    }
+   }
+  }
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }

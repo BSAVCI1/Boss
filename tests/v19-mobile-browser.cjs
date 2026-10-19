@@ -695,7 +695,7 @@ async function runBrowser(){
    for(const stage of ["before","after"]){
     await send("Page.navigate",{url:"file://"+(stage==="before"?baselineFile:file)});
     for(let i=0;i<100;i++){
-     const r=await send("Runtime.evaluate",{expression:"document.querySelector('.bottom-nav button[data-view=work]')!==null&&document.getElementById('cash')?.textContent!==null",returnByValue:true});
+     const r=await send("Runtime.evaluate",{expression:"document.documentElement.dataset.bossReady==='true'&&document.querySelector('.bottom-nav button[data-view=work]')!==null",returnByValue:true});
      if(r.result?.value)break;
      await sleep(100);
     }
@@ -707,6 +707,14 @@ async function runBrowser(){
      const result=await send("Runtime.evaluate",{expression:"(()=>{const nav=document.querySelector('.bottom-nav button[data-view="+tab+"]');if(!nav)throw Error('Missing tab');nav.click();return true})()",returnByValue:true});
      if(result.exceptionDetails)throw Error("Missing actual navigation "+tab);
      await sleep(250);
+     // The newly navigated file can exist in the DOM before its game handler
+     // is attached. Require actual active tab after a genuine nav click.
+     for(let attempt=0;attempt<12;attempt++){
+      const visibleView=await send("Runtime.evaluate",{expression:"document.getElementById('view-"+tab+"')?.hidden===false",returnByValue:true});
+      if(visibleView.result?.value)break;
+      await sleep(150);
+      await send("Runtime.evaluate",{expression:"document.querySelector('.bottom-nav button[data-view="+tab+"]').click()",returnByValue:true});
+     }
      const probe=await send("Runtime.evaluate",{expression:"(()=>{const el=document.querySelector("+JSON.stringify(selector)+");if(!el)return null;document.documentElement.style.scrollBehavior='auto';window.scrollTo({top:Math.max(0,window.scrollY+el.getBoundingClientRect().top-12),behavior:'instant'});const b=el.getBoundingClientRect();return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,visible:!!el.getClientRects().length,top:b.top,text:el.innerText.slice(0,180),uniqueIds:document.querySelectorAll('[id]').length===new Set([...document.querySelectorAll('[id]')].map(x=>x.id)).size,headings:[...document.querySelectorAll('#view-growth .boss-primary-section>h2')].map(x=>x.textContent),hierarchy:document.getElementById('org-explorer')?.innerText||''}})()",returnByValue:true});
      const info=probe.result?.value;
      assert.ok(info&&info.visible&&info.width===width&&!info.overflow&&info.uniqueIds,"v22.5A2 mobile layout: "+JSON.stringify(info));

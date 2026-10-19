@@ -4916,7 +4916,7 @@ function renderCEODecisions(){
  cultureRecommendationCard()+
  (cfoGuard?'<p class="small risk-watch">CFO · cash protection: delegated spending paused until payroll + premises costs have 30 days of runway. CEO direct exceptions retain their existing eligibility rules.</p>':'')+
  leadership+upcoming+'<p class="small" id="ceo-action-status" role="status">Approving any request posts real costs only after durable saving.</p>';
- if(root.innerHTML!==markup)root.innerHTML=markup;
+ reconcileCEOContent(root,markup);
 }
 function renderBriefing(){
 const urgent=rankedProjects().filter(f=>f.risk==="critical"||f.risk==="unassigned"||f.risk==="watch");

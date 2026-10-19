@@ -295,7 +295,21 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 #property-decision-preview .buttons button{min-width:0}
 @media(max-width:390px){.ceo-today-grid{gap:5px}.ceo-today-grid>div{padding:8px}.ceo-today-grid strong{font-size:15px}}
 
-.management-pane{margin:10px 0;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}.management-pane>summary{cursor:pointer;min-height:48px;padding:12px 14px;font-weight:720;list-style-position:inside}.management-pane>.card,.management-pane>section{margin:9px 10px 12px;min-width:0}.management-pane>summary:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}#ideas .knowledge-row{padding:9px 0}#upgrade-archive>summary{font-size:13px}#completed-ideas .knowledge-row{opacity:.86}.ceo-quick-actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.ceo-quick-actions button{flex:1 1 145px}@media(max-width:414px){.management-pane>.card,.management-pane>section{margin:8px 7px 10px}.ceo-quick-actions button{min-width:0}}</style>
+.management-pane{margin:10px 0;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}.management-pane>summary{cursor:pointer;min-height:48px;padding:12px 14px;font-weight:720;list-style-position:inside}.management-pane>.card,.management-pane>section{margin:9px 10px 12px;min-width:0}.management-pane>summary:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}#ideas .knowledge-row{padding:9px 0}#upgrade-archive>summary{font-size:13px}#completed-ideas .knowledge-row{opacity:.86}.ceo-quick-actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.ceo-quick-actions button{flex:1 1 145px}@media(max-width:414px){.management-pane>.card,.management-pane>section{margin:8px 7px 10px}.ceo-quick-actions button{min-width:0}}
+/* v22.5A1: one owner-approved management authorization surface. */
+.management-policy-center{overflow-wrap:anywhere}
+.management-policy-center .policy-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0}
+.management-policy-center .policy-options button{min-width:0;text-align:left;min-height:46px}
+.management-policy-center .policy-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+.management-policy-center .policy-compare>div{border:1px solid var(--line);border-radius:9px;padding:8px;min-width:0}
+.management-policy-center .policy-compare strong{display:block;font-size:13px}
+.management-policy-center .policy-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.management-policy-center .policy-inputs label{font-size:12px;display:block;min-width:0}
+.management-policy-center .policy-inputs input,.management-policy-center .policy-inputs select{width:100%;min-width:0;margin-top:4px}
+.management-policy-center .policy-status{font-size:12px;min-height:16px}
+.management-policy-center .policy-status[data-error="true"]{color:var(--warn)}
+@media(max-width:390px){.management-policy-center .policy-compare{gap:5px}.management-policy-center .policy-compare>div{padding:6px}}
+</style>
 </head>
 <body>
 <main id="game-root">
@@ -309,6 +323,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="lead"><b>CEO command center</b><span class="small">Decisions and delegated work</span></div>
 <div id="ceo-priority-content"><p class="small">Preparing your company priorities.</p></div>
 </section>
+<section class="card management-policy-center" id="management-policy-center" aria-label="CEO management policy"><p class="small">Preparing current management authorities.</p></section>
 <div class="ceo-quick-actions game-actions" aria-label="Quick simulation actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
 <details class="management-pane" id="today-ceo-tools"><summary>CEO strategy, executive appointments &amp; company identity</summary>
 <div class="card ceo-office"><div class="eyebrow">CEO · COMPANY IDENTITY</div><h2 id="company-name">Business Services Group</h2><p id="company-identity"></p><div class="ceo-office-grid"><div><b>My direct reports</b><div id="ceo-direct-reports"></div></div><div><b>Executive Assistant</b><div id="ceo-assistant"></div></div></div></div>
@@ -4412,6 +4427,221 @@ function ceoStrategyReview(){
   "Maintaining direction does not guarantee revenue or prevent missed deadlines; monitor performance and change only on meaningful new evidence."};
 }
 
+
+/* v22.5A1 MANAGEMENT POLICY — proposal is transient; only explicit CEO approval writes authorities. */
+let managementPolicyDraft=null,managementPolicyStatus="",managementPolicyError=false,managementPolicyOpen=false;
+const MANAGEMENT_APPROACHES=["conservative","balanced","aggressive","custom"];
+const MANAGEMENT_LABELS={conservative:"Conservative",balanced:"Balanced",aggressive:"Aggressive",custom:"Custom"};
+function managementPolicyFacts(){
+ const payroll=S.team.reduce((a,p)=>a+dailySalary(p),0),premises=propertySummary().daily||0,base=payroll+premises;
+ const reserve=base*30,available=Math.max(0,S.cash-reserve),runway=base>0?S.cash/base:null;
+ const ops=managementOps(),work=DEPT_KEYS.reduce((n,k)=>{const v=managementWorkload(k);return n+Math.max(0,v.unattended-v.ready);},0);
+ return {payroll,premises,base,reserve,available,runway,work,ops,people:S.team.length,
+  leadershipPaid:ladderPayroll(),leaderCount:S.org.progression.appointments.length,
+  deptKeys:DEPT_KEYS.filter(k=>!!orgManager(k)),unitKeys:S.exec.units.filter(u=>!!person(u.managerId)).map(u=>u.key)};
+}
+function managementPolicyCurrent(){
+ const ops=managementOps(),departments={},units={};
+ for(const k of DEPT_KEYS){const p=orgPlan(k);departments[k]={coaching:p.limits.coaching,training:p.limits.training,team:p.limits.team,hiring:p.limits.hiring,
+  slots:p.hireSlots,payroll:p.payrollLimit,perAction:p.perAction,spent:{...p.spent},expires:p.since+p.days,hasManager:!!orgManager(k)};}
+ for(const u of S.exec.units){const p=u.plan;units[u.key]={coaching:p.coachingLimit,training:p.trainingLimit,team:p.teamLimit,
+  perAction:p.perAction,spent:{coaching:p.spent,training:p.trainingSpent,team:p.teamSpent},expires:p.since+p.days,hasManager:!!person(u.managerId)};}
+ const a=S.ops.policy;
+ return {preset:S.org.managementPolicy?.preset||"custom",since:S.org.managementPolicy?.since??null,
+  hiring:ops.hireBudget,slots:ops.hireSlots,perHire:ops.perHire,payroll:S.org.progression.authorityDaily,
+  coaching:0,training:0,days:ops.days,expires:ops.since+ops.days,spent:ops.hireSpent,hires:ops.hires,
+  departments,units,assistant:{total:a.totalBudget,perAction:a.budget,spent:a.spent,expires:a.since+a.days,hasAssistant:!!person(S.ops.assistantId)}};
+}
+function managementPolicyPreset(name){
+ if(!MANAGEMENT_APPROACHES.includes(name))return null;
+ const f=managementPolicyFacts(),scale={conservative:.25,balanced:1,aggressive:1.8,custom:1}[name];
+ // Cash above 30-day payroll + premises, and existing real team size bound total authority.
+ const pool=Math.max(0,Math.floor(Math.min(f.available*.10*scale,f.people*MANAGEMENT_HIRE_COST*scale)));
+ const hiringSlots=Math.max(0,Math.min(20,Math.floor(f.work*(name==="conservative"?.25:name==="aggressive"?1:.5)),
+  Math.floor(Math.max(0,f.available-pool)/(90*1.5*S.mod.cost+MANAGEMENT_HIRE_COST))));
+ const hireCost=hiringSlots*MANAGEMENT_HIRE_COST;
+ const leadershipExtra=f.leaderCount?Math.floor(Math.min(100-f.leadershipPaid,Math.max(0,f.available-pool-hireCost-hiringSlots*90*1.5*S.mod.cost)/180,
+  name==="conservative"?0:name==="balanced"?S.mod.cost:2*S.mod.cost)*100)/100:0;
+ const activeDept=Math.max(1,f.deptKeys.length),activeUnits=Math.max(1,f.unitKeys.length);
+ const one=(fraction,n)=>Math.floor(pool*fraction/Math.max(1,n));
+ const departments={},units={};
+ for(const k of DEPT_KEYS){const active=f.deptKeys.includes(k);
+  departments[k]={coaching:active?one(.35,activeDept):0,training:active?one(.20,activeDept):0,
+    team:active?one(.10,activeDept):0,hiring:0,slots:0,payroll:0,
+    perAction:active?Math.min(20,Math.floor(pool*.10)):0};}
+ for(const u of S.exec.units){const active=f.unitKeys.includes(u.key);
+  units[u.key]={coaching:active?one(.12,activeUnits):0,training:active?one(.08,activeUnits):0,
+   team:active?one(.05,activeUnits):0,perAction:active?Math.min(20,Math.floor(pool*.10)):0};}
+ const assistant=person(S.ops.assistantId)?{total:Math.floor(pool*.10),perAction:Math.min(10,Math.floor(pool*.10))}:{total:0,perAction:0};
+ return {preset:name,days:90,hiring:hireCost,slots:hiringSlots,perHire:hiringSlots?MANAGEMENT_HIRE_COST:0,
+  payroll:leadershipExtra>0?Math.round((f.leadershipPaid+leadershipExtra)*100)/100:0,
+  departments,units,assistant,createdDay:S.day};
+}
+function managementPolicyExposure(p){
+ const f=managementPolicyFacts();
+ const dept=Object.values(p.departments).reduce((n,d)=>n+d.coaching+d.training+d.team+d.hiring,0);
+ const gm=Object.values(p.units).reduce((n,u)=>n+u.coaching+u.training+u.team,0);
+ const once=p.hiring+dept+gm+p.assistant.total;
+ // Existing appointed salary is already counted in current base; a new authorization never cancels it.
+ const extra=Math.max(0,p.payroll-f.leadershipPaid)+p.slots*1.5*S.mod.cost+
+   Object.values(p.departments).reduce((n,d)=>n+d.payroll,0);
+ return {once,extra,days30:once+extra*Math.min(30,p.days),days90:once+extra*Math.min(90,p.days),
+   total:once+extra*p.days,runway:f.runway,remaining90:f.base?Math.max(0,(S.cash-once)/(f.base+extra)):null,available:f.available};
+}
+function managementPolicyValidate(p){
+ const integer=(v,max=1000000)=>Number.isSafeInteger(v)&&v>=0&&v<=max;
+ const decimal=(v,max=1000000)=>Number.isFinite(v)&&v>=0&&v<=max;
+ if(!p||!MANAGEMENT_APPROACHES.includes(p.preset)||![90,180].includes(p.days)||
+  !integer(p.hiring,10000)||!integer(p.slots,20)||!integer(p.perHire,10000)||
+  !decimal(p.payroll,100)||p.perHire>p.hiring&&(p.slots>0)||p.slots>0&&p.perHire<MANAGEMENT_HIRE_COST)
+  return "Recruiting, payroll and expiry must have valid caps; a hire needs a $20 per-hire limit.";
+ if(p.slots>0&&p.hiring<p.slots*MANAGEMENT_HIRE_COST)return "Each permitted recruit needs the actual $20 recruitment cost.";
+ if(Object.keys(p.departments).sort().join("|")!==DEPT_KEYS.slice().sort().join("|")||
+   Object.keys(p.units).sort().join("|")!==S.exec.units.map(u=>u.key).sort().join("|"))return "Company departments or operating units changed. Review the proposal again.";
+ for(const [k,d] of Object.entries(p.departments)){
+  for(const v of [d.coaching,d.training,d.team,d.hiring,d.slots,d.perAction])if(!integer(v,1000000))return "Invalid department monetary or hiring amount for "+k+".";
+  if(!integer(d.slots,20)||!decimal(d.payroll,100000)||d.perAction>1000000)return "Invalid department staffing or payroll limit.";
+  if(d.slots&&(!d.hiring||d.perAction<MANAGEMENT_HIRE_COST||d.payroll<1.5*S.mod.cost*d.slots))
+   return "Department hiring needs slots, one-time budget, per-action cap and daily payroll.";
+ }
+ for(const [k,u] of Object.entries(p.units)){for(const v of [u.coaching,u.training,u.team,u.perAction])
+  if(!integer(v))return "Invalid GM amount for "+k+".";}
+ if(!integer(p.assistant.total)||!integer(p.assistant.perAction)||
+  p.assistant.perAction>p.assistant.total)return "Assistant spending caps are inconsistent.";
+ const f=managementPolicyFacts(),x=managementPolicyExposure(p);
+ if(x.total>f.available+0.001)return "Maximum potential commitment exceeds cash above 30 days of payroll and premises. Reduce limits.";
+ if(!executiveFinanceGuard(x.once))return "CFO reserve protection blocks this proposed authorization.";
+ return "";
+}
+function managementPolicyPropose(name){
+ const preset=managementPolicyPreset(name);if(!preset)return;
+ managementPolicyDraft=preset;managementPolicyOpen=true;managementPolicyStatus="";
+ renderManagementPolicies(true);
+}
+function managementPolicyApprove(){
+ const proposal=managementPolicyDraft;
+ const problem=managementPolicyValidate(proposal);
+ if(problem){managementPolicyStatus=problem;managementPolicyError=true;renderManagementPolicies(true);return false;}
+ // The existing game transaction snapshots S, pauses ticks and rolls back *all* permissions on failed storage.
+ const result=unitCommit(()=>{
+  const reason=managementPolicyValidate(proposal);if(reason){managementPolicyStatus=reason;return false;}
+  const old=managementPolicyCurrent(),ops=managementOps(),g=S.org.progression;
+  if(!Array.isArray(S.org.managementPolicyHistory))S.org.managementPolicyHistory=[];
+  S.org.managementPolicyHistory.unshift({day:S.day,previous:old,approved:proposal.preset,
+   note:"Historic expenditure remains in policy history; approving limits did not spend cash."});
+  S.org.managementPolicyHistory=S.org.managementPolicyHistory.slice(0,20);
+  ops.since=S.day;ops.days=proposal.days;ops.hireBudget=proposal.hiring;ops.hireSlots=proposal.slots;ops.perHire=proposal.perHire;
+  ops.hireSpent=0;ops.hires=0;ops.history.unshift({day:S.day,kind:"bundle-authority",preset:proposal.preset,priorSpent:old.spent});
+  g.authorityDaily=proposal.payroll;
+  g.events.push({day:S.day,action:"CEO approved management policy",preset:proposal.preset,limit:proposal.payroll});
+  for(const k of DEPT_KEYS){const p=orgPlan(k),d=proposal.departments[k];
+   p.since=S.day;p.days=proposal.days;p.limits={coaching:d.coaching,training:d.training,team:d.team,hiring:d.hiring};
+   p.perAction=d.perAction;p.hireSlots=d.slots;p.payrollLimit=d.payroll;
+   p.spent={coaching:0,training:0,team:0,hiring:0};p.hires=0;p.payrollAdded=0;}
+  for(const u of S.exec.units){const d=proposal.units[u.key],p=u.plan;
+   p.since=S.day;p.days=proposal.days;p.coachingLimit=d.coaching;p.trainingLimit=d.training;p.teamLimit=d.team;
+   p.perAction=d.perAction;p.spent=0;p.trainingSpent=0;p.teamSpent=0;
+   unitRecord(u.key,"authority","CEO explicitly authorized "+proposal.preset+" GM limits; no spend at approval.");}
+  const ap=S.ops.policy;ap.since=S.day;ap.days=proposal.days;ap.totalBudget=proposal.assistant.total;
+  ap.budget=proposal.assistant.perAction;ap.spent=0; // Assistant behavior toggles and officer mandates remain unchanged.
+  S.org.managementPolicy={preset:proposal.preset,since:S.day,expires:S.day+proposal.days};
+  delete S.ui.authorityDrafts.leadership;delete S.ui.authorityDrafts.recruitBudget;delete S.ui.authorityDrafts.recruitSlots;
+  ladderSignature="";orgControlsSignature="";unitViewSignature="";
+  logIt("CEO approved "+MANAGEMENT_LABELS[proposal.preset]+" policy until Day "+(S.day+proposal.days)+". Limits only; no cash paid.");
+  return true;
+ });
+ const finish=ok=>{
+  if(ok){managementPolicyDraft=null;managementPolicyOpen=false;managementPolicyStatus="CEO policy saved. Current authorizations updated; no spending occurred.";managementPolicyError=false;}
+  else{managementPolicyStatus=managementPolicyStatus||"Approval did not save. All previous management authorizations were restored.";managementPolicyError=true;}
+  renderManagementPolicies(true);return !!ok;
+ };
+ return result&&typeof result.then==="function"?result.then(finish):finish(result);
+}
+function managementPolicyCancel(){managementPolicyDraft=null;managementPolicyOpen=false;managementPolicyStatus="Proposal cancelled. Current authorizations are unchanged.";managementPolicyError=false;renderManagementPolicies(true);}
+function managementPolicyDetails(p){
+ const x=managementPolicyExposure(p),f=managementPolicyFacts();
+ return '<p class="small">Expires Day '+(S.day+p.days)+' · '+p.days+' game days; manual renewal only. No automatic extension.</p>'+
+ '<div class="policy-compare"><div><small>Current authorizations</small><strong>Corporate '+managementOps().hires+'/'+managementOps().hireSlots+' hired · '+biCurrency(managementOps().hireSpent)+' spent</strong>'+
+ '<p class="small">Recruiting '+biCurrency(managementOps().hireBudget)+' · management limit '+biCurrency(S.org.progression.authorityDaily)+'/day</p></div>'+
+ '<div><small>Proposed limits — NOT active</small><strong>'+p.slots+' future hires · '+biCurrency(p.hiring)+' recruiting</strong>'+
+ '<p class="small">Per hire '+biCurrency(p.perHire)+' · leadership ceiling '+biCurrency(p.payroll)+'/day</p></div></div>'+
+ '<div class="policy-compare"><div><small>Maximum possible new commitments</small><strong>'+biCurrency(x.total)+'</strong>'+
+ '<p class="small">One-time caps '+biCurrency(x.once)+' · incremental daily payroll exposure '+biCurrency(x.extra)+'/day</p></div>'+
+ '<div><small>Cash protection</small><strong>'+biCurrency(x.days30)+' / 30 days</strong>'+
+ '<p class="small">'+biCurrency(x.days90)+' / 90 days · existing runway '+(f.runway===null?'n/a':f.runway.toFixed(1)+' days')+
+ ' · worst-case post-commit runway '+(x.remaining90===null?'n/a':x.remaining90.toFixed(1)+' days')+'</p></div></div>'+
+ '<details class="aux-details"><summary>Scope, historic spending and safeguards</summary>'+
+ '<p class="small">Department coaching/training/team: '+Object.entries(p.departments).map(([k,d])=>esc(DEPARTMENTS[k].name)+' '+biCurrency(d.coaching)+' / '+biCurrency(d.training)+' / '+biCurrency(d.team)+'; '+d.slots+' hires; '+biCurrency(d.payroll)+'/day').join(' · ')+'</p>'+
+ '<p class="small">GM coaching/training/team: '+Object.entries(p.units).map(([k,u])=>esc(SERVICE_LINES[k]?.name||k)+' '+biCurrency(u.coaching)+' / '+biCurrency(u.training)+' / '+biCurrency(u.team)).join(' · ')||'No operating units'+'</p>'+
+ '<p class="small">Executive assistant: total '+biCurrency(p.assistant.total)+'; per decision '+biCurrency(p.assistant.perAction)+'. Requires actual assistant and previously enabled tasks.</p>'+
+ '<p class="small">CFO 30-day reserve '+biCurrency(f.reserve)+'. Corporate, department and GM limits remain independent. Executive HR/CFO/COO mandates are unchanged: '+Object.keys(S.exec.officers).map(role=>role.toUpperCase()+' '+(executiveOfficer(role,"act")?'active':'inactive/expired')).join(' · ')+'.</p>'+
+ '<p class="small">Historical corporate recruiting '+biCurrency(managementOps().hireSpent)+'; departments '+biCurrency(DEPT_KEYS.reduce((n,k)=>n+Object.values(orgPlan(k).spent).reduce((a,b)=>a+b,0),0))+
+ '; GM '+biCurrency(S.exec.units.reduce((n,u)=>n+u.plan.spent+u.plan.trainingSpent+u.plan.teamSpent,0))+
+ '; assistant '+biCurrency(S.ops.policy.spent)+'. Actual prior payments are preserved in ledger and policy history.</p>'+
+ '<p class="small">Authorization is potential headroom, NOT money spent. Existing appointments, CEO manual exceptions, promotion qualifications and CFO safeguards still govern execution. No strategic purchase, acquisition or expansion is authorized.</p></details>';
+}
+function managementPolicyCustomForm(p){
+ const field=(key,label,v,step="1")=>'<label>'+esc(label)+'<input type="number" inputmode="decimal" min="0" step="'+step+'" data-management-field="'+esc(key)+'" value="'+esc(v)+'"></label>';
+ let inputs=field("hiring","Corporate recruiting $",p.hiring)+field("slots","Corporate hire slots",p.slots)+
+ field("perHire","Per recruit $",p.perHire)+field("payroll","Leadership payroll cap $/day",p.payroll,"0.01")+
+ field("assistant.total","Assistant total $",p.assistant.total)+field("assistant.perAction","Assistant per action $",p.assistant.perAction);
+ for(const [k,d] of Object.entries(p.departments))for(const [a,label] of [["coaching","Coaching $"],["training","Training $"],["team","Team $"],["hiring","Recruiting $"],["slots","Hire slots"],["payroll","Payroll $/day"],["perAction","Per action $"]])
+  inputs+=field("departments."+k+"."+a,DEPARTMENTS[k].name+" · "+label,d[a],a==="payroll"?"0.01":"1");
+ for(const [k,u] of Object.entries(p.units))for(const a of ["coaching","training","team","perAction"])
+  inputs+=field("units."+k+"."+a,(SERVICE_LINES[k]?.name||k)+" · "+a+" $",u[a]);
+ return '<details class="aux-details" open><summary>Custom: edit scope and amounts</summary><label>Expiration<input type="number" disabled value="'+(S.day+p.days)+'"></label>'+
+ '<label>Authorization duration<select data-management-field="days"><option value="90" '+(p.days===90?"selected":"")+'>90 days</option><option value="180" '+(p.days===180?"selected":"")+'>180 days</option></select></label>'+
+ '<div class="policy-inputs">'+inputs+'</div></details>';
+}
+function renderManagementPolicies(force=false){
+ const root=$("management-policy-center");if(!root||!S||(!force&&editableInteractionPending()))return;
+ if(!force&&root.contains(document.activeElement)&&document.activeElement?.matches?.("input,select,textarea"))return;
+ const prior=root.querySelector("details[data-management-review]"),expanded=managementPolicyOpen||!!prior?.open;
+ const now=managementPolicyCurrent(),expired=now.expires<=S.day,staff=S.team.length;
+ const activeDepts=Object.entries(now.departments).filter(([,d])=>d.hasManager&&d.expires>S.day).length;
+ const activeUnits=Object.entries(now.units).filter(([,u])=>u.hasManager&&u.expires>S.day).length;
+ const executive=Object.keys(S.exec.officers).filter(role=>executiveOfficer(role,"act")).length;
+ let html='<div class="lead"><b>Management policies</b><span class="small">'+(S.org.managementPolicy?MANAGEMENT_LABELS[now.preset]:'Individual legacy limits')+'</span></div>'+
+ '<p class="small">Current: corporate '+(expired?'EXPIRED · ':'')+Math.max(0,now.slots-now.hires)+' hires remaining · '+biCurrency(Math.max(0,now.hiring-now.spent))+
+ ' unspent authorization · '+biCurrency(now.payroll)+'/day leadership ceiling. '+activeDepts+' department(s), '+activeUnits+' GM(s), '+executive+' executive mandate(s) active.</p>'+
+ '<p class="small">Managers need their actual roles, valid mandate, cash and eligibility. Exceptions still require CEO approval.</p>'+
+ '<details data-management-review '+(expanded?'open':'')+'><summary>Review management policy</summary>'+
+ '<p class="small">Choose an approach to PREVIEW. No authority changes until CEO confirms a complete bundle.</p>'+
+ '<div class="policy-options">'+MANAGEMENT_APPROACHES.map(k=>'<button type="button" data-management-preset="'+k+'" class="'+(managementPolicyDraft?.preset===k?'selected':'')+'">'+MANAGEMENT_LABELS[k]+'</button>').join('')+'</div>';
+ if(managementPolicyDraft){
+  html+='<p class="small"><b>'+MANAGEMENT_LABELS[managementPolicyDraft.preset]+' proposal</b> · real company cash, size, reserve and workload are used; actual spending remains zero.</p>'+
+    (managementPolicyDraft.preset==="custom"?managementPolicyCustomForm(managementPolicyDraft):"")+
+    managementPolicyDetails(managementPolicyDraft);
+  const reason=managementPolicyValidate(managementPolicyDraft);
+  if(reason)html+='<p class="policy-status" data-error="true">'+esc(reason)+'</p>';
+  html+='<div class="buttons"><button type="button" data-management-action="approve" '+(reason?'disabled':'')+'>CEO confirm full policy</button>'+
+  '<button type="button" data-management-action="cancel">Cancel</button></div>';
+ }else html+='<p class="small">Current permissions remain in place. Historical spending is not erased by selecting another approach.</p>';
+ html+='</details><p class="policy-status" role="status" data-error="'+managementPolicyError+'">'+esc(managementPolicyStatus)+'</p>';
+ root.innerHTML=html;
+}
+$("management-policy-center").addEventListener("click",e=>{
+ const b=e.target.closest("button");if(!b)return;
+ if(b.dataset.managementPreset){managementPolicyPropose(b.dataset.managementPreset);return;}
+ if(b.dataset.managementAction==="cancel")managementPolicyCancel();
+ if(b.dataset.managementAction==="approve")managementPolicyApprove();
+});
+$("management-policy-center").addEventListener("input",e=>{
+ const key=e.target?.dataset?.managementField;
+ if(!key||!managementPolicyDraft||managementPolicyDraft.preset!=="custom")return;
+ const raw=e.target.value;if(raw.trim()==="")return;
+ const n=Number(raw),parts=key.split(".");
+ if(!Number.isFinite(n))return;
+ let ref=managementPolicyDraft;
+ for(const part of parts.slice(0,-1)){if(!ref[part])return;ref=ref[part];}
+ ref[parts.at(-1)]=n;
+ // Keep native input focus/caret; update the comparison when focus is released.
+});
+$("management-policy-center").addEventListener("change",e=>{
+ if(e.target?.dataset?.managementField==="days"&&managementPolicyDraft)managementPolicyDraft.days=Number(e.target.value);
+});
+$("management-policy-center").addEventListener("focusout",()=>{setTimeout(()=>renderManagementPolicies(),900);});
+
 function renderCEOFocus(){
  const root=$("ceo-priority-content");if(!root||editableInteractionPending())return;
  const inventory=ceoDecisionInventory(),direction=companyDirection(),office=ceoPremisesOpportunity(),warnings=propertyWarnings(),review=ceoStrategyReview();
@@ -4579,7 +4809,7 @@ for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)day
 }
 function refresh(){
 if(editableInteractionPending())return;
-renderLadder();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
+renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);

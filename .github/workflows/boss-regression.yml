@@ -33,6 +33,13 @@ jobs:
           echo "Immutable v22.5A1 screenshot baseline verified: $BASELINE / 1b5718949207cf5927dad14d754cdf764b54a7e9"
       - name: Real Chromium 390px and 414px CEO acceptance
         run: node --experimental-websocket tests/v19-mobile-browser.cjs
+      - name: Preserve v22.5B 390px and 414px People & Culture recommendations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-v22-5b-culture-mobile-proof
+          path: reports/v22-5b-mobile/*.png
+          if-no-files-found: error
       - name: Preserve actual 390px and 414px CEO screenshots
         if: always()
         uses: actions/upload-artifact@v4

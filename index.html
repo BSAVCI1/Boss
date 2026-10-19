@@ -371,10 +371,11 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </details></section>
 <section id="view-work" class="app-view" data-page="work" aria-label="Projects and sales" hidden>
 <div class="view-intro"><h2>Work</h2><p>Deliver projects, win customers and protect cash</p></div>
+<section aria-labelledby="deals-title"><h2 id="deals-title">Active projects</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
 <section class="card"><div class="lead"><b>Financial position</b><span class="small">Current company totals</span></div><div class="boss-overview" id="work-finance-snapshot"></div><p id="work-finance-action" class="small boss-summary"></p></section>
 <section class="card"><div class="lead"><b>Owned capabilities</b><span class="small">Permanent toolkit benefits</span></div><div id="work-owned-capabilities"></div></section>
 <section class="card" id="work-project-watch"><div class="lead"><b>Projects requiring attention</b><span id="work-project-watch-count" class="small"></span></div><p id="work-project-watch-summary" class="small"></p></section>
-<section aria-labelledby="deals-title"><h2 id="deals-title">Active projects</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
+
 
 <details class="aux-details" id="work-project-forecasts"><summary>All project priorities &amp; deadline forecasts</summary><div class="assistant-queue"><div class="lead"><b>Project priorities &amp; deadline forecast</b><span class="small" id="assistant-queue-summary"></span></div><div id="assistant-priorities"></div><p class="filter-note">Forecasts estimate remaining game days from the current assignment, skills and mood. Project deadlines still apply in Focus mode. Suggestions remain visible without an assistant.</p></div></details>
 <section aria-labelledby="pipeline-title"><h2 id="pipeline-title">New opportunities</h2><div class="card">
@@ -1143,7 +1144,7 @@ function renderSimpleScreens(){
  const strained=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35),units=S.exec.units||[];
  $("team-simple-summary").textContent=S.team.length+" employees · "+DEPT_KEYS.filter(k=>orgManager(k)).length+" department head(s) · "+units.filter(u=>person(u.managerId)).length+" appointed GM(s) · "+strained.length+" people needing support. "+(strained.length?"Review wellbeing below.":"No major wellbeing risk flagged.")+" Reporting follows actual manager relationships.";
  $("growth-business-status").textContent=S.exec.lines.length+" owned business line(s) · "+units.length+" operating unit(s) · "+units.filter(u=>person(u.managerId)).length+" appointed GM(s). Below: earned expansion opportunities and costs.";
- $("growth-focus-summary").textContent="Target sector: "+SECTORS[S.market.focus].name+" · Commercial positioning: "+worldStrategy().name+". Affects new contracts only. Company-wide 90-day direction is on Today; unit strategies are with the GMs.";
+ $("growth-focus-summary").textContent="Target sector: "+SECTORS[S.market.focus].name+" · Commercial positioning: "+worldStrategy().name+" · Price position: "+e.pricing+". Affects new contracts only. Company-wide 90-day direction is on Today; unit strategies are with the GMs.";
 }
 
 function economyRender(){

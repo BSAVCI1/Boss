@@ -662,8 +662,8 @@ async function runBrowser(){
        overflow:document.documentElement.scrollWidth>innerWidth+6,
        current:root.textContent.includes("Current:"),
        preview:!!root.querySelector('button[data-management-action="approve"]'),
-       approved:s.org.managementPolicy?.preset==="balanced",
-       policySaved:!!(await saved())?.org?.managementPolicy,
+       approved:s.org.managementPolicy?.preset===preset,
+       policySaved:(await saved())?.org?.managementPolicy?.preset===preset,
        errors:window.__mobileErrors||[]
      };
     })()`.replace("__BOSS_STAGE__",JSON.stringify(stage));

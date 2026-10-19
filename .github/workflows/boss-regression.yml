@@ -26,6 +26,13 @@ jobs:
           name: boss-v22-4-1-fast-mobile-proof
           path: reports/v22-4-1-mobile/*.png
           if-no-files-found: error
+      - name: Preserve v22.5A1 real mobile policy screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-v22-5a1-policy-mobile-proof
+          path: reports/v22-5a1-mobile/*.png
+          if-no-files-found: error
   ceo_clarity_fast:
     runs-on: ubuntu-latest
     steps:

@@ -1,4 +1,9 @@
 name: Boss offline regression checks
+# PRs share a concurrency group so new commits cancel only obsolete PR runs.
+# Push/deployment checks use their unique run_id and are never auto-cancelled.
+concurrency:
+  group: boss-regression-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 on:
   push:
     branches: [main, boss-v15-advanced-economy, boss-v15-1-career-pathways, boss-v16-living-business-world, boss-v16-1-balance-and-people, boss-v17-game-first, boss-v18-ceo-leadership, boss-v19-org-autonomy, integration/v22-3-v22-4-release-candidate]

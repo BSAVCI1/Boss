@@ -309,6 +309,16 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .management-policy-center .policy-status{font-size:12px;min-height:16px}
 .management-policy-center .policy-status[data-error="true"]{color:var(--warn)}
 @media(max-width:390px){.management-policy-center .policy-compare{gap:5px}.management-policy-center .policy-compare>div{padding:6px}}
+
+/* v22.5A2: brief default views; all original manual controls retained. */
+.boss-overview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+.boss-overview>div{border:1px solid var(--line);border-radius:8px;padding:9px;min-width:0;overflow-wrap:anywhere}
+.boss-overview small{display:block;font-size:11px}.boss-overview strong{display:block;font-size:17px}
+.boss-primary-section{margin:12px 0 20px;min-width:0}
+.boss-primary-section>h2{margin:10px 0 4px}
+.boss-capability{padding:8px 9px;border:1px solid var(--line);border-radius:8px;margin:6px 0}
+.boss-capability small{display:block}.boss-summary{overflow-wrap:anywhere}
+@media(max-width:414px){.boss-overview{gap:6px}.boss-overview>div{padding:7px}.boss-overview strong{font-size:15px}}
 </style>
 </head>
 <body>
@@ -360,9 +370,13 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <details class="aux-details"><summary>Company history <span class="small" id="log-recent"></span></summary><div class="card" id="log" aria-live="off"></div></details>
 </details></section>
 <section id="view-work" class="app-view" data-page="work" aria-label="Projects and sales" hidden>
-<div class="view-intro"><h2>Work</h2><p>Projects, customers and future contracts</p></div>
+<div class="view-intro"><h2>Work</h2><p>Deliver projects, win customers and protect cash</p></div>
+<section class="card"><div class="lead"><b>Financial position</b><span class="small">Current company totals</span></div><div class="boss-overview" id="work-finance-snapshot"></div><p id="work-finance-action" class="small boss-summary"></p></section>
+<section class="card"><div class="lead"><b>Owned capabilities</b><span class="small">Permanent toolkit benefits</span></div><div id="work-owned-capabilities"></div></section>
+<section class="card" id="work-project-watch"><div class="lead"><b>Projects requiring attention</b><span id="work-project-watch-count" class="small"></span></div><p id="work-project-watch-summary" class="small"></p></section>
 <section aria-labelledby="deals-title"><h2 id="deals-title">Active projects</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
 
+<details class="aux-details" id="work-project-forecasts"><summary>All project priorities &amp; deadline forecasts</summary><div class="assistant-queue"><div class="lead"><b>Project priorities &amp; deadline forecast</b><span class="small" id="assistant-queue-summary"></span></div><div id="assistant-priorities"></div><p class="filter-note">Forecasts estimate remaining game days from the current assignment, skills and mood. Project deadlines still apply in Focus mode. Suggestions remain visible without an assistant.</p></div></details>
 <section aria-labelledby="pipeline-title"><h2 id="pipeline-title">New opportunities</h2><div class="card">
 <div class="lead"><b>Commercial pipeline</b><span id="pipeline-summary" class="small">Building opportunities</span></div>
 <p class="filter-note">Sales prospect; Marketing generates demand. Prospects move through qualification, proposal and negotiation before becoming projects. Focus holds new contract starts.</p>
@@ -373,7 +387,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </div></section>
 
 <details class="management-pane" id="work-customers"><summary>Customer relationships · optional portfolio detail</summary><section aria-labelledby="customers-title"><h2 id="customers-title">Customer relationships</h2><div class="card"><div class="assistant-queue"><div class="lead"><b>Customer relationships</b><span class="small" id="customer-summary">No customers yet</span></div><div id="customer-portfolio" class="small">Finish projects to build customer loyalty.</div></div></div></section></details>
-<details class="aux-details game-advanced" id="work-records"><summary>Business records &amp; money</summary>
+<details class="aux-details game-advanced" id="work-records"><summary>Advanced Finance &amp; business records · credit, invoices and ledger</summary>
 <details class="aux-details" id="performance-panel">
 <summary>Business intelligence — Finance, Sales, Delivery &amp; People</summary>
 <div class="bi-report">
@@ -386,25 +400,26 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <details class="bi-accordion bi-delivery" id="bi-delivery-panel"><summary><span class="bi-section-title">Delivery · Realization &amp; quality</span><span class="bi-section-state" id="bi-delivery-state">Not assessed</span><span class="bi-section-hint" id="bi-delivery-hint">Tap to inspect</span></summary><div class="bi-accordion-body"><div id="bi-delivery" class="bi-metric-grid"></div><div id="coach-delivery-guide"></div><div id="bi-sectors"></div><details class="aux-details"><summary>Completed project profitability</summary><div id="bi-project-history"></div></details><p class="filter-note">Booked value is estimated at contract award and adjusted for contract changes. Realized revenue is recognized on completion; collection may occur later based on invoicing terms. Cash and profit differ. Project contribution margin allocates delivery labor plus direct project expenses, not general overhead.</p></div></details>
 <details class="bi-accordion bi-people" id="bi-people-panel"><summary><span class="bi-section-title">People · Capacity &amp; productivity</span><span class="bi-section-state" id="bi-people-state">Not assessed</span><span class="bi-section-hint" id="bi-people-hint">Tap to inspect</span></summary><div class="bi-accordion-body"><div id="bi-people" class="bi-metric-grid"></div><div id="coach-people-guide"></div><div id="coach-role-performance"></div><p class="filter-note">Billable utilization = delivery workdays / staffed workdays. Remaining capacity can support prospecting, training, rest or leadership.</p></div></details>
 </div></details>
-<details class="aux-details" id="economy-panel"><summary>Advanced economy · Receivables, cash, credit &amp; investments <span class="small" id="economy-summary"></span></summary>
+<details class="aux-details" id="economy-panel"><summary>Advanced Finance · payment terms, debt &amp; invoices <span class="small" id="economy-summary"></span></summary>
 <div class="card"><p class="filter-note">Earned profit is not available cash. Client invoices collect on their due dates (some clients may pay 3 days late), while wages remain payable every day. New policies affect future contracts only.</p>
 <div id="economy-stats"></div><div class="filter-grid">
 <div><label for="economy-terms">Default payment terms on future contracts</label><select id="economy-terms"><option value="0">Immediate — 4% fee discount</option><option value="7">7 days — base price</option><option value="14">14 days — 4% fee premium</option><option value="30">30 days — 8% fee premium</option></select></div>
 <div><label for="economy-pricing">Price position for future contracts</label><select id="economy-pricing"><option value="standard">Standard — balanced</option><option value="competitive">Competitive — 6% fee reduction</option><option value="premium">Premium — 10% more fee, fewer wins</option></select></div></div>
 <p class="filter-note" id="economy-market"></p><div class="buttons"><button type="button" id="economy-borrow">Draw $50 credit</button><button type="button" id="economy-repay">Repay up to $50</button><button type="button" id="economy-factor">Collect next invoice early (3% fee)</button></div>
 <p class="filter-note">Credit: maximum $150 outstanding; interest 0.1% per game day on principal, expensed as incurred and payable later. Borrowing improves cash but not profit. Repayment never expenses principal or interest twice.</p>
-<details class="aux-details"><summary>Capital investment decisions</summary><div class="buttons"><button type="button" id="economy-invest-operations">Delivery toolkit ($65)</button><button type="button" id="economy-invest-commercial">Sales toolkit ($55)</button></div><p class="small">Investments use cash and create a simulated long-lived capability. No depreciation is modeled. Return on investment would require incremental returns compared with a credible no-investment baseline.</p><div id="economy-assets"></div></details>
+
 <details class="aux-details"><summary>Outstanding customer invoices</summary><div id="economy-invoices"></div></details>
 </div></details>
 </details>
 </section>
 <section id="view-team" class="app-view" data-page="team" aria-label="People and delegation" hidden>
-<div class="view-intro"><h2>Team</h2><p>Employees, roles and culture</p></div>
-<section class="card org-explorer"><div class="lead"><b>Company reporting tree</b><span id="org-people-count" class="small"></span></div><p class="small">Saved reporting lines and actual appointments. Career grade and delegated management authority are separate.</p><div id="org-explorer"></div></section><details class="aux-details game-advanced" id="leadership-details"><summary>Leadership progression &amp; CEO authorization</summary><div id="leadership-growth"></div></details>
+<div class="view-intro"><h2>Team</h2><p>Reporting, careers and people needing support</p></div>
+<section class="card"><div class="lead"><b>People and management capacity</b><span class="small">Actual appointments</span></div><p class="small" id="team-simple-summary"></p><p class="small">Company-wide limits are approved at <b>Today → Management policies</b>. Optional empty positions are not urgent when teams can operate effectively.</p></section>
+<section class="card org-explorer"><div class="lead"><b>Company reporting tree</b><span id="org-people-count" class="small"></span></div><p class="small">Saved reporting lines and actual appointments. Career grade and delegated management authority are separate.</p><div id="org-explorer"></div></section><details class="aux-details game-advanced" id="leadership-details"><summary>Advanced leadership progression · governed by Management policies</summary><div id="leadership-growth"></div></details>
 <section aria-labelledby="team-title"><h2 id="team-title">Your people · by manager</h2><p class="small" id="team-wellbeing">Each employee appears once. Open a reporting group, then an employee for legitimate actions and promotion requirements.</p><div id="people"></div></section>
 <section aria-labelledby="hiring-title"><h2 id="hiring-title">Grow the team</h2><div class="card"><details class="aux-details" id="recruitment-panel"><summary>Search and hire employees</summary><div class="filter-grid"><div><label for="hire-skill">Specialty to find</label><select id="hire-skill"><option value="">Any skill</option><option value="sales">Sales</option><option value="mkt">Marketing</option><option value="prod">Product</option><option value="ops">Operations</option></select></div><div><label for="hire-interest">Personal interest</label><select id="hire-interest"><option value="">Any interest</option><option value="customers">Customer relationships</option><option value="creative">Creative projects</option><option value="technology">Technology</option><option value="learning">Learning and growth</option><option value="people">Helping colleagues</option><option value="systems">Better processes</option></select></div></div><p class="filter-note">Search is free; hiring has a one-time fee. Each teammate adds $1.50 per day in salary costs, before cost breakthroughs.</p><div class="buttons"><button type="button" id="search-talent">Search candidates</button></div><div class="candidate-list" id="candidates"></div></details><div class="team-culture"><b>Executive assistant · CEO support</b><p class="filter-note" id="assistant-status">No executive assistant appointed.</p><div class="buttons"><button type="button" id="hire-assistant">Hire executive assistant ($20)</button></div>
 <p class="filter-note">Hire for $20 or appoint an existing colleague. Configure exactly what the assistant may do; they never displace someone you assigned. Your high-stakes people decisions stay with you.</p>
-<details class="assistant-settings"><summary>Delegation rules — customize your assistant</summary>
+<details class="assistant-settings"><summary>Advanced assistant tasks · spending limits in CEO Management policies</summary>
 <label class="assistant-toggle"><input type="checkbox" id="policy-assign"> Auto-assign unstaffed deals to idle colleagues</label>
 <div class="filter-grid"><div><label for="policy-priority">Project priority</label><select id="policy-priority"><option value="balanced">Balanced: urgency + skills</option><option value="deadline">Deadlines first</option><option value="skills">Best skill match first</option></select></div><div><label for="policy-budget">Maximum automatic spend per decision</label><input id="policy-budget" type="number" inputmode="decimal" min="0" step="1" value="10"></div><div><label for="policy-total">Total routine spending allowed ($)</label><input id="policy-total" type="number" inputmode="decimal" min="0" step="1" value="60"></div><div><label for="policy-days">Assistant budget term</label><select id="policy-days"><option value="90">90 game days</option><option value="180">180 game days</option></select></div></div>
 <div class="small" id="policy-budget-status">Approved routine assistance spending starts from this game.</div><button type="button" id="policy-renew">Renew assistant spending authority</button><p class="filter-note">Routine staff decisions delegated automatically:</p>
@@ -416,30 +431,25 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <label class="assistant-toggle"><input type="checkbox" id="policy-alerts"> Log deadline risk warnings</label>
 </div>
 </details>
-<div class="assistant-queue"><div class="lead"><b>Project priorities &amp; deadline forecast</b><span class="small" id="assistant-queue-summary"></span></div><div id="assistant-priorities"></div><p class="filter-note">Forecasts estimate remaining game days from the current assignment, skills and mood. Project deadlines still apply in Focus mode. Suggestions remain visible without an assistant.</p></div>
-</div><div class="team-culture"><b>Motivate the whole team</b><div class="filter-note">A team activity lifts mood and loyalty for everyone. Available every 12 days.</div><div class="buttons"><button type="button" id="team-activity">Team activity</button></div><div class="filter-note" id="team-activity-status"></div></div></div></section>
+
+</div><details class="team-culture aux-details"><summary>Optional team activity · existing morale action</summary><div class="filter-note">A team activity lifts mood and loyalty for everyone. Available every 12 days.</div><div class="buttons"><button type="button" id="team-activity">Team activity</button></div><div class="filter-note" id="team-activity-status"></div></details></div></section>
 
 <section aria-labelledby="skills-title"><h2 id="skills-title">Skills &amp; careers</h2><div class="card"><details class="aux-details" id="skills-panel"><summary>Show skills, promotion paths and hiring gaps</summary><p class="filter-note">Role expertise, hidden talents and mentor recommendations evolve through actual work.</p><div id="skills-map"></div></details></div></section>
 
-<details class="aux-details game-advanced" id="team-organization"><summary>Managers &amp; organization</summary>
+<details class="aux-details game-advanced" id="team-organization"><summary>Advanced manager appointments &amp; reporting</summary>
 <section aria-labelledby="organization-title"><h2 id="organization-title">Managers</h2><div class="card org-overview">
 <div class="lead"><b>Reporting lines</b><span id="org-status" class="small">Flat founder-led structure</span></div>
 
-<div id="org-chart"></div><div id="coach-manager-review"></div><details id="org-settings" class="aux-details"><summary>Leadership hierarchy, budgets &amp; delegated authority</summary><p class="small">CEO authorizes one shared budget per department, not a budget per individual manager. Appointed team managers can use that department's coaching envelope for their own direct reports. Hiring slots and the extra payroll cap also apply to the entire department—not to a manager's reporting span. No maximum team size is set here; a wide span reduces management effectiveness.</p><div id="org-controls"></div><p class="filter-note">Appointment and career grade are separate. Department heads earn an additional $0.75/day and team managers $0.50/day, with reduced individual delivery capacity. These appointments do not automatically promote career grade. Team managers coach their team; autonomous hiring, training and department-wide wellbeing remain department-head decisions. The Executive Assistant coordinates CEO follow-ups, not departmental spending.</p></details>
+<div id="org-chart"></div><div id="coach-manager-review"></div><details id="org-settings" class="aux-details"><summary>Individual management controls · subject to CEO policies</summary><p class="small">CEO authorizes one shared budget per department, not a budget per individual manager. Appointed team managers can use that department's coaching envelope for their own direct reports. Hiring slots and the extra payroll cap also apply to the entire department—not to a manager's reporting span. No maximum team size is set here; a wide span reduces management effectiveness.</p><div id="org-controls"></div><p class="filter-note">Appointment and career grade are separate. Department heads earn an additional $0.75/day and team managers $0.50/day, with reduced individual delivery capacity. These appointments do not automatically promote career grade. Team managers coach their team; autonomous hiring, training and department-wide wellbeing remain department-head decisions. The Executive Assistant coordinates CEO follow-ups, not departmental spending.</p></details>
 </div></section>
 </details>
 </section>
 <section id="view-growth" class="app-view" data-page="growth" aria-label="Strategy and capabilities" hidden>
-<div class="view-intro"><h2>Growth</h2><p>Industries, investments and company knowledge</p></div>
-<section aria-labelledby="market-title"><h2 id="market-title">Target customer sector</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><details class="aux-details" id="sector-explore"><summary>Explore customer markets</summary><div id="sector-options" class="sector-buttons"></div></details><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
-
-<section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Purchased service lines start as shared service portfolios. You can now organize a purchased line into an operating unit below, appoint a General Manager and allocate dedicated employees. These units are internal operating divisions, not independent subsidiaries or separate bank accounts. Company cash and financial records remain consolidated; unit results only track future work. Shared department budgets and advanced unit delegations evolve in later releases. Revenue is never counted twice.</p><div id="company-unlock-guide" class="filter-note"></div><p id="company-launch-status" class="small" role="status"></p><div id="business-lines"></div><div id="business-units" aria-label="Operating unit management"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">New launches require proven delivery, leadership, qualified staffing and financial runway. Previously purchased lines remain yours. No future revenue is guaranteed.</p></details></section>
-<section class="card" id="property-panel" aria-label="Company offices and buildings"><div class="lead"><b>Offices &amp; company property</b><span class="small" id="property-summary">Distributed work</span></div>
-<p class="small">Lease office space, buy company buildings and open dedicated operating-unit sites. Every choice uses real company cash, one-time investment or setup cost and ongoing rent or upkeep. Existing staff and businesses stay intact.</p>
-<div id="property-overview"></div><details class="aux-details" id="property-options"><summary>Compare premises &amp; approve a move</summary><label for="property-location">Location for next lease or purchase</label>
-<select id="property-location"><option value="park">Business park · balanced</option><option value="central">City center · premium</option><option value="regional">Regional hub · value</option></select>
-<p id="property-location-explain" class="small"></p><div id="property-decision-preview" role="region" aria-label="CEO property approval preview" hidden></div><div id="property-purchase-options"></div></details><div id="property-status" class="small" role="status"></div>
+<div class="view-intro"><h2>Growth</h2><p>Businesses, markets and investments</p></div>
+<section class="boss-primary-section" id="growth-expand-businesses"><h2>1. Expand businesses</h2><p class="small">Owned service lines, operating units, GMs and next eligible expansion; real prerequisites and CEO approval apply.</p><p class="small boss-summary" id="growth-business-status"></p><section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Purchased service lines start as shared service portfolios. You can now organize a purchased line into an operating unit below, appoint a General Manager and allocate dedicated employees. These units are internal operating divisions, not independent subsidiaries or separate bank accounts. Company cash and financial records remain consolidated; unit results only track future work. Shared department budgets and advanced unit delegations evolve in later releases. Revenue is never counted twice.</p><div id="company-unlock-guide" class="filter-note"></div><p id="company-launch-status" class="small" role="status"></p><div id="business-lines"></div><div id="business-units" aria-label="Operating unit management"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">New launches require proven delivery, leadership, qualified staffing and financial runway. Previously purchased lines remain yours. No future revenue is guaranteed.</p></details></section>
 </section>
+<section class="boss-primary-section" id="growth-markets-customers"><h2>2. Markets and customers</h2><p class="small">Target sector and commercial positioning affect new customers; CEO direction and each GM strategy are separate.</p><section class="card"><div class="lead"><b>Current market focus</b></div><p class="small boss-summary" id="growth-focus-summary"></p></section><section aria-labelledby="market-title"><h2 id="market-title">Target customer sector</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><details class="aux-details" id="sector-explore"><summary>Explore customer markets</summary><div id="sector-options" class="sector-buttons"></div></details><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
+
 <details class="management-pane" id="growth-rivals"><summary>Rivals, market research &amp; competitive strategy</summary><section aria-labelledby="world-title"><h2 id="world-title">Your rivals</h2>
 <div class="card"><div id="game-rivals" class="game-rivals"></div><div class="lead"><b>Competitive environment</b><span class="small" id="world-summary">Three simulated rival companies</span></div>
 
@@ -453,7 +463,16 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <details class="aux-details"><summary>Competitive bid outcomes</summary><div id="world-tenders"></div></details>
 <p class="filter-note">Win probabilities are transparent simulation estimates, not real-world causation. Choosing Pass never causes a compulsory penalty; future opportunities continue.</p>
 </details></div></section></details>
-<section aria-labelledby="lab-title"><h2 id="lab-title">Try an idea</h2>
+</section>
+<section class="boss-primary-section" id="growth-investments-property"><h2>3. Investments and property</h2><p class="small">View current assets and prices. Purchases require available cash and CEO action.</p><section class="card" id="property-panel" aria-label="Company offices and buildings"><div class="lead"><b>Offices &amp; company property</b><span class="small" id="property-summary">Distributed work</span></div>
+<p class="small">Lease office space, buy company buildings and open dedicated operating-unit sites. Every choice uses real company cash, one-time investment or setup cost and ongoing rent or upkeep. Existing staff and businesses stay intact.</p>
+<div id="property-overview"></div><details class="aux-details" id="property-options"><summary>Compare premises &amp; approve a move</summary><label for="property-location">Location for next lease or purchase</label>
+<select id="property-location"><option value="park">Business park · balanced</option><option value="central">City center · premium</option><option value="regional">Regional hub · value</option></select>
+<p id="property-location-explain" class="small"></p><div id="property-decision-preview" role="region" aria-label="CEO property approval preview" hidden></div><div id="property-purchase-options"></div></details><div id="property-status" class="small" role="status"></div>
+</section>
+
+<section class="card"><div class="lead"><b>Capital toolkits</b></div><p class="small" id="growth-capital-summary"></p><details class="aux-details"><summary>Capital toolkits · manual purchase and investment history</summary><div class="buttons"><button type="button" id="economy-invest-operations">Delivery toolkit ($65)</button><button type="button" id="economy-invest-commercial">Sales toolkit ($55)</button></div><p class="small">Investments use cash and create a simulated long-lived capability. No depreciation is modeled. Return on investment would require incremental returns compared with a credible no-investment baseline.</p><div id="economy-assets"></div></details></section>
+<details class="aux-details game-advanced" id="growth-research"><summary>Advanced research, ideas &amp; history</summary><section aria-labelledby="lab-title"><h2 id="lab-title">Try an idea</h2>
 <div class="card lab-card"><div class="lead"><b>Experiment notebook</b><span id="lab-summary" class="small">Plan a measurable business experiment</span></div>
 <p class="filter-note">Make a prediction, adjust one business policy, then compare financial, customer and employee outcomes. Lessons are saved privately in this browser. Results are simulated evidence, not proof of cause.</p>
 <details class="aux-details" id="lab-panel"><summary>Open experiment lab</summary>
@@ -479,7 +498,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </details></div></section>
 <section aria-labelledby="idea-title"><h2 id="idea-title">Company upgrades</h2><div class="card"><p class="filter-note">Ideas discovered through research, service and daily work fill the map. Related discoveries unlock capabilities automatically—no manual pair matching.</p><div class="lead"><b>Organizational knowledge</b><span class="small" id="idea-summary"></span></div><p id="upgrades-complete" class="small" hidden></p><div id="ideas" aria-label="Next research and upgrade opportunities"></div><details class="aux-details" id="upgrade-archive"><summary id="completed-upgrades-count">Completed upgrades &amp; mastered research</summary><div id="completed-ideas"></div><div id="completed-discoveries" class="small"></div></details><p id="idea-message" class="message" role="status"></p><div id="built" class="built"></div>
 <details class="aux-details" id="idea-progress-panel"><summary id="idea-progress-summary">Innovation portfolio · funded ideas</summary><div id="idea-progress-content"></div></details></div></section>
-
+</details></section>
 </section>
 </main>
 <nav class="bottom-nav" aria-label="Main navigation"><button type="button" data-view="today" class="active" aria-current="page"><span aria-hidden="true">⌂</span>Today</button><button type="button" data-view="work"><span aria-hidden="true">▤</span>Work</button><button type="button" data-view="team"><span aria-hidden="true">♙</span>Team</button><button type="button" data-view="growth"><span aria-hidden="true">◈</span>Growth</button></nav>
@@ -1107,8 +1126,30 @@ function economyInvest(kind){if(S.ev||!["operations","commercial"].includes(kind
 const before=coachSnap();S.cash-=fee;S.economy.invested[kind]=true;S.economy.assets[kind]={day:S.day,fee,revenue:S.bi.totals.revenue,contribution:S.bi.totals.projectContribution,wins:S.bi.totals.wins};biMoney("investment",fee,kind+" capital asset");
 coachDecision("Invest in "+kind,before,"Paid "+biCurrency(fee)+" capital cash (not an operating expense). "+(kind==="operations"?"Delivery speed +6%":"New prospecting output +8%")+". Track outcomes over time; ROI is not established by correlation.",null,30);
 logIt("Invested "+biCurrency(fee)+" in "+kind+" capacity; cash reduced, no immediate P&L expense.");save();refresh();return true;}
+
+/* v22.5A2 read-only presentation; unchanged saved finances, identity and authority. */
+function renderSimpleScreens(){
+ const e=S.economy,ar=economyOutstanding(),open=economyReceivables(),overdue=open.filter(x=>S.day>x.due);
+ const profit=(S.bi.totals.revenue||0)-(S.bi.totals.costs||0);
+ const liabilities=(e.loan||0)+(e.interestDue||0)+(S.bi.unpaidPayroll||0)+(e.procurementPayable||0);
+ $("work-finance-snapshot").innerHTML=[["Cash",S.cash],["Operating profit to date",profit],["Receivables",ar],["Unpaid liabilities",liabilities]].map(([k,v])=>'<div><small>'+k+'</small><strong>'+biCurrency(v)+'</strong></div>').join("");
+ $("work-finance-action").textContent=(overdue.length?overdue.length+" overdue invoice(s). ":"")+(S.bi.unpaidPayroll>0?"Unpaid wages: "+biCurrency(S.bi.unpaidPayroll)+". ":"")+"Profit is not cash. Credit, payment terms and full ledger remain in Advanced Finance.";
+ const assets=[["operations","Delivery toolkit","+6% delivery speed"],["commercial","Sales toolkit","+8% prospecting output"]];
+ $("work-owned-capabilities").innerHTML=assets.filter(([k])=>e.invested[k]).map(([,n,benefit])=>'<div class="boss-capability"><b>'+n+'</b><small>Owned · '+benefit+'. No attributed ROI.</small></div>').join("")||'<p class="small">No owned toolkits yet. Manual investments are in Growth.</p>';
+ $("growth-capital-summary").textContent=assets.filter(([k])=>e.invested[k]).map(([,n,benefit])=>n+" owned ("+benefit+")").join(" · ")||"No owned toolkits. See costs below.";
+ const risk=rankedProjects().filter(x=>["critical","watch","unassigned"].includes(x.risk)),f=risk[0];
+ $("work-project-watch-count").textContent=risk.length+" requiring attention · "+S.deals.length+" active";
+ $("work-project-watch-summary").textContent=f?(f.risk==="critical"?"At risk":f.risk==="unassigned"?"Unassigned":"Watch")+": "+f.d.cl+" · "+Math.max(0,f.d.dl)+" days left · "+(f.assigned?"Assigned to "+f.assigned.n:f.candidate?"Available teammate "+f.candidate.n:"No free teammate")+". See full forecast below.":"No urgent delivery exception. Authorized managers and assistants continue routine work.";
+ const strained=S.team.filter(p=>p.career.stress>=70||p.career.burnout>=35),units=S.exec.units||[];
+ $("team-simple-summary").textContent=S.team.length+" employees · "+DEPT_KEYS.filter(k=>orgManager(k)).length+" department head(s) · "+units.filter(u=>person(u.managerId)).length+" appointed GM(s) · "+strained.length+" people needing support. "+(strained.length?"Review wellbeing below.":"No major wellbeing risk flagged.")+" Reporting follows actual manager relationships.";
+ $("growth-business-status").textContent=S.exec.lines.length+" owned business line(s) · "+units.length+" operating unit(s) · "+units.filter(u=>person(u.managerId)).length+" appointed GM(s). Below: earned expansion opportunities and costs.";
+ $("growth-focus-summary").textContent="Target sector: "+SECTORS[S.market.focus].name+" · Commercial positioning: "+worldStrategy().name+". Affects new contracts only. Company-wide 90-day direction is on Today; unit strategies are with the GMs.";
+}
+
 function economyRender(){
 const panel=$("economy-panel"),e=S.economy,open=economyReceivables(),ar=economyOutstanding(),overdue=open.filter(i=>S.day>i.due),debt=e.loan+e.interestDue;
+renderSimpleScreens();
+for(const kind of ["operations","commercial"]){const b=$("economy-invest-"+kind),fee=kind==="operations"?65:55;b.hidden=!!e.invested[kind];b.disabled=!!S.ev||!!e.invested[kind]||S.cash<fee;b.textContent=kind==="operations"?"Invest $65 — Delivery toolkit (+6% speed)":"Invest $55 — Sales toolkit (+8% prospecting)";}
 $("economy-summary").textContent=biCurrency(ar)+" receivable · "+overdue.length+" overdue · "+biCurrency(debt)+" debt";
 if(!panel.open)return;
 $("economy-terms").value=String(e.terms);$("economy-pricing").value=e.pricing;
@@ -1117,7 +1158,7 @@ $("economy-market").textContent=economyPressure().name+' · next shift in '+(45-
 $("economy-invoices").innerHTML=open.slice().sort((a,b)=>a.due-b.due).slice(0,12).map(i=>'<div class="bi-micro-row"><span>'+esc(i.client)+' · Invoice #'+i.id+' · Day '+i.day+'</span><span>'+biCurrency(i.amount)+' · '+(S.day>i.due?'Overdue '+(S.day-i.due)+'d':'Due Day '+i.due)+'</span></div>').join("")||'<p class="small">No unpaid customer invoices. Future completed projects will create invoices.</p>';
 $("economy-borrow").disabled=!!S.ev||e.loan>=e.creditLimit;$("economy-repay").disabled=!!S.ev||debt<.01||S.cash<.01;
 $("economy-factor").disabled=!!S.ev||!open.some(i=>i.due>S.day);
-$("economy-assets").innerHTML=["operations","commercial"].map(k=>{const a=e.assets[k];if(!a)return "";const since=S.day-a.day,contribution=S.bi.totals.projectContribution-a.contribution,wins=S.bi.totals.wins-a.wins;return '<div class="coach-mini"><b>'+(k==="operations"?"Delivery toolkit":"Sales toolkit")+'</b> · '+since+' days active · '+biCurrency(a.fee)+' capital invested · '+biCurrency(contribution)+' observed company-wide project contribution and '+wins+' wins since investment. This is <b>not attributable ROI</b>; it includes existing work, market pressure and other changes.</div>';}).join("");
+$("economy-assets").innerHTML=["operations","commercial"].map(k=>{const a=e.assets[k];if(!a)return "";const since=S.day-a.day,contribution=S.bi.totals.projectContribution-a.contribution,wins=S.bi.totals.wins-a.wins;return '<div class="coach-mini"><b>'+(k==="operations"?"Delivery toolkit":"Sales toolkit")+'</b> · Purchased Day '+a.day+' · '+biCurrency(a.fee)+' invested. '+(k==="operations"?"+6% delivery speed":"+8% prospecting output")+'. Historical company contribution and wins are not investment ROI.</div>';}).join("");
 for(const kind of ["operations","commercial"]){const b=$("economy-invest-"+kind),fee=kind==="operations"?65:55;b.disabled=!!S.ev||e.invested[kind]||S.cash<fee;b.textContent=e.invested[kind]?"Investment active":kind==="operations"?"Invest $65 — Delivery toolkit (+6% speed)":"Invest $55 — Sales toolkit (+8% prospecting)";}
 }
 function economyChangePolicy(type,value){if(S.ev)return false;const e=S.economy,before=coachSnap();
@@ -3078,7 +3119,7 @@ function canonicalReporting(){
  const groups=new Map();
  for(const entry of entries){
   const manager=byId.get(entry.supervisor),key=manager?"report-"+manager.id:"ceo-"+(entry.unit?.key||"corporate");
-  if(!groups.has(key))groups.set(key,{id:key,title:manager?"Reports to "+manager.n+" (#"+manager.id+")":
+  if(!groups.has(key))groups.set(key,{id:key,title:manager?"Reports to "+manager.n:
    entry.unit?"CEO oversight · "+entry.owner:"CEO · direct reports",managerName:manager?.n||"CEO",people:[]});
   groups.get(key).people.push(entry.p);
  }
@@ -3089,7 +3130,7 @@ function teamReportingGroups(){return canonicalReporting().groups;}
 function renderOrgExplorer(view){
  const root=$("org-explorer");if(!root)return;
  $("org-people-count").textContent=view.entries.length+" unique employees";
- const jump=id=>'<button type="button" data-employee-jump="'+id+'">'+esc(person(id)?.n||"Employee")+' #'+id+' →</button>';
+ const jump=id=>'<button type="button" data-employee-jump="'+id+'">'+esc(person(id)?.n||"Employee")+' →</button>';
  const executive=Object.entries(EXECUTIVE_ROLES).map(([key,meta])=>{
   const p=person(S.exec?.officers?.[key]?.id);
   return '<div class="org-minor"><b>'+esc(meta.short)+'</b> · '+(p?jump(p.id):'<span class="org-vacant">Vacant · earned appointment required</span>')+'</div>';
@@ -3097,19 +3138,19 @@ function renderOrgExplorer(view){
  const offices=DEPT_KEYS.map(dept=>{
   const chief=orgManager(dept),n=view.entries.filter(x=>!x.unit&&x.p.department===dept).length;
   return '<div class="org-sector"><b>'+esc(DEPARTMENTS[dept].name)+' · '+n+' people</b>'+
-    (chief?jump(chief.id):'<span class="small org-vacant">Department head vacant · CEO-led</span>')+
+    (chief?jump(chief.id):'<span class="small">CEO-led</span>')+
     DEPARTMENTS[dept].skills.map(role=>{const sub=orgSubManager(dept,role);
-     return '<div class="org-minor">'+esc(ROLE_NAMES[role])+' manager · '+(sub?jump(sub.id):'<span class="small">Unassigned (optional)</span>')+'</div>';
+     return sub?'<div class="org-minor">'+esc(ROLE_NAMES[role])+' manager · '+jump(sub.id)+'</div>':'';
     }).join("")+'</div>';
  }).join("");
  const business=(S.exec?.units||[]).map(u=>{
   const gm=person(u.managerId),n=view.entries.filter(x=>x.unit?.key===u.key).length;
   return '<div class="org-sector"><b>'+esc(SERVICE_LINES[u.key]?.name||u.key)+' · '+n+' people</b>'+
-   '<span class="small">Dedicated operating business</span>'+(gm?jump(gm.id):'<span class="org-vacant small">GM vacant · CEO oversight</span>')+'</div>';
+   '<span class="small">Dedicated operating business</span>'+(gm?jump(gm.id):'<span class="small">CEO oversight</span>')+'</div>';
  }).join("");
  root.innerHTML='<div class="org-ceo"><b>CEO · founder</b><div class="small">Corporate and business-unit leadership</div>'+
   executive+(person(S.ops.assistantId)?'<div class="org-minor">Executive Assistant · '+jump(S.ops.assistantId)+'</div>':
-   '<div class="org-minor">Executive Assistant · <span class="org-vacant">Not appointed</span></div>')+'</div>'+
+   '<div class="org-minor">Executive Assistant · Founder-led support</div>')+'</div>'+
   '<div class="org-leadership">'+offices+business+'</div>'+
   '<p class="small">The reporting groups below resolve saved leadership assignments first, then actual departmental or unit supervision. An open leadership position never creates an imaginary manager.</p>';
 }

@@ -4572,7 +4572,7 @@ function managementPolicyDetails(p){
  ' · worst-case post-commit runway '+(x.remaining90===null?'n/a':x.remaining90.toFixed(1)+' days')+'</p></div></div>'+
  '<details class="aux-details"><summary>Scope, historic spending and safeguards</summary>'+
  '<p class="small">Department coaching/training/team: '+Object.entries(p.departments).map(([k,d])=>esc(DEPARTMENTS[k].name)+' '+biCurrency(d.coaching)+' / '+biCurrency(d.training)+' / '+biCurrency(d.team)+'; '+d.slots+' hires; '+biCurrency(d.payroll)+'/day').join(' · ')+'</p>'+
- '<p class="small">GM coaching/training/team: '+Object.entries(p.units).map(([k,u])=>esc(SERVICE_LINES[k]?.name||k)+' '+biCurrency(u.coaching)+' / '+biCurrency(u.training)+' / '+biCurrency(u.team)).join(' · ')||'No operating units'+'</p>'+
+ '<p class="small">GM coaching/training/team: '+(Object.entries(p.units).map(([k,u])=>esc(SERVICE_LINES[k]?.name||k)+' '+biCurrency(u.coaching)+' / '+biCurrency(u.training)+' / '+biCurrency(u.team)).join(' · ')||'No operating units')+'</p>'+
  '<p class="small">Executive assistant: total '+biCurrency(p.assistant.total)+'; per decision '+biCurrency(p.assistant.perAction)+'. Requires actual assistant and previously enabled tasks.</p>'+
  '<p class="small">CFO 30-day reserve '+biCurrency(f.reserve)+'. Corporate, department and GM limits remain independent. Executive HR/CFO/COO mandates are unchanged: '+Object.keys(S.exec.officers).map(role=>role.toUpperCase()+' '+(executiveOfficer(role,"act")?'active':'inactive/expired')).join(' · ')+'.</p>'+
  '<p class="small">Historical corporate recruiting '+biCurrency(managementOps().hireSpent)+'; departments '+biCurrency(DEPT_KEYS.reduce((n,k)=>n+Object.values(orgPlan(k).spent).reduce((a,b)=>a+b,0),0))+

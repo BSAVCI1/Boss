@@ -544,35 +544,120 @@ async function runBrowser(){
     console.log("PASS v22.4.1 screenshot "+filename);
    }
   }
-  // v22.5A1 — real owner-sized Chromium selection, comparison and confirmed approval.
+  // v22.5A1: genuine owner-size Chromium policy UX. Interact solely via the
+  // production DOM controls; management functions live inside the game's IIFE.
   const policyDir=path.join("reports","v22-5a1-mobile");fs.mkdirSync(policyDir,{recursive:true});
   for(const [width,height] of [[390,844],[414,896]]){
    await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
    for(const stage of ["selection","comparison","approval"]){
-    const expression="(()=>{"+
-     "document.querySelector('.bottom-nav button[data-view=\\\"today\\\"]').click();"+
-     "window.__bossQA.pause();window.__bossQA.resetEditShield();"+
-     "const s=window.__bossQA.state(),cash=s.cash,team=s.team.length;"+
-     (stage==="comparison"?"managementPolicyPropose('balanced');":
-       stage==="approval"?"window.__policyApproved=managementPolicyApprove();":"managementPolicyCancel();")+
-     "renderManagementPolicies(true);"+
-     "const e=document.getElementById('management-policy-center');"+
-     "if(!e)throw Error('Missing management policy');"+
-     "const d=e.querySelector('details[data-management-review]');if(d)d.open=true;"+
-     "window.scrollTo({top:Math.max(0,window.scrollY+e.getBoundingClientRect().top-10)});"+
-     "return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,exists:!!e,stage:"+JSON.stringify(stage)+",approved:window.__policyApproved,team:s.team.length,cash:s.cash,hasPreview:!!e.querySelector('button[data-management-action=\\\"approve\\\"]'),hasCurrent:e.textContent.includes('Current:')};})()";
-    const state=await send("Runtime.evaluate",{expression,returnByValue:true});
-    if(state.exceptionDetails)throw Error("v22.5A1 browser: "+JSON.stringify(state.exceptionDetails));
+    const expression=String.raw`(()=>{
+     const stage=__BOSS_STAGE__;
+     document.querySelector('.bottom-nav button[data-view="today"]').click();
+     const qa=window.__bossQA;qa.pause();qa.resetEditShield();
+     const s=qa.state(),root=document.getElementById("management-policy-center");
+     if(!root)throw Error("Missing CEO Today management policy center");
+     const saved=()=>JSON.parse(localStorage.getItem("boss20"));
+     const scopes=x=>JSON.stringify({
+       hiring:x.org.progression.operations.hireBudget,
+       slots:x.org.progression.operations.hireSlots,
+       payroll:x.org.progression.authorityDaily,
+       departments:Object.fromEntries(Object.entries(x.org.departments).map(([k,v])=>[k,v.plan])),
+       units:x.exec.units.map(u=>({key:u.key,plan:u.plan})),
+       assistant:x.ops.policy,
+       policy:x.org.managementPolicy||null
+     });
+     const history=x=>JSON.stringify({
+       cash:x.cash,team:x.team.map(p=>[p.id,p.n,p.salary]),
+       totals:x.bi.totals,contracts:x.deals.map(d=>[d.id,d.agreedFee]),
+       property:x.exec.property
+     });
+     const review=()=>root.querySelector("details[data-management-review]");
+     const button=selector=>{
+       const b=root.querySelector(selector);
+       if(!b||b.disabled)throw Error("Missing or disabled policy action: "+selector);
+       b.click();
+     };
+     // The only direct QA reads are state snapshots; every policy operation
+     // must use real user-visible controls.
+     if(stage==="selection"){
+       window.__policyUiProof={
+         savedScopes:scopes(saved()),savedHistory:history(saved()),
+         liveScopes:scopes(s),liveHistory:history(s),saveRevision:s._saveRevision
+       };
+       const disclosure=review();
+       if(!disclosure)throw Error("Review management policy is missing");
+       if(!disclosure.open)disclosure.querySelector("summary").click();
+       if(!disclosure.open)throw Error("Review disclosure did not open");
+       if(!root.querySelector('button[data-management-preset="conservative"]')||
+          !root.querySelector('button[data-management-preset="balanced"]')||
+          !root.querySelector('button[data-management-preset="aggressive"]')||
+          !root.querySelector('button[data-management-preset="custom"]'))
+          throw Error("All four choices must be available");
+     }else if(stage==="comparison"){
+       const prior=window.__policyUiProof;
+       if(!prior)throw Error("Selection baseline not captured");
+       button('button[data-management-preset="balanced"]');
+       if(!root.textContent.includes("Proposed limits")||
+          !root.textContent.includes("Maximum possible new commitments"))
+          throw Error("CEO financial comparison not shown");
+       if(scopes(s)!==prior.liveScopes||history(s)!==prior.liveHistory||
+          scopes(saved())!==prior.savedScopes||history(saved())!==prior.savedHistory)
+          throw Error("Selecting a management preset changed active authorities or history");
+       // Verify that the actual Cancel button leaves both saved and active
+       // limits untouched. Re-select for the approval screenshot.
+       button('button[data-management-action="cancel"]');
+       if(scopes(s)!==prior.liveScopes||scopes(saved())!==prior.savedScopes)
+          throw Error("Cancel changed saved or in-memory management permissions");
+       button('button[data-management-preset="balanced"]');
+       if(!root.querySelector('button[data-management-action="approve"]'))
+          throw Error("CEO approval action missing from comparison");
+     }else{
+       const prior=window.__policyUiProof;
+       if(!prior)throw Error("Comparison baseline missing");
+       button('button[data-management-action="approve"]');
+       const savedNow=saved();
+       if(s.org.managementPolicy?.preset!=="balanced"||
+          savedNow.org.managementPolicy?.preset!=="balanced")
+          throw Error("CEO confirmation did not durably authorize Balanced policy");
+       if(history(s)!==prior.liveHistory||history(savedNow)!==prior.savedHistory)
+          throw Error("Approval incorrectly spent money or changed historic company records");
+       if(scopes(s)===prior.liveScopes||scopes(savedNow)===prior.savedScopes)
+          throw Error("CEO confirmation did not apply the proposed permissions");
+       if(s.org.progression.operations.hireSlots!==savedNow.org.progression.operations.hireSlots||
+          s.org.progression.authorityDaily!==savedNow.org.progression.authorityDaily)
+          throw Error("Confirmed authority disagrees with saved authority");
+       if(!root.textContent.includes("CEO policy saved"))
+          throw Error("Actual approved-policy status not displayed");
+       const disclosure=review();if(disclosure&&!disclosure.open)disclosure.querySelector("summary").click();
+     }
+     const d=review();
+     if(!d?.open)throw Error("Policy details unexpectedly closed");
+     document.documentElement.style.scrollBehavior="auto";
+     window.scrollTo(0,Math.max(0,window.scrollY+root.getBoundingClientRect().top-9));
+     return {
+       stage,width:innerWidth,visible:root.getClientRects().length>0,
+       overflow:document.documentElement.scrollWidth>innerWidth+6,
+       current:root.textContent.includes("Current:"),
+       preview:!!root.querySelector('button[data-management-action="approve"]'),
+       approved:s.org.managementPolicy?.preset==="balanced",
+       policySaved:!!saved().org.managementPolicy,
+       errors:window.__mobileErrors||[]
+     };
+    })()`.replace("__BOSS_STAGE__",JSON.stringify(stage));
+    const state=await send("Runtime.evaluate",{expression,returnByValue:true,awaitPromise:true});
+    if(state.exceptionDetails)throw Error("v22.5A1 actual UI regression: "+JSON.stringify(state.exceptionDetails));
     const check=state.result?.value;
-    assert.ok(check?.exists&&!check.overflow&&check.hasCurrent&&check.width===width,"Policy viewport failed "+JSON.stringify(check));
-    if(stage==="comparison")assert.ok(check.hasPreview,"CEO did not receive a preview");
-    if(stage==="approval")assert.equal(check.approved,true,"Policy approval was not durable");
-    await sleep(180);
+    assert.ok(check?.visible&&check?.current&&!check?.overflow&&check.width===width,
+      "Policy viewport or authority display failed "+JSON.stringify(check));
+    assert.equal(check.errors.length,0,"Browser reported policy errors");
+    if(stage==="comparison")assert.equal(check.preview,true,"No CEO policy comparison");
+    if(stage==="approval")assert.ok(check.approved&&check.policySaved,"CEO policy was not committed");
+    await sleep(220);
     const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
     assert.ok(shot.data?.length>1500,"Policy screenshot missing");
     const filename=path.join(policyDir,"boss-policy-"+stage+"-"+width+"px.png");
     fs.writeFileSync(filename,Buffer.from(shot.data,"base64"));
-    console.log("PASS v22.5A1 real screenshot "+filename);
+    console.log("PASS v22.5A1 owner-size browser "+filename+" "+JSON.stringify(check));
    }
   }
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");

@@ -512,7 +512,14 @@ async function runBrowser(){
     const checks=[];
     for(const speed of [1,3,8]){
      qa.speed(speed);
-     for(let n=0;n<7;n++)qa.tick();
+     for(let n=0;n<7;n++){
+      const dayBefore=s.day;
+      for(let attempts=0;attempts<100&&s.day===dayBefore;attempts++){
+       qa.tick();
+       await new Promise(r=>setTimeout(r,40)); // IndexedDB write acknowledgment precedes next tick.
+      }
+      if(s.day!==dayBefore+1)throw Error("A real game day failed to commit at "+speed+"x: "+dayBefore+" → "+s.day);
+     }
      checks.push({speed,day:s.day,open:panel.open,same:document.getElementById("ceo-more-accountable")===panel,focus:document.activeElement===summary});
     }
     return{checks,advanced:s.day-day===21,stillOpen:panel.open,same:document.getElementById("ceo-more-accountable")===panel,focus:document.activeElement===summary,

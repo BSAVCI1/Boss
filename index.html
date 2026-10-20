@@ -4535,11 +4535,12 @@ function renderLaunchGuide(){
 /* v22.6: live earned leadership is a lens on existing career and authorization systems. */
 const LEAD_PHASES=["founder","leader","group"],LEAD_NAMES={founder:"Founder",leader:"Business Leader",group:"Group CEO"};
 function leadershipMaturity(){
- const a=S.org.progression.appointments||[],delivered=S.market.completed||0;
+ const hasProgression=!!S.org?.progression;
+ const a=S.org?.progression?.appointments||[],delivered=S.market.completed||0;
  const senior=a.filter(n=>["manager","senior","director"].includes(n.level)&&
   person(n.id)&&n.id!==S.ops.assistantId&&!unitOfPerson(n.id)&&!executiveRoleOf(n.id));
  const directors=senior.filter(n=>n.level==="director");
- const headed=DEPT_KEYS.filter(k=>orgManager(k)&&managementLead(k)&&orgReports(k).length>0);
+ const headed=hasProgression?DEPT_KEYS.filter(k=>orgManager(k)&&managementLead(k)&&orgReports(k).length>0):[];
  // Credit only measured reviews/scorecards for the currently appointed accountable leader.
  const reviewed=headed.filter(k=>{
   const head=orgManager(k),leader=managementLead(k),node=a.find(n=>n.id===leader.id);
@@ -4551,14 +4552,14 @@ function leadershipMaturity(){
   return measured||score;
  });
  const accountable=new Set(headed.map(k=>managementLead(k)?.id).filter(Boolean));
- const delegated=managementOps().history.filter(x=>x.kind==="hire"&&
-  Number.isInteger(x.employeeId)&&person(x.employeeId)&&accountable.has(x.managerId)).length;
+ const delegated=hasProgression?managementOps().history.filter(x=>x.kind==="hire"&&
+  Number.isInteger(x.employeeId)&&person(x.employeeId)&&accountable.has(x.managerId)).length:0;
  // A new GM cannot inherit an old GM's review, and a non-delivery review cannot unlock a group.
  const operating=S.exec.units.filter(u=>person(u.managerId)&&u.staffIds.includes(u.managerId)&&
   u.staffIds.some(id=>id!==u.managerId&&person(id))&&u.delivered>0&&
   (u.reviews||[]).some(r=>r.managerId===u.managerId&&r.delivered>0)&&
   S.exec.lines.some(line=>line.key===u.key));
- const activeExecutives=Object.keys(EXECUTIVE_ROLES).filter(role=>!!executiveOfficer(role,"act"));
+ const activeExecutives=hasProgression?Object.keys(EXECUTIVE_ROLES).filter(role=>!!executiveOfficer(role,"act")):[];
  const management=[
   {label:"Appoint a corporate Manager or higher",met:senior.length>0,detail:senior.length+" active"},
   {label:"Operate a manager-led department",met:headed.length>0,detail:headed.length+"/1"},

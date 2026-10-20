@@ -156,6 +156,15 @@ test("new department manager needs their own evidence",()=>{
  const s=growBusiness(reset()),incoming=manager(s);
  assert.ok(incoming);assert.equal(G.leadershipMaturity().stage,"founder");
 });
+test("legacy saves without a progression field save without rewriting finances",()=>{
+ const s=reset(),before=snapshot(s);s.day=2895;delete s.org.progression;
+ assert.equal(G.leadershipMaturity().stage,"founder");
+ assert.equal(G.save(),true,"Legacy save must remain writeable");
+ const restored=G.load(JSON.stringify(s));
+ assert.equal(restored.cash,before.cash);
+ assert.equal(JSON.stringify(restored.bi.totals),before.fin);
+ assert.ok(restored.org.progression);
+});
 test("manual tabs, authority policy, finance, IndexedDB and save engine remain structurally present",()=>{
  for(const id of ["view-work","view-team","view-growth","economy-panel","management-policy-center","org-explorer","ceo-action-center","leadership-growth","business-units"]){
   assert.ok(html.includes('id="'+id+'"'),id+" missing");

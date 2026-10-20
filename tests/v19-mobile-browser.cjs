@@ -730,6 +730,25 @@ async function runBrowser(){
     }
    }
   }
+
+  // v22.5B: live Chromium screenshots of real state-driven recommendations at both iPhone widths.
+  const cultureDir=path.resolve("reports/v22-5b-mobile");fs.mkdirSync(cultureDir,{recursive:true});
+  for(const [width,height] of [[390,844],[414,896]]){
+   await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+   await send("Page.navigate",{url:"file://"+file});
+   for(let n=0;n<90;n++){
+    const loaded=await send("Runtime.evaluate",{expression:"document.documentElement.dataset.bossReady==='true'&&!!window.__bossQA",returnByValue:true});
+    if(loaded.result?.value)break;await sleep(100);
+   }
+   const scenario=await send("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;if(!qa)return null;qa.pause();qa.resetEditShield();qa.grow(8);const s=qa.state();s.cash+=100000;s.bi.openingCash+=100000;s.day=500;s.hr.lastTeamDay=-99;s.hr.culture.lastAny=-99;for(const p of s.team){p.mood=37;p.loy=42;p.career.stress=21;}qa.renderCEOFocus();qa.renderCEODecisions();document.querySelector('.bottom-nav button[data-view=today]').click();const detail=document.querySelector('[data-people-culture] details');if(detail)detail.open=true;const panel=document.querySelector('[data-people-culture]');if(panel)window.scrollTo({top:window.scrollY+panel.getBoundingClientRect().top-16,behavior:'instant'});return{width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,card:!!panel,choices:panel?.querySelectorAll('button[data-kind]').length,eligible:panel?.querySelectorAll('button[data-kind]:not([disabled])').length,visible:!!panel?.getClientRects().length}})()",returnByValue:true});
+   const v=scenario.result?.value;assert.ok(v&&v.width===width&&!v.overflow&&v.card&&v.choices===3&&v.eligible===3&&v.visible,"v22.5B culture mobile setup "+JSON.stringify(v));
+   await sleep(200);
+   const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+   assert.ok(shot.data?.length>1500,"Missing real v22.5B culture screenshot");
+   const name=path.join(cultureDir,"boss-culture-recommendation-"+width+"px.png");
+   fs.writeFileSync(name,Buffer.from(shot.data,"base64"));
+   console.log("PASS v22.5B live culture "+name+" "+JSON.stringify(v));
+  }
   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }

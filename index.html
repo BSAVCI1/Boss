@@ -5044,6 +5044,8 @@ function renderCEOFocus(){
    {title:"Develop your initial leaders",why:S.team.length+" colleagues; real manager eligibility and coaching are shown in Team.",go:"team",label:"Develop employees →"}:
    maturity.stage==="leader"&&maturity.reviewed.length<maturity.headed.length?
    {title:"Review departmental performance",why:maturity.reviewed.length+" of "+maturity.headed.length+" manager-led departments reviewed.",go:"team",label:"Review managers →"}:
+   maturity.stage==="leader"&&maturity.headed.length>0?
+   {title:"Review manager outcomes and growth",why:maturity.headed.map(k=>DEPARTMENTS[k].name+": "+S.org.departments[k].stats.delivered+" deliveries, "+S.org.departments[k].reviews.length+" reviews").join("; ")+". CEO approval requests: "+inventory.approvals+".",go:"team",label:"Review department leaders →"}:
    maturity.stage==="group"&&maturity.operating.length>=2?
    {title:"Review business-unit results and executive accountability",why:maturity.operating.map(u=>(SERVICE_LINES[u.key]?.name||u.key)+": "+u.delivered+" delivered / "+u.reviews.length+" GM reviews").join("; ")+". "+maturity.activeExecutives.length+" valid executive mandates.",go:"growth",label:"Review portfolio →"}:
    direction.key&&companyLaunchReadiness(direction.key).ready?

@@ -96,7 +96,7 @@ test("rich but insufficient group remains Business Leader",()=>{
  assert.equal(G.leadershipMaturity().stage,"leader");
 });
 test("genuinely operating Director-led two-unit group earns Group CEO",()=>{
- const s=group(reset()),before=snapshot(s),m=G.leadershipMaturity();
+ const s=group(reset());s.cash+=500;s.bi.openingCash+=500;const before=snapshot(s),m=G.leadershipMaturity();
  assert.equal(m.stage,"group");
  assert.equal(m.operating.length,2);assert.equal(m.directors.length,1);
  assert.equal(m.activeExecutives.length,1);

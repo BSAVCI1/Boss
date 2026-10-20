@@ -1741,7 +1741,7 @@ function managementHire(r,authority){
  S.team.push(p);S.cash-=r.cost;biMoney("recruiting",r.cost,"Corporate "+authority+" staffing");
  r.status=authority;r.decided=S.day;r.hiredId=p.id;
  const o=managementOps();if(authority==="delegated"){o.hireSpent+=r.cost;o.hires++;}
- o.history.unshift({day:S.day,kind:"hire",dept:r.dept,managerId:r.managerId,employeeId:p.id,approval:authority,cost:r.cost,payroll:dailySalary(p)});
+ o.history.unshift({day:S.day,kind:"hire",dept:r.dept,managerId:r.managerId,employeeId:p.id,approval:authority,authorization:authority==="delegated"?"approved corporate hire slots, per-hire and recruitment budget":"canonical CEO approval",cost:r.cost,payroll:dailySalary(p),outcome:"Staffing position filled"});
  o.history=o.history.slice(0,55);structural="";ladderSignature="";
  logIt(person(r.managerId).n+" "+(authority==="delegated"?"hired within authority":"received CEO approval to hire")+" "+p.n+" for "+biCurrency(r.cost)+" plus recurring "+biCurrency(dailySalary(p))+"/day.");return true;
 }
@@ -2705,9 +2705,11 @@ function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
 function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();executiveOfficerDay();orgAutonomousTeamDay();unitAutonomousDay();ladderDay();managementReviewMonth();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
+if(managementCOODay())dirty=true;
 if(unitStaffingDay())dirty=true;
 if(unitDelegateWork())dirty=true;
 if(delegateWork())dirty=true;
+if(managementAutopilotReconcile())dirty=true;
 if(autonomousWork())dirty=true;
 for(const p of [...S.team]){
 if(p.career.autoRest&&p.career.stress<=34&&p.career.burnout<=12){p.career.autoRest=false;p.t="idle";logIt(p.n+" returned after a recovery break.");dirty=true;}
@@ -2771,7 +2773,12 @@ function unitDelegateWork(){
    if(!worker)continue;
    d.w=worker.id;worker.t="d"+d.id;worker.role.autoTask=true;
    performanceAssign(d,worker);
-   unitRecord(u.key,"delivery",gm.n+" assigned "+worker.n+" to "+d.cl+" within the dedicated unit team.");
+   const grant=managementOps().shared.find(a=>a.unitKey===u.key&&a.employeeId===worker.id&&a.until>S.day&&a.status==="active");
+   const coo=executiveOfficer("coo","coordinate");
+   if(grant&&coo&&grant.approvedBy===coo.id){
+    const ops=managementOps();ops.history.unshift({day:S.day,kind:"coo-dispatch",managerId:coo.id,role:"COO",unitKey:u.key,employeeId:worker.id,dealId:d.id,authorization:"active COO coordination mandate + existing 30-day sharing",cost:0,outcome:"Qualified shared specialist assigned to an actual unowned unit project"});ops.history=ops.history.slice(0,55);
+    unitRecord(u.key,"delivery","COO "+coo.n+" coordinated GM "+gm.n+": "+worker.n+" assigned to "+d.cl+" without added payroll.");
+   }else unitRecord(u.key,"delivery",gm.n+" assigned "+worker.n+" to "+d.cl+" within authorized team capacity.");
    changed=true;
   }
  }
@@ -3558,7 +3565,9 @@ function executiveOfficerDay(){
   }
   for(const p of S.team){
    if(p.id===hr.id||executiveRoleOf(p.id)||p.id===S.ops.assistantId||p.t!=="idle"||p.career.recoveryDays>0||p.career.autoRest)continue;
-   if(p.career.stress>=65||p.career.burnout>=30){p.t="rest";p.career.autoRest=true;recovery++;}
+   if(p.career.stress>=65||p.career.burnout>=30){p.t="rest";p.career.autoRest=true;recovery++;
+    const ops=managementOps();ops.history.unshift({day:S.day,kind:"hr-recovery",managerId:hr.id,role:"HR",employeeId:p.id,authorization:"active HR people mandate",cost:0,outcome:"Idle employee placed on recovery after measured stress/burnout"});ops.history=ops.history.slice(0,55);
+   }
   }
   if(hired||recovery){o.history.unshift({day:S.day,action:"people",hired,recovery});
    logIt(hr.n+" executed HR mandate: "+hired+" approved hires and "+recovery+" idle-employee recovery assignments.");}
@@ -3880,6 +3889,48 @@ function unitCareerReadiness(u){
 }
 // v22: a GM negotiates scarce capacity with the functional department leader.
 // Reassigning a corporate specialist for 30 days never creates new payroll or permanent ownership.
+// Genuine COO capacity coordination, using the existing 30-day no-extra-payroll sharing mechanism.
+function managementCOODay(){
+ const coo=executiveOfficer("coo","coordinate");if(!coo)return false;
+ const ops=managementOps();let changed=false;
+ for(const u of S.exec.units){
+  const gm=person(u.managerId),plan=u.plan,role=SERVICE_LINES[u.key]?.need;
+  if(!gm||!role||gm.career.recoveryDays>0||gm.career.autoRest)continue;
+  const gaps=S.deals.filter(d=>d.unitKey===u.key&&!d.w).sort((a,b)=>a.dl-b.dl);
+  if(!gaps.length||gaps.length<2&&gaps[0].dl>7)continue;
+  const grant=ops.shared.some(a=>a.unitKey===u.key&&a.until>S.day&&a.status==="active"&&
+   gaps.some(d=>{const p=person(a.employeeId);return p?.t==="idle"&&p.career.recoveryDays===0&&p.s[d.need]>=2;}));
+  if(grant||S.day-(plan.lastSharedNegotiation??-999)<14)continue;
+  const dept=["sales","mkt"].includes(role)?"commercial":"delivery";
+  const candidate=managementSharedCandidates(u.key).filter(p=>p.department===dept&&p.role.auto&&
+   p.t==="idle"&&!p.career.autoRest&&p.career.recoveryDays===0&&p.s[role]>=2&&
+   gaps.some(d=>workerSpeed(p,d)>0)).sort((a,b)=>b.s[role]-a.s[role]||a.id-b.id)[0];
+  if(!candidate)continue;
+  ops.shared.push({unitKey:u.key,employeeId:candidate.id,since:S.day,until:S.day+30,status:"active",approvedBy:coo.id,reason:"COO approved urgent GM staffing coordination"});
+  ops.shared=ops.shared.slice(-40);plan.lastSharedNegotiation=S.day;
+  ops.history.unshift({day:S.day,kind:"shared",unitKey:u.key,managerId:coo.id,role:"COO",employeeId:candidate.id,until:S.day+30,authorization:"active COO coordination mandate",cost:0,outcome:"Existing qualified specialist shared for urgent unowned projects"});
+  ops.history=ops.history.slice(0,55);
+  unitRecord(u.key,"negotiation","COO "+coo.n+" and GM "+gm.n+" arranged 30-day temporary access to "+candidate.n+"; same employee ID, reporting line and payroll.");
+  logIt("COO "+coo.n+" resolved a real capacity gap with GM "+gm.n+" using "+candidate.n+" for temporary shared work.");
+  changed=true;
+ }
+ return changed;
+}
+function managementAutopilotReconcile(){
+ let changed=false;
+ for(const r of managementOps().requests.filter(x=>x.status==="open")){
+  const active=managementLead(r.dept)?.id===r.managerId&&
+   S.deals.some(d=>!d.unitKey&&!d.w&&d.need===r.skill);
+  if(!active){r.status="withdrawn";r.decided=S.day;changed=true;}
+ }
+ for(const r of S.exec.unitRequests.filter(x=>x.status==="open")){
+  const u=S.exec.units.find(x=>x.key===r.key);
+  const active=u&&u.managerId===r.managerId&&u.staffIds.length<Math.min(25,u.plan.staffingTarget||5)&&
+   S.deals.some(d=>d.unitKey===r.key&&!d.w);
+  if(!active){r.status="withdrawn";r.decidedAt=S.day;changed=true;}
+ }
+ return changed;
+}
 function unitStaffingDay(){
  let changed=false;
  for(const u of S.exec.units){
@@ -3950,7 +4001,7 @@ function unitHireFromRequest(req,authority){
  S.team.push(employee);u.staffIds.push(employee.id);
  S.cash-=req.cost;biMoney("recruiting",req.cost,SERVICE_LINES[u.key].name+" "+authority+" unit specialist: "+employee.n);
  u.developmentCost+=req.cost;req.status=authority;req.decidedAt=S.day;req.hiredId=employee.id;
- if(authority==="delegated"){const o=managementOps();o.hires++;o.hireSpent+=req.cost;o.history.unshift({day:S.day,kind:"unit-hire",unitKey:u.key,dept:req.department,employeeId:employee.id,approval:"delegated",cost:req.cost});
+ if(authority==="delegated"){const o=managementOps();o.hires++;o.hireSpent+=req.cost;o.history.unshift({day:S.day,kind:"unit-hire",unitKey:u.key,dept:req.department,managerId:req.managerId,employeeId:employee.id,approval:"delegated",authorization:"approved corporate hire limits and GM staffing target",cost:req.cost,payroll:dailySalary(employee),outcome:"Unit specialist hired"});
   o.history=o.history.slice(0,55);}
  unitRecord(u.key,"staffing",employee.n+" (#"+employee.id+") hired by "+(authority==="delegated"?"manager within CEO limits":"CEO exception")+
   "; "+biCurrency(req.cost)+" recruiting expense and "+biCurrency(dailySalary(employee))+"/day corporate payroll.");

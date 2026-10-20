@@ -4983,14 +4983,18 @@ function renderCEODecisions(){
   const eligible=unitRequestLive(req)&&managementCashReady(req);
   requests.push('<div class="exec-proposal"><b>Operating unit · staffing exception</b><p>'+
    esc(SERVICE_LINES[req.key]?.name||"Unknown unit")+' · '+esc(req.reason)+' · Recruiting '+biCurrency(req.cost)+
-   ' once + '+biCurrency(req.payroll)+'/day payroll. '+(eligible?"21-day payroll reserve verified.":"Insufficient cash runway or unit staffing limit reached.")+'</p>'+
+   ' once + '+biCurrency(req.payroll)+'/day payroll. '+(eligible?"21-day payroll reserve verified.":"Insufficient payroll runway or GM staffing authority.")+'</p>'+
+   '<p class="small">Requester: '+esc(person(req.managerId)?.n||"General Manager")+' · '+esc(managementFinanceExplanation(req))+
+   ' Approve: one actual specialist hired. Decline: no hire and cooldown. No decision: existing work remains at deadline risk.</p>'+
    '<div class="buttons"><button type="button" data-ceo-action="unit-approve" data-id="'+req.id+'" '+(eligible?'':'disabled')+'>Approve unit hire</button>'+
    '<button type="button" data-ceo-action="unit-decline" data-id="'+req.id+'">Decline</button></div></div>');
  }
  for(const req of hiring){const eligible=managementRequestLive(req)&&managementCashReady(req);
   requests.push('<div class="exec-proposal"><b>Corporate department · staffing exception</b><p>'+
    esc(DEPARTMENTS[req.dept]?.name||"Department")+' · '+esc(req.reason)+
-   ' · One-time '+biCurrency(req.cost)+' + '+biCurrency(req.payroll)+'/day; 21 days payroll required.</p>'+
+   ' · One-time '+biCurrency(req.cost)+' + '+biCurrency(req.payroll)+'/day payroll.</p>'+
+   '<p class="small">Requester: '+esc(person(req.managerId)?.n||"Department manager")+' · '+esc(managementFinanceExplanation(req))+
+   ' Approve: one real colleague hired. Decline: no hire and no immediate repeat. No decision: workload remains unresolved.</p>'+
    '<div class="buttons"><button type="button" data-ceo-action="manager-approve" data-id="'+req.id+'" '+(eligible?'':'disabled')+'>Approve corporate hire</button>'+
    '<button type="button" data-ceo-action="manager-decline" data-id="'+req.id+'">Decline</button></div></div>');
  }

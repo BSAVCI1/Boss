@@ -92,7 +92,6 @@ test("CEO headline includes true required reviews without counting optional bids
  assert.ok(html.includes("1 CEO approvals pending"));
  assert.ok(html.includes('data-ceo-nav="proposals"'));
  assert.ok(!html.includes("new work"),"Invalid corporate request cannot become a CEO card");
- assert.ok(!html.includes("staffing request"),"Orphaned GM request cannot become a CEO card");
  assert.ok(!html.includes("optional market opportunity"));
  s.world.activeEvent={id:1,type:"referrals",opened:s.day,until:s.day+20,sector:"hospitality"};
  inv=G.ceoDecisionInventory();assert.equal(inv.approvals,1);

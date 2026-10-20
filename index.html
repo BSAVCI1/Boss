@@ -3813,9 +3813,9 @@ function v23Render(){
  const cards=[{key:"core"},...lines].map(l=>{
  const item=BOSS_BUSINESSES[l.key]||BOSS_BUSINESSES.core,u=S.exec.units.find(u=>u.key===l.key),line=lines.find(x=>x.key===l.key);
  const active=S.deals.filter(d=>l.key==="core"?!d.serviceLine:d.serviceLine===l.key).length;
- const last=history.find(x=>x.line===l.key),profit=u?u.revenue-u.directCost-u.sharedLaborCost-u.payrollCost-u.developmentCost:0;
+ const last=history.find(x=>x.line===l.key),profit=u?(u.revenue||0)-(u.directCost||0)-(u.sharedLaborCost||0)-(u.payrollCost||0)-(u.developmentCost||0):0;
  const result=last?(last.kind==="campaign"?last.leads+" modeled leads · "+last.conversions+" conversions":"prototype "+last.built+" · validation "+last.verified+" · debt "+last.debt):"No completed specialist results";
- return '<div class="coach-mini"><b>'+esc(item[0])+'</b><p class="small"><b>Sells:</b> '+esc(item[1])+' · <b>Buys:</b> '+esc(item[2])+' · <b>Competes on:</b> '+esc(item[3])+'</p><p class="small">'+active+' signed active · '+(line?.delivered||0)+' finished · '+biCurrency(line?.revenue||0)+' recognized'+
+ return '<div class="coach-mini"><b>'+esc(item[0])+'</b><p class="small"><b>Sells:</b> '+esc(item[1])+' · <b>Buyer:</b> '+esc(item[2])+' · <b>Competes on:</b> '+esc(item[3])+'</p><p class="small">'+active+' signed active · '+(line?.delivered||0)+' finished · '+biCurrency(line?.revenue||0)+' recognized'+
  (u?' · GM '+esc(person(u.managerId)?.n||"unfilled")+' · unit contribution '+biCurrency(profit):'')+(last?' · Latest: '+esc(result):'')+'</p></div>';
  }).join("");
  for(const id of ["v23-work","v23-growth"]){const el=$(id);if(el&&el.innerHTML!==cards)el.innerHTML=cards;}

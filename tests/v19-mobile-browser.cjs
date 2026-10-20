@@ -313,7 +313,7 @@ const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>
    for(const [key,mi,si] of [["marketing",5,6],["operations",7,8]]){
     const gm=S.team[mi],specialist=S.team[si];gm.role.primary="lead";
     S.exec.lines.push({key,since:0,delivered:4,revenue:900,directCost:200});
-    S.exec.units.push({key,managerId:gm.id,staffIds:[gm.id,specialist.id],delivered:4,reviews:[{day:20,delivered:4}],plan:{}});
+    S.exec.units.push({key,managerId:gm.id,staffIds:[gm.id,specialist.id],delivered:4,reviews:[{day:20,managerId:gm.id,delivered:4}],plan:{}});
    }
    S.exec.officers.coo.id=S.team[10].id;S.exec.officers.coo.mandate=true;S.exec.officers.coo.authoritySince=20;
   }

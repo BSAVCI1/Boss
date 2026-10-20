@@ -22,7 +22,7 @@ const box={document:{getElementById:element,querySelector:()=>element("x"),query
 vm.createContext(box);
 const boot=code.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
 vm.runInContext(code.slice(0,boot)+
- "globalThis.G={fresh,state:()=>S,save,load,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,ensureExecutive,leadershipMaturity,leadershipRecordPhase,leadershipSummaryMarkup,renderLeadershipContexts,renderCEOFocus,gamePlan,gameChapter,companyDirection,ceoDecisionInventory,executiveOfficer};})();",box,{timeout:10000});
+ "globalThis.G={fresh,state:()=>S,save,load,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,ensureExecutive,leadershipMaturity,orgPeriod,leadershipRecordPhase,leadershipSummaryMarkup,renderLeadershipContexts,renderCEOFocus,gamePlan,gameChapter,companyMilestone,companyDirection,ceoDecisionInventory,executiveOfficer};})();",box,{timeout:10000});
 const G=box.G;
 function reset(){store.clear();G.fresh();return G.state();}
 function add(s,role="ops"){
@@ -37,13 +37,13 @@ function manager(s,level="manager"){
 }
 function growBusiness(s,withReview=true,level="manager"){
  manager(s,level);s.market.completed=12;
- if(withReview)s.org.departments.commercial.reviews.push({day:s.day,manager:s.team.find(p=>p.id===s.org.departments.commercial.managerId).n,result:"Measured delivery",reading:"Capacity"});
+ if(withReview){s.day+=30;s.org.departments.commercial.stats.leads=5;G.orgPeriod();}
  return s;
 }
 function addUnit(s,key){
  const gm=add(s),specialist=add(s,key==="marketing"?"mkt":"ops");
  gm.role.primary="lead";s.exec.lines.push({key,since:0,delivered:4,revenue:1000,directCost:120});
- s.exec.units.push({key,managerId:gm.id,staffIds:[gm.id,specialist.id],delivered:4,reviews:[{day:s.day,delivered:4}],plan:{}});
+ s.exec.units.push({key,managerId:gm.id,staffIds:[gm.id,specialist.id],delivered:4,reviews:[{day:s.day,managerId:gm.id,delivered:4}],plan:{}});
  return gm;
 }
 function group(s){
@@ -76,7 +76,9 @@ test("cash and elapsed days alone cannot earn managerial capability",()=>{
  assert.equal(G.leadershipMaturity().stage,"founder");
  manager(s,"manager");
  assert.equal(G.leadershipMaturity().stage,"founder","Appointment alone not demonstrated management");
- s.org.departments.commercial.reviews.push({day:1,manager:s.team.find(p=>p.id===s.org.departments.commercial.managerId).n,result:"Target met"});
+ s.org.departments.commercial.reviews.push({day:1,manager:"Founder",result:"Target met"});
+ assert.equal(G.leadershipMaturity().stage,"founder","Stale review cannot unlock");
+ s.day+=30;s.org.departments.commercial.stats.leads=5;G.orgPeriod();
  assert.equal(G.leadershipMaturity().stage,"leader");
 });
 test("measured manager-led company becomes Business Leader",()=>{
@@ -128,9 +130,23 @@ test("one-time transition persists and dismissal never spends or changes permiss
 });
 test("career milestone and chapter are distinct from leadership maturity",()=>{
  const s=reset();s.market.completed=100;s.rep=200;s.day=1000;
- assert.notEqual(G.gameChapter(),"Founder");
+ assert.equal(G.companyMilestone(),"Established specialist firm");
+ assert.equal(G.gameChapter(),"Founder");
  assert.equal(G.companyDirection().stage,"Founder");
  assert.equal(G.leadershipMaturity().stage,"founder");
+});
+test("GM replacement cannot inherit predecessor group capability",()=>{
+ const s=group(reset()),old=s.exec.units[0].managerId,successor=add(s);
+ assert.equal(G.leadershipMaturity().stage,"group");
+ s.exec.units[0].managerId=successor.id;s.exec.units[0].staffIds.push(successor.id);
+ assert.notEqual(successor.id,old);
+ assert.equal(G.leadershipMaturity().stage,"leader");
+ s.exec.units[0].reviews.push({day:s.day,managerId:successor.id,delivered:0});
+ assert.equal(G.leadershipMaturity().stage,"leader");
+});
+test("new department manager needs their own evidence",()=>{
+ const s=growBusiness(reset()),incoming=manager(s);
+ assert.ok(incoming);assert.equal(G.leadershipMaturity().stage,"founder");
 });
 test("manual tabs, authority policy, finance, IndexedDB and save engine remain structurally present",()=>{
  for(const id of ["view-work","view-team","view-growth","economy-panel","management-policy-center","org-explorer","ceo-action-center","leadership-growth","business-units"]){

@@ -4536,19 +4536,33 @@ function renderLaunchGuide(){
 const LEAD_PHASES=["founder","leader","group"],LEAD_NAMES={founder:"Founder",leader:"Business Leader",group:"Group CEO"};
 function leadershipMaturity(){
  const a=S.org.progression.appointments||[],delivered=S.market.completed||0;
- const senior=a.filter(n=>["manager","senior","director"].includes(n.level)&&person(n.id)&&!unitOfPerson(n.id)&&!executiveRoleOf(n.id));
+ const senior=a.filter(n=>["manager","senior","director"].includes(n.level)&&
+  person(n.id)&&n.id!==S.ops.assistantId&&!unitOfPerson(n.id)&&!executiveRoleOf(n.id));
  const directors=senior.filter(n=>n.level==="director");
  const headed=DEPT_KEYS.filter(k=>orgManager(k)&&managementLead(k));
- const reviewed=headed.filter(k=>S.org.departments[k].reviews.some(r=>r.manager===orgManager(k).n&&r.result!=="Insufficient evidence"));
- const delegated=managementOps().history.filter(x=>x.kind==="hire"&&Number.isInteger(x.employeeId)&&
-  headed.some(k=>orgManager(k).id===x.managerId||managementLead(k).id===x.managerId)).length;
- const operating=S.exec.units.filter(u=>person(u.managerId)&&u.staffIds.some(id=>id!==u.managerId&&person(id))&&
-  u.delivered>0&&u.reviews.length>0&&S.exec.lines.some(line=>line.key===u.key));
+ // Credit only measured reviews/scorecards for the currently appointed accountable leader.
+ const reviewed=headed.filter(k=>{
+  const head=orgManager(k),leader=managementLead(k),node=a.find(n=>n.id===leader.id);
+  const since=node?.since??S.day;
+  const measured=(S.org.departments[k].reviews||[]).some(r=>r.manager===head.n&&
+   r.day>=since&&["Target met","Below target"].includes(r.result));
+  const score=(managementOps().scorecards||[]).some(r=>r.personId===leader.id&&r.dept===k&&
+   r.day>=since&&Number(r.completed)>0);
+  return measured||score;
+ });
+ const accountable=new Set(headed.map(k=>managementLead(k)?.id).filter(Boolean));
+ const delegated=managementOps().history.filter(x=>x.kind==="hire"&&
+  Number.isInteger(x.employeeId)&&person(x.employeeId)&&accountable.has(x.managerId)).length;
+ // A new GM cannot inherit an old GM's review, and a non-delivery review cannot unlock a group.
+ const operating=S.exec.units.filter(u=>person(u.managerId)&&u.staffIds.includes(u.managerId)&&
+  u.staffIds.some(id=>id!==u.managerId&&person(id))&&u.delivered>0&&
+  (u.reviews||[]).some(r=>r.managerId===u.managerId&&r.delivered>0)&&
+  S.exec.lines.some(line=>line.key===u.key));
  const activeExecutives=Object.keys(EXECUTIVE_ROLES).filter(role=>!!executiveOfficer(role,"act"));
  const management=[
   {label:"Appoint a corporate Manager or higher",met:senior.length>0,detail:senior.length+" active"},
   {label:"Operate a manager-led department",met:headed.length>0,detail:headed.length+"/1"},
-  {label:"Demonstrate a manager review or executed management outcome",met:reviewed.length>0||delegated>0,detail:reviewed.length+" reviewed; "+delegated+" actions"},
+  {label:"Demonstrate manager delivery or an executed hire",met:reviewed.length>0||delegated>0,detail:reviewed.length+" measured departments; "+delegated+" hires"},
   {label:"Deliver 12 client projects",met:delivered>=12,detail:delivered+"/12"}
  ];
  const businessReady=management.every(x=>x.met);
@@ -4623,7 +4637,8 @@ function renderLeadershipContexts(){
  }
 }
 
-function gameChapter(){const n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;return n>=100&&S.rep>=100?(S.team.length>=12&&leaders===2?"Established company":"Established specialist firm"):n>=30&&leaders===2?"Growing company":n>=12&&S.team.length>=6?"Small company":n>=3?"Small agency":"Founder";}
+function companyMilestone(){const n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;return n>=100&&S.rep>=100?(S.team.length>=12&&leaders===2?"Established company":"Established specialist firm"):n>=30&&leaders===2?"Growing company":n>=12&&S.team.length>=6?"Small company":n>=3?"Small agency":"Founder";}
+function gameChapter(){return leadershipMaturity().name;}
 function gamePlan(){let n=S.market.completed||0,open=S.deals.filter(d=>!person(d.w));
  const m=leadershipMaturity();
  if(m.stage==="group")return ["Review your operating group",
@@ -4655,7 +4670,7 @@ function gameToast(message){const t=$("game-toast");if(!t)return;t.textContent=m
 function gameRender(){
 const [title,hint,value,max,view,project]=gamePlan(),direction=companyDirection(),event={delivered:S.market.completed||0,wins:S.world?.stats?.won||0,built:S.built.length};
 if(lastGameEvent){if(event.delivered>lastGameEvent.delivered)gameToast("Client project completed — great work!");else if(event.built>lastGameEvent.built)gameToast("You unlocked a company capability!");else if(event.wins>lastGameEvent.wins)gameToast("Competitive contract won!");}lastGameEvent=event;
-const legacyChapter=gameChapter();$("game-chapter").textContent=leadershipMaturity().name+" · Day "+S.day;
+const legacyChapter=companyMilestone();$("game-chapter").textContent=gameChapter()+" · Day "+S.day;
  const stageHtml='<div class="lead"><b>Company milestone · '+esc(legacyChapter)+'</b></div>'+
  '<p class="small"><b>'+esc(direction.title)+'</b> · '+esc(direction.detail)+'</p>'+
  '<p class="small">'+(direction.unmet.length?direction.unmet.length+" remaining growth requirements":"Next company milestone ready or under management")+'</p>';

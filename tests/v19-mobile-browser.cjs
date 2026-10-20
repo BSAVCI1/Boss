@@ -300,7 +300,7 @@ const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"inde
 const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,setupLeadership:stage=>{
  fresh();
  if(stage!=="founder"){
-  while(S.team.length<13){
+  while(S.team.length<(stage==="group"?11:8)){
    const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);
    p.role.primary=["sales","prod","ops","mkt"][S.team.length%4];S.team.push(p);
   }

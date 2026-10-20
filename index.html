@@ -4535,7 +4535,7 @@ function renderLaunchGuide(){
 /* v22.6: live earned leadership is a lens on existing career and authorization systems. */
 const LEAD_PHASES=["founder","leader","group"],LEAD_NAMES={founder:"Founder",leader:"Business Leader",group:"Group CEO"};
 function leadershipMaturity(){
- const hasProgression=!!S.org?.progression;
+ const hasProgression=!!S.org?.progression,ops=S.org?.progression?.operations;
  const a=S.org?.progression?.appointments||[],delivered=S.market.completed||0;
  const senior=a.filter(n=>["manager","senior","director"].includes(n.level)&&
   person(n.id)&&n.id!==S.ops.assistantId&&!unitOfPerson(n.id)&&!executiveRoleOf(n.id));
@@ -4547,12 +4547,12 @@ function leadershipMaturity(){
   const since=node?.since??S.day;
   const measured=(S.org.departments[k].reviews||[]).some(r=>r.manager===head.n&&
    r.day>=since&&["Target met","Below target"].includes(r.result));
-  const score=(managementOps().scorecards||[]).some(r=>r.personId===leader.id&&r.dept===k&&
+  const score=(ops?.scorecards||[]).some(r=>r.personId===leader.id&&r.dept===k&&
    r.day>=since&&Number(r.completed)>0);
   return measured||score;
  });
  const accountable=new Set(headed.map(k=>managementLead(k)?.id).filter(Boolean));
- const delegated=hasProgression?managementOps().history.filter(x=>x.kind==="hire"&&
+ const delegated=hasProgression?(ops?.history||[]).filter(x=>x.kind==="hire"&&
   Number.isInteger(x.employeeId)&&person(x.employeeId)&&accountable.has(x.managerId)).length:0;
  // A new GM cannot inherit an old GM's review, and a non-delivery review cannot unlock a group.
  const operating=S.exec.units.filter(u=>person(u.managerId)&&u.staffIds.includes(u.managerId)&&

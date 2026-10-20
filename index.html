@@ -4519,6 +4519,98 @@ function renderLaunchGuide(){
   "CEO approval available · $120 once; verified save required.":"Locked: "+check.checks.filter(c=>!c.met).map(c=>c.label).join(" · ");
 }
 
+
+/* v22.6: live earned leadership is a lens on existing career and authorization systems. */
+const LEAD_PHASES=["founder","leader","group"],LEAD_NAMES={founder:"Founder",leader:"Business Leader",group:"Group CEO"};
+function leadershipMaturity(){
+ const a=S.org.progression.appointments||[],delivered=S.market.completed||0;
+ const senior=a.filter(n=>["manager","senior","director"].includes(n.level)&&person(n.id)&&!unitOfPerson(n.id)&&!executiveRoleOf(n.id));
+ const directors=senior.filter(n=>n.level==="director");
+ const headed=DEPT_KEYS.filter(k=>orgManager(k)&&managementLead(k));
+ const reviewed=headed.filter(k=>S.org.departments[k].reviews.length>0);
+ const delegated=managementOps().history.filter(x=>["hire","hr-recovery","coo-dispatch"].includes(x.kind)&&
+  Number.isInteger(x.employeeId)&&(Number.isInteger(x.managerId)||Number.isInteger(x.executedBy))).length;
+ const operating=S.exec.units.filter(u=>person(u.managerId)&&u.staffIds.some(id=>id!==u.managerId&&person(id))&&
+  u.delivered>0&&u.reviews.length>0&&S.exec.lines.some(line=>line.key===u.key));
+ const activeExecutives=Object.keys(EXECUTIVE_ROLES).filter(role=>!!executiveOfficer(role,"act"));
+ const management=[
+  {label:"Appoint a corporate Manager or higher",met:senior.length>0,detail:senior.length+" active"},
+  {label:"Operate a manager-led department",met:headed.length>0,detail:headed.length+"/1"},
+  {label:"Demonstrate a manager review or executed management outcome",met:reviewed.length>0||delegated>0,detail:reviewed.length+" reviewed; "+delegated+" actions"},
+  {label:"Deliver 12 client projects",met:delivered>=12,detail:delivered+"/12"}
+ ];
+ const businessReady=management.every(x=>x.met);
+ const group=[
+  {label:"Maintain Business Leader capability",met:businessReady,detail:businessReady?"Ready":"Restore current management"},
+  {label:"Appoint a corporate Director",met:directors.length>0,detail:directors.length+"/1"},
+  {label:"Operate two staffed, delivering, reviewed GM units",met:operating.length>=2,detail:operating.length+"/2"},
+  {label:"Maintain a valid executive mandate",met:activeExecutives.length>0,detail:activeExecutives.length+"/1"},
+  {label:"Deliver 30 client projects",met:delivered>=30,detail:delivered+"/30"}
+ ];
+ const stage=group.every(x=>x.met)?"group":businessReady?"leader":"founder";
+ return{stage,name:LEAD_NAMES[stage],next:stage==="founder"?"Business Leader":stage==="leader"?"Group CEO":null,
+  checks:stage==="founder"?management:stage==="leader"?group:[],headed,reviewed,senior,directors,operating,activeExecutives,delivered,delegated};
+}
+function leadershipRecordPhase(){
+ const ui=S.ui,m=leadershipMaturity(),idx=LEAD_PHASES.indexOf(m.stage);
+ if(!Array.isArray(ui.leadershipSeen)){
+  ui.leadershipSeen=LEAD_PHASES.slice(0,idx+1);ui.leadershipHighest=m.stage;ui.leadershipPending=[];return;
+ }
+ if(!Array.isArray(ui.leadershipPending))ui.leadershipPending=[];
+ if(!LEAD_PHASES.includes(ui.leadershipHighest))ui.leadershipHighest="founder";
+ for(let i=0;i<=idx;i++){const key=LEAD_PHASES[i];
+  if(!ui.leadershipSeen.includes(key)){
+   ui.leadershipSeen.push(key);if(key!=="founder")ui.leadershipPending.push({stage:key,day:S.day});
+  }
+ }
+ if(idx>LEAD_PHASES.indexOf(ui.leadershipHighest))ui.leadershipHighest=m.stage;
+}
+function leadershipSummaryMarkup(m){
+ const roles={founder:"Find customers, deliver projects, recruit your initial team and protect cash.",
+  leader:"Set department objectives, develop managers, review delivery and decide important exceptions.",
+  group:"Set portfolio direction, review GMs and executives, allocate capital and evaluate expansion."};
+ const changes={founder:"An earned manager-led organization takes routine work within existing approval limits.",
+  leader:"Reviewed GM-led businesses, a Director and a valid executive mandate move priorities to portfolio leadership.",
+  group:"GM and executive accountability leads; manual work remains accessible and mandates never renew themselves."};
+ const remaining=m.checks.filter(c=>!c.met),highest=S.ui.leadershipHighest;
+ let html='<section class="leadership-summary" aria-label="Leadership progression"><div class="lead"><b>'+esc(m.name)+'</b><span class="small">Current leadership stage</span></div>'+
+  '<p>'+esc(roles[m.stage])+'</p>'+
+  (remaining.length?'<p class="small"><b>Next: '+esc(m.next)+'</b> · '+remaining.map(c=>esc(c.label+" ("+c.detail+")")).join("; ")+'</p>':
+   '<p class="small">All leadership stages earned. Company launch and career requirements still apply.</p>')+
+  '<p class="small"><b>What changes:</b> '+esc(changes[m.stage])+'</p>';
+ if(highest&&LEAD_PHASES.indexOf(highest)>LEAD_PHASES.indexOf(m.stage))html+='<p class="small">Previously reached '+esc(LEAD_NAMES[highest])+'. Expired operating capability does not erase past achievement.</p>';
+ const pending=(S.ui.leadershipPending||[])[0];
+ if(pending&&pending.stage===m.stage){
+  const people=m.stage==="leader"?m.headed.map(k=>orgManager(k)?.n).filter(Boolean):m.operating.map(u=>person(u.managerId)?.n).filter(Boolean);
+  html+='<div class="leadership-transition" role="status"><b>New chapter · '+esc(m.name)+'</b><p>Earned on Day '+pending.day+' through real delivery and leadership evidence.</p>'+
+   '<p>'+esc(people.join(", ")||"Your appointed team")+' handles only work within existing mandates. '+esc(roles[m.stage])+'</p>'+
+   '<button type="button" data-lead-dismiss="1">Dismiss · continue playing</button></div>';
+ }
+ return html+'</section>';
+}
+function renderLeadershipContexts(){
+ const m=leadershipMaturity(),risks=rankedProjects().filter(x=>["critical","watch","unassigned"].includes(x.risk)).length;
+ const without=S.deals.filter(d=>!d.w).length,decisions=ceoDecisionInventory().approvals;
+ const summaries={
+  founder:{
+   work:S.deals.length+" active projects · "+without+" unassigned · "+m.delivered+" completed. Assign people and win your first customers.",
+   team:S.team.length+" employees · "+m.senior.length+" corporate Managers. You lead hiring and coaching directly.",
+   growth:m.delivered+" completed projects · "+S.market.open.length+" unlocked sectors. Develop customers before new fixed costs."},
+  leader:{
+   work:risks+" project exceptions · "+m.headed.map(k=>DEPARTMENTS[k].name+" "+S.org.departments[k].stats.delivered+" delivered").join(" · ")+". Manual project details remain below.",
+   team:m.headed.length+" manager-led departments · "+m.reviewed.length+" with recorded reviews · "+decisions+" CEO approvals. Review leaders and reporting.",
+   growth:S.exec.lines.length+" additional services · "+m.delivered+" completed projects. Plan expansion within established launch rules."},
+  group:{
+   work:risks+" project exceptions · "+without+" unassigned projects across "+S.exec.units.length+" GM units. Drill into every project below.",
+   team:m.directors.length+" Directors · "+m.operating.length+" reviewed GM units · "+m.activeExecutives.length+" active executive mandates. Review succession and authority.",
+   growth:m.operating.map(u=>(SERVICE_LINES[u.key]?.name||u.key)+" "+u.delivered+" delivered / "+u.reviews.length+" GM reviews").join(" · ")+". Evaluate portfolio and capital priorities."}
+ };
+ for(const tab of ["work","team","growth"]){const root=$("leadership-context-"+tab);if(!root)continue;
+  const html='<div class="lead"><b>'+esc(m.name)+' · '+tab+'</b></div><p class="small">'+esc(summaries[m.stage][tab])+'</p>';
+  if(root.innerHTML!==html)root.innerHTML=html;
+ }
+}
+
 function gameChapter(){const n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;return n>=100&&S.rep>=100?(S.team.length>=12&&leaders===2?"Established company":"Established specialist firm"):n>=30&&leaders===2?"Growing company":n>=12&&S.team.length>=6?"Small company":n>=3?"Small agency":"Founder";}
 function gamePlan(){let n=S.market.completed||0,open=S.deals.filter(d=>!person(d.w));
 if(!n&&open.length)return["Assign a teammate to your first project","Match a worker to a customer. Your first completed project starts your story.",0,2,"work",open[0].id];

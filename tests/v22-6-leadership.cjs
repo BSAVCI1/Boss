@@ -165,6 +165,22 @@ test("legacy saves without a progression field save without rewriting finances",
  assert.equal(JSON.stringify(restored.bi.totals),before.fin);
  assert.ok(restored.org.progression);
 });
+test("v21.4c missing management operations migration saves and reloads safely",()=>{
+ const s=growBusiness(reset()),before=snapshot(s);s.day=2915;
+ delete s.org.progression.operations;
+ const raw=JSON.stringify(s);
+ assert.equal(G.leadershipMaturity().stage,"leader","Missing optional management journal cannot invalidate a real manager's measured results");
+ assert.equal(JSON.stringify(s),raw,"Leadership projection must not reconstruct legacy state");
+ assert.equal(G.save(),true,"Legacy operations omission must not abort save");
+ const loaded=G.load();
+ assert.ok(loaded&&loaded.org.progression.operations,"Legacy operations must be rehydrated by existing load migration");
+ assert.equal(loaded.org.progression.operations.hireBudget,0);
+ assert.equal(loaded.org.progression.operations.hireSlots,0);
+ assert.equal(loaded.org.progression.operations.shared.length,0);
+ assert.equal(loaded.cash,before.cash);assert.equal(loaded.day,2915);
+ assert.equal(JSON.stringify(loaded.bi.totals),before.fin);
+ assert.equal(G.leadershipMaturity().stage,"leader","No leadership or finance effects from save-only journal");
+});
 test("manual tabs, authority policy, finance, IndexedDB and save engine remain structurally present",()=>{
  for(const id of ["view-work","view-team","view-growth","economy-panel","management-policy-center","org-explorer","ceo-action-center","leadership-growth","business-units"]){
   assert.ok(html.includes('id="'+id+'"'),id+" missing");

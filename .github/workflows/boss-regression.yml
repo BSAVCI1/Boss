@@ -61,6 +61,13 @@ jobs:
           name: boss-v22-5a2-before-after
           path: reports/v22-5a2-mobile/*.png
           if-no-files-found: error
+      - name: Preserve v23A product and customer mobile evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-v23a-business-mobile
+          path: reports/v23a-mobile/*.png
+          if-no-files-found: error
       - name: Preserve six v22.6 real Chromium leadership-stage screenshots
         if: always()
         uses: actions/upload-artifact@v4

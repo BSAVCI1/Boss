@@ -310,6 +310,12 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .management-policy-center .policy-status[data-error="true"]{color:var(--warn)}
 @media(max-width:390px){.management-policy-center .policy-compare{gap:5px}.management-policy-center .policy-compare>div{padding:6px}}
 
+/* v22.6: adaptive leadership without hiding manual controls. */
+.leadership-summary{padding:12px;border:1px solid var(--line);border-radius:11px;margin:0 0 12px;background:var(--accentWash);overflow-wrap:anywhere}
+.leadership-summary p{font-size:13px;line-height:1.48;margin:7px 0}
+.leadership-transition{padding:10px;border:1px solid var(--accent);border-radius:9px;background:var(--panel);margin-top:10px}
+.leadership-transition button{min-height:44px}.leadership-context{margin:10px 0;overflow-wrap:anywhere}
+@media(max-width:414px){.leadership-summary .lead{flex-wrap:wrap}}
 /* v22.5A2: brief default views; all original manual controls retained. */
 .boss-overview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
 .boss-overview>div{border:1px solid var(--line);border-radius:8px;padding:9px;min-width:0;overflow-wrap:anywhere}
@@ -370,7 +376,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <details class="aux-details"><summary>Company history <span class="small" id="log-recent"></span></summary><div class="card" id="log" aria-live="off"></div></details>
 </details></section>
 <section id="view-work" class="app-view" data-page="work" aria-label="Projects and sales" hidden>
-<div class="view-intro"><h2>Work</h2><p>Deliver projects, win customers and protect cash</p></div>
+<div class="view-intro"><h2>Work</h2><p>Deliver projects, win customers and protect cash</p></div><section class="card leadership-context" id="leadership-context-work" aria-label="Work leadership focus"></section>
 <section aria-labelledby="deals-title"><h2 id="deals-title">Active projects</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
 <section class="card"><div class="lead"><b>Financial position</b><span class="small">Current company totals</span></div><div class="boss-overview" id="work-finance-snapshot"></div><p id="work-finance-action" class="small boss-summary"></p></section>
 <section class="card"><div class="lead"><b>Owned capabilities</b><span class="small">Permanent toolkit benefits</span></div><div id="work-owned-capabilities"></div></section>
@@ -414,7 +420,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </details>
 </section>
 <section id="view-team" class="app-view" data-page="team" aria-label="People and delegation" hidden>
-<div class="view-intro"><h2>Team</h2><p>Reporting, careers and people needing support</p></div>
+<div class="view-intro"><h2>Team</h2><p>Reporting, careers and people needing support</p></div><section class="card leadership-context" id="leadership-context-team" aria-label="Team leadership focus"></section>
 <section class="card"><div class="lead"><b>People and management capacity</b><span class="small">Actual appointments</span></div><p class="small" id="team-simple-summary"></p><p class="small">Company-wide limits are approved at <b>Today → Management policies</b>. Optional empty positions are not urgent when teams can operate effectively.</p></section>
 <section class="card org-explorer"><div class="lead"><b>Company reporting tree</b><span id="org-people-count" class="small"></span></div><p class="small">Saved reporting lines and actual appointments. Career grade and delegated management authority are separate.</p><div id="org-explorer"></div></section><details class="aux-details game-advanced" id="leadership-details"><summary>Advanced leadership progression · governed by Management policies</summary><div id="leadership-growth"></div></details>
 <section aria-labelledby="team-title"><h2 id="team-title">Your people · by manager</h2><p class="small" id="team-wellbeing">Each employee appears once. Open a reporting group, then an employee for legitimate actions and promotion requirements.</p><div id="people"></div></section>
@@ -446,7 +452,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </details>
 </section>
 <section id="view-growth" class="app-view" data-page="growth" aria-label="Strategy and capabilities" hidden>
-<div class="view-intro"><h2>Growth</h2><p>Businesses, markets and investments</p></div>
+<div class="view-intro"><h2>Growth</h2><p>Businesses, markets and investments</p></div><section class="card leadership-context" id="leadership-context-growth" aria-label="Growth leadership focus"></section>
 <section class="boss-primary-section" id="growth-expand-businesses"><h2>1. Expand businesses</h2><p class="small">Owned service lines, operating units, GMs and next eligible expansion; real prerequisites and CEO approval apply.</p><p class="small boss-summary" id="growth-business-status"></p><section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Purchased service lines start as shared service portfolios. You can now organize a purchased line into an operating unit below, appoint a General Manager and allocate dedicated employees. These units are internal operating divisions, not independent subsidiaries or separate bank accounts. Company cash and financial records remain consolidated; unit results only track future work. Shared department budgets and advanced unit delegations evolve in later releases. Revenue is never counted twice.</p><div id="company-unlock-guide" class="filter-note"></div><p id="company-launch-status" class="small" role="status"></p><div id="business-lines"></div><div id="business-units" aria-label="Operating unit management"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">New launches require proven delivery, leadership, qualified staffing and financial runway. Previously purchased lines remain yours. No future revenue is guaranteed.</p></details></section>
 </section>
 <section class="boss-primary-section" id="growth-markets-customers"><h2>2. Markets and customers</h2><p class="small">Target sector and commercial positioning affect new customers; CEO direction and each GM strategy are separate.</p><section class="card"><div class="lead"><b>Current market focus</b></div><p class="small boss-summary" id="growth-focus-summary"></p></section><section aria-labelledby="market-title"><h2 id="market-title">Target customer sector</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><details class="aux-details" id="sector-explore"><summary>Explore customer markets</summary><div id="sector-options" class="sector-buttons"></div></details><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
@@ -1012,7 +1018,7 @@ function save(){
   }
   if(saveConflict){saveError("RevisionConflict","This tab must reload the newer saved company before continuing.");return false;}
   nextRevision=Math.max(persistedRevision,Number(S._saveRevision)||0)+1;
-  S._saveRevision=nextRevision;payload=JSON.stringify(S);
+  leadershipRecordPhase();S._saveRevision=nextRevision;payload=JSON.stringify(S);
   if(extendedStorage)return queueIndexedSave(payload,nextRevision,S.day);
   localStorage.setItem(KEY,payload);
   if(localStorage.getItem(KEY)!==payload)throw new Error("Save verification failed");
@@ -2038,9 +2044,7 @@ function companyDirection(){
  const selected=$("service-line-select")?.value;
  const key=available.includes(selected)?selected:available[0];
  const leadership=S.org.progression.appointments;
- const stage=leadership.some(n=>n.level==="director")?"Corporate Group":
-  leadership.some(n=>n.level==="manager")?"Managed Company":
-  leadership.some(n=>n.level==="lead")?"Team Builder":"Founder";
+ const stage=leadershipMaturity().name;
  if(!key)return{stage,title:"Manage and improve your business group",detail:"All four service portfolios are owned. Improve GM results, profitability, succession and stable operating capacity.",unmet:[],view:"growth"};
  const readiness=companyLaunchReadiness(key),missing=readiness.checks.filter(c=>!c.met);
  const blocked=missing[0],title=readiness.ready?"Approve your next business launch":"Next unlock: "+readiness.chapter;
@@ -2902,6 +2906,14 @@ $("ceo-action-center").addEventListener("click",e=>{
  else report(result);
 });
 $("ceo-priority-card").addEventListener("click",e=>{
+ const dismiss=e.target.closest("button[data-lead-dismiss]");
+ if(dismiss){
+  const before=S.ui.leadershipPending||[];if(!before.length)return;
+  S.ui.leadershipPending=before.slice(1);
+  const done=ok=>{if(!ok)S.ui.leadershipPending=before;refresh();};
+  const saved=save();if(saved&&typeof saved.then==="function")saved.then(done);else done(saved);
+  return;
+ }
  const button=e.target.closest("button[data-ceo-nav]");if(!button)return;
  const target=button.dataset.ceoNav;
  if(target==="property"){$("property-options").open=true;navigate("growth");requestAnimationFrame(()=>$("property-panel").scrollIntoView({block:"start"}));}
@@ -4613,6 +4625,13 @@ function renderLeadershipContexts(){
 
 function gameChapter(){const n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;return n>=100&&S.rep>=100?(S.team.length>=12&&leaders===2?"Established company":"Established specialist firm"):n>=30&&leaders===2?"Growing company":n>=12&&S.team.length>=6?"Small company":n>=3?"Small agency":"Founder";}
 function gamePlan(){let n=S.market.completed||0,open=S.deals.filter(d=>!person(d.w));
+ const m=leadershipMaturity();
+ if(m.stage==="group")return ["Review your operating group",
+  m.operating.map(u=>(SERVICE_LINES[u.key]?.name||u.key)+": "+u.delivered+" delivered").join(" · ")+" · "+m.activeExecutives.length+" active executive mandates.",
+  m.operating.length,Math.max(2,m.operating.length),"today",null];
+ if(m.stage==="leader")return ["Develop departmental leadership",
+  m.reviewed.length+" department(s) reviewed · "+ceoDecisionInventory().approvals+" CEO approvals pending.",
+  m.reviewed.length,Math.max(1,m.headed.length),"team",null];
 if(!n&&open.length)return["Assign a teammate to your first project","Match a worker to a customer. Your first completed project starts your story.",0,2,"work",open[0].id];
 if(!n&&S.deals.length)return["Finish your first client project","Your team is delivering. Keep an eye on deadlines.",1,2,"work",S.deals[0].id];
 if(!n)return["Find your first customer","Build an opportunity without overspending on salaries.",0,1,"work",null];
@@ -4636,8 +4655,8 @@ function gameToast(message){const t=$("game-toast");if(!t)return;t.textContent=m
 function gameRender(){
 const [title,hint,value,max,view,project]=gamePlan(),direction=companyDirection(),event={delivered:S.market.completed||0,wins:S.world?.stats?.won||0,built:S.built.length};
 if(lastGameEvent){if(event.delivered>lastGameEvent.delivered)gameToast("Client project completed — great work!");else if(event.built>lastGameEvent.built)gameToast("You unlocked a company capability!");else if(event.wins>lastGameEvent.wins)gameToast("Competitive contract won!");}lastGameEvent=event;
-const legacyChapter=gameChapter();$("game-chapter").textContent=(legacyChapter===direction.stage?direction.stage:legacyChapter+" · "+direction.stage)+" · Day "+S.day;
- const stageHtml='<div class="lead"><b>Company direction · '+esc(direction.stage)+'</b></div>'+
+const legacyChapter=gameChapter();$("game-chapter").textContent=leadershipMaturity().name+" · Day "+S.day;
+ const stageHtml='<div class="lead"><b>Company milestone · '+esc(legacyChapter)+'</b></div>'+
  '<p class="small"><b>'+esc(direction.title)+'</b> · '+esc(direction.detail)+'</p>'+
  '<p class="small">'+(direction.unmet.length?direction.unmet.length+" remaining growth requirements":"Next company milestone ready or under management")+'</p>';
  if($("company-stage-today").innerHTML!==stageHtml)$("company-stage-today").innerHTML=stageHtml;
@@ -5160,7 +5179,7 @@ for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)day
 }
 function refresh(){
 if(editableInteractionPending())return;
-renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
+renderLeadershipContexts();renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);

@@ -5038,7 +5038,9 @@ function renderCEOFocus(){
   {title:"Protect payroll and operating runway",why:severity,go:"work",label:"Review cash and collections →"}:
   office?{title:"Resolve workplace crowding",why:severity,go:"property",label:"Compare premises and decide →"}:
   first?{title:"Resolve a pending manager request",why:first.name+" · "+first.reason,go:first.location,label:"Review approval and consequences →"}:
-  maturity.stage==="founder"&&(!maturity.delivered||S.deals.some(d=>!d.w))?
+  maturity.stage==="founder"&&direction.key&&companyLaunchReadiness(direction.key).ready?
+   {title:"Launch another business",why:"Earned launch eligibility: "+companyLaunchReadiness(direction.key).checks.filter(x=>x.met).length+" real requirements met. CEO approval spends $120; new customer demand is not guaranteed.",go:"launch",label:"Review business launch →"}:
+   maturity.stage==="founder"&&(!maturity.delivered||S.deals.some(d=>!d.w))?
    {title:"Deliver and assign customer projects",why:S.deals.filter(d=>!d.w).length+" unassigned projects · "+maturity.delivered+" delivered so far.",go:"work",label:"Manage customer work →"}:
    maturity.stage==="founder"&&S.team.length<5?
    {title:"Develop your initial leaders",why:S.team.length+" colleagues; real manager eligibility and coaching are shown in Team.",go:"team",label:"Develop employees →"}:

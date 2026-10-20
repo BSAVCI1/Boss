@@ -23,7 +23,7 @@ test("v22.4C fresh founder sees honest company cash, operating result and next c
  assert.equal(inv.approvals,0);
  G.renderCEOFocus();
  const html=el("ceo-priority-content").innerHTML;
- for(const part of ["Available cash · not profit","Cumulative tracked operating","CEO approvals pending","Managed by my team","Next company chapter","Strategic priority"]){
+ for(const part of ["Available cash · not profit","Cumulative tracked operating","CEO approvals pending","Founder-led operations","Current leadership stage","Next: Business Leader","Strategic priority"]){
   assert.ok(html.includes(part),"Missing CEO Today: "+part);
  }
  assert.ok(html.includes("No completed delegated management action"),"No imaginary delegated successes in founder view");

@@ -26,7 +26,7 @@ test("v22.4C fresh founder sees honest company cash, operating result and next c
  for(const part of ["Available cash · not profit","Cumulative tracked operating","CEO approvals pending","Managed by my team","Next company chapter","Strategic priority"]){
   assert.ok(html.includes(part),"Missing CEO Today: "+part);
  }
- assert.ok(html.includes("Founder-led operations"),"No imaginary delegated executives in founder view");
+ assert.ok(html.includes("No completed delegated management action"),"No imaginary delegated successes in founder view");
  assert.ok(html.includes("0 CEO approvals pending"));
  assert.equal(s.cash,cash);assert.equal(JSON.stringify(s),serialized,"Today projection must never touch save");
  money(s);
@@ -35,7 +35,9 @@ test("v22.4C developing CEO distinguishes pending hiring from handled work",()=>
  const s=fresh();staff(s,12);s.market.completed=25;s.day=270;
  s.cash+=50000;s.bi.openingCash+=50000;
  const manager=s.team[4];manager.department="commercial";manager.role.primary="lead";s.org.departments.commercial.managerId=manager.id;
- G.managementOps().requests.push({id:8801,status:"open",cost:20,payroll:1.5,dept:"commercial",reason:"Capacity gap"});
+ s.org.progression.appointments.push({id:manager.id,level:"manager",since:s.day-90});
+ s.deals[0].need="sales";s.deals[0].w=null;
+ G.managementOps().requests.push({id:8801,status:"open",cost:20,payroll:1.5,dept:"commercial",managerId:manager.id,skill:"sales",reason:"Capacity gap"});
  const before=JSON.stringify(s),decision=G.ceoDecisionInventory();assert.equal(decision.approvals,1);
  G.renderCEOFocus();const html=el("ceo-priority-content").innerHTML;
  assert.ok(html.includes("1 CEO approvals pending"));assert.ok(html.includes("Capacity gap"));assert.ok(html.includes("$20 once"));assert.ok(html.includes('data-ceo-nav="decisions"'));

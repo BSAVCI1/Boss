@@ -1730,18 +1730,18 @@ function managementWorkload(dept){
  return{staff,unattended,busy,ready,overloaded:unattended>=2&&unattended>ready||jobs.length>staff.length&&busy>=Math.max(1,staff.length-1)};
 }
 function managementHiringAvailable(r){
- const o=managementOps();return executiveFinanceGuard(r.cost)&&S.day<o.since+o.days&&o.hires<o.hireSlots&&o.hireSpent+r.cost<=o.hireBudget&&r.cost<=o.perHire;
+ const o=managementOps();return executiveFinanceGuard(r.cost+(executiveOfficer("cfo","protect")?Math.max(0,r.payroll||0)*30:0))&&S.day<o.since+o.days&&o.hires<o.hireSlots&&o.hireSpent+r.cost<=o.hireBudget&&r.cost<=o.perHire;
 }
 function managementCashReady(r){return S.cash>=r.cost+(S.team.reduce((n,p)=>n+dailySalary(p),0)+r.payroll)*21;}
-function managementHire(r,authority){
- if(!r||r.status!=="open"||managementLead(r.dept)?.id!==r.managerId||!managementCashReady(r)||
+function managementHire(r,authority,executedBy=null){
+ if(!r||!managementRequestLive(r)||!managementCashReady(r)||
  (authority==="delegated"&&!managementHiringAvailable(r)))return false;
  const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);
  p.department=r.dept;p.role.primary=r.skill;p.s[r.skill]=Math.max(2,p.s[r.skill]);p.role.auto=true;
  S.team.push(p);S.cash-=r.cost;biMoney("recruiting",r.cost,"Corporate "+authority+" staffing");
  r.status=authority;r.decided=S.day;r.hiredId=p.id;
  const o=managementOps();if(authority==="delegated"){o.hireSpent+=r.cost;o.hires++;}
- o.history.unshift({day:S.day,kind:"hire",dept:r.dept,managerId:r.managerId,employeeId:p.id,approval:authority,cost:r.cost,payroll:dailySalary(p)});
+ o.history.unshift({day:S.day,kind:"hire",dept:r.dept,managerId:r.managerId,executedBy,employeeId:p.id,approval:authority,authorization:authority==="delegated"?"approved corporate hire slots, per-hire and recruitment budget":"canonical CEO approval",cost:r.cost,payroll:dailySalary(p),outcome:"Staffing position filled"});
  o.history=o.history.slice(0,55);structural="";ladderSignature="";
  logIt(person(r.managerId).n+" "+(authority==="delegated"?"hired within authority":"received CEO approval to hire")+" "+p.n+" for "+biCurrency(r.cost)+" plus recurring "+biCurrency(dailySalary(p))+"/day.");return true;
 }
@@ -2705,9 +2705,11 @@ function weakest(p){return KEYS.reduce((a,b)=>p.s[a]<=p.s[b]?a:b);}
 function strongest(p){return KEYS.reduce((a,b)=>p.s[a]>=p.s[b]?a:b);}
 function tick(){if(paused||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;S.day+=1;orgPeriod();orgBudgetPeriod();executiveWeek();executiveOfficerDay();orgAutonomousTeamDay();unitAutonomousDay();ladderDay();managementReviewMonth();worldDay();let dirty=false,ideaDirty=false;
 if(pipelineDay())dirty=true;
+if(managementCOODay())dirty=true;
 if(unitStaffingDay())dirty=true;
 if(unitDelegateWork())dirty=true;
 if(delegateWork())dirty=true;
+if(managementAutopilotReconcile())dirty=true;
 if(autonomousWork())dirty=true;
 for(const p of [...S.team]){
 if(p.career.autoRest&&p.career.stress<=34&&p.career.burnout<=12){p.career.autoRest=false;p.t="idle";logIt(p.n+" returned after a recovery break.");dirty=true;}
@@ -2771,7 +2773,12 @@ function unitDelegateWork(){
    if(!worker)continue;
    d.w=worker.id;worker.t="d"+d.id;worker.role.autoTask=true;
    performanceAssign(d,worker);
-   unitRecord(u.key,"delivery",gm.n+" assigned "+worker.n+" to "+d.cl+" within the dedicated unit team.");
+   const grant=managementOps().shared.find(a=>a.unitKey===u.key&&a.employeeId===worker.id&&a.until>S.day&&a.status==="active");
+   const coo=executiveOfficer("coo","coordinate");
+   if(grant&&coo&&grant.approvedBy===coo.id){
+    const ops=managementOps();ops.history.unshift({day:S.day,kind:"coo-dispatch",managerId:coo.id,role:"COO",unitKey:u.key,employeeId:worker.id,dealId:d.id,authorization:"active COO coordination mandate + existing 30-day sharing",cost:0,outcome:"Qualified shared specialist assigned to an actual unowned unit project"});ops.history=ops.history.slice(0,55);
+    unitRecord(u.key,"delivery","COO "+coo.n+" coordinated GM "+gm.n+": "+worker.n+" assigned to "+d.cl+" without added payroll.");
+   }else unitRecord(u.key,"delivery",gm.n+" assigned "+worker.n+" to "+d.cl+" within authorized team capacity.");
    changed=true;
   }
  }
@@ -3554,11 +3561,13 @@ function executiveOfficerDay(){
  if(hr){
   const o=S.exec.officers.hr;let hired=0,recovery=0;
   for(const r of managementOps().requests.filter(x=>x.status==="open")){
-   if(managementHiringAvailable(r)&&managementCashReady(r)&&managementHire(r,"delegated"))hired++;
+   if(managementHiringAvailable(r)&&managementCashReady(r)&&managementHire(r,"delegated",hr.id))hired++;
   }
   for(const p of S.team){
    if(p.id===hr.id||executiveRoleOf(p.id)||p.id===S.ops.assistantId||p.t!=="idle"||p.career.recoveryDays>0||p.career.autoRest)continue;
-   if(p.career.stress>=65||p.career.burnout>=30){p.t="rest";p.career.autoRest=true;recovery++;}
+   if(p.career.stress>=65||p.career.burnout>=30){p.t="rest";p.career.autoRest=true;recovery++;
+    const ops=managementOps();ops.history.unshift({day:S.day,kind:"hr-recovery",managerId:hr.id,role:"HR",employeeId:p.id,authorization:"active HR people mandate",cost:0,outcome:"Idle employee placed on recovery after measured stress/burnout"});ops.history=ops.history.slice(0,55);
+   }
   }
   if(hired||recovery){o.history.unshift({day:S.day,action:"people",hired,recovery});
    logIt(hr.n+" executed HR mandate: "+hired+" approved hires and "+recovery+" idle-employee recovery assignments.");}
@@ -3880,6 +3889,48 @@ function unitCareerReadiness(u){
 }
 // v22: a GM negotiates scarce capacity with the functional department leader.
 // Reassigning a corporate specialist for 30 days never creates new payroll or permanent ownership.
+// Genuine COO capacity coordination, using the existing 30-day no-extra-payroll sharing mechanism.
+function managementCOODay(){
+ const coo=executiveOfficer("coo","coordinate");if(!coo)return false;
+ const ops=managementOps();let changed=false;
+ for(const u of S.exec.units){
+  const gm=person(u.managerId),plan=u.plan,role=SERVICE_LINES[u.key]?.need;
+  if(!gm||!role||gm.career.recoveryDays>0||gm.career.autoRest)continue;
+  const gaps=S.deals.filter(d=>d.unitKey===u.key&&!d.w).sort((a,b)=>a.dl-b.dl);
+  if(!gaps.length||gaps.length<2&&gaps[0].dl>7)continue;
+  const grant=ops.shared.some(a=>a.unitKey===u.key&&a.until>S.day&&a.status==="active"&&
+   gaps.some(d=>{const p=person(a.employeeId);return p?.t==="idle"&&p.career.recoveryDays===0&&p.s[d.need]>=2;}));
+  if(grant||S.day-(plan.lastSharedNegotiation??-999)<14)continue;
+  const dept=["sales","mkt"].includes(role)?"commercial":"delivery";
+  const candidate=managementSharedCandidates(u.key).filter(p=>p.department===dept&&p.role.auto&&
+   p.t==="idle"&&!p.career.autoRest&&p.career.recoveryDays===0&&p.s[role]>=2&&
+   gaps.some(d=>workerSpeed(p,d)>0)).sort((a,b)=>b.s[role]-a.s[role]||a.id-b.id)[0];
+  if(!candidate)continue;
+  ops.shared.push({unitKey:u.key,employeeId:candidate.id,since:S.day,until:S.day+30,status:"active",approvedBy:coo.id,reason:"COO approved urgent GM staffing coordination"});
+  ops.shared=ops.shared.slice(-40);plan.lastSharedNegotiation=S.day;
+  ops.history.unshift({day:S.day,kind:"shared",unitKey:u.key,managerId:coo.id,role:"COO",employeeId:candidate.id,until:S.day+30,authorization:"active COO coordination mandate",cost:0,outcome:"Existing qualified specialist shared for urgent unowned projects"});
+  ops.history=ops.history.slice(0,55);
+  unitRecord(u.key,"negotiation","COO "+coo.n+" and GM "+gm.n+" arranged 30-day temporary access to "+candidate.n+"; same employee ID, reporting line and payroll.");
+  logIt("COO "+coo.n+" resolved a real capacity gap with GM "+gm.n+" using "+candidate.n+" for temporary shared work.");
+  changed=true;
+ }
+ return changed;
+}
+function managementAutopilotReconcile(){
+ let changed=false;
+ for(const r of managementOps().requests.filter(x=>x.status==="open")){
+  const active=managementLead(r.dept)?.id===r.managerId&&
+   S.deals.some(d=>!d.unitKey&&!d.w&&d.need===r.skill);
+  if(!active){r.status="withdrawn";r.decided=S.day;changed=true;}
+ }
+ for(const r of S.exec.unitRequests.filter(x=>x.status==="open")){
+  const u=S.exec.units.find(x=>x.key===r.key);
+  const active=u&&u.managerId===r.managerId&&u.staffIds.length<Math.min(25,u.plan.staffingTarget||5)&&
+   S.deals.some(d=>d.unitKey===r.key&&!d.w);
+  if(!active){r.status="withdrawn";r.decidedAt=S.day;changed=true;}
+ }
+ return changed;
+}
 function unitStaffingDay(){
  let changed=false;
  for(const u of S.exec.units){
@@ -3937,7 +3988,7 @@ function unitDelegatedHireReady(req,leader){
 }
 function unitHireFromRequest(req,authority){
  const u=S.exec.units.find(x=>x.key===req.key);
- if(!u||req.status!=="open"||req.managerId!==u.managerId||!person(u.managerId)||
+ if(!u||!unitRequestLive(req)||!person(u.managerId)||
   u.staffIds.length>=Math.min(25,u.plan.staffingTarget||5)||!managementCashReady(req))return false;
  if(authority==="delegated"){
   const leader=managementLead(req.department)||orgManager(req.department)||executiveOfficer("coo","coordinate");
@@ -3950,7 +4001,7 @@ function unitHireFromRequest(req,authority){
  S.team.push(employee);u.staffIds.push(employee.id);
  S.cash-=req.cost;biMoney("recruiting",req.cost,SERVICE_LINES[u.key].name+" "+authority+" unit specialist: "+employee.n);
  u.developmentCost+=req.cost;req.status=authority;req.decidedAt=S.day;req.hiredId=employee.id;
- if(authority==="delegated"){const o=managementOps();o.hires++;o.hireSpent+=req.cost;o.history.unshift({day:S.day,kind:"unit-hire",unitKey:u.key,dept:req.department,employeeId:employee.id,approval:"delegated",cost:req.cost});
+ if(authority==="delegated"){const o=managementOps();o.hires++;o.hireSpent+=req.cost;o.history.unshift({day:S.day,kind:"unit-hire",unitKey:u.key,dept:req.department,managerId:req.managerId,employeeId:employee.id,approval:"delegated",authorization:"approved corporate hire limits and GM staffing target",cost:req.cost,payroll:dailySalary(employee),outcome:"Unit specialist hired"});
   o.history=o.history.slice(0,55);}
  unitRecord(u.key,"staffing",employee.n+" (#"+employee.id+") hired by "+(authority==="delegated"?"manager within CEO limits":"CEO exception")+
   "; "+biCurrency(req.cost)+" recruiting expense and "+biCurrency(dailySalary(employee))+"/day corporate payroll.");
@@ -4521,9 +4572,51 @@ function ceoPremisesOpportunity(){
 }
 // v22.4 batch 3: centralize what truly awaits CEO review.
 // Optional opportunities and operational warnings are NOT approvals.
+function managementRequestLive(r){
+ return r?.status==="open"&&managementLead(r.dept)?.id===r.managerId&&
+  S.deals.some(d=>!d.unitKey&&!d.w&&d.need===r.skill);
+}
+function unitRequestLive(r){
+ const u=S.exec.units.find(x=>x.key===r?.key);
+ return r?.status==="open"&&u&&u.managerId===r.managerId&&
+  u.staffIds.length<Math.min(25,u.plan.staffingTarget||5)&&
+  S.deals.some(d=>d.unitKey===r.key&&!d.w);
+}
+function managementFinanceExplanation(r){
+ const o=managementOps(),payroll=S.team.reduce((v,p)=>v+dailySalary(p),0),
+  premises=propertySummary().daily,recurring=r.payroll||0,once=r.cost||0;
+ const available=managementHiringAvailable(r),cashReady=managementCashReady(r),
+  budget=Math.max(0,o.hireBudget-o.hireSpent),slots=Math.max(0,o.hireSlots-o.hires);
+ const cfo=executiveOfficer("cfo","protect"),reserve=(payroll+premises)*30;
+ return "Cash "+biCurrency(S.cash)+" · once "+biCurrency(once)+" · incremental payroll "+
+  biCurrency(recurring)+"/day · corporate hiring budget "+biCurrency(o.hireBudget)+
+  " (remaining "+biCurrency(budget)+", "+slots+" hire slots). "+
+  (available?"Within delegated authority. ":"No remaining valid delegated hiring authority. ")+
+  (cfo?"CFO 30-day payroll/premises reserve "+biCurrency(reserve)+
+    (executiveFinanceGuard(once)?" remains intact. ":" would be breached by delegated spending. "):"No active CFO mandate. ")+
+  (cashReady?"CEO approval still requires 21 days of incremental payroll runway.":
+   "Cannot approve now: 21-day incremental payroll runway insufficient.");
+}
+function managementOutcomeCards(){
+ const ops=managementOps(),recent=ops.history.filter(x=>x.day>=S.day-30&&
+  ["hire","unit-hire","hr-recovery","coo-dispatch"].includes(x.kind));
+ const rows=recent.sort((a,b)=>b.day-a.day).slice(0,7).map(x=>{
+  const p=person(x.employeeId),manager=person(x.executedBy||x.managerId);
+  const label=x.kind==="coo-dispatch"?"COO assigned shared specialist":x.kind==="hr-recovery"?
+   "HR arranged recovery":x.kind==="unit-hire"?"GM hired unit specialist":x.executedBy?"HR facilitated authorized hire":"Manager hired colleague";
+  const unit=x.unitKey?" · "+(SERVICE_LINES[x.unitKey]?.name||x.unitKey):"";
+  const project=x.dealId?" · "+(deal(x.dealId)?.cl||"project #"+x.dealId):"";
+  return "Day "+x.day+" · "+label+" · "+(manager?.n||x.role||"Authorized manager")+
+   " → "+(p?.n||"Employee #"+x.employeeId)+unit+project+
+   " · cost "+biCurrency(x.cost||0)+(x.payroll?" + "+biCurrency(x.payroll)+"/day payroll":" · no new payroll");
+ });
+ for(const x of S.exec.history.filter(x=>x.day>=S.day-30&&x.action==="delegated").slice(0,2))
+  rows.push("Day "+x.day+" · "+(x.result||"Director action completed"));
+ return rows;
+}
 function ceoDecisionInventory(){
- const hiring=managementOps().requests.filter(x=>x.status==="open");
- const unit=S.exec.unitRequests.filter(x=>x.status==="open");
+ const hiring=managementOps().requests.filter(managementRequestLive);
+ const unit=S.exec.unitRequests.filter(unitRequestLive);
  const proposals=S.exec.proposals||[];
  const step=ladderNext(),payroll=S.team.reduce((n,p)=>n+dailySalary(p),0);
  const promotion=step?.ready&&S.cash>=(payroll+step.incremental*S.mod.cost)*14?step:null;
@@ -4818,23 +4911,14 @@ function renderCEOFocus(){
  const payroll=S.team.reduce((n,p)=>n+dailySalary(p),0),siteDaily=propertySummary().daily;
  const currentProfit=(S.bi.totals.revenue||0)-(S.bi.totals.costs||0),daily=payroll+siteDaily;
  const days=daily>0?S.cash/daily:null,risky=days!==null&&days<7;
- const requests=[...inventory.hiring.map(x=>({name:DEPARTMENTS[x.dept]?.name+" manager"||"Department manager",reason:x.reason,
+ const requests=[...inventory.hiring.map(x=>({name:person(x.managerId)?.n||"Department manager",reason:x.reason,
   once:x.cost,recurring:x.payroll,location:"decisions"})),
  ...inventory.unit.map(x=>({name:person(x.managerId)?.n||"General Manager vacancy",reason:x.reason,
   once:x.cost,recurring:x.payroll,location:"decisions"})),
  ...inventory.proposals.map(x=>({name:person(x.managerId)?.n||"Department manager",reason:x.benefit,
   once:x.cost||0,recurring:x.type==="raise"?.25:x.type==="hire"?1.5*S.mod.cost:x.type==="submanager"?.5*S.mod.cost:0,location:"proposals"}))];
- const managed=executiveManagementDigest();
- for(const [role,officer] of Object.entries(S.exec.officers)){
-  const p=person(officer.id);if(p)managed.push(EXECUTIVE_ROLES[role].short+" "+p.n+
-   (executiveOfficer(role,"active")?" · authorized mandate":" · no active mandate"));
- }
- for(const u of S.exec.units){const gm=person(u.managerId),latest=u.reviews?.at(-1);
-  if(gm)managed.push("GM "+gm.n+" · "+(SERVICE_LINES[u.key]?.name||u.key)+
-   (latest?" · last review "+latest.result:" · awaiting first measured review"));
- }
- if(!managed.length)for(const dept of DEPT_KEYS){const leader=orgManager(dept);if(leader)managed.push(leader.n+
-  " · "+DEPARTMENTS[dept].name+" · "+(S.org.departments[dept]?.reviews?.at(-1)?.result||"no measured review yet"));}
+ const managed=managementOutcomeCards();
+ if(!managed.length)managed.push("No completed delegated management action recorded in the last 30 game days. Existing managers continue within their actual approved authority.");
  const first=requests[0];
  const severity=risky?"Cash covers fewer than 7 days of payroll + active premises; review collections and spending.":
   office?"Workplace crowding: "+office.people+" people for "+office.capacity+" corporate seats.":
@@ -4857,7 +4941,7 @@ function renderCEOFocus(){
  '<div><small>Workforce · operating units</small><strong>'+S.team.length+' people · '+S.exec.units.length+' GM units</strong></div>'+
  '<div><small>Business portfolios</small><strong>'+ (1+S.exec.lines.length)+' total</strong><small>Core + '+S.exec.lines.length+' launched services</small></div></div>'+
  '<p class="small">'+esc(severity)+(days!==null?' · Current payroll/site cash cover '+days.toFixed(1)+' days.':'')+'</p>'+
- '<div class="ceo-today-section"><h3>'+inventory.approvals+' CEO approvals pending</h3>'+
+ '<div class="ceo-today-section"><h3>Needs my decision · '+inventory.approvals+' CEO approvals pending</h3>'+
  (first?'<p><b>'+esc(first.name)+'</b> · '+esc(first.reason)+'</p><p class="small">Requested '+biCurrency(first.once)+' once'+
  (first.recurring?' + '+biCurrency(first.recurring)+'/day ongoing':' · no new daily cost declared')+
  '. Approve or decline in the existing decision center; expected benefit is not a measured result.</p>'+
@@ -4869,8 +4953,8 @@ function renderCEOFocus(){
  '<div class="ceo-today-section ceo-focus-action"><h3>Strategic priority · '+esc(main.title)+'</h3><p>'+esc(main.why)+'</p>'+
  '<button type="button" data-ceo-nav="'+main.go+'">'+esc(main.label)+'</button></div>'+
  '<div class="ceo-today-section"><h3>Managed by my team</h3>'+
- (managed.length?managed.slice(0,2).map(x=>'<p class="small">'+esc(x)+'</p>').join("")+
- (managed.length>2?'<details id="ceo-more-accountable"><summary>More accountable leaders</summary>'+managed.slice(2).map(x=>'<p>'+esc(x)+'</p>').join("")+'</details>':''):
+ (managed.length?managed.slice(0,3).map(x=>'<p class="small">'+esc(x)+'</p>').join("")+
+ (managed.length>3?'<details id="ceo-more-accountable"><summary>More completed actions</summary>'+managed.slice(3).map(x=>'<p>'+esc(x)+'</p>').join("")+'</details>':''):
  '<p class="small">Founder-led operations. No appointed leader with recorded delegated work.</p>')+
  '<p class="small">Exceptions: '+(inventory.hiring.length+inventory.unit.length)+' staffing request(s); '+(S.exec.units||[]).filter(u=>S.deals.some(d=>d.unitKey===u.key&&!d.w)).length+' GM unit(s) with unassigned work.</p></div>'+
  (main.go==="launch"?'':'<div class="ceo-today-section"><h3>Next company chapter · '+esc(direction.title)+'</h3><p>'+esc(milestone)+'</p>'+
@@ -4896,17 +4980,21 @@ function renderCEODecisions(){
  const {hiring,unit,promotion}=decisions,offer=S.world.activeEvent;
  const requests=[];
  for(const req of unit){const u=S.exec.units.find(x=>x.key===req.key);
-  const eligible=managementCashReady(req)&&!!u&&u.managerId===req.managerId&&u.staffIds.length<Math.min(25,u.plan.staffingTarget||5);
+  const eligible=unitRequestLive(req)&&managementCashReady(req);
   requests.push('<div class="exec-proposal"><b>Operating unit · staffing exception</b><p>'+
    esc(SERVICE_LINES[req.key]?.name||"Unknown unit")+' · '+esc(req.reason)+' · Recruiting '+biCurrency(req.cost)+
-   ' once + '+biCurrency(req.payroll)+'/day payroll. '+(eligible?"21-day payroll reserve verified.":"Insufficient cash runway or unit staffing limit reached.")+'</p>'+
+   ' once + '+biCurrency(req.payroll)+'/day payroll. '+(eligible?"21-day payroll reserve verified.":"Insufficient payroll runway or GM staffing authority.")+'</p>'+
+   '<p class="small">Requester: '+esc(person(req.managerId)?.n||"General Manager")+' · '+esc(managementFinanceExplanation(req))+
+   ' Approve: one actual specialist hired. Decline: no hire and cooldown. No decision: existing work remains at deadline risk.</p>'+
    '<div class="buttons"><button type="button" data-ceo-action="unit-approve" data-id="'+req.id+'" '+(eligible?'':'disabled')+'>Approve unit hire</button>'+
    '<button type="button" data-ceo-action="unit-decline" data-id="'+req.id+'">Decline</button></div></div>');
  }
- for(const req of hiring){const eligible=managementCashReady(req);
+ for(const req of hiring){const eligible=managementRequestLive(req)&&managementCashReady(req);
   requests.push('<div class="exec-proposal"><b>Corporate department · staffing exception</b><p>'+
    esc(DEPARTMENTS[req.dept]?.name||"Department")+' · '+esc(req.reason)+
-   ' · One-time '+biCurrency(req.cost)+' + '+biCurrency(req.payroll)+'/day; 21 days payroll required.</p>'+
+   ' · One-time '+biCurrency(req.cost)+' + '+biCurrency(req.payroll)+'/day payroll.</p>'+
+   '<p class="small">Requester: '+esc(person(req.managerId)?.n||"Department manager")+' · '+esc(managementFinanceExplanation(req))+
+   ' Approve: one real colleague hired. Decline: no hire and no immediate repeat. No decision: workload remains unresolved.</p>'+
    '<div class="buttons"><button type="button" data-ceo-action="manager-approve" data-id="'+req.id+'" '+(eligible?'':'disabled')+'>Approve corporate hire</button>'+
    '<button type="button" data-ceo-action="manager-decline" data-id="'+req.id+'">Decline</button></div></div>');
  }

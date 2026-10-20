@@ -323,6 +323,8 @@ test("v22.2 executive offices produce real scorecards and keep salary/roles acro
 test("v22.2 authorized HR can complete pending departmental recruitment without extra CEO spending",()=>{
  const s=fresh();fund(s,12000);staff(s,15);s.market.completed=35;
  const mgr=s.team[0],hr=qualified(s,s.team[5].id);
+ // A real unassigned project is required: recruitment is not permission to grow without demand.
+ s.deals[0].need="mkt";s.deals[0].w=null;s.deals[0].unitKey=null;
  s.org.progression.appointments.push({id:mgr.id,level:"manager",since:0});
  assert.equal(G.executiveAppoint("hr",hr.id),true);
  assert.equal(G.executiveMandate("hr",true),true);

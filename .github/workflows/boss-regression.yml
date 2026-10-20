@@ -76,7 +76,7 @@ jobs:
         with:
           node-version: '20'
       - name: Validate CEO decision clarity before long economic replays
-        run: node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-5a1-management-policy.cjs && node tests/v22-5a2-simplification.cjs && node tests/v22-5b-smart-management.cjs && node tests/v22-5c-autopilot.cjs && node tests/v22-6-leadership.cjs
+        run: node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-5a1-management-policy.cjs && node tests/v22-5a2-simplification.cjs && node tests/v22-5b-smart-management.cjs && node tests/v22-5c-autopilot.cjs && node tests/v22-6-leadership.cjs && node tests/v23a-product-customer.cjs
   game:
     runs-on: ubuntu-latest
     steps:
@@ -99,7 +99,7 @@ jobs:
           grep -q 'id="view-growth"' reports/v22-5a2-before.html
           echo "Immutable v22.5A1 screenshot baseline verified: $BASELINE / 1b5718949207cf5927dad14d754cdf764b54a7e9"
       - name: Run standalone game regression checks
-        run: node tests/v22-3c4-integrated-growth.cjs && node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs && node tests/v17-game.cjs && node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v20-portfolio.cjs && node tests/v21-5-growth.cjs && node tests/v22-property-pace.cjs && node tests/v22-2-executive-leadership.cjs && node tests/v22-3-economic-balancing.cjs && node tests/v22-3a-economic-proof.cjs && node tests/v22-3b-economic-calibration.cjs && node tests/v22-3b-integrity.cjs && node tests/v22-5a1-management-policy.cjs && node tests/v22-5b-smart-management.cjs && node tests/v22-5c-autopilot.cjs && node tests/v22-6-leadership.cjs && node tests/v22-3c1-organic-hq.cjs && node tests/v22-3c3-organic-leadership.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-3-v22-4-integration.cjs && node --experimental-websocket tests/v19-mobile-browser.cjs
+        run: node tests/v22-3c4-integrated-growth.cjs && node tests/v15-smoke.cjs && node tests/v16-world.cjs && node tests/v161-fixes.cjs && node tests/v17-game.cjs && node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v20-portfolio.cjs && node tests/v21-5-growth.cjs && node tests/v22-property-pace.cjs && node tests/v22-2-executive-leadership.cjs && node tests/v22-3-economic-balancing.cjs && node tests/v22-3a-economic-proof.cjs && node tests/v22-3b-economic-calibration.cjs && node tests/v22-3b-integrity.cjs && node tests/v22-5a1-management-policy.cjs && node tests/v22-5b-smart-management.cjs && node tests/v22-5c-autopilot.cjs && node tests/v22-6-leadership.cjs && node tests/v23a-product-customer.cjs && node tests/v22-3c1-organic-hq.cjs && node tests/v22-3c3-organic-leadership.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-3-v22-4-integration.cjs && node --experimental-websocket tests/v19-mobile-browser.cjs
 
       - name: Upload v22.3A economic evidence
         if: always()

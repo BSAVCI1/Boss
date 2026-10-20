@@ -37,7 +37,7 @@ function manager(s,level="manager"){
 }
 function growBusiness(s,withReview=true,level="manager"){
  manager(s,level);s.market.completed=12;
- if(withReview)s.org.departments.commercial.reviews.push({day:s.day,result:"Measured delivery",reading:"Capacity"});
+ if(withReview)s.org.departments.commercial.reviews.push({day:s.day,manager:s.team.find(p=>p.id===s.org.departments.commercial.managerId).n,result:"Measured delivery",reading:"Capacity"});
  return s;
 }
 function addUnit(s,key){
@@ -76,7 +76,7 @@ test("cash and elapsed days alone cannot earn managerial capability",()=>{
  assert.equal(G.leadershipMaturity().stage,"founder");
  manager(s,"manager");
  assert.equal(G.leadershipMaturity().stage,"founder","Appointment alone not demonstrated management");
- s.org.departments.commercial.reviews.push({day:1,result:"Review"});
+ s.org.departments.commercial.reviews.push({day:1,manager:s.team.find(p=>p.id===s.org.departments.commercial.managerId).n,result:"Target met"});
  assert.equal(G.leadershipMaturity().stage,"leader");
 });
 test("measured manager-led company becomes Business Leader",()=>{
@@ -85,7 +85,7 @@ test("measured manager-led company becomes Business Leader",()=>{
  assert.ok(m.checks.some(c=>c.label.includes("two staffed")&&!c.met));
  G.renderLeadershipContexts();G.renderCEOFocus();
  assert.match(element("ceo-priority-content").innerHTML,/Business Leader/);
- assert.match(element("ceo-priority-content").innerHTML,/Review departmental performance|Review the current CEO direction/);
+ assert.match(element("ceo-priority-content").innerHTML,/Review manager outcomes and growth/);
  assert.match(element("leadership-context-team").innerHTML,/manager-led/);
  assertSafe(s,before);
 });

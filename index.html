@@ -4539,7 +4539,7 @@ function leadershipMaturity(){
  const senior=a.filter(n=>["manager","senior","director"].includes(n.level)&&
   person(n.id)&&n.id!==S.ops.assistantId&&!unitOfPerson(n.id)&&!executiveRoleOf(n.id));
  const directors=senior.filter(n=>n.level==="director");
- const headed=DEPT_KEYS.filter(k=>orgManager(k)&&managementLead(k));
+ const headed=DEPT_KEYS.filter(k=>orgManager(k)&&managementLead(k)&&orgReports(k).length>0);
  // Credit only measured reviews/scorecards for the currently appointed accountable leader.
  const reviewed=headed.filter(k=>{
   const head=orgManager(k),leader=managementLead(k),node=a.find(n=>n.id===leader.id);
@@ -4584,11 +4584,12 @@ function leadershipRecordPhase(){
  }
  if(!Array.isArray(ui.leadershipPending))ui.leadershipPending=[];
  if(!LEAD_PHASES.includes(ui.leadershipHighest))ui.leadershipHighest="founder";
+ const newlyEarned=!ui.leadershipSeen.includes(m.stage);
  for(let i=0;i<=idx;i++){const key=LEAD_PHASES[i];
-  if(!ui.leadershipSeen.includes(key)){
-   ui.leadershipSeen.push(key);if(key!=="founder")ui.leadershipPending.push({stage:key,day:S.day});
-  }
+  if(!ui.leadershipSeen.includes(key))ui.leadershipSeen.push(key);
  }
+ // If one save crosses more than one threshold, celebrate only the actual new role.
+ if(newlyEarned&&m.stage!=="founder")ui.leadershipPending=[{stage:m.stage,day:S.day}];
  if(idx>LEAD_PHASES.indexOf(ui.leadershipHighest))ui.leadershipHighest=m.stage;
 }
 function leadershipSummaryMarkup(m){

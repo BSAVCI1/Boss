@@ -318,6 +318,7 @@ const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>
    S.exec.officers.coo.id=S.team[10].id;S.exec.officers.coo.mandate=true;S.exec.officers.coo.authoritySince=20;
   }
   ensureExecutive(S);
+  S.cash+=900;S.bi.openingCash+=900;
  }
  structural="";renderStructure();refresh();return leadershipMaturity().stage;
 },pause:()=>{paused=true;clearTimeout(clock)},speed:value=>{spd=value},resetEditShield:()=>{editingActive=false;editingControl=null;editingCooldownUntil=0;if(document.activeElement?.matches?.(EDITABLE_CONTROL))document.activeElement.blur()},grow:n=>{while(S.team.length<n){const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);S.team.push(p);}structural='';renderStructure();refresh()}};S=load();if(!S)fresh();`);
@@ -784,9 +785,10 @@ async function runBrowser(){
     if(v.result?.value){ready=true;break;}await sleep(110);
    }
    assert.ok(ready,"v22.6 game did not bootstrap");
-   const run=await send("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.pause();qa.resetEditShield();const phase=qa.setupLeadership("+JSON.stringify(phase)+");qa.pause();document.querySelector('.bottom-nav button[data-view=today]').click();window.scrollTo(0,0);const el=document.getElementById('ceo-priority-content');return{phase,width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,summary:el.querySelector('.leadership-summary')?.textContent||'',work:!!document.getElementById('deals'),team:!!document.getElementById('people'),finance:!!document.getElementById('economy-panel')}})()",returnByValue:true});
+   const run=await send("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.pause();qa.resetEditShield();const phase=qa.setupLeadership("+JSON.stringify(phase)+");qa.pause();document.querySelector('.bottom-nav button[data-view=today]').click();window.scrollTo(0,0);const el=document.getElementById('ceo-priority-content');return{phase,width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,summary:el.querySelector('.leadership-summary')?.textContent||'',agenda:el.querySelector('.ceo-focus-action')?.textContent||'',work:!!document.getElementById('deals'),team:!!document.getElementById('people'),finance:!!document.getElementById('economy-panel')}})()",returnByValue:true});
    const v=run.result?.value;assert.ok(v&&v.phase===phase&&v.width===width&&!v.overflow&&v.work&&v.team&&v.finance,"v22.6 mobile "+JSON.stringify(v));
    assert.ok(v.summary.includes({founder:"Founder",leader:"Business Leader",group:"Group CEO"}[phase]),"Missing actual phase "+JSON.stringify(v));
+   assert.ok(v.agenda.includes({founder:"Deliver and assign customer projects",leader:"Review manager outcomes and growth",group:"Review business-unit results"}[phase]),"Phase-specific CEO priority missing "+JSON.stringify(v));
    await sleep(220);
    const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
    assert.ok(shot.data?.length>1500,"Missing v22.6 screenshot");

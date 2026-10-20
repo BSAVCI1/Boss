@@ -128,6 +128,14 @@ test("one-time transition persists and dismissal never spends or changes permiss
  assert.ok(again.ui.leadershipSeen.includes("leader"));
  assertSafe(s,before);
 });
+test("skipping directly to a genuinely mature group displays one true chapter, not two queued popups",()=>{
+ const s=reset();G.save();group(s);s.cash+=500;s.bi.openingCash+=500;
+ G.save();assert.equal(G.leadershipMaturity().stage,"group");
+ assert.equal(s.ui.leadershipPending.length,1);
+ assert.equal(s.ui.leadershipPending[0].stage,"group");
+ assert.equal([...s.ui.leadershipSeen].join(","),"founder,leader,group");
+ assert.equal((G.leadershipSummaryMarkup(G.leadershipMaturity()).match(/data-lead-dismiss/g)||[]).length,1);
+});
 test("career milestone and chapter are distinct from leadership maturity",()=>{
  const s=reset();s.market.completed=100;s.rep=200;s.day=1000;
  assert.equal(G.companyMilestone(),"Established specialist firm");

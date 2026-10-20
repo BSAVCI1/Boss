@@ -1236,12 +1236,28 @@ priceEdge*1.5;
 const specialist=lead.sector===S.market.focus?.035:0;
 const opponent=lead.sector===rival.sector?.06:0;
 const base=.77+needEdge+specialist-opponent+policy.win+(loyalty>=60?.075:0)+(S.day<=S.world.researchUntil?.06:0)+({0:-.04,7:0,14:.035,30:.065}[S.economy.terms]||0);
-const chance=Math.max(.48,Math.min(.94,base*worldDemand()));
+/* Real client history, staffing, competition and sector match only affect future bids. */
+const previous=S.market.customers[lead.client],history=Object.values(S.market.customers).filter(c=>c.orders>0);
+const quality=history.length?history.reduce((a,c)=>a+(c.quality||75),0)/history.length:75;
+const available=S.team.filter(p=>p.id!==S.ops.assistantId&&!unitOfPerson(p.id)&&!executiveRoleOf(p.id)&&!S.deals.some(d=>d.w===p.id)&&p.career.recoveryDays===0&&SECTORS[lead.sector].skills.includes(p.role.primary)).length;
+const factors=[
+ ["Sector fit",lead.sector===S.market.focus?.035:-.025],
+ ["Delivered client quality",history.length?(quality-75)/440:0],
+ ["Existing buyer trust",previous?.orders?Math.max(-.06,Math.min(.09,(previous.loyalty-50)/420)):0],
+ ["Price against competitor",priceEdge*(clientNeed==="price"?.7:.35)],
+ ["Available delivery specialists",available?.025:Math.max(-.11,-.045-S.deals.length/Math.max(1,pipelineCapacity())*.032)],
+ ["Delivery speed",clientNeed==="speed"?(policy.scope<1?.025:-.025)-(rival.speed-75)*.001:0],
+ ["Rival sector specialization",lead.sector===rival.sector?-.04:0]
+];
+const chance=Math.max(.26,Math.min(.93,base*worldDemand()+factors.reduce((a,f)=>a+f[1],0)));
+const drivers=factors.sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).filter(f=>Math.abs(f[1])>=.008).slice(0,4).map(f=>(f[1]>=0?"+":"−")+f[0]+" "+Math.round(Math.abs(f[1])*100)+"pp");
 const feeHint=worldIndicativeFee(lead);
-return{chance,rival,clientNeed,feeHint,rivalIndex:rival.pricing,playerPosition:pos,reason:clientNeed==="price"?"competing mainly on price":clientNeed==="quality"?"comparing quality and reputation":clientNeed==="speed"?"prioritizing reliable delivery":"prioritizing trusted suppliers"};}
+return{chance,rival,clientNeed,feeHint,rivalIndex:rival.pricing,playerPosition:pos,drivers,
+ evidence:{quality:Math.round(quality),historicClients:history.length,clientOrders:previous?.orders||0,trust:previous?.loyalty||0,sectorMatch:lead.sector===S.market.focus,availableSpecialists:available,activeProjects:S.deals.length,competitor:rival.name,relativePrice:+pos.toFixed(2)},
+ reason:clientNeed==="price"?"competing mainly on price":clientNeed==="quality"?"comparing quality and reputation":clientNeed==="speed"?"prioritizing reliable delivery":"prioritizing trusted suppliers"};}
 function worldResolveTender(lead){const preview=worldTenderPreview(lead);
 const won=Math.random()<preview.chance;
-const result={day:S.day,client:lead.client,sector:lead.sector,rival:preview.rival.name,priority:preview.clientNeed,strategy:S.world.strategy,policy:S.economy.pricing,probability:+preview.chance.toFixed(3),result:won?"won":"lost",feeHint:preview.feeHint};
+const result={day:S.day,client:lead.client,sector:lead.sector,rival:preview.rival.name,priority:preview.clientNeed,strategy:S.world.strategy,policy:S.economy.pricing,probability:+preview.chance.toFixed(3),result:won?"won":"lost",feeHint:preview.feeHint,drivers:preview.drivers,evidence:preview.evidence,reason:preview.reason};
 S.world.tenders.unshift(result);if(S.world.tenders.length>70)S.world.tenders.length=70;
 S.world.stats[won?"won":"lost"]++;
 preview.rival[won?"losses":"wins"]++;

@@ -4941,7 +4941,7 @@ function renderCEOFocus(){
  '<div><small>Workforce · operating units</small><strong>'+S.team.length+' people · '+S.exec.units.length+' GM units</strong></div>'+
  '<div><small>Business portfolios</small><strong>'+ (1+S.exec.lines.length)+' total</strong><small>Core + '+S.exec.lines.length+' launched services</small></div></div>'+
  '<p class="small">'+esc(severity)+(days!==null?' · Current payroll/site cash cover '+days.toFixed(1)+' days.':'')+'</p>'+
- '<div class="ceo-today-section"><h3>Needs my decision · '+inventory.approvals+' pending requests</h3>'+
+ '<div class="ceo-today-section"><h3>Needs my decision · '+inventory.approvals+' CEO approvals pending</h3>'+
  (first?'<p><b>'+esc(first.name)+'</b> · '+esc(first.reason)+'</p><p class="small">Requested '+biCurrency(first.once)+' once'+
  (first.recurring?' + '+biCurrency(first.recurring)+'/day ongoing':' · no new daily cost declared')+
  '. Approve or decline in the existing decision center; expected benefit is not a measured result.</p>'+

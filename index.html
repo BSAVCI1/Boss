@@ -1730,18 +1730,18 @@ function managementWorkload(dept){
  return{staff,unattended,busy,ready,overloaded:unattended>=2&&unattended>ready||jobs.length>staff.length&&busy>=Math.max(1,staff.length-1)};
 }
 function managementHiringAvailable(r){
- const o=managementOps();return executiveFinanceGuard(r.cost)&&S.day<o.since+o.days&&o.hires<o.hireSlots&&o.hireSpent+r.cost<=o.hireBudget&&r.cost<=o.perHire;
+ const o=managementOps();return executiveFinanceGuard(r.cost+(executiveOfficer("cfo","protect")?Math.max(0,r.payroll||0)*30:0))&&S.day<o.since+o.days&&o.hires<o.hireSlots&&o.hireSpent+r.cost<=o.hireBudget&&r.cost<=o.perHire;
 }
 function managementCashReady(r){return S.cash>=r.cost+(S.team.reduce((n,p)=>n+dailySalary(p),0)+r.payroll)*21;}
-function managementHire(r,authority){
- if(!r||r.status!=="open"||managementLead(r.dept)?.id!==r.managerId||!managementCashReady(r)||
+function managementHire(r,authority,executedBy=null){
+ if(!r||!managementRequestLive(r)||!managementCashReady(r)||
  (authority==="delegated"&&!managementHiringAvailable(r)))return false;
  const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);
  p.department=r.dept;p.role.primary=r.skill;p.s[r.skill]=Math.max(2,p.s[r.skill]);p.role.auto=true;
  S.team.push(p);S.cash-=r.cost;biMoney("recruiting",r.cost,"Corporate "+authority+" staffing");
  r.status=authority;r.decided=S.day;r.hiredId=p.id;
  const o=managementOps();if(authority==="delegated"){o.hireSpent+=r.cost;o.hires++;}
- o.history.unshift({day:S.day,kind:"hire",dept:r.dept,managerId:r.managerId,employeeId:p.id,approval:authority,authorization:authority==="delegated"?"approved corporate hire slots, per-hire and recruitment budget":"canonical CEO approval",cost:r.cost,payroll:dailySalary(p),outcome:"Staffing position filled"});
+ o.history.unshift({day:S.day,kind:"hire",dept:r.dept,managerId:r.managerId,executedBy,employeeId:p.id,approval:authority,authorization:authority==="delegated"?"approved corporate hire slots, per-hire and recruitment budget":"canonical CEO approval",cost:r.cost,payroll:dailySalary(p),outcome:"Staffing position filled"});
  o.history=o.history.slice(0,55);structural="";ladderSignature="";
  logIt(person(r.managerId).n+" "+(authority==="delegated"?"hired within authority":"received CEO approval to hire")+" "+p.n+" for "+biCurrency(r.cost)+" plus recurring "+biCurrency(dailySalary(p))+"/day.");return true;
 }
@@ -3561,7 +3561,7 @@ function executiveOfficerDay(){
  if(hr){
   const o=S.exec.officers.hr;let hired=0,recovery=0;
   for(const r of managementOps().requests.filter(x=>x.status==="open")){
-   if(managementHiringAvailable(r)&&managementCashReady(r)&&managementHire(r,"delegated"))hired++;
+   if(managementHiringAvailable(r)&&managementCashReady(r)&&managementHire(r,"delegated",hr.id))hired++;
   }
   for(const p of S.team){
    if(p.id===hr.id||executiveRoleOf(p.id)||p.id===S.ops.assistantId||p.t!=="idle"||p.career.recoveryDays>0||p.career.autoRest)continue;
@@ -3988,7 +3988,7 @@ function unitDelegatedHireReady(req,leader){
 }
 function unitHireFromRequest(req,authority){
  const u=S.exec.units.find(x=>x.key===req.key);
- if(!u||req.status!=="open"||req.managerId!==u.managerId||!person(u.managerId)||
+ if(!u||!unitRequestLive(req)||!person(u.managerId)||
   u.staffIds.length>=Math.min(25,u.plan.staffingTarget||5)||!managementCashReady(req))return false;
  if(authority==="delegated"){
   const leader=managementLead(req.department)||orgManager(req.department)||executiveOfficer("coo","coordinate");
@@ -4603,7 +4603,7 @@ function managementOutcomeCards(){
  const rows=recent.sort((a,b)=>b.day-a.day).slice(0,7).map(x=>{
   const p=person(x.employeeId),manager=person(x.executedBy||x.managerId);
   const label=x.kind==="coo-dispatch"?"COO assigned shared specialist":x.kind==="hr-recovery"?
-   "HR arranged recovery":x.kind==="unit-hire"?"GM hired unit specialist":"Manager hired colleague";
+   "HR arranged recovery":x.kind==="unit-hire"?"GM hired unit specialist":x.executedBy?"HR facilitated authorized hire":"Manager hired colleague";
   const unit=x.unitKey?" · "+(SERVICE_LINES[x.unitKey]?.name||x.unitKey):"";
   const project=x.dealId?" · "+(deal(x.dealId)?.cl||"project #"+x.dealId):"";
   return "Day "+x.day+" · "+label+" · "+(manager?.n||x.role||"Authorized manager")+
@@ -4911,7 +4911,7 @@ function renderCEOFocus(){
  const payroll=S.team.reduce((n,p)=>n+dailySalary(p),0),siteDaily=propertySummary().daily;
  const currentProfit=(S.bi.totals.revenue||0)-(S.bi.totals.costs||0),daily=payroll+siteDaily;
  const days=daily>0?S.cash/daily:null,risky=days!==null&&days<7;
- const requests=[...inventory.hiring.map(x=>({name:DEPARTMENTS[x.dept]?.name+" manager"||"Department manager",reason:x.reason,
+ const requests=[...inventory.hiring.map(x=>({name:person(x.managerId)?.n||"Department manager",reason:x.reason,
   once:x.cost,recurring:x.payroll,location:"decisions"})),
  ...inventory.unit.map(x=>({name:person(x.managerId)?.n||"General Manager vacancy",reason:x.reason,
   once:x.cost,recurring:x.payroll,location:"decisions"})),

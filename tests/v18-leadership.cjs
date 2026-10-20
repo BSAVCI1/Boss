@@ -12,7 +12,7 @@ const el=id=>{if(!elements.has(id))elements.set(id,{id,innerHTML:"",textContent:
 const sandbox={document:{getElementById:el,querySelector:()=>el("selector"),querySelectorAll:()=>[],documentElement:el("html"),body:el("body"),addEventListener(){}},window:{scrollY:0,innerWidth:390,addEventListener(){},scrollTo(){}},localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)},requestAnimationFrame:()=>1,setTimeout:()=>1,clearTimeout:()=>{},getComputedStyle:()=>({getPropertyValue:()=>""}),clearInterval:()=>{},Math,Date,Map,Set,JSON,console};
 vm.createContext(sandbox);
 const boot=javascript.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0,"Missing boot");
-vm.runInContext(javascript.slice(0,boot)+"globalThis.G={fresh,load,get:()=>S,set:x=>S=x,save,tick,gameChapter,gamePlan,gameRender,gameAdvanceDays,renderStructure,renderBriefing,refresh,navigate,ensureExecutive,executiveWeek,executiveProposal,executiveDecision,ceoDirection,draftExecutiveDirection,executiveShow,executiveLaunch,ceoLineFinish,createDeal,worldNewEvent,worldDay,worldEventChoice,renderIdeas,ideaProgressDay,delegateWork,orgChooseManager,feeFor,careerRoleSkill};})();",sandbox,{timeout:3000});
+vm.runInContext(javascript.slice(0,boot)+"globalThis.G={fresh,load,get:()=>S,set:x=>S=x,save,tick,gameChapter,companyMilestone,gamePlan,gameRender,gameAdvanceDays,renderStructure,renderBriefing,refresh,navigate,ensureExecutive,executiveWeek,executiveProposal,executiveDecision,ceoDirection,draftExecutiveDirection,executiveShow,executiveLaunch,ceoLineFinish,createDeal,worldNewEvent,worldDay,worldEventChoice,renderIdeas,ideaProgressDay,delegateWork,orgChooseManager,feeFor,careerRoleSkill};})();",sandbox,{timeout:3000});
 const G=sandbox.G;
 function fresh(){store.clear();G.fresh();el("lab-topic").value="learning";el("lab-duration").value="15";el("lab-forecast").value="25";el("lab-sector").value="hospitality";}
 
@@ -87,7 +87,7 @@ const line=s.exec.lines[0];G.ceoLineFinish({serviceLine:"product",bookedAt:s.day
 assert.equal(line.delivered,1);assert.equal(line.revenue,210);accounting(s);
 });
 test("mature founder-led specialist is established despite team smaller than 12",()=>{
-fresh();const s=G.get();s.market.completed=305;s.rep=1456;s.day=2252;assert.ok(G.gameChapter().includes("Established"));assert.ok(/CEO|direction|chapter/i.test(G.gamePlan()[0]));
+fresh();const s=G.get();s.market.completed=305;s.rep=1456;s.day=2252;assert.equal(G.companyMilestone(),"Established specialist firm");assert.equal(G.gameChapter(),"Founder");assert.ok(/CEO|direction|chapter/i.test(G.gamePlan()[0]));
 assert.ok(G.gamePlan()[2]<G.gamePlan()[3],"Mature company needs an unfinished strategic goal");
 });
 test("market brief is prioritized on Today and stays for 45 days",()=>{

@@ -75,7 +75,7 @@ test("CEO Today and Growth explain the next actual missing milestone",()=>{
  const advice=G.companyDirection();
  assert.equal(advice.stage,"Founder");assert.ok(advice.unmet.length>0);
  G.renderLaunchGuide();assert.ok(el("company-unlock-guide").innerHTML.includes("Locked"));
- G.gameRender();assert.ok(el("company-stage-today").innerHTML.includes("Company direction"));
+ G.gameRender();assert.ok(el("company-stage-today").innerHTML.includes("Company milestone"),"Business launch milestone stays distinct from v22.6 leadership maturity");
  assert.ok(el("game-chapter").textContent.includes("Founder"));
  money(s);
 });

@@ -308,7 +308,7 @@ const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>
   const manager=S.team[3];manager.department="commercial";manager.role.primary="lead";
   S.org.progression.appointments.push({id:manager.id,level:stage==="group"?"director":"manager",since:0,successorId:null});
   S.org.departments.commercial.managerId=manager.id;
-  S.org.departments.commercial.reviews.push({day:20,result:"Target met",reading:"Measured delivery"});
+  S.org.departments.commercial.reviews.push({day:20,manager:manager.n,result:"Target met",reading:"Measured delivery"});
   if(stage==="group"){
    for(const [key,mi,si] of [["marketing",5,6],["operations",7,8]]){
     const gm=S.team[mi],specialist=S.team[si];gm.role.primary="lead";

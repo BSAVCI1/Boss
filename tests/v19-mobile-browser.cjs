@@ -297,7 +297,30 @@ document.addEventListener("DOMContentLoaded",async()=>{
 });
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
-const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,pause:()=>{paused=true;clearTimeout(clock)},speed:value=>{spd=value},resetEditShield:()=>{editingActive=false;editingControl=null;editingCooldownUntil=0;if(document.activeElement?.matches?.(EDITABLE_CONTROL))document.activeElement.blur()},grow:n=>{while(S.team.length<n){const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);S.team.push(p);}structural='';renderStructure();refresh()}};S=load();if(!S)fresh();`);
+const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,setupLeadership:stage=>{
+ fresh();
+ if(stage!=="founder"){
+  while(S.team.length<13){
+   const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);
+   p.role.primary=["sales","prod","ops","mkt"][S.team.length%4];S.team.push(p);
+  }
+  S.day=20;S.market.completed=stage==="group"?40:15;
+  const manager=S.team[3];manager.department="commercial";manager.role.primary="lead";
+  S.org.progression.appointments.push({id:manager.id,level:stage==="group"?"director":"manager",since:0,successorId:null});
+  S.org.departments.commercial.managerId=manager.id;
+  S.org.departments.commercial.reviews.push({day:20,result:"Target met",reading:"Measured delivery"});
+  if(stage==="group"){
+   for(const [key,mi,si] of [["marketing",5,6],["operations",7,8]]){
+    const gm=S.team[mi],specialist=S.team[si];gm.role.primary="lead";
+    S.exec.lines.push({key,since:0,delivered:4,revenue:900,directCost:200});
+    S.exec.units.push({key,managerId:gm.id,staffIds:[gm.id,specialist.id],delivered:4,reviews:[{day:20,delivered:4}],plan:{}});
+   }
+   S.exec.officers.coo.id=S.team[10].id;S.exec.officers.coo.mandate=true;S.exec.officers.coo.authoritySince=20;
+  }
+  ensureExecutive(S);
+ }
+ structural="";renderStructure();refresh();return leadershipMaturity().stage;
+},pause:()=>{paused=true;clearTimeout(clock)},speed:value=>{spd=value},resetEditShield:()=>{editingActive=false;editingControl=null;editingCooldownUntil=0;if(document.activeElement?.matches?.(EDITABLE_CONTROL))document.activeElement.blur()},grow:n=>{while(S.team.length<n){const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);S.team.push(p);}structural='';renderStructure();refresh()}};S=load();if(!S)fresh();`);
 fs.writeFileSync(file,qaHtml.replace("</body>","<script>"+instrumentation+"</script></body>"));
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),"boss-cdp-"));
 const args=["--headless=new","--no-sandbox","--disable-gpu","--disable-dev-shm-usage","--hide-scrollbars","--allow-file-access-from-files","--remote-debugging-port=0","--user-data-dir="+profile,"about:blank"];
@@ -749,7 +772,31 @@ async function runBrowser(){
    fs.writeFileSync(name,Buffer.from(shot.data,"base64"));
    console.log("PASS v22.5B live culture "+name+" "+JSON.stringify(v));
   }
-  console.log("PASS real Chromium near-390px Boss mobile UI smoke");
+  
+ // v22.6 actual game-engine state rendered by real Chromium at iPhone sizes.
+ const leadDir=path.resolve("reports/v22-6-mobile");fs.mkdirSync(leadDir,{recursive:true});
+ for(const [width,height] of [[390,844],[414,896]]){
+  await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+  for(const phase of ["founder","leader","group"]){
+   await send("Page.navigate",{url:"file://"+file});
+   let ready=false;for(let n=0;n<90;n++){
+    const v=await send("Runtime.evaluate",{expression:"document.documentElement.dataset.bossReady==='true'&&!!window.__bossQA",returnByValue:true});
+    if(v.result?.value){ready=true;break;}await sleep(110);
+   }
+   assert.ok(ready,"v22.6 game did not bootstrap");
+   const run=await send("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.pause();qa.resetEditShield();const phase=qa.setupLeadership("+JSON.stringify(phase)+");qa.pause();document.querySelector('.bottom-nav button[data-view=today]').click();window.scrollTo(0,0);const el=document.getElementById('ceo-priority-content');return{phase,width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,summary:el.querySelector('.leadership-summary')?.textContent||'',work:!!document.getElementById('deals'),team:!!document.getElementById('people'),finance:!!document.getElementById('economy-panel')}})()",returnByValue:true});
+   const v=run.result?.value;assert.ok(v&&v.phase===phase&&v.width===width&&!v.overflow&&v.work&&v.team&&v.finance,"v22.6 mobile "+JSON.stringify(v));
+   assert.ok(v.summary.includes({founder:"Founder",leader:"Business Leader",group:"Group CEO"}[phase]),"Missing actual phase "+JSON.stringify(v));
+   await sleep(220);
+   const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+   assert.ok(shot.data?.length>1500,"Missing v22.6 screenshot");
+   const filename=path.join(leadDir,"boss-"+phase+"-"+width+"px.png");
+   fs.writeFileSync(filename,Buffer.from(shot.data,"base64"));
+   console.log("PASS v22.6 Chromium "+filename+" "+JSON.stringify(v));
+  }
+ }
+
+   console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }
 runBrowser().catch(err=>{console.error(err);process.exitCode=1});

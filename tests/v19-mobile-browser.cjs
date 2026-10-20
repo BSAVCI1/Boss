@@ -501,8 +501,8 @@ async function runBrowser(){
     }
     s.world.activeEvent={id:4900,opened:4900,until:4950,type:"referrals",sector:s.market.focus};
     qa.renderCEOFocus();qa.renderCEODecisions();
-    const panel=document.getElementById("ceo-more-accountable");
-    if(!panel)throw Error("More accountable leaders missing");
+    const panel=document.getElementById("ceo-strategy-evidence");
+    if(!panel)throw Error("CEO strategy evidence disclosure missing");
     const summaries=document.querySelectorAll("#ceo-action-center button[data-ceo-action=opportunity]");
     if(summaries.length!==2||document.querySelectorAll("#exec-inbox button[data-world-event]").length)
      throw Error("Duplicate market decisions");
@@ -520,9 +520,9 @@ async function runBrowser(){
       }
       if(s.day!==dayBefore+1)throw Error("A real game day failed to commit at "+speed+"x: "+dayBefore+" → "+s.day);
      }
-     checks.push({speed,day:s.day,open:panel.open,same:document.getElementById("ceo-more-accountable")===panel,focus:document.activeElement===summary});
+     checks.push({speed,day:s.day,open:panel.open,same:document.getElementById("ceo-strategy-evidence")===panel,focus:document.activeElement===summary});
     }
-    return{checks,advanced:s.day-day===21,stillOpen:panel.open,same:document.getElementById("ceo-more-accountable")===panel,focus:document.activeElement===summary,
+    return{checks,advanced:s.day-day===21,stillOpen:panel.open,same:document.getElementById("ceo-strategy-evidence")===panel,focus:document.activeElement===summary,
       overflow:document.documentElement.scrollWidth>innerWidth+6,review:!!document.getElementById("ceo-strategy-review"),
       actionable:document.querySelectorAll("#ceo-action-center button[data-ceo-action=opportunity]").length};
    })()`;
@@ -531,7 +531,7 @@ async function runBrowser(){
    const result=response.result?.value;console.log("v22.4.1 actual browser CEO ticks",JSON.stringify(result));
    assert.ok(result?.advanced&&result.stillOpen&&result.same&&result.focus&&!result.overflow&&result.review,
      "CEO disclosures/focus/overflow failed after 21 real game days");
-   assert.ok(result.checks.every(x=>x.open&&x.same&&x.focus),"A 1x/3x/8x tick unmounted leaders panel");
+   assert.ok(result.checks.every(x=>x.open&&x.same&&x.focus),"A 1x/3x/8x tick unmounted CEO evidence panel");
    assert.equal(result.actionable,2,"Only one market acceptance/rejection pair allowed");
    for(const kind of ["overview","strategy"]){
     const selector=kind==="overview"?"#ceo-priority-card":"#ceo-strategy-review";

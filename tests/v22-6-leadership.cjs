@@ -111,7 +111,7 @@ test("invalid or expired officer mandate removes false autonomy, not historical 
  assert.equal(s.ui.leadershipHighest,"group");
  s.exec.officers.coo.mandate=false;
  assert.equal(G.leadershipMaturity().stage,"leader");
- s.exec.officers.coo.mandate=true;s.day=91;
+ s.exec.officers.coo.mandate=true;s.day=s.exec.officers.coo.authoritySince+91;
  assert.equal(G.leadershipMaturity().stage,"leader");
  assert.equal(s.ui.leadershipHighest,"group");
  G.renderCEOFocus();assert.match(element("ceo-priority-content").innerHTML,/Previously reached Group CEO/);

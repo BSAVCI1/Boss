@@ -22,7 +22,7 @@ const box={document:{getElementById:element,querySelector:()=>element("x"),query
 vm.createContext(box);
 const boot=code.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0);
 vm.runInContext(code.slice(0,boot)+
- "globalThis.G={createDeal,feeFor,v23Work,v23Accepted,v23Finish,v23Render,v23Decision,worldTenderPreview,worldResolveTender,state:()=>S,save,load,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,ensureExecutive,leadershipMaturity,orgPeriod,leadershipRecordPhase,leadershipSummaryMarkup,renderLeadershipContexts,renderCEOFocus,gamePlan,gameChapter,companyMilestone,companyDirection,ceoDecisionInventory,executiveOfficer};})();",box,{timeout:10000});
+ "globalThis.G={fresh,createDeal,feeFor,v23Work,v23Accepted,v23Finish,v23Render,v23Decision,worldTenderPreview,worldResolveTender,state:()=>S,save,load,createPerson,ensureCareer,ensureRole,ensureDepartment,ensurePerformance,ensureExecutive,leadershipMaturity,orgPeriod,leadershipRecordPhase,leadershipSummaryMarkup,renderLeadershipContexts,renderCEOFocus,gamePlan,gameChapter,companyMilestone,companyDirection,ceoDecisionInventory,executiveOfficer};})();",box,{timeout:10000});
 const G=box.G;
 
 function reset(){store.clear();G.fresh();return G.state();}

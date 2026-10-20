@@ -798,6 +798,26 @@ async function runBrowser(){
   }
  }
 
+
+ // v23A: real Chromium portfolio, campaign and prototype views at both iPhone widths.
+ const v23Dir=path.resolve("reports/v23a-mobile");fs.mkdirSync(v23Dir,{recursive:true});
+ for(const [width,height] of [[390,844],[414,896]]){
+  await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+  await send("Page.navigate",{url:"file://"+file});
+  let loaded=false;for(let n=0;n<95;n++){const v=await send("Runtime.evaluate",{expression:"document.documentElement.dataset.bossReady==='true'&&!!window.__bossQA",returnByValue:true});if(v.result?.value){loaded=true;break;}await sleep(100);}
+  assert.ok(loaded,"v23A mobile game bootstrap");
+  const fixture=await send("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.pause();qa.resetEditShield();qa.setupLeadership('founder');const s=qa.state();s.exec.lines.push({key:'marketing',since:0,delivered:2,revenue:450,spent:120},{key:'product',since:0,delivered:1,revenue:280,spent:120});const a=s.deals[0],b=s.deals[1];a.serviceLine='marketing';a.serviceOffer='Brand launch campaign';a.v23={kind:'campaign',channel:'focused',creative:7.2,reach:850,leads:45,conversions:8,tested:false,spent:0};b.serviceLine='product';b.serviceOffer='Client prototype';b.v23={kind:'prototype',built:6,verified:2.5,debt:1.4,accepted:false,tested:false,spent:0};qa.grow(3);qa.pause();return{lines:s.exec.lines.length,marketing:!!document.getElementById('v23-project-'+a.id),product:!!document.getElementById('v23-project-'+b.id)}})()",returnByValue:true});
+  assert.ok(fixture.result?.value?.marketing&&fixture.result?.value?.product,"v23A distinct project contracts");
+  for(const tab of ["work","growth"]){
+   const view=await send("Runtime.evaluate",{expression:"(()=>{document.querySelector('.bottom-nav button[data-view="+tab+"]').click();const panel=document.getElementById('view-"+tab+"');const portfolio=document.getElementById('v23-"+tab+"');if(portfolio?.parentElement?.tagName==='DETAILS')portfolio.parentElement.open=true;const cards=portfolio?.textContent||'';if("+JSON.stringify(tab)+"==='work'){const project=document.querySelector('#deals details[data-project-id]');if(project)project.open=true;}window.scrollTo({top:Math.max(0,window.scrollY+(portfolio?.getBoundingClientRect().top||0)-15),behavior:'instant'});return{width:innerWidth,active:!panel.hidden,overflow:document.documentElement.scrollWidth>innerWidth+6,marketing:cards.includes('Marketing Studio'),product:cards.includes('Product Development'),core:cards.includes('Core B2B services'),visible:!!portfolio?.getClientRects().length}})()",returnByValue:true});
+   const v=view.result?.value;assert.ok(v&&v.width===width&&v.active&&!v.overflow&&v.marketing&&v.product&&v.core&&v.visible,"v23A browser "+JSON.stringify(v));
+   await sleep(220);const screenshot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+   assert.ok(screenshot.data?.length>1500,"Missing real v23A screenshot");
+   const name=path.join(v23Dir,"boss-v23a-"+tab+"-"+width+"px.png");fs.writeFileSync(name,Buffer.from(screenshot.data,"base64"));
+   console.log("PASS v23A Chromium "+name+" "+JSON.stringify(v));
+  }
+ }
+
    console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }

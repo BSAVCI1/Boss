@@ -1,0 +1,74 @@
+
+/* v23A: optional contract workstreams — no separate economy or invented invoices. */
+const BOSS_BUSINESSES={
+ core:["Core B2B services","Client delivery, operations and technology","Business clients needing reliable projects","Quality, speed, sector expertise and trust"],
+ marketing:["Marketing Studio","Campaigns, creative testing and audience response","Clients buying campaign reach and qualified leads","Marketing talent, targeting and creative investment"],
+ product:["Product Development","Prototypes, testing and accepted releases","Clients requiring dependable technical products","Product skill, release quality and technical debt"],
+ operations:["Operations consulting","Process redesign and implementation","Business operations teams","Execution and reliability"],
+ technology:["Technology services","Technical implementation projects","Technology buyers","Specialist competence and delivery"]
+};
+function v23New(d){return d.serviceLine==="marketing"?{kind:"campaign",channel:"focused",creative:0,reach:0,leads:0,conversions:0,tested:false,spent:0}:
+d.serviceLine==="product"?{kind:"prototype",built:0,verified:0,debt:0,accepted:false,tested:false,spent:0}:null;}
+function v23Accepted(d){const x=d.v23;return !x||x.kind!=="prototype"||x.built>=d.work*.53&&x.verified>=d.work*.22&&x.debt<=5&&d.quality>=70;}
+function v23Work(d,p,e){
+ const x=d.v23;if(!x||e<=0)return;
+ if(x.kind==="campaign"){
+  const effort=e*Math.max(.45,Math.min(1.6,p.s.mkt/Math.max(1,d.diff)))*(x.tested?1.25:1),reach=effort*(x.channel==="broad"?110:65);
+  const leadRate=(x.channel==="broad"?.035:.067)*Math.max(.45,d.quality/90);
+  x.creative+=effort;x.reach+=reach;x.leads+=reach*leadRate;x.conversions+=reach*leadRate*(x.channel==="broad"?.10:.18)*Math.max(.35,d.quality/90);
+ }else{
+  const effort=e*Math.max(.45,Math.min(1.5,p.s.prod/Math.max(1,d.diff)));
+  x.built+=effort;x.verified+=effort*.39*(x.tested?1.5:1)*d.quality/85;
+  x.debt=Math.max(0,x.debt+effort*((p.s.prod<d.diff?.16:.055)+(unitOfPerson(p.id)?.plan?.focus==="speed"?.08:0)-(x.tested?.23:.085)));
+  x.accepted=v23Accepted(d);
+ }
+}
+function v23Finish(d,success){
+ const x=d.v23;if(!x)return;
+ if(x.kind==="campaign"){let conversion=x.leads?x.conversions/x.leads:0;d.quality=clamp(d.quality+(conversion>=.12?3:conversion<.07?-5:0));}
+ else x.accepted=success&&v23Accepted(d);
+ if(!Array.isArray(S.v23History))S.v23History=[];
+ S.v23History.unshift({day:S.day,dealId:d.id,line:d.serviceLine,client:d.cl,kind:x.kind,success,fee:success?feeFor(d):0,quality:Math.round(d.quality),
+  reach:Math.round(x.reach||0),leads:Math.floor(x.leads||0),conversions:Math.floor(x.conversions||0),
+  built:+(x.built||0).toFixed(1),verified:+(x.verified||0).toFixed(1),debt:+(x.debt||0).toFixed(1),spent:x.spent});
+ S.v23History=S.v23History.slice(0,70);
+ logIt(x.kind==="campaign"?"Campaign "+(success?"delivered":"missed")+" for "+d.cl+": "+Math.round(x.reach)+" modeled reach, "+Math.floor(x.leads)+" leads, "+Math.floor(x.conversions)+" conversions (client response, not new company orders).":
+ "Product "+(success?"accepted":"missed acceptance")+" for "+d.cl+": prototype "+x.built.toFixed(1)+"; validation "+x.verified.toFixed(1)+"; debt "+x.debt.toFixed(1)+".");
+}
+function v23Decision(id,action){
+ const d=deal(id),x=d?.v23;if(!x||S.ev||saveConflict||saveErrorReason||!person(d.w)||d.prog>=d.work)return false;
+ if(x.kind==="campaign"&&["focused","broad"].includes(action))return unitCommit(()=>{x.channel=action;logIt(d.cl+" campaign now targets "+action+" reach.");return true;});
+ const fee=x.kind==="campaign"?12:15;
+ if(action!==(x.kind==="campaign"?"creative":"verify")||x.tested||S.cash<fee||!executiveFinanceGuard(fee))return false;
+ return unitCommit(()=>{
+  if(S.cash<fee||!person(d.w)||x.tested)return false;
+  S.cash-=fee;biMoney(x.kind==="campaign"?"marketing":"quality",fee,(x.kind==="campaign"?"Creative A/B test: ":"Prototype verification: ")+d.cl);
+  d.directCost=(d.directCost||0)+fee;x.tested=true;x.spent+=fee;
+  if(x.kind==="prototype"){x.debt=Math.max(0,x.debt-2);d.quality=clamp(d.quality+3);}
+  logIt("CEO authorized "+biCurrency(fee)+" for "+d.cl+" project "+d.id+"; attributed to existing contract costs once.");return true;
+ });
+}
+function v23ProjectHTML(d){
+ const x=d.v23;if(!x)return"";
+ if(x.kind==="campaign")return '<div class="coach-mini"><b>Campaign studio · '+esc(x.channel)+'</b><p class="small">Creative '+x.creative.toFixed(1)+' · modeled reach '+Math.round(x.reach)+' · leads '+Math.floor(x.leads)+' · conversions '+Math.floor(x.conversions)+'. Client response only, not new company orders.</p><div class="contract-actions">'+
+ '<button type="button" data-v23="'+d.id+'" data-v23-action="focused" '+(x.channel==="focused"?'disabled':'')+'>Focused audience · better conversion</button><button type="button" data-v23="'+d.id+'" data-v23-action="broad" '+(x.channel==="broad"?'disabled':'')+'>Broad audience · more reach</button>'+
+ '<button type="button" data-v23="'+d.id+'" data-v23-action="creative" '+(x.tested||!d.w||S.cash<12||!executiveFinanceGuard(12)?'disabled':'')+'>CEO creative test · $12</button></div></div>';
+ return '<div class="coach-mini"><b>Product prototype · '+(x.accepted?"Acceptance-ready":"Needs validation")+'</b><p class="small">Build '+x.built.toFixed(1)+' / '+(d.work*.53).toFixed(1)+' · validation '+x.verified.toFixed(1)+' / '+(d.work*.22).toFixed(1)+' · debt '+x.debt.toFixed(1)+' / max 5 · quality '+Math.round(d.quality)+'% / min 70%. A failed acceptance gate blocks release, risking the existing deadline.</p>'+
+ '<button type="button" data-v23="'+d.id+'" data-v23-action="verify" '+(x.tested||!d.w||S.cash<15||!executiveFinanceGuard(15)?'disabled':'')+'>CEO prototype test · $15</button></div>';
+}
+function v23Render(){
+ const history=Array.isArray(S.v23History)?S.v23History:[],lines=S.exec.lines||[];
+ const cards=[{key:"core"},...lines].map(l=>{
+ const item=BOSS_BUSINESSES[l.key]||BOSS_BUSINESSES.core,u=S.exec.units.find(u=>u.key===l.key),line=lines.find(x=>x.key===l.key);
+ const active=S.deals.filter(d=>l.key==="core"?!d.serviceLine:d.serviceLine===l.key).length;
+ const last=history.find(x=>x.line===l.key),profit=u?u.revenue-u.directCost-u.sharedLaborCost-u.payrollCost-u.developmentCost:0;
+ const result=last?(last.kind==="campaign"?last.leads+" modeled leads · "+last.conversions+" conversions":"prototype "+last.built+" · validation "+last.verified+" · debt "+last.debt):"No completed specialist results";
+ return '<div class="coach-mini"><b>'+esc(item[0])+'</b><p class="small"><b>Sells:</b> '+esc(item[1])+' · <b>Buys:</b> '+esc(item[2])+' · <b>Competes on:</b> '+esc(item[3])+'</p><p class="small">'+active+' signed active · '+(line?.delivered||0)+' finished · '+biCurrency(line?.revenue||0)+' recognized'+
+ (u?' · GM '+esc(person(u.managerId)?.n||"unfilled")+' · unit contribution '+biCurrency(profit):'')+(last?' · Latest: '+esc(result):'')+'</p></div>';
+ }).join("");
+ for(const id of ["v23-work","v23-growth"]){const el=$(id);if(el&&el.innerHTML!==cards)el.innerHTML=cards;}
+ const stage=leadershipMaturity().stage,who=stage==="group"?"Group CEO: review GM and portfolio economics":stage==="leader"?"Business Leader: review customer and unit outcomes":"Founder: build and deliver your first contracts";
+ const summary='<b>'+who+'</b><p class="small">'+lines.length+' specialist portfolios · '+S.deals.length+' active contracts · '+S.world.tenders.length+' competitive outcomes. Creative or prototype progress never posts standalone revenue.</p>';
+ const today=$("v23-today");if(today&&today.innerHTML!==summary)today.innerHTML=summary;
+ for(const d of S.deals){const e=$("v23-project-"+d.id);if(e){const html=v23ProjectHTML(d);if(e.innerHTML!==html)e.innerHTML=html;}}
+}

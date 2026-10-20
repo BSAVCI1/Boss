@@ -4539,9 +4539,9 @@ function leadershipMaturity(){
  const senior=a.filter(n=>["manager","senior","director"].includes(n.level)&&person(n.id)&&!unitOfPerson(n.id)&&!executiveRoleOf(n.id));
  const directors=senior.filter(n=>n.level==="director");
  const headed=DEPT_KEYS.filter(k=>orgManager(k)&&managementLead(k));
- const reviewed=headed.filter(k=>S.org.departments[k].reviews.length>0);
- const delegated=managementOps().history.filter(x=>["hire","hr-recovery","coo-dispatch"].includes(x.kind)&&
-  Number.isInteger(x.employeeId)&&(Number.isInteger(x.managerId)||Number.isInteger(x.executedBy))).length;
+ const reviewed=headed.filter(k=>S.org.departments[k].reviews.some(r=>r.manager===orgManager(k).n&&r.result!=="Insufficient evidence"));
+ const delegated=managementOps().history.filter(x=>x.kind==="hire"&&Number.isInteger(x.employeeId)&&
+  headed.some(k=>orgManager(k).id===x.managerId||managementLead(k).id===x.managerId)).length;
  const operating=S.exec.units.filter(u=>person(u.managerId)&&u.staffIds.some(id=>id!==u.managerId&&person(id))&&
   u.delivered>0&&u.reviews.length>0&&S.exec.lines.some(line=>line.key===u.key));
  const activeExecutives=Object.keys(EXECUTIVE_ROLES).filter(role=>!!executiveOfficer(role,"act"));

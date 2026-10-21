@@ -47,6 +47,10 @@ pass("Mature company must own active physical building and fund 30-day obligatio
  const s=mature();const old=JSON.stringify(s);
  s.exec.property.sites[0].status="inactive";assert.equal(G.factoryBuy(),false);
  s.exec.property.sites[0].status="active";s.cash=900;assert.equal(G.factoryBuy(),false);
+ s.cash=32090;const staff=s.team.filter(p=>["prod","ops"].includes(p.role.primary)&&p.t==="idle");
+ assert.ok(staff.length>0);for(const p of staff)p.t="study";
+ assert.equal(G.factoryBuy(),false,"no real free production worker blocks equipment");
+ staff[0].t="idle";
  s.cash=32090;assert.equal(G.factoryBuy(),true);
  assert.equal(s.factory.installed,true);assert.equal(s.factory.siteId,902);
  assert.equal(s.bi.totals.investments,1600);assert.equal(s.cash,30490);
@@ -76,7 +80,7 @@ pass("Real production worker, paid energy, stock basis, quality and reduced-capa
  assert.equal(s.cash,cash-1.15);
  assert.ok(s.bi.totals.costs>=1.15);
  const built=s.factory.totalBuilt,materials=s.factory.raw;
- s.exec.property.sites[0].status="inactive";s.day+=1;G.factoryDay();
+ s.exec.property.sites[0].status="inactive";assert.equal(G.factorySell(),false,"no inventory dispatch from inactive factory");s.day+=1;G.factoryDay();
  assert.equal(s.factory.totalBuilt,built);assert.equal(s.factory.raw,materials);
  s.exec.property.sites[0].status="active";
  assert.equal(G.factoryRelease(),true);assert.equal(operator.t,"idle");

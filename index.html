@@ -4502,6 +4502,7 @@ function factoryCapitalReady(){
  const site=propertyActive(),stage=leadershipMaturity().stage;
  return{site:site&&["building","hq"].includes(site.type)&&!site.unitKey?site:null,
   mature:stage==="group"&&S.market.completed>=20,
+  staffed:factoryCandidates().length>0,
   surplus:capitalFacts().available};
 }
 function factoryEvent(type,detail,cash=0,qty=0){
@@ -4511,10 +4512,10 @@ function factoryEvent(type,detail,cash=0,qty=0){
 }
 function factoryBuy(){
  const f=S.factory,gate=factoryCapitalReady(),price=FACTORY_LINE.equipment;
- if(f.installed||!gate.site||!gate.mature||gate.surplus<price||!executiveFinanceGuard(price))return false;
+ if(f.installed||!gate.site||!gate.mature||!gate.staffed||gate.surplus<price||!executiveFinanceGuard(price))return false;
  return unitCommit(()=>{
   const ready=factoryCapitalReady();
-  if(S.factory.installed||!ready.site||!ready.mature||ready.surplus<price)return false;
+  if(S.factory.installed||!ready.site||!ready.mature||!ready.staffed||ready.surplus<price)return false;
   S.cash=+(S.cash-price).toFixed(2);biMoney("investment",price,"v24C one physical factory machine, owned equipment");
   S.factory.installed=true;S.factory.siteId=ready.site.id;S.factory.boughtDay=S.day;
   factoryEvent("equipment","CEO purchased a line at the actual owned corporate building",price);
@@ -4603,10 +4604,10 @@ function factoryQuote(){
 }
 function factorySell(){
  const f=S.factory,q=factoryQuote();
- if(!f.installed||!q.units||q.already)return false;
+ if(!f.installed||!factorySite()||!q.units||q.already)return false;
  return unitCommit(()=>{
   const spot=factoryQuote();
-  if(!spot.units||spot.already)return false;
+  if(!factorySite()||!spot.units||spot.already)return false;
   if(!spot.accepted){
    S.factory.rejectedDay=S.day;
    factoryEvent("rejected","Independent wholesale buyer declined Day "+S.day+" quote, no revenue",0,0);
@@ -4654,9 +4655,10 @@ function factoryRender(){
  const actions=!f.installed?
   '<p class="small">Unlock: Group CEO, ≥20 completed client projects and an actual active owned corporate office building or HQ. Keep 30-day payroll, all debt, property and existing acquisition commitments after spending.</p>'+
   '<p class="small">Real eligible premises: '+(gate.site?esc(PROPERTY_TYPES[gate.site.type].name):'none')+
+  '. Available real operations/product operator: '+(gate.staffed?'yes':'none')+
   '. Deployable surplus '+biCurrency(gate.surplus)+'. No site or cash is silently created.</p>'+
   '<div class="factory-actions"><button type="button" data-factory="buy" '+
-  (!gate.site||!gate.mature||gate.surplus<FACTORY_LINE.equipment?'disabled':'')+
+  (!gate.site||!gate.mature||!gate.staffed||gate.surplus<FACTORY_LINE.equipment?'disabled':'')+
   '>CEO approve owned machine · '+biCurrency(FACTORY_LINE.equipment)+'</button></div>':
   '<p class="small">Actual plant: '+(site?esc(PROPERTY_TYPES[site.type].name):"owned site inactive")+
   ' · machine basis '+biCurrency(FACTORY_LINE.equipment)+' · active operator '+
@@ -4672,7 +4674,7 @@ function factoryRender(){
    q.units+' available finished units · '+biCurrency(q.price)+'/kit · quality '+
    Math.round(f.quality)+'/100 · buyer acceptance estimate '+Math.round(q.threshold*100)+
    '% (uncertain). Buyer may refuse; same-day repeat offers blocked. No signed contracts until delivered sale.</p>'+
-   '<button type="button" data-factory="sell" '+(!q.units||q.already?'disabled':'')+
+   '<button type="button" data-factory="sell" '+(!site||!q.units||q.already?'disabled':'')+
    '>Offer '+q.units+' kits to distributor</button></div>';
  const events=f.events.slice(0,12).map(e=>'<div class="factory-row">Day '+e.day+
   ' · '+esc(e.type)+' · '+esc(e.detail)+'</div>').join("");

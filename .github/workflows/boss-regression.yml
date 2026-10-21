@@ -8,6 +8,7 @@ on:
   push:
     branches: [main, boss-v15-advanced-economy, boss-v15-1-career-pathways, boss-v16-living-business-world, boss-v16-1-balance-and-people, boss-v17-game-first, boss-v18-ceo-leadership, boss-v19-org-autonomy, integration/v22-3-v22-4-release-candidate]
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, edited]
     branches: [main]
 jobs:
   ceo_mobile_fast:

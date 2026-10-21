@@ -354,6 +354,24 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 @media(max-width:430px){.campus-zone-grid{grid-template-columns:1fr}.campus-site-picker{flex-direction:column}.campus-site-picker button{width:100%}.campus-seat-list{grid-template-columns:repeat(2,minmax(0,1fr))}.campus-overview{gap:5px}.campus-stat{padding:8px 5px}.campus-stat b{font-size:13px}}
 @media(prefers-reduced-motion:reduce){.campus-seat-meter span,.campus-site-picker button{transition:none!important;animation:none!important}}
 
+
+/* v24B — truthful group empire and people stories, no added game navigation. */
+.empire-strip{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.empire-strip button{min-height:38px;font-size:12px;text-align:left;white-space:normal;max-width:100%;border:1px solid var(--line)}
+.empire-strip button[aria-pressed="true"]{outline:2px solid var(--accent);background:var(--accentWash)}
+.empire-world{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.empire-node{min-width:0;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--accentWash)}
+.empire-node b{display:block;overflow-wrap:anywhere}
+.empire-node .small{display:block;margin-top:5px}
+.empire-node button{width:100%;min-height:37px;text-align:left;font-size:12px;white-space:normal}
+.empire-detail{border-left:3px solid var(--accent);padding:9px 11px;margin-top:10px;background:var(--accentWash);overflow-wrap:anywhere}
+.story-card{border:1px solid var(--line);border-radius:11px;padding:10px;margin:8px 0}
+.story-card[aria-current="true"]{border:2px solid var(--accent)}
+.story-card button{min-height:38px;font-size:12px;white-space:normal}
+.story-signal{font-size:12px;color:var(--muted)}
+@media(max-width:430px){.empire-world{grid-template-columns:1fr}.empire-strip{flex-direction:column}.empire-strip button{width:100%}}
+@media(prefers-reduced-motion:reduce){.empire-node,.story-card{animation:none!important;transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -364,7 +382,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
-<section class="card" id="v23-today" aria-label="Business portfolio overview"></section><section class="card" id="capital-today" aria-label="Capital position"></section><section class="card" id="acquisition-today" aria-label="Acquisitions and competition"></section><section class="card" id="ceo-priority-card" aria-label="CEO command center">
+<section class="card" id="v23-today" aria-label="Business portfolio overview"></section><section class="card" id="capital-today" aria-label="Capital position"></section><section class="card" id="people-story-today" aria-label="Real people stories"></section><section class="card" id="acquisition-today" aria-label="Acquisitions and competition"></section><section class="card" id="ceo-priority-card" aria-label="CEO command center">
 <div class="lead"><b>CEO command center</b><span class="small">Decisions and delegated work</span></div>
 <div id="ceo-priority-content"><p class="small">Preparing your company priorities.</p></div>
 </section>
@@ -449,7 +467,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </details>
 </section>
 <section id="view-team" class="app-view" data-page="team" aria-label="People and delegation" hidden>
-<div class="view-intro"><h2>Team</h2><p>Reporting, careers and people needing support</p></div><section class="card leadership-context" id="leadership-context-team" aria-label="Team leadership focus"></section>
+<div class="view-intro"><h2>Team</h2><p>Reporting, careers and people needing support</p></div><section class="card leadership-context" id="leadership-context-team" aria-label="Team leadership focus"></section><details class="card" id="people-stories-panel"><summary>People stories · work-earned leadership choices</summary><p class="small">Real work, coaching and strain create stories at most once every 14 game days. The CEO may respond; ignoring a story spends nothing and never blocks existing managers.</p><div id="people-stories"></div></details>
 <section class="card"><div class="lead"><b>People and management capacity</b><span class="small">Actual appointments</span></div><p class="small" id="team-simple-summary"></p><p class="small">Company-wide limits are approved at <b>Today → Management policies</b>. Optional empty positions are not urgent when teams can operate effectively.</p></section>
 <section class="card" id="campus-panel" aria-label="Living company campus">
 <div class="campus-head"><b>Live company campus</b><span class="small">Real people · saved premises · current work</span></div>
@@ -491,7 +509,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </details>
 </section>
 <section id="view-growth" class="app-view" data-page="growth" aria-label="Strategy and capabilities" hidden>
-<div class="view-intro"><h2>Growth</h2><p>Businesses, markets and investments</p></div><details class="card"><summary>Product portfolio · actual commercial performance</summary><div id="v23-growth"></div></details><details class="card" id="capital-panel"><summary>Investment portfolio · capital & risks</summary><div id="capital-growth"></div></details><details class="card" id="acquisition-panel"><summary>Acquisitions · diligence, integration &amp; competition</summary><div id="acquisition-growth"></div></details><section class="card leadership-context" id="leadership-context-growth" aria-label="Growth leadership focus"></section>
+<div class="view-intro"><h2>Growth</h2><p>Businesses, markets and investments</p></div><details class="card" id="empire-panel"><summary>Our business empire · only real owned assets</summary><p class="small">A schematic overview, not a geographic map. Properties, staffed divisions, acquired rivals and financial investments are different kinds of assets, not separate banks or free income.</p><div id="empire-world"></div></details><details class="card"><summary>Product portfolio · actual commercial performance</summary><div id="v23-growth"></div></details><details class="card" id="capital-panel"><summary>Investment portfolio · capital & risks</summary><div id="capital-growth"></div></details><details class="card" id="acquisition-panel"><summary>Acquisitions · diligence, integration &amp; competition</summary><div id="acquisition-growth"></div></details><section class="card leadership-context" id="leadership-context-growth" aria-label="Growth leadership focus"></section>
 <section class="boss-primary-section" id="growth-expand-businesses"><h2>1. Expand businesses</h2><p class="small">Owned service lines, operating units, GMs and next eligible expansion; real prerequisites and CEO approval apply.</p><p class="small boss-summary" id="growth-business-status"></p><section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Purchased service lines start as shared service portfolios. You can now organize a purchased line into an operating unit below, appoint a General Manager and allocate dedicated employees. These units are internal operating divisions, not independent subsidiaries or separate bank accounts. Company cash and financial records remain consolidated; unit results only track future work. Shared department budgets and advanced unit delegations evolve in later releases. Revenue is never counted twice.</p><div id="company-unlock-guide" class="filter-note"></div><p id="company-launch-status" class="small" role="status"></p><div id="business-lines"></div><div id="business-units" aria-label="Operating unit management"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">New launches require proven delivery, leadership, qualified staffing and financial runway. Previously purchased lines remain yours. No future revenue is guaranteed.</p></details></section>
 </section>
 <section class="boss-primary-section" id="growth-markets-customers"><h2>2. Markets and customers</h2><p class="small">Target sector and commercial positioning affect new customers; CEO direction and each GM strategy are separate.</p><section class="card"><div class="lead"><b>Current market focus</b></div><p class="small boss-summary" id="growth-focus-summary"></p></section><section aria-labelledby="market-title"><h2 id="market-title">Target customer sector</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><details class="aux-details" id="sector-explore"><summary>Explore customer markets</summary><div id="sector-options" class="sector-buttons"></div></details><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
@@ -1449,7 +1467,7 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
-ensureOrganization(s);ensureExecutive(s);ensureBI(s);restoreRecordedLines(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureCapital(s);ensureWorld(s);ensureAcquisitions(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
+ensureOrganization(s);ensureExecutive(s);ensureBI(s);restoreRecordedLines(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureCapital(s);ensureWorld(s);ensureAcquisitions(s);ensurePeopleStories(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
 for(const d of s.deals)if(!Number.isFinite(d.agreedFee))d.agreedFee=d.biBooked&&Number.isFinite(d.bookVal)?d.bookVal:estimatedFee(d,s);
 persistedRevision=Number(s._saveRevision)||0;return s;}catch(e){return null;}}
 const BI_FIELDS=["deliveryEligibleDays","deliveryRoleWorkDays","revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
@@ -2751,7 +2769,7 @@ S.market.customers[d.cl]=prev;}
 function fresh(){
  ceoDraftPriority=null;saveConflict=false;saveErrorReason="";paused=false;
  try{persistedRevision=Number(JSON.parse(localStorage.getItem(KEY)||"null")?._saveRevision)||0;}catch{persistedRevision=0;}
- S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now(),lastInterruptDay:0},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureCapital(S);ensureWorld(S);ensureAcquisitions(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+ S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now(),lastInterruptDay:0},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureCapital(S);ensureWorld(S);ensureAcquisitions(S);ensurePeopleStories(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.t==="exec")return "Executive leadership";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -2806,7 +2824,7 @@ unitPayrollDay();
  const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(Math.max(0,S.cash),salary);S.cash-=actuallyPaid;
 biMoney("payroll",salary,"Daily payroll",actuallyPaid);
 // Pay prior procurement liabilities after payroll, without silently creating negative cash.
-contractProcurementSettle();acquisitionDay();
+contractProcurementSettle();acquisitionDay();peopleStoryDay();
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&S.day-S.flow.lastInterruptDay>=28)startDilemma();
 labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
@@ -4243,6 +4261,185 @@ function acquisitionRender(){
   (cards||'<p class="small">No further acquisition targets.</p>');
  if(root.innerHTML!==html)root.innerHTML=html;
 }
+
+
+/* v24B company world: one truthful view of current real saved entities, without
+   phantom sites, fictional maps, salaries, contracts or separate banks. */
+let empirePick="corporate",empireSignature="",storySignature="";
+function empireAssets(){
+ const out=[{key:"corporate",kind:"workplace",name:"Corporate workplace",label:"Current corporate people",unitKey:null}];
+ for(const site of S.exec.property.sites){
+  if(site.status==="closed"||site.status==="sold")continue;
+  out.push({key:"property:"+site.id,kind:"property",id:site.id,name:PROPERTY_TYPES[site.type]?.name||"Recorded property",
+   label:site.status+" · "+(site.unitKey?SERVICE_LINES[site.unitKey]?.name||"Unit":"Corporate"),
+   site});
+ }
+ for(const u of S.exec.units){
+  out.push({key:"unit:"+u.key,kind:"unit",unitKey:u.key,name:SERVICE_LINES[u.key]?.name||u.key,
+   label:"Operating division · consolidated cash",unit:u});
+ }
+ for(const a of S.acquisitions.owned){
+  out.push({key:"acquired:"+a.id,kind:"acquired",id:a.id,name:a.name,label:"Acquired competitor asset",asset:a});
+ }
+ for(const p of S.capital.lots){
+  out.push({key:"capital:"+p.id,kind:"investment",id:p.id,name:CAPITAL_ASSETS[p.kind].name,
+   label:"Financial asset · simulated value",asset:p});
+ }
+ return out;
+}
+function empireDetails(asset){
+ const noIncome="No separate cash account or automatic customer revenue.";
+ if(asset.kind==="workplace"){
+  const people=propertyPeople(),active=propertyActive(),capacity=propertyCapacity();
+  return people.length+" staff · "+capacity+" seats · "+(active?PROPERTY_TYPES[active.type].name+" ("+active.status+")":"Distributed, no purchased site")+
+   " · consolidated payroll. "+noIncome;
+ }
+ if(asset.kind==="property"){
+  const x=asset.site,p=propertyActive(x.unitKey||null),people=propertyPeople(x.unitKey||null);
+  return esc(x.status)+" · "+esc(PROPERTY_LOCATIONS[x.location]?.name||"Location not recorded")+
+   " · "+(x.status==="active"?people.length:0)+" onsite employee(s) · "+PROPERTY_TYPES[x.type].capacity+
+   " seats · daily "+biCurrency(x.status==="active"?x.dayCost:0)+
+   " · owned book "+biCurrency(x.book||0)+" · arrears "+biCurrency(x.arrears||0)+
+   ". "+(p?.id===x.id?"Current active scope.":"Not active; staff work elsewhere.")+" "+noIncome;
+ }
+ if(asset.kind==="unit"){
+  const u=asset.unit,gm=person(u.managerId),staff=propertyPeople(u.key),site=propertyActive(u.key);
+  return "GM "+(gm?esc(gm.n)+" · #"+gm.id:"VACANT, CEO oversight")+
+   " · "+staff.length+"/"+propertyCapacity(u.key)+" actual seats · "+
+   (site?PROPERTY_TYPES[site.type].name:"Distributed unit, no owned site")+
+   " · "+(u.delivered||0)+" delivered projects · recorded unit revenue "+biCurrency(u.revenue||0)+
+   ". All operations use group cash; no extra employees or bank accounts.";
+ }
+ if(asset.kind==="acquired"){
+  const x=asset.asset,days=Math.max(0,S.day-x.day);
+  return "Purchased Day "+x.day+" for "+biCurrency(x.price)+
+   " · "+(days<30?"Integration "+days+"/30 days":"Integration complete")+
+   " · health "+Math.round(x.health)+"/100 · pending "+biCurrency(x.payable||0)+
+   ". No employee headcount or signed contract was granted by acquisition.";
+ }
+ if(asset.kind==="investment"){
+  const x=asset.asset;
+  return "Cost basis "+biCurrency(x.basis)+" · market estimate "+biCurrency(x.value)+
+   " · unrealized "+biCurrency(x.value-x.basis)+". Mark changes are not liquid cash or booked customer sales.";
+ }
+ return "";
+}
+function empireRender(){
+ const node=$("empire-world");if(!node||editableInteractionPending())return;
+ const assets=empireAssets();if(!assets.some(x=>x.key===empirePick))empirePick="corporate";
+ const sign=JSON.stringify([empirePick,S.day,S.team.map(x=>[x.id,x.t]),S.exec.property.sites,
+  S.exec.units.map(u=>[u.key,u.managerId,u.staffIds,u.delivered,u.revenue]),S.acquisitions.owned,S.capital.lots]);
+ if(sign===empireSignature)return;empireSignature=sign;
+ const blocks=assets.map(x=>
+  '<article class="empire-node"><b>'+esc(x.name)+'</b><span class="small">'+esc(x.label)+'</span>'+
+  '<button type="button" data-empire-key="'+esc(x.key)+'" aria-pressed="'+(x.key===empirePick)+'">Explore '+esc(x.kind)+'</button></article>').join("");
+ const selected=assets.find(x=>x.key===empirePick);
+ node.innerHTML='<div class="empire-world">'+blocks+'</div>'+
+  '<div class="empire-detail" role="status"><b>'+esc(selected.name)+' · '+esc(selected.kind)+'</b>'+
+  '<p class="small">'+empireDetails(selected)+'</p></div>'+
+  '<p class="small">'+assets.filter(x=>x.kind==="property").length+" recorded active/inactive properties · "+
+   S.exec.units.length+" genuine operating divisions · "+S.acquisitions.owned.length+" acquired rivals · "+
+   S.capital.lots.length+" portfolio lots. Unowned premises and rivals are not assets.</p>";
+}
+$("empire-panel").addEventListener("click",e=>{
+ const b=e.target?.closest?.("button[data-empire-key]");if(!b)return;
+ const k=b.dataset.empireKey;
+ if(!empireAssets().some(x=>x.key===k))return;
+ empirePick=k;empireSignature="";empireRender();
+});
+/* Actual work-earned story events. Creation occurs on game-day tick only.
+   The only automatic effect is an observational journal; no cash, XP or morale
+   changes before explicit, audited CEO intervention. */
+function ensurePeopleStories(st){
+ if(!st.peopleStories||typeof st.peopleStories!=="object")
+  st.peopleStories={version:1,nextId:1,items:[],lastScan:st.day};
+ const q=st.peopleStories;
+ if(!Array.isArray(q.items))q.items=[];
+ q.items=q.items.filter(x=>x&&Number.isInteger(x.id)&&Number.isInteger(x.personId)&&
+   ["strain","mentor","client"].includes(x.kind)&&Number.isFinite(x.day)&&x.day<=st.day&&
+   ["open","acknowledged","supported"].includes(x.status));
+ q.nextId=Math.max(Number.isInteger(q.nextId)?q.nextId:1,1,...q.items.map(x=>x.id+1));
+ if(!Number.isFinite(q.lastScan))q.lastScan=st.day;
+ q.items=q.items.slice(-65);q.version=1;
+}
+function peopleStoryEvidence(p){
+ if(p.career.stress>=72||p.career.burnout>=35)
+  return{kind:"strain",score:p.career.stress,context:p.n+" has "+Math.round(p.career.stress)+"/100 strain and "+
+   Math.round(p.career.burnout)+"/100 burnout after current work."};
+ if((p.career.practice.coaching||0)>=6)
+  return{kind:"mentor",score:p.career.practice.coaching,context:p.n+" completed "+
+   p.career.practice.coaching+" real coaching days. Their contribution deserves recognition."};
+ if((p.perf.completed||0)>=2&&(p.perf.onTime||0)>=1)
+  return{kind:"client",score:p.perf.completed,context:p.n+" completed "+p.perf.completed+
+   " client projects with "+p.perf.onTime+" on-time deliveries."};
+ return null;
+}
+function peopleStoryDay(){
+ const s=S.peopleStories;
+ if(S.day<14||S.day%14!==0||s.lastScan===S.day)return;
+ s.lastScan=S.day;
+ if(s.items.some(x=>x.status==="open"&&person(x.personId)))return;
+ const candidates=S.team.filter(p=>p.id!==S.ops.assistantId)
+  .map(p=>({p,event:peopleStoryEvidence(p)})).filter(x=>x.event&&
+   !s.items.some(z=>z.personId===x.p.id&&z.kind===x.event.kind&&S.day-z.day<90));
+ if(!candidates.length)return;
+ candidates.sort((a,b)=>(a.event.kind==="strain"?0:a.event.kind==="mentor"?1:2)-
+  (b.event.kind==="strain"?0:b.event.kind==="mentor"?1:2)||b.event.score-a.event.score||a.p.id-b.p.id);
+ const picked=candidates[0];
+ s.items.push({id:s.nextId++,personId:picked.p.id,kind:picked.event.kind,day:S.day,
+  status:"open",context:picked.event.context});
+ s.items=s.items.slice(-65);
+ logIt("A real people story needs the CEO's judgment: "+picked.p.n+" ("+picked.event.kind+").");
+}
+function peopleStoryChoose(id,action){
+ const story=S.peopleStories?.items.find(x=>x.id===id&&x.status==="open"),p=person(story?.personId);
+ if(!p||!story||!["acknowledge","support"].includes(action))return false;
+ const cost=action==="support"&&story.kind==="strain"?6:0;
+ if(action==="support"&&story.kind!=="strain")return false;
+ if(cost&&(capitalFacts().available<cost||S.cash<cost))return false;
+ return unitCommit(()=>{
+  const current=S.peopleStories.items.find(x=>x.id===id&&x.status==="open"),worker=person(current?.personId);
+  if(!current||!worker||cost&&capitalFacts().available<cost)return false;
+  if(cost){S.cash=+(S.cash-cost).toFixed(2);biMoney("people",cost,"CEO-approved recovery support for "+worker.n);}
+  if(current.kind==="strain"){
+   worker.career.stress=Math.max(0,worker.career.stress-(cost?22:4));
+   worker.career.burnout=Math.max(0,worker.career.burnout-(cost?9:1));
+  }
+  worker.mood=clamp(worker.mood+(cost?8:3));worker.loy=clamp(worker.loy+3);
+  worker.career.satisfaction=clamp(worker.career.satisfaction+(cost?9:4));
+  current.status=cost?"supported":"acknowledged";current.resolved=S.day;current.cost=cost;
+  logIt("CEO "+(cost?"funded recovery for ":"recognized ")+worker.n+
+   " in response to real "+current.kind+" evidence. "+(cost?biCurrency(cost)+" cash cost.":"No cash spent."));
+  return true;
+ });
+}
+function peopleStoriesRender(){
+ const root=$("people-stories"),today=$("people-story-today");
+ const pending=S.peopleStories.items.filter(x=>x.status==="open"&&person(x.personId)),past=S.peopleStories.items.filter(x=>x.status!=="open").slice(-4).reverse();
+ const next=pending[0],summary=pending.length?
+  "One earned people decision: "+person(next.personId).n+" · "+next.kind+". The CEO can respond in Team.":
+  "No new people exceptions. Managers continue approved daily support.";
+ if(today){const markup='<b>People & culture</b><p class="small">'+esc(summary)+'</p>';if(today.innerHTML!==markup)today.innerHTML=markup;}
+ if(!root||editableInteractionPending())return;
+ const mark=pending.map(x=>{
+  const p=person(x.personId),cost=6,eligible=x.kind==="strain"&&capitalFacts().available>=cost;
+  return'<article class="story-card"><b>'+esc(p.n)+' · '+esc(x.kind)+' · Day '+x.day+'</b>'+
+   '<p class="story-signal">'+esc(x.context)+'</p>'+
+   '<button type="button" data-story="'+x.id+'" data-story-choice="acknowledge">Acknowledge and recognize · free</button> '+
+   (x.kind==="strain"?'<button type="button" data-story="'+x.id+'" data-story-choice="support" '+(eligible?'':'disabled')+
+    '>CEO approve recovery support · '+biCurrency(cost)+'</button>':'')+
+   '</article>';
+ }).join("")||'<p class="small">No unresolved earned people stories. Keep delivering projects, mentoring and protecting staff wellbeing.</p>';
+ const history=past.map(x=>'<div class="small">Day '+x.day+' · '+esc(person(x.personId)?.n||"Former colleague")+
+  ' · '+esc(x.kind)+' · '+esc(x.status)+' · CEO spent '+biCurrency(x.cost||0)+'</div>').join("");
+ const text=mark+(history?'<details class="aux-details"><summary>Recent real outcomes</summary>'+history+'</details>':'');
+ if(root.innerHTML!==text)root.innerHTML=text;
+}
+$("people-stories-panel").addEventListener("click",e=>{
+ const btn=e.target?.closest?.("button[data-story]");if(!btn)return;
+ const result=peopleStoryChoose(Number(btn.dataset.story),btn.dataset.storyChoice);
+ if(result&&typeof result.then==="function")result.catch(()=>{});
+});
 
 function v23Render(){
  const history=Array.isArray(S.v23History)?S.v23History:[],lines=S.exec.lines||[];
@@ -5746,7 +5943,7 @@ for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)day
 }
 function refresh(){
 if(editableInteractionPending())return;
-v23Render();capitalRender();acquisitionRender();
+v23Render();capitalRender();acquisitionRender();empireRender();peopleStoriesRender();
 campusRender();renderLeadershipContexts();renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";

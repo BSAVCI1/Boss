@@ -846,7 +846,9 @@ async function runBrowser(){
 
  // v23C — real CEO diligence/purchase buttons, cash ledger and mobile views.
  const acqDir=path.resolve("reports/v23c-mobile");fs.mkdirSync(acqDir,{recursive:true});
- const acquisitionFixture=fs.readFileSync(file);
+ // Use the real instrumented game, but NOT the earlier QA runner that exercises quota failures/reloads.
+ // Sharing that runner caused concurrent writes and false IndexedDB errors during CEO diligence.
+ const acquisitionFixture=Buffer.from(qaHtml,"utf8");
  const acquisitionHost=http.createServer((req,res)=>{res.writeHead(200,{"Content-Type":"text/html; charset=utf-8"});res.end(acquisitionFixture)});
  await new Promise(resolve=>acquisitionHost.listen(0,"127.0.0.1",resolve));acquisitionHost.unref();
  const acquisitionUrl="http://127.0.0.1:"+acquisitionHost.address().port+"/";

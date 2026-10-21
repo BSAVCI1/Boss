@@ -297,7 +297,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
 });
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
-const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,acquisitionDiligence,acquisitionBuy,acquisitionRender,setupLeadership:stage=>{
+const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,peopleStoryDay,peopleStoriesRender,empireRender,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,acquisitionDiligence,acquisitionBuy,acquisitionRender,setupLeadership:stage=>{
  fresh();
  if(stage!=="founder"){
   while(S.team.length<(stage==="group"?11:8)){
@@ -923,6 +923,25 @@ async function runBrowser(){
    fs.writeFileSync(image,Buffer.from(shot.data,"base64"));
    console.log("PASS v24A Chromium "+image+" "+JSON.stringify(v));
   }
+
+  // v24B real HTTP-origin browser acceptance: render a genuine company portfolio
+  // and an earned stress story, then click a real, persisted CEO acknowledgment.
+  const storiesDir=path.resolve("reports/v24b-mobile");fs.mkdirSync(storiesDir,{recursive:true});
+  const stage=(await acqSend("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.resetEditShield();qa.setupLeadership('group');qa.pause();const s=qa.state();s.exec.property.sites.push({id:909,type:'office',status:'active',location:'regional',dayCost:2.64,boost:1.03,book:220,investment:220,since:s.day,lastDepreciation:s.day,arrears:0});qa.grow(s.team.length);qa.empireRender();const world=document.getElementById('empire-world');return {assets:world.querySelectorAll('button[data-empire-key]').length,includesRealProperty:world.textContent.includes('Regional office lease'),includesUnit:world.textContent.includes('Marketing studio'),width:innerWidth}})()",returnByValue:true})).result?.value;
+  assert.ok(stage&&stage.width===width&&stage.assets>=4&&stage.includesRealProperty&&stage.includesUnit,"v24B truthful world "+JSON.stringify(stage));
+  const choice=(await acqSend("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA,s=qa.state();const asset=document.querySelector('#empire-world button[data-empire-key=\"property:909\"]');asset?.click();const detail=document.getElementById('empire-world')?.textContent||'';s.day=28;s.team[0].career.stress=88;qa.peopleStoryDay();qa.peopleStoriesRender();document.querySelector('.bottom-nav button[data-view=\"team\"]').click();document.getElementById('people-stories-panel').open=true;const event=document.querySelector('#people-stories button[data-story-choice=\"acknowledge\"]');const before=s.cash,found=!!event;event?.click();return {selectedProperty:detail.includes('Regional hub'),found,before,after:s.cash,status:s.peopleStories.items.at(-1)?.status,storyCount:s.peopleStories.items.length,overflow:document.documentElement.scrollWidth>innerWidth+6}})()",returnByValue:true})).result?.value;
+  assert.ok(choice?.selectedProperty&&choice.found&&choice.before===choice.after&&choice.status==="acknowledged"&&choice.storyCount===1&&!choice.overflow,"v24B real free CEO choice "+JSON.stringify(choice));
+  for(const mode of ["empire","stories"]){
+   const v=(await acqSend("Runtime.evaluate",{expression:"(()=>{const mode="+JSON.stringify(mode)+";document.querySelector('.bottom-nav button[data-view=\"'+(mode==='empire'?'growth':'team')+'\"]').click();const panel=document.getElementById(mode==='empire'?'empire-panel':'people-stories-panel');panel.open=true;const el=document.getElementById(mode==='empire'?'empire-world':'people-stories');window.scrollTo({top:Math.max(0,scrollY+el.getBoundingClientRect().top-18),behavior:'instant'});return {visible:!!el?.getClientRects().length,overflow:document.documentElement.scrollWidth>innerWidth+6,text:el?.textContent?.slice(0,120)||''}})()",returnByValue:true})).result?.value;
+   assert.ok(v?.visible&&!v.overflow,"v24B mobile "+mode+" "+JSON.stringify(v));
+   await sleep(220);
+   const shot=await acqSend("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+   assert.ok(shot.data?.length>1500,"v24B actual Chromium screenshot");
+   const fileName=path.join(storiesDir,"boss-v24b-"+mode+"-"+width+"px.png");
+   fs.writeFileSync(fileName,Buffer.from(shot.data,"base64"));
+   console.log("PASS v24B Chromium "+fileName+" "+JSON.stringify(v));
+  }
+
  }
  acqWs.close();
  await send("Target.closeTarget",{targetId:acquisitionTarget.targetId});

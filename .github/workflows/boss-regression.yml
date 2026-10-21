@@ -33,6 +33,20 @@ jobs:
           echo "Immutable v22.5A1 screenshot baseline verified: $BASELINE / 1b5718949207cf5927dad14d754cdf764b54a7e9"
       - name: Real Chromium 390px and 414px CEO acceptance
         run: node --experimental-websocket tests/v19-mobile-browser.cjs
+      - name: Upload v22.4D simplified Today and research screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-v22-4d-mobile-evidence
+          path: reports/v22-4d-mobile/*.png
+          if-no-files-found: error
+      - name: Upload v22.4.1 real mobile CEO acceptance images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-v22-4-1-mobile-evidence
+          path: reports/v22-4-1-mobile/*.png
+          if-no-files-found: error
       - name: Preserve v22.5B 390px and 414px People & Culture recommendations
         if: always()
         uses: actions/upload-artifact@v4
@@ -171,13 +185,6 @@ jobs:
           path: reports/v22-4b-mobile/*.png
           if-no-files-found: warn
 
-      - name: Upload v22.4D simplified Today and research screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: boss-v22-4d-mobile-evidence
-          path: reports/v22-4d-mobile/*.png
-          if-no-files-found: error
 
       - name: Upload v22.4C actual CEO Today and property comparison screenshots
         if: always()
@@ -187,13 +194,6 @@ jobs:
           path: reports/v22-4c-mobile/*.png
           if-no-files-found: warn
 
-      - name: Upload v22.4.1 real mobile CEO acceptance images
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: boss-v22-4-1-mobile-evidence
-          path: reports/v22-4-1-mobile/*.png
-          if-no-files-found: error
 
   # Each sensitivity scenario uses independent simulated companies. Parallelize
   # without discarding model results or reducing assertions.

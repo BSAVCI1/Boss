@@ -846,9 +846,13 @@ async function runBrowser(){
 
  // v23C — real CEO diligence/purchase buttons, cash ledger and mobile views.
  const acqDir=path.resolve("reports/v23c-mobile");fs.mkdirSync(acqDir,{recursive:true});
+ const acquisitionFixture=fs.readFileSync(file);
+ const acquisitionHost=http.createServer((req,res)=>{res.writeHead(200,{"Content-Type":"text/html; charset=utf-8"});res.end(acquisitionFixture)});
+ await new Promise(resolve=>acquisitionHost.listen(0,"127.0.0.1",resolve));acquisitionHost.unref();
+ const acquisitionUrl="http://127.0.0.1:"+acquisitionHost.address().port+"/";
  for(const [width,height] of [[390,844],[414,896]]){
   await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
-  await send("Page.navigate",{url:"file://"+file});
+  await send("Page.navigate",{url:acquisitionUrl});
   let ready=false;for(let n=0;n<95;n++){
    const q=await send("Runtime.evaluate",{expression:"document.documentElement.dataset.bossReady==='true'&&!!window.__bossQA",returnByValue:true});
    if(q.result?.value){ready=true;break;}await sleep(110);
@@ -867,6 +871,7 @@ async function runBrowser(){
    console.log("PASS v23C Chromium "+name+" "+JSON.stringify(v));
   }
  }
+ acquisitionHost.close();
 
    console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}

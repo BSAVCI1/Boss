@@ -325,6 +325,35 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .boss-capability{padding:8px 9px;border:1px solid var(--line);border-radius:8px;margin:6px 0}
 .boss-capability small{display:block}.boss-summary{overflow-wrap:anywhere}
 @media(max-width:414px){.boss-overview{gap:6px}.boss-overview>div{padding:7px}.boss-overview strong{font-size:15px}}
+
+/* v24A — live, accessible company campus derived only from the real saved model. */
+.campus-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.campus-site-picker{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+.campus-site-picker button{font-size:12px;min-height:40px;text-align:left;white-space:normal;max-width:100%;border:1px solid var(--line)}
+.campus-site-picker button[aria-pressed="true"]{outline:2px solid var(--accent);background:var(--accentWash)}
+.campus-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:10px 0}
+.campus-stat{background:var(--accentWash);border-radius:10px;padding:9px 7px;min-width:0}
+.campus-stat span{display:block;font-size:11px;overflow-wrap:anywhere}
+.campus-stat b{display:block;font-size:14px}
+.campus-seat-meter{border:1px solid var(--line);border-radius:999px;overflow:hidden;height:12px;background:var(--bar);margin:10px 0}
+.campus-seat-meter span{display:block;height:100%;background:var(--accent);min-width:0}
+.campus-zone-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:11px 0}
+.campus-zone{border:1px solid var(--line);background:var(--accentWash);border-radius:12px;padding:10px;min-width:0}
+.campus-zone b{display:block;font-size:13px;overflow-wrap:anywhere}
+.campus-seat-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
+.campus-seat-list button{width:100%;min-height:56px;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--card);text-align:left;overflow-wrap:anywhere;font-size:12px}
+.campus-seat-list button[aria-pressed="true"]{border-color:var(--accent);outline:2px solid var(--accent)}
+.campus-seat-list button span{display:block;font-size:11px;margin-top:3px;opacity:.8}
+.campus-person-detail{border:2px solid var(--accent);border-radius:12px;padding:12px;margin:10px 0;background:var(--accentWash)}
+.campus-report-tree,.campus-report-tree ul{list-style:none;padding-left:10px;margin:6px 0;border-left:2px solid var(--line)}
+.campus-report-tree li{margin:6px 0;overflow-wrap:anywhere}
+.campus-report-tree button{min-height:34px;padding:5px 9px;text-align:left;font-size:12px;white-space:normal}
+.campus-report-tree button[aria-pressed="true"]{outline:2px solid var(--accent)}
+.campus-muted-asset{border-left:3px solid var(--line);padding:5px 9px;margin:5px 0;font-size:12px}
+.campus-context{font-size:12px;line-height:1.5}
+@media(max-width:430px){.campus-zone-grid{grid-template-columns:1fr}.campus-site-picker{flex-direction:column}.campus-site-picker button{width:100%}.campus-seat-list{grid-template-columns:repeat(2,minmax(0,1fr))}.campus-overview{gap:5px}.campus-stat{padding:8px 5px}.campus-stat b{font-size:13px}}
+@media(prefers-reduced-motion:reduce){.campus-seat-meter span,.campus-site-picker button{transition:none!important;animation:none!important}}
+
 </style>
 </head>
 <body>
@@ -422,6 +451,16 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <section id="view-team" class="app-view" data-page="team" aria-label="People and delegation" hidden>
 <div class="view-intro"><h2>Team</h2><p>Reporting, careers and people needing support</p></div><section class="card leadership-context" id="leadership-context-team" aria-label="Team leadership focus"></section>
 <section class="card"><div class="lead"><b>People and management capacity</b><span class="small">Actual appointments</span></div><p class="small" id="team-simple-summary"></p><p class="small">Company-wide limits are approved at <b>Today → Management policies</b>. Optional empty positions are not urgent when teams can operate effectively.</p></section>
+<section class="card" id="campus-panel" aria-label="Living company campus">
+<div class="campus-head"><b>Live company campus</b><span class="small">Real people · saved premises · current work</span></div>
+<p class="small">Explore the working company. The seat map and reporting tree read your actual saved people, sites and reporting assignments; no virtual hires, property purchases or payments.</p>
+<div id="campus-sites" class="campus-site-picker" aria-label="Choose an actual workplace"></div>
+<div id="campus-plan" aria-live="polite"></div>
+<details class="aux-details" id="campus-tree-panel"><summary>See the full reporting tree · CEO to every employee</summary>
+<p class="small">Actual supervisors, GMs, executives and team leads. Vacant jobs remain vacant; selecting someone reveals real work and employment details.</p>
+<div id="campus-report-tree"></div>
+</details>
+</section>
 <section class="card org-explorer"><div class="lead"><b>Company reporting tree</b><span id="org-people-count" class="small"></span></div><p class="small">Saved reporting lines and actual appointments. Career grade and delegated management authority are separate.</p><div id="org-explorer"></div></section><details class="aux-details game-advanced" id="leadership-details"><summary>Advanced leadership progression · governed by Management policies</summary><div id="leadership-growth"></div></details>
 <section aria-labelledby="team-title"><h2 id="team-title">Your people · by manager</h2><p class="small" id="team-wellbeing">Each employee appears once. Open a reporting group, then an employee for legitimate actions and promotion requirements.</p><div id="people"></div></section>
 <section aria-labelledby="hiring-title"><h2 id="hiring-title">Grow the team</h2><div class="card"><details class="aux-details" id="recruitment-panel"><summary>Search and hire employees</summary><div class="filter-grid"><div><label for="hire-skill">Specialty to find</label><select id="hire-skill"><option value="">Any skill</option><option value="sales">Sales</option><option value="mkt">Marketing</option><option value="prod">Product</option><option value="ops">Operations</option></select></div><div><label for="hire-interest">Personal interest</label><select id="hire-interest"><option value="">Any interest</option><option value="customers">Customer relationships</option><option value="creative">Creative projects</option><option value="technology">Technology</option><option value="learning">Learning and growth</option><option value="people">Helping colleagues</option><option value="systems">Better processes</option></select></div></div><p class="filter-note">Search is free; hiring has a one-time fee. Each teammate adds $1.50 per day in salary costs, before cost breakthroughs.</p><div class="buttons"><button type="button" id="search-talent">Search candidates</button></div><div class="candidate-list" id="candidates"></div></details><div class="team-culture"><b>Executive assistant · CEO support</b><p class="filter-note" id="assistant-status">No executive assistant appointed.</p><div class="buttons"><button type="button" id="hire-assistant">Hire executive assistant ($20)</button></div>
@@ -3166,6 +3205,135 @@ function canonicalReporting(){
  return{entries,groups:sorted,byId};
 }
 function teamReportingGroups(){return canonicalReporting().groups;}
+
+/* v24A: read-only, render-time visualization from existing workforce, property and
+   canonical reporting rules. Never create a parallel employee/site state or cash flow. */
+let campusScope="corporate",campusSelectedId=null,campusSignature="";
+function campusSites(){
+ const list=[{key:"corporate",unitKey:null,name:"Corporate workplace"}];
+ for(const u of S.exec?.units||[])if(SERVICE_LINES[u.key])
+  list.push({key:"unit:"+u.key,unitKey:u.key,name:SERVICE_LINES[u.key].name});
+ return list;
+}
+function campusSiteInfo(site){
+ const people=propertyPeople(site.unitKey),active=propertyActive(site.unitKey),capacity=propertyCapacity(site.unitKey);
+ const def=active?PROPERTY_TYPES[active.type]:null;
+ return{...site,people,active,capacity,
+  name:active?def.name:(site.unitKey?"Distributed unit workspace":"Distributed founder workspace"),
+  kind:active?def.kind:"workspace",
+  location:active?PROPERTY_LOCATIONS[active.location]?.name||"Unknown":"No purchased property",
+  daily:active?active.dayCost:0,
+  overcrowded:people.length>capacity,
+  multiplier:people.length?propertyWorkMultiplier(people[0]):1};
+}
+function campusZones(people){
+ const groups=[
+  {name:"Leadership & support",people:[]},
+  {name:"Sales & customer work",people:[]},
+  {name:"Marketing & creative",people:[]},
+  {name:"Product & operations",people:[]}
+ ];
+ for(const p of people){
+  const leadership=!!executiveRoleOf(p.id)||p.id===S.ops.assistantId||!!ladderNode(p.id)||
+   !!(unitOfPerson(p.id)?.managerId===p.id)||DEPT_KEYS.some(k=>
+    orgManager(k)?.id===p.id||DEPARTMENTS[k].skills.some(r=>orgSubManager(k,r)?.id===p.id));
+  const k=leadership?0:p.role.primary==="sales"?1:p.role.primary==="mkt"?2:3;
+  groups[k].people.push(p);
+ }
+ return groups.filter(g=>g.people.length);
+}
+function campusTree(view){
+ const nodes=new Map(view.entries.map(e=>[e.p.id,{...e,kids:[]}]));
+ const roots=[];
+ for(const entry of view.entries){
+  const node=nodes.get(entry.p.id),parent=nodes.get(entry.supervisor);
+  if(parent&&parent!==node)parent.kids.push(node);else roots.push(node);
+ }
+ const make=(x,depth=0)=>{
+  const p=x.p,selected=campusSelectedId===p.id;
+  const button='<button type="button" data-campus-person="'+p.id+'" aria-pressed="'+selected+
+   '" title="'+esc(x.source)+'">'+esc(p.n)+' · '+esc(orgPersonPosition(p))+'</button>';
+  return'<li>'+button+(x.kids.length&&depth<20?'<ul>'+x.kids.map(y=>make(y,depth+1)).join("")+'</ul>':'')+'</li>';
+ };
+ return'<div class="campus-context"><b>CEO · company owner</b> · '+view.entries.length+
+  ' unique employees</div><ul class="campus-report-tree">'+roots.map(x=>make(x)).join("")+'</ul>'+
+  '<p class="small">Vacant executive positions: '+
+  Object.entries(EXECUTIVE_ROLES).filter(([role])=>!person(S.exec?.officers?.[role]?.id))
+   .map(([role,meta])=>esc(meta.short)).join(", ")+
+  (Object.keys(EXECUTIVE_ROLES).every(r=>!!person(S.exec?.officers?.[r]?.id))?"None":"")+
+  '. Only authorized appointments can fill a position.</p>';
+}
+function campusRender(force=false){
+ const picker=$("campus-sites"),plan=$("campus-plan"),tree=$("campus-report-tree");
+ if(!picker||!plan||!tree||editableInteractionPending())return;
+ const sites=campusSites();
+ if(!sites.some(x=>x.key===campusScope))campusScope="corporate";
+ const selectedSite=campusSiteInfo(sites.find(x=>x.key===campusScope));
+ const report=canonicalReporting(),selected=person(campusSelectedId);
+ const sig=JSON.stringify([S.day,campusScope,campusSelectedId,S.exec.property.sites.map(x=>[x.id,x.type,x.status,x.location,x.unitKey,x.dayCost]),
+  sites.map(x=>[x.key,propertyCapacity(x.unitKey)]),S.team.map(p=>[p.id,p.n,p.department,p.role.primary,p.t,p.career.rank,p.career.stress]),
+  report.entries.map(e=>[e.p.id,e.supervisor,e.source]),S.exec.officers,S.ops.assistantId]);
+ if(!force&&sig===campusSignature)return;campusSignature=sig;
+ picker.innerHTML=sites.map(site=>{
+  const d=campusSiteInfo(site);
+  return'<button type="button" data-campus-site="'+esc(site.key)+'" aria-pressed="'+(site.key===campusScope)+'">'+
+   esc(site.name)+' · '+d.people.length+'/'+d.capacity+' seats'+(d.overcrowded?" · OVER CAPACITY":"")+'</button>';
+ }).join("");
+ const active=selectedSite.active,savedProperty=S.exec.property.sites||[],details=[];
+ if(active)details.push(esc(PROPERTY_TYPES[active.type].name)+" · "+esc(selectedSite.location)+" · "+esc(selectedSite.kind));
+ else details.push(esc(selectedSite.name)+" · no property purchase");
+ const capacity=Math.max(1,selectedSite.capacity),occupied=selectedSite.people.length;
+ const meter=Math.min(100,Math.round(100*occupied/capacity));
+ const stat='<div class="campus-overview">'+
+  '<div class="campus-stat"><span>Working here</span><b>'+occupied+' people</b></div>'+
+  '<div class="campus-stat"><span>Actual capacity</span><b>'+capacity+' seats</b></div>'+
+  '<div class="campus-stat"><span>Fixed cost / game day</span><b>'+biCurrency(selectedSite.daily)+'</b></div></div>'+
+  '<div class="campus-seat-meter" role="meter" aria-label="Seats occupied" aria-valuemin="0" aria-valuemax="'+capacity+'" aria-valuenow="'+Math.min(occupied,capacity)+'"><span style="width:'+meter+'%"></span></div>'+
+  '<p class="campus-context">'+details.join(" · ")+'. '+occupied+' of '+capacity+' places used. '+
+  (selectedSite.overcrowded?'Overcrowding reduces future work productivity and morale.':"No crowding penalty.")+
+  ' Current productivity location factor '+(100*selectedSite.multiplier).toFixed(1)+'% (includes existing location bonus).'+
+  ' Areas below group actual working roles; they do not represent purchased extra rooms.</p>';
+ const zones=campusZones(selectedSite.people).map(zone=>{
+  const nodes=zone.people.map(p=>'<button type="button" data-campus-person="'+p.id+'" aria-pressed="'+(campusSelectedId===p.id)+'">'+
+   esc(p.n)+' · #'+p.id+'<span>'+esc(taskText(p))+'</span></button>');
+  const visible=nodes.slice(0,16),remaining=nodes.slice(16);
+  return'<section class="campus-zone"><b>'+esc(zone.name)+' · '+zone.people.length+'</b>'+
+   '<div class="campus-seat-list">'+visible.join("")+'</div>'+
+   (remaining.length?'<details class="aux-details"><summary>Show '+remaining.length+' additional real employee(s)</summary>'+
+     '<div class="campus-seat-list">'+remaining.join("")+'</div></details>':'')+'</section>';
+ }).join("");
+ let personInfo='';
+ if(selected){
+  const entry=report.entries.find(x=>x.p.id===selected.id),workspace=campusSiteInfo(sites.find(x=>x.key===(unitOfPerson(selected.id)?"unit:"+unitOfPerson(selected.id).key:"corporate")));
+  personInfo='<div class="campus-person-detail" role="region" aria-label="Selected employee"><b>'+esc(selected.n)+' · #'+selected.id+'</b>'+
+   '<p class="small">'+esc(orgPersonPosition(selected))+' · '+esc(entry?.owner||"Corporate")+
+   '<br>Current work: '+esc(taskText(selected))+
+   '<br>Reports to: '+esc(person(entry?.supervisor)?.n||"CEO")+" ("+esc(entry?.source||"Direct oversight")+")"+
+   '<br>Actual location: '+esc(workspace.name)+' · '+workspace.people.length+'/'+workspace.capacity+' seats</p>'+
+   '<button type="button" data-campus-jump="'+selected.id+'">Open employee in Team →</button></div>';
+ }
+ const held=savedProperty.filter(x=>x.status!=="active"&&x.status!=="sold"&&x.status!=="closed");
+ const assets=held.length?'<details class="aux-details"><summary>Other recorded properties · '+held.length+'</summary>'+
+  held.map(x=>'<div class="campus-muted-asset">'+esc(PROPERTY_TYPES[x.type]?.name||"Premises")+
+   ' · '+esc(x.unitKey?SERVICE_LINES[x.unitKey]?.name||"Unit":"Corporate")+' · '+esc(x.status)+
+   ' · '+esc(PROPERTY_LOCATIONS[x.location]?.name||"Location not recorded")+
+   ' · no staff shown until activated</div>').join("")+'</details>':'';
+ plan.innerHTML='<b>'+esc(selectedSite.name)+' · live floor map</b>'+stat+
+  '<div class="campus-zone-grid">'+(zones||'<p class="small">No people assigned to this site.</p>')+'</div>'+
+  personInfo+assets;
+ tree.innerHTML=campusTree(report);
+}
+$("campus-panel").addEventListener("click",e=>{
+ const button=e.target?.closest?.("button");if(!button)return;
+ if(button.dataset.campusSite){campusScope=button.dataset.campusSite;campusSelectedId=null;campusRender(true);}
+ if(button.dataset.campusPerson){campusSelectedId=Number(button.dataset.campusPerson);campusRender(true);}
+ if(button.dataset.campusJump){
+  const id=Number(button.dataset.campusJump),card=$("people")?.querySelector('details[data-employee-id="'+id+'"]');
+  if(!card)return;const group=card.closest("details[data-team-group]");
+  if(group)group.open=true;card.open=true;card.scrollIntoView?.({block:"center",behavior:"smooth"});
+ }
+});
+
 function renderOrgExplorer(view){
  const root=$("org-explorer");if(!root)return;
  $("org-people-count").textContent=view.entries.length+" unique employees";
@@ -5579,7 +5747,7 @@ for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)day
 function refresh(){
 if(editableInteractionPending())return;
 v23Render();capitalRender();acquisitionRender();
-renderLeadershipContexts();renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
+campusRender();renderLeadershipContexts();renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);

@@ -81,7 +81,7 @@ test("Integration charges 30 days only, paid/payable reconciles, affects future 
  const day=s.day,cost=x.integrationCost;G.acquisitionDay();assert.equal(x.integrationCost,cost);assert.equal(s.day,day);ledger(s);
 });
 test("Debt, unpaid wages, portfolio lots and protected runway block speculative purchases",()=>{
- const s=leader(reset());fund(s,1500);
+ const s=leader(reset());fund(s,900);
  assert.equal(G.acquisitionDiligence("harbor"),true);
  s.economy.loan=1300;assert.equal(G.acquisitionBuy("harbor"),false);
  s.economy.loan=0;s.bi.unpaidPayroll=1000;assert.equal(G.acquisitionBuy("harbor"),false);

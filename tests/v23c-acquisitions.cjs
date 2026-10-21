@@ -104,6 +104,6 @@ test("Old saves and revoked CFO authority do not grant free units or damage iden
  assert.equal(G.acquisitionDiligence("north"),true);assert.equal(G.acquisitionBuy("north"),true);
  const copy=G.load(JSON.stringify(s));assert.equal(copy.acquisitions.owned[0].id,"north");
  assert.equal(copy.world.rivals.find(r=>r.id==="north").acquired,true);
- assert.deepEqual(copy.team.map(p=>p.id),people);assert.deepEqual(copy.deals.map(d=>d.agreedFee),contracts);
+ assert.equal(JSON.stringify(copy.team.map(p=>p.id)),JSON.stringify(people));assert.equal(JSON.stringify(copy.deals.map(d=>d.agreedFee)),JSON.stringify(contracts));
  assert.equal(copy.exec.units.length,s.exec.units.length);ledger(s);
 });

@@ -4339,7 +4339,7 @@ function empireRender(){
   '<p class="small">'+empireDetails(selected)+'</p></div>'+
   '<p class="small">'+assets.filter(x=>x.kind==="property").length+" recorded active/inactive properties · "+
    S.exec.units.length+" genuine operating divisions · "+S.acquisitions.owned.length+" acquired rivals · "+
-   S.capital.lots.length+" portfolio lots. Unowned premises and rivals are not assets.</p>';
+   S.capital.lots.length+" portfolio lots. Unowned premises and rivals are not assets.</p>";
 }
 $("empire-panel").addEventListener("click",e=>{
  const b=e.target?.closest?.("button[data-empire-key]");if(!b)return;

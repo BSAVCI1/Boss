@@ -297,7 +297,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
 });
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
-const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,setupLeadership:stage=>{
+const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,acquisitionDiligence,acquisitionBuy,acquisitionRender,setupLeadership:stage=>{
  fresh();
  if(stage!=="founder"){
   while(S.team.length<(stage==="group"?11:8)){
@@ -842,6 +842,74 @@ async function runBrowser(){
    console.log("PASS v23B Chromium "+name+" "+JSON.stringify(v));
   }
  }
+
+
+ // v23C — real CEO diligence/purchase buttons, cash ledger and mobile views.
+ const acqDir=path.resolve("reports/v23c-mobile");fs.mkdirSync(acqDir,{recursive:true});
+ // Use the real instrumented game, but NOT the earlier QA runner that exercises quota failures/reloads.
+ // Sharing that runner caused concurrent writes and false IndexedDB errors during CEO diligence.
+ const acquisitionFixture=Buffer.from(qaHtml,"utf8");
+ const acquisitionHost=http.createServer((req,res)=>{res.writeHead(200,{"Content-Type":"text/html; charset=utf-8"});res.end(acquisitionFixture)});
+ await new Promise(resolve=>acquisitionHost.listen(0,"127.0.0.1",resolve));acquisitionHost.unref();
+ const acquisitionUrl="http://127.0.0.1:"+acquisitionHost.address().port+"/";
+
+ // Acquisition verification runs in a fresh HTTP-origin Chrome target.
+ // Moving the existing file:// target across origin groups can detach the CDP session.
+ const acquisitionTarget=await send("Target.createTarget",{url:acquisitionUrl});
+ let acqInfo=null;
+ for(let i=0;i<25;i++){
+  const tabsNow=await getJson("http://127.0.0.1:"+port+"/json");
+  acqInfo=tabsNow.find(t=>t.id===acquisitionTarget.targetId&&t.webSocketDebuggerUrl);
+  if(acqInfo)break;
+  await sleep(70);
+ }
+ assert.ok(acqInfo?.webSocketDebuggerUrl,"v23C HTTP browser target missing");
+ await sleep(450);
+ const acqWs=new WebSocket(acqInfo.webSocketDebuggerUrl);
+ await new Promise((resolve,reject)=>{
+  const timeout=setTimeout(()=>reject(Error("v23C CDP connect timeout")),8000);
+  acqWs.addEventListener("open",()=>{clearTimeout(timeout);resolve()},{once:true});
+  acqWs.addEventListener("error",()=>{clearTimeout(timeout);reject(Error("v23C CDP connect failed"))},{once:true});
+ });
+ const acqPending=new Map();let acqSeq=0;
+ acqWs.addEventListener("message",e=>{
+  try{const msg=JSON.parse(e.data);if(msg.id&&acqPending.has(msg.id)){
+   acqPending.get(msg.id)(msg);acqPending.delete(msg.id);
+  }}catch{}
+ });
+ function acqSend(method,params={}){
+  return new Promise((resolve,reject)=>{
+   const seq=++acqSeq,timeout=setTimeout(()=>{acqPending.delete(seq);reject(Error("v23C CDP timeout "+method))},10000);
+   acqPending.set(seq,msg=>{clearTimeout(timeout);if(msg.error)reject(Error(method+": "+JSON.stringify(msg.error)));else resolve(msg.result)});
+   acqWs.send(JSON.stringify({id:seq,method,params}));
+  });
+ }
+ await acqSend("Page.enable");await acqSend("Runtime.enable");
+
+ for(const [width,height] of [[390,844],[414,896]]){
+  await acqSend("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+  // Already initialized on HTTP; avoid switching Chrome document targets.
+  let ready=false;for(let n=0;n<95;n++){
+   let q;try{q=await acqSend("Runtime.evaluate",{expression:"document.documentElement.dataset.bossReady==='true'&&!!window.__bossQA",returnByValue:true});}catch{await sleep(150);continue;}
+   if(q.result?.value){ready=true;break;}await sleep(110);
+  }
+  assert.ok(ready,"v23C real browser boot");
+  const setup=(await acqSend("Runtime.evaluate",{expression:"(async()=>{const qa=window.__bossQA;qa.pause();qa.resetEditShield();const stage=qa.setupLeadership('leader');qa.pause();const s=qa.state();s.cash+=50000;s.bi.openingCash+=50000;qa.grow(s.team.length);document.querySelector('.bottom-nav button[data-view=\"growth\"]').click();const panel=document.getElementById('acquisition-panel');panel.open=true;const before=s.cash;const diligence=panel.querySelector('button[data-acquisition=\"diligence\"][data-target=\"harbor\"]');const diligenceEnabled=!!diligence&&!diligence.disabled;if(diligenceEnabled){diligence.click();await new Promise(r=>setTimeout(r,420));qa.resetEditShield();qa.grow(qa.state().team.length);panel.open=true;}const buy=panel.querySelector('button[data-acquisition=\"buy\"][data-target=\"harbor\"]');const buyEnabled=!!buy&&!buy.disabled;if(buyEnabled){buy.click();await new Promise(r=>setTimeout(r,420));qa.resetEditShield();qa.grow(qa.state().team.length);panel.open=true;}return{stage,before,after:qa.state().cash,diligenceEnabled,buyEnabled,owned:qa.state().acquisitions.owned.length,investments:qa.state().bi.totals.investments,open:panel.open,saveStatus:document.getElementById('save-state')?.textContent,errors:window.__mobileErrors||[]}})()",returnByValue:true,awaitPromise:true})).result?.value;
+  assert.ok(setup&&setup.stage==="leader"&&setup.diligenceEnabled&&setup.buyEnabled&&setup.owned===1&&setup.investments>0&&setup.after<setup.before&&setup.open,"v23C real CEO purchase "+JSON.stringify(setup));
+  for(const tab of ["growth","work","today"]){
+   const v=(await acqSend("Runtime.evaluate",{expression:"(()=>{const tab="+JSON.stringify(tab)+";document.querySelector('.bottom-nav button[data-view=\"'+tab+'\"]').click();const el=document.getElementById('acquisition-'+tab);if(el?.parentElement?.tagName==='DETAILS')el.parentElement.open=true;const text=el?.textContent||'';window.scrollTo({top:Math.max(0,scrollY+el.getBoundingClientRect().top-20),behavior:'instant'});return{width:innerWidth,tab,visible:!!el?.getClientRects().length,overflow:document.documentElement.scrollWidth>innerWidth+6,acquired:text.includes(tab==='growth'?'acquired Day':tab==='work'?'Acquisition financial bridge':'1 acquired'),action:tab==='growth'?!!el.querySelector('button[data-acquisition=\"buy\"]'):true}})()",returnByValue:true})).result?.value;
+   assert.ok(v&&v.width===width&&v.visible&&!v.overflow&&v.acquired&&v.action,"v23C mobile "+JSON.stringify(v));
+   await sleep(230);
+   const shot=await acqSend("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+   assert.ok(shot.data?.length>1500,"v23C real screenshot missing");
+   const name=path.join(acqDir,"boss-v23c-"+tab+"-"+width+"px.png");
+   fs.writeFileSync(name,Buffer.from(shot.data,"base64"));
+   console.log("PASS v23C Chromium "+name+" "+JSON.stringify(v));
+  }
+ }
+ acqWs.close();
+ await send("Target.closeTarget",{targetId:acquisitionTarget.targetId});
+ acquisitionHost.close();
 
    console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}

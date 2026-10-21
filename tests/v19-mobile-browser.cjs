@@ -818,6 +818,31 @@ async function runBrowser(){
   }
  }
 
+
+ // v23B live-engine investment purchase and capital UX at owner phone sizes.
+ const capitalDir=path.resolve("reports/v23b-mobile");fs.mkdirSync(capitalDir,{recursive:true});
+ for(const [width,height] of [[390,844],[414,896]]){
+  await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+  await send("Page.navigate",{url:"file://"+file});
+  let ready=false;for(let n=0;n<95;n++){
+   const q=await send("Runtime.evaluate",{expression:"document.documentElement.dataset.bossReady==='true'&&!!window.__bossQA",returnByValue:true});
+   if(q.result?.value){ready=true;break;}await sleep(110);
+  }
+  assert.ok(ready,"v23B mobile game ready");
+  const state=await send("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.pause();qa.resetEditShield();qa.setupLeadership('founder');qa.pause();const s=qa.state();s.cash+=30000;s.bi.openingCash+=30000;qa.grow(2);qa.pause();document.querySelector('.bottom-nav button[data-view=\"growth\"]').click();const d=document.getElementById('capital-panel');d.open=true;const buy=d.querySelector('button[data-capital=\"buy\"]');if(buy&&!buy.disabled)buy.click();return{buyEnabled:!!buy&&!buy.disabled,stage:document.getElementById('capital-today')?.textContent||'',lots:s.capital.lots.length}})()",returnByValue:true});
+  assert.ok(state.result?.value?.lots>=1,"v23B actual engine purchase reflected in capital lots");
+  for(const tab of ["growth","work"]){
+   const v=(await send("Runtime.evaluate",{expression:"(()=>{const tab="+JSON.stringify(tab)+";document.querySelector('.bottom-nav button[data-view=\"'+tab+'\"]').click();const el=document.getElementById(tab==='growth'?'capital-growth':'capital-work');if(el?.parentElement?.tagName==='DETAILS')el.parentElement.open=true;const text=el?.textContent||'';window.scrollTo({top:Math.max(0,scrollY+el.getBoundingClientRect().top-20),behavior:'instant'});return{width:innerWidth,tab,visible:!!el?.getClientRects().length,overflow:document.documentElement.scrollWidth>innerWidth+6,capital:text.includes(tab==='growth'?'Diversified reserve fund':'Capital vs operating cash'),buttons:tab==='growth'?!!el.querySelector('button[data-capital=\"sell\"]'):true}})()",returnByValue:true})).result?.value;
+   assert.ok(v&&v.width===width&&v.visible&&!v.overflow&&v.capital&&v.buttons,"v23B mobile "+JSON.stringify(v));
+   await sleep(240);
+   const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+   assert.ok(shot.data?.length>1500,"v23B real screenshot missing");
+   const name=path.join(capitalDir,"boss-v23b-"+tab+"-"+width+"px.png");
+   fs.writeFileSync(name,Buffer.from(shot.data,"base64"));
+   console.log("PASS v23B Chromium "+name+" "+JSON.stringify(v));
+  }
+ }
+
    console.log("PASS real Chromium near-390px Boss mobile UI smoke");
  }finally{try{ws?.close()}catch{}chrome.kill("SIGTERM");await sleep(250);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150})}catch(err){console.warn("Temporary Chrome profile cleanup deferred:",err.code)}}
 }

@@ -906,6 +906,23 @@ async function runBrowser(){
    fs.writeFileSync(name,Buffer.from(shot.data,"base64"));
    console.log("PASS v23C Chromium "+name+" "+JSON.stringify(v));
   }
+
+  // v24A: new real-company campus and canonical reporting on this same persistent HTTP origin.
+  const campusDir=path.resolve("reports/v24a-mobile");fs.mkdirSync(campusDir,{recursive:true});
+  const setupCampus=(await acqSend("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.resetEditShield();qa.setupLeadership('group');qa.pause();const s=qa.state();s.exec.property.sites.push({id:998,type:'building',status:'active',location:'park',dayCost:1.2,boost:1.06,since:s.day,book:1800,investment:1800,lastDepreciation:s.day,arrears:0,unitKey:null});qa.grow(s.team.length);qa.resetEditShield();document.querySelector('.bottom-nav button[data-view=\"team\"]').click();const p=document.getElementById('campus-plan');return{people:s.team.length,sites:document.querySelectorAll('#campus-sites button').length,active:p?.textContent||'',width:innerWidth}})()",returnByValue:true})).result?.value;
+  assert.ok(setupCampus&&setupCampus.width===width&&setupCampus.people>=11&&setupCampus.sites>=3&&setupCampus.active.includes("Owned office building"),"v24A real saved office "+JSON.stringify(setupCampus));
+  const interaction=(await acqSend("Runtime.evaluate",{expression:"(()=>{const site=document.querySelector('#campus-sites button[data-campus-site=\"unit:marketing\"]');site?.click();const staff=document.querySelector('#campus-plan button[data-campus-person]');staff?.click();const p=document.getElementById('campus-plan');return{unit:p?.textContent?.includes('Distributed unit workspace'),detail:p?.textContent?.includes('Reports to:'),tree:document.getElementById('campus-report-tree')?.textContent?.includes('CEO'),count:document.querySelectorAll('#campus-sites button').length,overflow:document.documentElement.scrollWidth>innerWidth+6}})()",returnByValue:true})).result?.value;
+  assert.ok(interaction?.unit&&interaction.detail&&interaction.tree&&interaction.count>=3&&!interaction.overflow,"v24A actual unit scene and employee drilldown "+JSON.stringify(interaction));
+  for(const mode of ["campus","organization"]){
+   const v=(await acqSend("Runtime.evaluate",{expression:"(()=>{const mode="+JSON.stringify(mode)+";document.querySelector('.bottom-nav button[data-view=\"team\"]').click();document.getElementById('campus-tree-panel').open=mode==='organization';const el=document.getElementById(mode==='campus'?'campus-plan':'campus-report-tree');window.scrollTo({top:Math.max(0,scrollY+el.getBoundingClientRect().top-25),behavior:'instant'});return{visible:!!el?.getClientRects().length,overflow:document.documentElement.scrollWidth>innerWidth+6,people:el?.querySelectorAll('button[data-campus-person]').length||0,text:el?.textContent?.slice(0,110)||''}})()",returnByValue:true})).result?.value;
+   assert.ok(v?.visible&&!v.overflow,"v24A mobile "+mode+" "+JSON.stringify(v));
+   await sleep(230);
+   const shot=await acqSend("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+   assert.ok(shot.data?.length>1500,"v24A genuine Chromium screenshot required");
+   const image=path.join(campusDir,"boss-v24a-"+mode+"-"+width+"px.png");
+   fs.writeFileSync(image,Buffer.from(shot.data,"base64"));
+   console.log("PASS v24A Chromium "+image+" "+JSON.stringify(v));
+  }
  }
  acqWs.close();
  await send("Target.closeTarget",{targetId:acquisitionTarget.targetId});

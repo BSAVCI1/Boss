@@ -335,7 +335,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
-<section class="card" id="v23-today" aria-label="Business portfolio overview"></section><section class="card" id="capital-today" aria-label="Capital position"></section><section class="card" id="ceo-priority-card" aria-label="CEO command center">
+<section class="card" id="v23-today" aria-label="Business portfolio overview"></section><section class="card" id="capital-today" aria-label="Capital position"></section><section class="card" id="acquisition-today" aria-label="Acquisitions and competition"></section><section class="card" id="ceo-priority-card" aria-label="CEO command center">
 <div class="lead"><b>CEO command center</b><span class="small">Decisions and delegated work</span></div>
 <div id="ceo-priority-content"><p class="small">Preparing your company priorities.</p></div>
 </section>
@@ -378,7 +378,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <section id="view-work" class="app-view" data-page="work" aria-label="Projects and sales" hidden>
 <div class="view-intro"><h2>Work</h2><p>Deliver projects, win customers and protect cash</p></div><details class="card" open><summary>Our businesses · products, buyers & results</summary><div id="v23-work"></div></details><section class="card leadership-context" id="leadership-context-work" aria-label="Work leadership focus"></section>
 <section aria-labelledby="deals-title"><h2 id="deals-title">Active projects</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
-<section class="card"><div class="lead"><b>Financial position</b><span class="small">Current company totals</span></div><div class="boss-overview" id="work-finance-snapshot"></div><div id="capital-work"></div><p id="work-finance-action" class="small boss-summary"></p></section>
+<section class="card"><div class="lead"><b>Financial position</b><span class="small">Current company totals</span></div><div class="boss-overview" id="work-finance-snapshot"></div><div id="capital-work"></div><div id="acquisition-work"></div><p id="work-finance-action" class="small boss-summary"></p></section>
 <section class="card"><div class="lead"><b>Owned capabilities</b><span class="small">Permanent toolkit benefits</span></div><div id="work-owned-capabilities"></div></section>
 <section class="card" id="work-project-watch"><div class="lead"><b>Projects requiring attention</b><span id="work-project-watch-count" class="small"></span></div><p id="work-project-watch-summary" class="small"></p></section>
 
@@ -452,7 +452,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </details>
 </section>
 <section id="view-growth" class="app-view" data-page="growth" aria-label="Strategy and capabilities" hidden>
-<div class="view-intro"><h2>Growth</h2><p>Businesses, markets and investments</p></div><details class="card"><summary>Product portfolio · actual commercial performance</summary><div id="v23-growth"></div></details><details class="card" id="capital-panel"><summary>Investment portfolio · capital & risks</summary><div id="capital-growth"></div></details><section class="card leadership-context" id="leadership-context-growth" aria-label="Growth leadership focus"></section>
+<div class="view-intro"><h2>Growth</h2><p>Businesses, markets and investments</p></div><details class="card"><summary>Product portfolio · actual commercial performance</summary><div id="v23-growth"></div></details><details class="card" id="capital-panel"><summary>Investment portfolio · capital & risks</summary><div id="capital-growth"></div></details><details class="card" id="acquisition-panel"><summary>Acquisitions · diligence, integration &amp; competition</summary><div id="acquisition-growth"></div></details><section class="card leadership-context" id="leadership-context-growth" aria-label="Growth leadership focus"></section>
 <section class="boss-primary-section" id="growth-expand-businesses"><h2>1. Expand businesses</h2><p class="small">Owned service lines, operating units, GMs and next eligible expansion; real prerequisites and CEO approval apply.</p><p class="small boss-summary" id="growth-business-status"></p><section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Purchased service lines start as shared service portfolios. You can now organize a purchased line into an operating unit below, appoint a General Manager and allocate dedicated employees. These units are internal operating divisions, not independent subsidiaries or separate bank accounts. Company cash and financial records remain consolidated; unit results only track future work. Shared department budgets and advanced unit delegations evolve in later releases. Revenue is never counted twice.</p><div id="company-unlock-guide" class="filter-note"></div><p id="company-launch-status" class="small" role="status"></p><div id="business-lines"></div><div id="business-units" aria-label="Operating unit management"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">New launches require proven delivery, leadership, qualified staffing and financial runway. Previously purchased lines remain yours. No future revenue is guaranteed.</p></details></section>
 </section>
 <section class="boss-primary-section" id="growth-markets-customers"><h2>2. Markets and customers</h2><p class="small">Target sector and commercial positioning affect new customers; CEO direction and each GM strategy are separate.</p><section class="card"><div class="lead"><b>Current market focus</b></div><p class="small boss-summary" id="growth-focus-summary"></p></section><section aria-labelledby="market-title"><h2 id="market-title">Target customer sector</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><details class="aux-details" id="sector-explore"><summary>Explore customer markets</summary><div id="sector-options" class="sector-buttons"></div></details><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
@@ -1208,7 +1208,7 @@ if(!Number.isFinite(w.since))w.since=state.day;
 }
 function worldStrategy(){return WORLD_STRATEGIES[S.world.strategy]||WORLD_STRATEGIES.balanced;}
 function worldDemand(){return economyPressure().factor*(S.day<=S.world.shockUntil?.92:1);}
-function worldRivalFor(lead){const rivals=S.world.rivals,ix=(lead.id*7+lead.sector.length)%rivals.length;
+function worldRivalFor(lead){const rivals=S.world.rivals.filter(r=>!r.acquired),ix=(lead.id*7+lead.sector.length)%Math.max(1,rivals.length);
 const expert=rivals.find(r=>r.sector===lead.sector);return expert||rivals[ix];}
 // v22.4: quote model uses signed-deal modifiers, without pretending the final scope is fixed.
 function worldIndicativeFee(lead){
@@ -1247,7 +1247,8 @@ const factors=[
  ["Price against competitor",priceEdge*(clientNeed==="price"?.7:.35)],
  ["Available delivery specialists",available?.025:Math.max(-.11,-.045-S.deals.length/Math.max(1,pipelineCapacity())*.032)],
  ["Delivery speed",clientNeed==="speed"?(policy.scope<1?.025:-.025)-(rival.speed-75)*.001:0],
- ["Rival sector specialization",lead.sector===rival.sector?-.04:0]
+ ["Rival sector specialization",lead.sector===rival.sector?-.04:0],
+ ["Acquisition integration and staffed capability",acquisitionBidEffect(lead)]
 ];
 const chance=Math.max(.26,Math.min(.93,base*worldDemand()+factors.reduce((a,f)=>a+f[1],0)));
 const drivers=factors.sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).filter(f=>Math.abs(f[1])>=.008).slice(0,4).map(f=>(f[1]>=0?"+":"−")+f[0]+" "+Math.round(Math.abs(f[1])*100)+"pp");
@@ -1314,7 +1315,7 @@ logIt(info);save();refresh();return true;
 }
 function worldDay(){
 const w=S.world,cycle=Math.floor(S.day/30);
-if(cycle!==w.lastRivalCycle&&S.day>w.since){w.lastRivalCycle=cycle;for(let i=0;i<w.rivals.length;i++){const r=w.rivals[i];const drift=([-.9,.3,1.1,0][(cycle+i)%4]);r.rep=Math.max(30,Math.min(94,r.rep+drift));r.pricing=+(WORLD_RIVALS[i].pricing+(Math.floor(cycle/2+i)%3-1)*.02).toFixed(2);
+if(cycle!==w.lastRivalCycle&&S.day>w.since){w.lastRivalCycle=cycle;for(let i=0;i<w.rivals.length;i++){const r=w.rivals[i];if(r.acquired)continue;const drift=([-.9,.3,1.1,0][(cycle+i)%4]);r.adaptation=Math.max(0,Math.min(3,(r.adaptation||0)+(S.acquisitions?.owned.length||0)*.15-((r.marketWins||0)>(r.marketMisses||0)?.08:0)));r.rep=Math.max(30,Math.min(94,r.rep+drift));r.pricing=+(WORLD_RIVALS[i].pricing+(Math.floor(cycle/2+i)%3-1)*.02+(r.adaptation||0)*.012).toFixed(2);
 r.quality=Math.max(62,Math.min(95,r.quality+[-2,1,2,-1][(cycle+i)%4]));
 r.speed=Math.max(58,Math.min(96,r.speed+[1,-2,2,0][(cycle+i)%4]));
 /* Simulate rival activity outside direct tenders; never claim this is the player's history. */
@@ -1333,12 +1334,12 @@ const lead={id:S.pipeline.seq++,client,sector:c.sector,stage:"prospect",progress
 }
 function worldRender(){
 const panel=$("world-panel"),w=S.world;
-$("world-summary").textContent=w.stats.won+" won · "+w.stats.lost+" lost · "+w.rivals.length+" rivals";
+$("world-summary").textContent=w.stats.won+" won · "+w.stats.lost+" lost · "+w.rivals.filter(r=>!r.acquired).length+" independent rivals";
 if(!panel.open)return;
 $("world-strategy").value=w.strategy;
 $("world-strategy").disabled=!!S.ev||S.day-w.changedAt<30;
 $("world-strategy-note").textContent=worldStrategy().description+" · Next strategy change "+(S.day-w.changedAt<30?"in "+(30-(S.day-w.changedAt))+" game days":"available now")+". Contract changes apply only to new agreements.";
-$("world-rivals").innerHTML=w.rivals.map(r=>'<div class="coach-row"><b>'+esc(r.name)+'</b> · '+esc(r.archetype)+'<div class="coach-mini">Focus: '+esc(SECTORS[r.sector].name)+' · Price index '+r.pricing.toFixed(2)+' · Quality '+Math.round(r.quality)+' · Speed '+Math.round(r.speed)+' · Reputation '+Math.round(r.rep)+'</div><div class="coach-mini">Shared bids: '+r.wins+' rival wins · '+r.losses+' bids beaten by you · Outside-market simulated wins '+(r.marketWins||0)+' · setbacks '+(r.marketMisses||0)+' (all forward-only)</div></div>').join("");
+$("world-rivals").innerHTML=w.rivals.map(r=>'<div class="coach-row"><b>'+esc(r.name)+'</b> · '+(r.acquired?'Acquired by your group · ':'')+esc(r.archetype)+'<div class="coach-mini">Focus: '+esc(SECTORS[r.sector].name)+' · Price index '+r.pricing.toFixed(2)+' · Quality '+Math.round(r.quality)+' · Speed '+Math.round(r.speed)+' · Reputation '+Math.round(r.rep)+'</div><div class="coach-mini">Shared bids: '+r.wins+' rival wins · '+r.losses+' bids beaten by you · Outside-market simulated wins '+(r.marketWins||0)+' · setbacks '+(r.marketMisses||0)+' (all forward-only)</div></div>').join("");
 $("world-tenders").innerHTML=w.tenders.slice(0,7).map(t=>'<div class="coach-row"><b>'+esc(t.client)+'</b> · '+(t.result==="won"?"Won":"Lost")+' against '+esc(t.rival)+'<div class="coach-mini">Day '+t.day+' · '+esc(t.priority)+' buyer · '+esc(t.strategy)+' strategy · Estimated win chance '+Math.round(100*t.probability)+'%. Why: '+esc((t.drivers||[]).join(' · ')||t.reason||'Historical buyer model')+'. Probability is a game model, not a guarantee.</div></div>').join("")||'<p class="small">No competitive tender outcomes recorded yet. New bids will accumulate as Sales converts prospects.</p>';
 $("world-market-info").textContent=economyPressure().name+" · "+(45-S.day%45)+" days until next market cycle · "+(S.day<=w.shockUntil?"Additional competitor-driven slowdown through Day "+w.shockUntil+". ":"")+"Bid outcomes depend on customer needs, competitive offers, reputation and your strategy.";
 const brief=w.activeEvent,labels={tender:"A major customer is accepting bids",referrals:"Customers are open to referrals",slowdown:"Competitive pressure is rising",retention:"A trusted customer may renew"};
@@ -1409,7 +1410,7 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
-ensureOrganization(s);ensureExecutive(s);ensureBI(s);restoreRecordedLines(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureCapital(s);ensureWorld(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
+ensureOrganization(s);ensureExecutive(s);ensureBI(s);restoreRecordedLines(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureCapital(s);ensureWorld(s);ensureAcquisitions(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
 for(const d of s.deals)if(!Number.isFinite(d.agreedFee))d.agreedFee=d.biBooked&&Number.isFinite(d.bookVal)?d.bookVal:estimatedFee(d,s);
 persistedRevision=Number(s._saveRevision)||0;return s;}catch(e){return null;}}
 const BI_FIELDS=["deliveryEligibleDays","deliveryRoleWorkDays","revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
@@ -2711,7 +2712,7 @@ S.market.customers[d.cl]=prev;}
 function fresh(){
  ceoDraftPriority=null;saveConflict=false;saveErrorReason="";paused=false;
  try{persistedRevision=Number(JSON.parse(localStorage.getItem(KEY)||"null")?._saveRevision)||0;}catch{persistedRevision=0;}
- S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now(),lastInterruptDay:0},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureCapital(S);ensureWorld(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+ S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now(),lastInterruptDay:0},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureCapital(S);ensureWorld(S);ensureAcquisitions(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.t==="exec")return "Executive leadership";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -2766,7 +2767,7 @@ unitPayrollDay();
  const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(Math.max(0,S.cash),salary);S.cash-=actuallyPaid;
 biMoney("payroll",salary,"Daily payroll",actuallyPaid);
 // Pay prior procurement liabilities after payroll, without silently creating negative cash.
-contractProcurementSettle();
+contractProcurementSettle();acquisitionDay();
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&S.day-S.flow.lastInterruptDay>=28)startDilemma();
 labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
@@ -3828,10 +3829,10 @@ function ensureCapital(st){
 function capitalFacts(){
  const payroll=S.team.reduce((n,p)=>n+dailySalary(p),0),premises=propertySummary().daily;
  const e=S.economy,owed=(e.loan||0)+(e.interestDue||0)+(e.procurementPayable||0)+(S.bi.unpaidPayroll||0)+propertyArrears();
- const reserve=30*(payroll+premises),available=Math.max(0,+(S.cash-reserve-owed).toFixed(2));
+ const reserve=30*(payroll+premises),integrationCommitment=acquisitionCommitment(),acquisitionPayables=(S.acquisitions?.owned||[]).reduce((n,x)=>n+(x.payable||0),0),available=Math.max(0,+(S.cash-reserve-owed-integrationCommitment-acquisitionPayables).toFixed(2));
  const value=S.capital.lots.reduce((n,x)=>n+x.value,0),basis=S.capital.lots.reduce((n,x)=>n+x.basis,0);
  return{cash:S.cash,available,reserve,owed,value,basis,unrealized:+(value-basis).toFixed(2),realized:S.capital.realized,
-  cfo:!!executiveOfficer("cfo","protect"),loan:e.loan||0,interest:e.interestDue||0};
+  cfo:!!executiveOfficer("cfo","protect"),loan:e.loan||0,interest:e.interestDue||0,integrationCommitment,acquisitionPayables};
 }
 function capitalDay(){
  if(!S.capital?.lots?.length)return;
@@ -3885,7 +3886,7 @@ function capitalRender(){
  const f=capitalFacts(),stage=leadershipMaturity().stage;
  const stageLabel=stage==="group"?"Group CEO capital allocation":stage==="leader"?"Business Leader cash allocation":"Founder cash survival";
  const headline="Cash "+biCurrency(f.cash)+" · protected 30-day payroll/premises "+biCurrency(f.reserve)+
-  " · liabilities and debt "+biCurrency(f.owed)+" · available surplus "+biCurrency(f.available)+".";
+  " · liabilities and debt "+biCurrency(f.owed+f.acquisitionPayables)+" · integration commitments "+biCurrency(f.integrationCommitment)+" · available surplus "+biCurrency(f.available)+".";
  const today=$("capital-today");if(today){const h='<b>'+stageLabel+'</b><p class="small">'+headline+
   " Holding cash is a valid strategy. Paper asset marks never become spendable cash.</p>";if(today.innerHTML!==h)today.innerHTML=h;}
  const work=$("capital-work");if(work){const h='<p class="small"><b>Capital vs operating cash</b> · '+headline+
@@ -3921,6 +3922,158 @@ function capitalRender(){
   (f.cfo?"Authorized CFO reserve protection active.":"No active CFO mandate: no CFO authorization is implied.")+
   ' No automatic expenditure or guaranteed returns.</p>';
  const content=header+holdings+buy+comparison;if(el.innerHTML!==content)el.innerHTML=content;
+}
+
+/* v23C: Offline CEO acquisitions; valuations are modeled, never verified target books. */
+const ACQ_DILIGENCE=18,ACQ_DAYS=30;
+function ensureAcquisitions(st){
+ if(!st.acquisitions||st.acquisitions.version!==1)st.acquisitions={version:1,owned:[],diligence:[],history:[]};
+ const a=st.acquisitions,ids=new Set(WORLD_RIVALS.map(r=>r.id)),seen=new Set();
+ a.owned=(Array.isArray(a.owned)?a.owned:[]).filter(x=>{
+  if(!x||!ids.has(x.id)||seen.has(x.id)||!Number.isFinite(x.price)||x.price<0||!Number.isFinite(x.day)||x.day>st.day)return false;
+  seen.add(x.id);return true;
+ });
+ for(const x of a.owned){
+  x.price=+x.price.toFixed(2);
+  x.daily=Number.isFinite(x.daily)&&x.daily>=0?x.daily:3;
+  x.risk=Number.isFinite(x.risk)?Math.max(0,Math.min(100,x.risk)):45;
+  x.health=Number.isFinite(x.health)?Math.max(0,Math.min(100,x.health)):70;
+  x.lastDay=Number.isFinite(x.lastDay)?Math.min(st.day,Math.max(x.day,x.lastDay)):x.day;
+  for(const k of ["payable","integrationCost","paidIntegration"])if(!Number.isFinite(x[k])||x[k]<0)x[k]=0;
+  x.sector=WORLD_RIVALS.find(r=>r.id===x.id).sector;
+ }
+ a.diligence=(Array.isArray(a.diligence)?a.diligence:[]).filter(x=>x&&ids.has(x.id)&&!seen.has(x.id)&&Number.isFinite(x.day)&&x.day<=st.day&&Number.isFinite(x.price)&&x.price>0&&Number.isFinite(x.daily)&&x.daily>0).slice(0,3);
+ a.history=(Array.isArray(a.history)?a.history:[]).filter(x=>x&&Number.isFinite(x.day)).slice(0,50);
+ for(const r of st.world.rivals)r.acquired=seen.has(r.id);
+}
+function acquisitionCommitment(){
+ return (S.acquisitions?.owned||[]).reduce((n,x)=>n+Math.max(0,ACQ_DAYS-Math.max(0,x.lastDay-x.day))*x.daily,0);
+}
+function acquisitionQuote(r){
+ const wins=Math.max(0,(r.wins||0)+(r.marketWins||0)),setbacks=Math.max(0,(r.losses||0)+(r.marketMisses||0));
+ const price=Math.max(250,Math.round(200+r.rep*4+r.quality*2+r.speed*1.4+Math.min(20,wins)*13-Math.min(12,setbacks)*8));
+ const risk=Math.max(12,Math.min(75,Math.round((100-r.quality)*.5+(100-r.speed)*.35+(100-r.rep)*.2)));
+ const daily=+(2+risk/20).toFixed(2);
+ return{price,risk,daily,confidence:wins+setbacks>=10?"Moderate market sample":"Limited market sample"};
+}
+function acquisitionGate(r,kind){
+ if(!r||r.acquired||S.acquisitions.owned.some(x=>x.id===r.id))return{ok:false,reason:"Already acquired"};
+ if(S.acquisitions.owned.length>=2)return{ok:false,reason:"Keep an independent rival"};
+ if(S.ev||saveConflict||saveErrorReason)return{ok:false,reason:"Finish the decision or resolve save"};
+ if(leadershipMaturity().stage==="founder"||S.market.completed<6)return{ok:false,reason:"Earn Business Leader status and deliver six contracts"};
+ const d=S.acquisitions.diligence.find(x=>x.id===r.id&&S.day-x.day<=30);
+ if(kind==="buy"&&!d)return{ok:false,reason:"Paid diligence required"};
+ const q=kind==="buy"?d:acquisitionQuote(r),needed=kind==="buy"?q.price+q.daily*ACQ_DAYS:ACQ_DILIGENCE;
+ if(capitalFacts().available+1e-6<needed||!executiveFinanceGuard(needed))return{ok:false,reason:"Insufficient surplus after payroll, debt and integration"};
+ return{ok:true,quote:q};
+}
+function acquisitionDiligence(id){
+ const r=S.world.rivals.find(x=>x.id===id);
+ if(!acquisitionGate(r,"diligence").ok||S.acquisitions.diligence.some(x=>x.id===id&&S.day-x.day<=30))return false;
+ return unitCommit(()=>{
+  if(!acquisitionGate(r,"diligence").ok)return false;
+  const q=acquisitionQuote(r);S.cash=+(S.cash-ACQ_DILIGENCE).toFixed(2);
+  biMoney("acquisition-diligence",ACQ_DILIGENCE,"CEO modeled due diligence: "+r.name);
+  S.acquisitions.diligence=S.acquisitions.diligence.filter(x=>x.id!==id);
+  S.acquisitions.diligence.push({id,day:S.day,...q});
+  S.acquisitions.history.unshift({day:S.day,id,kind:"diligence",amount:ACQ_DILIGENCE});
+  logIt("CEO spent "+biCurrency(ACQ_DILIGENCE)+" to investigate "+r.name+". Estimates are not audited accounts.");
+  return true;
+ });
+}
+function acquisitionBuy(id){
+ const r=S.world.rivals.find(x=>x.id===id);
+ if(!acquisitionGate(r,"buy").ok)return false;
+ return unitCommit(()=>{
+  const gate=acquisitionGate(r,"buy");if(!gate.ok)return false;
+  const q=gate.quote;S.cash=+(S.cash-q.price).toFixed(2);
+  biMoney("investment",q.price,"CEO acquisition asset: "+r.name+" (not operating sales)");
+  S.acquisitions.owned.push({id:r.id,name:r.name,sector:r.sector,day:S.day,lastDay:S.day,price:q.price,risk:q.risk,daily:q.daily,health:Math.max(40,82-q.risk/3),payable:0,integrationCost:0,paidIntegration:0});
+  S.acquisitions.diligence=S.acquisitions.diligence.filter(x=>x.id!==id);
+  S.acquisitions.history.unshift({day:S.day,id,kind:"purchase",amount:q.price});
+  r.acquired=true;
+  for(const other of S.world.rivals)if(!other.acquired)other.adaptation=Math.min(3,(other.adaptation||0)+1);
+  logIt("CEO acquired "+r.name+" for "+biCurrency(q.price)+". No free hires, contracts, revenue or GM mandate.");
+  return true;
+ });
+}
+function acquisitionDay(){
+ if(!S.acquisitions?.owned?.length)return;
+ const reserve7=7*(S.team.reduce((n,p)=>n+dailySalary(p),0)+propertySummary().daily);
+ for(const x of S.acquisitions.owned){
+  if(x.lastDay>=S.day)continue;
+  const sector=SECTORS[x.sector],staff=S.team.filter(p=>p.id!==S.ops.assistantId&&!executiveRoleOf(p.id)&&sector?.skills.includes(p.role.primary)).length;
+  const strain=S.deals.length>Math.max(1,staff)?.7:0;
+  x.health=Math.max(15,Math.min(95,+(x.health+(staff?.65:-1.2)-strain-(x.risk>50?.3:0)+.2*Math.sin(S.day+x.price)).toFixed(2)));
+  const age=S.day-x.day;
+  if(age<=ACQ_DAYS){
+   const paid=Math.min(x.daily,Math.max(0,+(S.cash-reserve7).toFixed(2)));
+   S.cash=+(S.cash-paid).toFixed(2);
+   x.integrationCost=+(x.integrationCost+x.daily).toFixed(2);
+   x.paidIntegration=+(x.paidIntegration+paid).toFixed(2);
+   x.payable=+(x.payable+x.daily-paid).toFixed(2);
+   biMoney("acquisition-integration",x.daily,"Integration Day "+age+": "+x.name,paid);
+  }
+  if(x.payable>.001){
+   const settle=Math.min(x.payable,Math.max(0,+(S.cash-reserve7).toFixed(2)));
+   if(settle>.001){
+    S.cash=+(S.cash-settle).toFixed(2);x.payable=+(x.payable-settle).toFixed(2);
+    x.paidIntegration=+(x.paidIntegration+settle).toFixed(2);
+    biAdd("cashOut",settle);biEvent("acquisition-payable",settle,"Prior integration payable: "+x.name,settle);
+   }
+  }
+  x.lastDay=S.day;
+  if(age===ACQ_DAYS)logIt(x.name+" integration ended: "+(x.health>=55?"future staffed sector advantage possible":"strained; future bid penalty remains")+".");
+ }
+}
+function acquisitionBidEffect(lead){
+ let effect=0;
+ for(const x of S.acquisitions?.owned||[]){
+  if(x.sector!==lead.sector)continue;
+  if(S.day-x.day<ACQ_DAYS)effect-=.035;
+  else{
+   const staffed=S.team.some(p=>p.id!==S.ops.assistantId&&!executiveRoleOf(p.id)&&SECTORS[x.sector].skills.includes(p.role.primary));
+   effect+=staffed&&x.health>=55?Math.min(.065,x.health/1200):-.015;
+  }
+ }
+ return Math.max(-.09,Math.min(.08,effect));
+}
+function acquisitionRender(){
+ const a=S.acquisitions,owned=a.owned,live=S.world.rivals.filter(r=>!r.acquired),f=capitalFacts();
+ const commitments=acquisitionCommitment(),payables=owned.reduce((n,x)=>n+x.payable,0);
+ const status=owned.length+" acquired · "+live.length+" independent rivals · integration reserved "+biCurrency(commitments)+" · payable "+biCurrency(payables)+".";
+ const today=$("acquisition-today");
+ if(today){const html='<b>Acquisitions & competition</b><p class="small">'+status+' Optional CEO purchases; no instant sales or staff.</p>';if(today.innerHTML!==html)today.innerHTML=html;}
+ const work=$("acquisition-work");
+ if(work){const html='<p class="small"><b>Acquisition financial bridge:</b> purchase basis '+biCurrency(owned.reduce((n,x)=>n+x.price,0))+
+  ' (investment, not sales) · integration cost '+biCurrency(owned.reduce((n,x)=>n+x.integrationCost,0))+
+  ' · integration cash paid '+biCurrency(owned.reduce((n,x)=>n+x.paidIntegration,0))+
+  ' · outstanding '+biCurrency(payables)+'. Existing signed deals unchanged.</p>';if(work.innerHTML!==html)work.innerHTML=html;}
+ const root=$("acquisition-growth");if(!root)return;
+ const ready=leadershipMaturity().stage==="founder"||S.market.completed<6?"Unlock after measured Business Leader management and six delivered contracts.":"Investigate competitors with surplus cash.";
+ const assets=owned.map(x=>'<div class="coach-row"><b>'+esc(x.name)+' · acquired Day '+x.day+'</b><p class="small">'+esc(SECTORS[x.sector].name)+
+  ' · basis '+biCurrency(x.price)+' · integration '+Math.min(ACQ_DAYS,S.day-x.day)+'/'+ACQ_DAYS+
+  ' days · health '+Math.round(x.health)+'/100 · paid '+biCurrency(x.paidIntegration)+' · payable '+biCurrency(x.payable)+
+  ' · '+(S.day-x.day<ACQ_DAYS?"Integration disruption affects future bids":"Sector benefit requires staffed specialists and healthy integration")+'.</p></div>').join("");
+ const cards=live.map(r=>{
+  const q=acquisitionQuote(r),d=a.diligence.find(x=>x.id===r.id&&S.day-x.day<=30),gate=acquisitionGate(r,"buy"),investigate=acquisitionGate(r,"diligence");
+  return '<div class="coach-row"><b>'+esc(r.name)+' · '+esc(SECTORS[r.sector].name)+'</b><p class="small">'+esc(r.archetype)+
+   ' · rep '+Math.round(r.rep)+' · quality '+Math.round(r.quality)+' · speed '+Math.round(r.speed)+
+   ' · observed wins '+((r.wins||0)+(r.marketWins||0))+' · modeled price '+biCurrency(q.price)+'.</p>'+
+   '<p class="small">'+(d?'Diligence Day '+d.day+' (expires Day '+(d.day+30)+'): quote '+biCurrency(d.price)+
+   ' · integration '+biCurrency(d.daily)+'/day × 30 · risk '+d.risk+'/100 · '+esc(d.confidence)+'.':
+   'Pay '+biCurrency(ACQ_DILIGENCE)+' for a time-limited quote, risk and integration estimate; not audited target books.')+'</p>'+
+   '<button type="button" data-acquisition="diligence" data-target="'+r.id+'" '+(investigate.ok&&!d?'':'disabled')+
+   '>CEO diligence · '+biCurrency(ACQ_DILIGENCE)+'</button> '+
+   '<button type="button" data-acquisition="buy" data-target="'+r.id+'" '+(gate.ok?'':'disabled')+
+   '>CEO acquire · '+biCurrency(d?.price||q.price)+'</button>'+
+   (!gate.ok?'<p class="small">'+esc(gate.reason)+'</p>':'<p class="small">Requires '+biCurrency(d.price+d.daily*ACQ_DAYS)+' surplus including integration reserve; future orders are not guaranteed.</p>')+'</div>';
+ }).join("");
+ const html='<p class="small">'+status+' Free cash after reserves '+biCurrency(f.available)+'. '+ready+
+  ' Simulated valuations can be wrong; integration may reduce bid odds and cause payable costs. At least one competitor remains independent.</p>'+
+  (assets||'<p class="small">No rivals acquired. Existing customers and staff remain intact.</p>')+
+  (cards||'<p class="small">No further acquisition targets.</p>');
+ if(root.innerHTML!==html)root.innerHTML=html;
 }
 
 function v23Render(){
@@ -4892,7 +5045,7 @@ const html=(stories.length?stories:["Your team's next achievement is waiting."])
 if($("game-journey").open){const n=S.market.completed||0,leaders=DEPT_KEYS.filter(k=>orgManager(k)).length;
 const stages=[["Founder",true],["First customer",n>=1],["Small agency",n>=3],["Growing team",n>=12&&S.team.length>=6],["Established",n>=30&&S.team.length>=12&&leaders===2]];
 $("game-journey-map").innerHTML=stages.map(([name,done])=>'<span class="game-journey-stage '+(done?'unlocked':'locked')+'">'+(done?'✓ ':'◇ ')+name+'</span>').join("");}
-const rivals=S.world?.rivals||[],rivalText=rivals.map(q=>'<div class="game-rival"><span class="game-rival-icon">◆</span><span><b>'+esc(q.name)+'</b><small>'+esc(q.archetype)+' approach · '+q.wins+' wins</small></span></div>').join("");
+const rivals=S.world?.rivals||[],rivalText=rivals.map(q=>'<div class="game-rival"><span class="game-rival-icon">◆</span><span><b>'+esc(q.name)+'</b><small>'+(q.acquired?'Acquired · ':'')+esc(q.archetype)+' approach · '+q.wins+' wins</small></span></div>').join("");
 if($("game-rivals").innerHTML!==rivalText)$("game-rivals").innerHTML=rivalText;
 }
 function gameAdvanceDays(){if(S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev||indexedWriteCount>0;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
@@ -5246,6 +5399,11 @@ $("capital-growth").addEventListener("click",event=>{
   b.dataset.capital==="sell"?capitalSell(Number(b.dataset.lot),Number(b.dataset.fraction)):false;
  if(result&&typeof result.then==="function")result.catch(()=>{});
 });
+$("acquisition-growth").addEventListener("click",event=>{
+ const b=event.target?.closest?.("button[data-acquisition]");if(!b)return;
+ const result=b.dataset.acquisition==="diligence"?acquisitionDiligence(b.dataset.target):b.dataset.acquisition==="buy"?acquisitionBuy(b.dataset.target):false;
+ if(result&&typeof result.then==="function")result.catch(()=>{});
+});
 function renderCEOFocus(){
  const root=$("ceo-priority-content");if(!root||editableInteractionPending())return;
  const inventory=ceoDecisionInventory(),direction=companyDirection(),office=ceoPremisesOpportunity(),warnings=propertyWarnings(),review=ceoStrategyReview(),maturity=leadershipMaturity();
@@ -5420,7 +5578,7 @@ for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)day
 }
 function refresh(){
 if(editableInteractionPending())return;
-v23Render();capitalRender();
+v23Render();capitalRender();acquisitionRender();
 renderLeadershipContexts();renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";

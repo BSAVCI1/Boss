@@ -297,7 +297,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
 });
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
-const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,setupLeadership:stage=>{
+const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,acquisitionDiligence,acquisitionBuy,acquisitionRender,setupLeadership:stage=>{
  fresh();
  if(stage!=="founder"){
   while(S.team.length<(stage==="group"?11:8)){
@@ -840,6 +840,31 @@ async function runBrowser(){
    const name=path.join(capitalDir,"boss-v23b-"+tab+"-"+width+"px.png");
    fs.writeFileSync(name,Buffer.from(shot.data,"base64"));
    console.log("PASS v23B Chromium "+name+" "+JSON.stringify(v));
+  }
+ }
+
+
+ // v23C — real CEO diligence/purchase buttons, cash ledger and mobile views.
+ const acqDir=path.resolve("reports/v23c-mobile");fs.mkdirSync(acqDir,{recursive:true});
+ for(const [width,height] of [[390,844],[414,896]]){
+  await send("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
+  await send("Page.navigate",{url:"file://"+file});
+  let ready=false;for(let n=0;n<95;n++){
+   const q=await send("Runtime.evaluate",{expression:"document.documentElement.dataset.bossReady==='true'&&!!window.__bossQA",returnByValue:true});
+   if(q.result?.value){ready=true;break;}await sleep(110);
+  }
+  assert.ok(ready,"v23C real browser boot");
+  const setup=(await send("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.pause();qa.resetEditShield();const stage=qa.setupLeadership('leader');qa.pause();const s=qa.state();s.cash+=50000;s.bi.openingCash+=50000;qa.grow(s.team.length);document.querySelector('.bottom-nav button[data-view=\"growth\"]').click();const panel=document.getElementById('acquisition-panel');panel.open=true;const before=s.cash;const diligence=panel.querySelector('button[data-acquisition=\"diligence\"][data-target=\"harbor\"]');const diligenceEnabled=!!diligence&&!diligence.disabled;if(diligenceEnabled){diligence.click();qa.resetEditShield();qa.grow(s.team.length);panel.open=true;}const buy=panel.querySelector('button[data-acquisition=\"buy\"][data-target=\"harbor\"]');const buyEnabled=!!buy&&!buy.disabled;if(buyEnabled){buy.click();qa.resetEditShield();qa.grow(s.team.length);panel.open=true;}return{stage,before,after:s.cash,diligenceEnabled,buyEnabled,owned:s.acquisitions.owned.length,investments:s.bi.totals.investments,open:panel.open}})()",returnByValue:true})).result?.value;
+  assert.ok(setup&&setup.stage==="leader"&&setup.diligenceEnabled&&setup.buyEnabled&&setup.owned===1&&setup.investments>0&&setup.after<setup.before&&setup.open,"v23C real CEO purchase "+JSON.stringify(setup));
+  for(const tab of ["growth","work","today"]){
+   const v=(await send("Runtime.evaluate",{expression:"(()=>{const tab="+JSON.stringify(tab)+";document.querySelector('.bottom-nav button[data-view=\"'+tab+'\"]').click();const el=document.getElementById('acquisition-'+tab);if(el?.parentElement?.tagName==='DETAILS')el.parentElement.open=true;const text=el?.textContent||'';window.scrollTo({top:Math.max(0,scrollY+el.getBoundingClientRect().top-20),behavior:'instant'});return{width:innerWidth,tab,visible:!!el?.getClientRects().length,overflow:document.documentElement.scrollWidth>innerWidth+6,acquired:text.includes(tab==='growth'?'acquired Day':tab==='work'?'Acquisition financial bridge':'1 acquired'),action:tab==='growth'?!!el.querySelector('button[data-acquisition=\"buy\"]'):true}})()",returnByValue:true})).result?.value;
+   assert.ok(v&&v.width===width&&v.visible&&!v.overflow&&v.acquired&&v.action,"v23C mobile "+JSON.stringify(v));
+   await sleep(230);
+   const shot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+   assert.ok(shot.data?.length>1500,"v23C real screenshot missing");
+   const name=path.join(acqDir,"boss-v23c-"+tab+"-"+width+"px.png");
+   fs.writeFileSync(name,Buffer.from(shot.data,"base64"));
+   console.log("PASS v23C Chromium "+name+" "+JSON.stringify(v));
   }
  }
 

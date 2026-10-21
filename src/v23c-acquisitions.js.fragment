@@ -1,0 +1,151 @@
+/* v23C: Offline CEO acquisitions; valuations are modeled, never verified target books. */
+const ACQ_DILIGENCE=18,ACQ_DAYS=30;
+function ensureAcquisitions(st){
+ if(!st.acquisitions||st.acquisitions.version!==1)st.acquisitions={version:1,owned:[],diligence:[],history:[]};
+ const a=st.acquisitions,ids=new Set(WORLD_RIVALS.map(r=>r.id)),seen=new Set();
+ a.owned=(Array.isArray(a.owned)?a.owned:[]).filter(x=>{
+  if(!x||!ids.has(x.id)||seen.has(x.id)||!Number.isFinite(x.price)||x.price<0||!Number.isFinite(x.day)||x.day>st.day)return false;
+  seen.add(x.id);return true;
+ });
+ for(const x of a.owned){
+  x.price=+x.price.toFixed(2);
+  x.daily=Number.isFinite(x.daily)&&x.daily>=0?x.daily:3;
+  x.risk=Number.isFinite(x.risk)?Math.max(0,Math.min(100,x.risk)):45;
+  x.health=Number.isFinite(x.health)?Math.max(0,Math.min(100,x.health)):70;
+  x.lastDay=Number.isFinite(x.lastDay)?Math.min(st.day,Math.max(x.day,x.lastDay)):x.day;
+  for(const k of ["payable","integrationCost","paidIntegration"])if(!Number.isFinite(x[k])||x[k]<0)x[k]=0;
+  x.sector=WORLD_RIVALS.find(r=>r.id===x.id).sector;
+ }
+ a.diligence=(Array.isArray(a.diligence)?a.diligence:[]).filter(x=>x&&ids.has(x.id)&&!seen.has(x.id)&&Number.isFinite(x.day)&&x.day<=st.day&&Number.isFinite(x.price)&&x.price>0&&Number.isFinite(x.daily)&&x.daily>0).slice(0,3);
+ a.history=(Array.isArray(a.history)?a.history:[]).filter(x=>x&&Number.isFinite(x.day)).slice(0,50);
+ for(const r of st.world.rivals)r.acquired=seen.has(r.id);
+}
+function acquisitionCommitment(){
+ return (S.acquisitions?.owned||[]).reduce((n,x)=>n+Math.max(0,ACQ_DAYS-Math.max(0,x.lastDay-x.day))*x.daily,0);
+}
+function acquisitionQuote(r){
+ const wins=Math.max(0,(r.wins||0)+(r.marketWins||0)),setbacks=Math.max(0,(r.losses||0)+(r.marketMisses||0));
+ const price=Math.max(250,Math.round(200+r.rep*4+r.quality*2+r.speed*1.4+Math.min(20,wins)*13-Math.min(12,setbacks)*8));
+ const risk=Math.max(12,Math.min(75,Math.round((100-r.quality)*.5+(100-r.speed)*.35+(100-r.rep)*.2)));
+ const daily=+(2+risk/20).toFixed(2);
+ return{price,risk,daily,confidence:wins+setbacks>=10?"Moderate market sample":"Limited market sample"};
+}
+function acquisitionGate(r,kind){
+ if(!r||r.acquired||S.acquisitions.owned.some(x=>x.id===r.id))return{ok:false,reason:"Already acquired"};
+ if(S.acquisitions.owned.length>=2)return{ok:false,reason:"Keep an independent rival"};
+ if(S.ev||saveConflict||saveErrorReason)return{ok:false,reason:"Finish the decision or resolve save"};
+ if(leadershipMaturity().stage==="founder"||S.market.completed<6)return{ok:false,reason:"Earn Business Leader status and deliver six contracts"};
+ const d=S.acquisitions.diligence.find(x=>x.id===r.id&&S.day-x.day<=30);
+ if(kind==="buy"&&!d)return{ok:false,reason:"Paid diligence required"};
+ const q=kind==="buy"?d:acquisitionQuote(r),needed=kind==="buy"?q.price+q.daily*ACQ_DAYS:ACQ_DILIGENCE;
+ if(capitalFacts().available+1e-6<needed||!executiveFinanceGuard(needed))return{ok:false,reason:"Insufficient surplus after payroll, debt and integration"};
+ return{ok:true,quote:q};
+}
+function acquisitionDiligence(id){
+ const r=S.world.rivals.find(x=>x.id===id);
+ if(!acquisitionGate(r,"diligence").ok||S.acquisitions.diligence.some(x=>x.id===id&&S.day-x.day<=30))return false;
+ return unitCommit(()=>{
+  if(!acquisitionGate(r,"diligence").ok)return false;
+  const q=acquisitionQuote(r);S.cash=+(S.cash-ACQ_DILIGENCE).toFixed(2);
+  biMoney("acquisition-diligence",ACQ_DILIGENCE,"CEO modeled due diligence: "+r.name);
+  S.acquisitions.diligence=S.acquisitions.diligence.filter(x=>x.id!==id);
+  S.acquisitions.diligence.push({id,day:S.day,...q});
+  S.acquisitions.history.unshift({day:S.day,id,kind:"diligence",amount:ACQ_DILIGENCE});
+  logIt("CEO spent "+biCurrency(ACQ_DILIGENCE)+" to investigate "+r.name+". Estimates are not audited accounts.");
+  return true;
+ });
+}
+function acquisitionBuy(id){
+ const r=S.world.rivals.find(x=>x.id===id);
+ if(!acquisitionGate(r,"buy").ok)return false;
+ return unitCommit(()=>{
+  const gate=acquisitionGate(r,"buy");if(!gate.ok)return false;
+  const q=gate.quote;S.cash=+(S.cash-q.price).toFixed(2);
+  biMoney("investment",q.price,"CEO acquisition asset: "+r.name+" (not operating sales)");
+  S.acquisitions.owned.push({id:r.id,name:r.name,sector:r.sector,day:S.day,lastDay:S.day,price:q.price,risk:q.risk,daily:q.daily,health:Math.max(40,82-q.risk/3),payable:0,integrationCost:0,paidIntegration:0});
+  S.acquisitions.diligence=S.acquisitions.diligence.filter(x=>x.id!==id);
+  S.acquisitions.history.unshift({day:S.day,id,kind:"purchase",amount:q.price});
+  r.acquired=true;
+  for(const other of S.world.rivals)if(!other.acquired)other.adaptation=Math.min(3,(other.adaptation||0)+1);
+  logIt("CEO acquired "+r.name+" for "+biCurrency(q.price)+". No free hires, contracts, revenue or GM mandate.");
+  return true;
+ });
+}
+function acquisitionDay(){
+ if(!S.acquisitions?.owned?.length)return;
+ const reserve7=7*(S.team.reduce((n,p)=>n+dailySalary(p),0)+propertySummary().daily);
+ for(const x of S.acquisitions.owned){
+  if(x.lastDay>=S.day)continue;
+  const sector=SECTORS[x.sector],staff=S.team.filter(p=>p.id!==S.ops.assistantId&&!executiveRoleOf(p.id)&&sector?.skills.includes(p.role.primary)).length;
+  const strain=S.deals.length>Math.max(1,staff)?.7:0;
+  x.health=Math.max(15,Math.min(95,+(x.health+(staff?.65:-1.2)-strain-(x.risk>50?.3:0)+.2*Math.sin(S.day+x.price)).toFixed(2)));
+  const age=S.day-x.day;
+  if(age<=ACQ_DAYS){
+   const paid=Math.min(x.daily,Math.max(0,+(S.cash-reserve7).toFixed(2)));
+   S.cash=+(S.cash-paid).toFixed(2);
+   x.integrationCost=+(x.integrationCost+x.daily).toFixed(2);
+   x.paidIntegration=+(x.paidIntegration+paid).toFixed(2);
+   x.payable=+(x.payable+x.daily-paid).toFixed(2);
+   biMoney("acquisition-integration",x.daily,"Integration Day "+age+": "+x.name,paid);
+  }
+  if(x.payable>.001){
+   const settle=Math.min(x.payable,Math.max(0,+(S.cash-reserve7).toFixed(2)));
+   if(settle>.001){
+    S.cash=+(S.cash-settle).toFixed(2);x.payable=+(x.payable-settle).toFixed(2);
+    x.paidIntegration=+(x.paidIntegration+settle).toFixed(2);
+    biAdd("cashOut",settle);biEvent("acquisition-payable",settle,"Prior integration payable: "+x.name,settle);
+   }
+  }
+  x.lastDay=S.day;
+  if(age===ACQ_DAYS)logIt(x.name+" integration ended: "+(x.health>=55?"future staffed sector advantage possible":"strained; future bid penalty remains")+".");
+ }
+}
+function acquisitionBidEffect(lead){
+ let effect=0;
+ for(const x of S.acquisitions?.owned||[]){
+  if(x.sector!==lead.sector)continue;
+  if(S.day-x.day<ACQ_DAYS)effect-=.035;
+  else{
+   const staffed=S.team.some(p=>p.id!==S.ops.assistantId&&!executiveRoleOf(p.id)&&SECTORS[x.sector].skills.includes(p.role.primary));
+   effect+=staffed&&x.health>=55?Math.min(.065,x.health/1200):-.015;
+  }
+ }
+ return Math.max(-.09,Math.min(.08,effect));
+}
+function acquisitionRender(){
+ const a=S.acquisitions,owned=a.owned,live=S.world.rivals.filter(r=>!r.acquired),f=capitalFacts();
+ const commitments=acquisitionCommitment(),payables=owned.reduce((n,x)=>n+x.payable,0);
+ const status=owned.length+" acquired · "+live.length+" independent rivals · integration reserved "+biCurrency(commitments)+" · payable "+biCurrency(payables)+".";
+ const today=$("acquisition-today");
+ if(today){const html='<b>Acquisitions & competition</b><p class="small">'+status+' Optional CEO purchases; no instant sales or staff.</p>';if(today.innerHTML!==html)today.innerHTML=html;}
+ const work=$("acquisition-work");
+ if(work){const html='<p class="small"><b>Acquisition financial bridge:</b> purchase basis '+biCurrency(owned.reduce((n,x)=>n+x.price,0))+
+  ' (investment, not sales) · integration cost '+biCurrency(owned.reduce((n,x)=>n+x.integrationCost,0))+
+  ' · integration cash paid '+biCurrency(owned.reduce((n,x)=>n+x.paidIntegration,0))+
+  ' · outstanding '+biCurrency(payables)+'. Existing signed deals unchanged.</p>';if(work.innerHTML!==html)work.innerHTML=html;}
+ const root=$("acquisition-growth");if(!root)return;
+ const ready=leadershipMaturity().stage==="founder"||S.market.completed<6?"Unlock after measured Business Leader management and six delivered contracts.":"Investigate competitors with surplus cash.";
+ const assets=owned.map(x=>'<div class="coach-row"><b>'+esc(x.name)+' · acquired Day '+x.day+'</b><p class="small">'+esc(SECTORS[x.sector].name)+
+  ' · basis '+biCurrency(x.price)+' · integration '+Math.min(ACQ_DAYS,S.day-x.day)+'/'+ACQ_DAYS+
+  ' days · health '+Math.round(x.health)+'/100 · paid '+biCurrency(x.paidIntegration)+' · payable '+biCurrency(x.payable)+
+  ' · '+(S.day-x.day<ACQ_DAYS?"Integration disruption affects future bids":"Sector benefit requires staffed specialists and healthy integration")+'.</p></div>').join("");
+ const cards=live.map(r=>{
+  const q=acquisitionQuote(r),d=a.diligence.find(x=>x.id===r.id&&S.day-x.day<=30),gate=acquisitionGate(r,"buy"),investigate=acquisitionGate(r,"diligence");
+  return '<div class="coach-row"><b>'+esc(r.name)+' · '+esc(SECTORS[r.sector].name)+'</b><p class="small">'+esc(r.archetype)+
+   ' · rep '+Math.round(r.rep)+' · quality '+Math.round(r.quality)+' · speed '+Math.round(r.speed)+
+   ' · observed wins '+((r.wins||0)+(r.marketWins||0))+' · modeled price '+biCurrency(q.price)+'.</p>'+
+   '<p class="small">'+(d?'Diligence Day '+d.day+' (expires Day '+(d.day+30)+'): quote '+biCurrency(d.price)+
+   ' · integration '+biCurrency(d.daily)+'/day × 30 · risk '+d.risk+'/100 · '+esc(d.confidence)+'.':
+   'Pay '+biCurrency(ACQ_DILIGENCE)+' for a time-limited quote, risk and integration estimate; not audited target books.')+'</p>'+
+   '<button type="button" data-acquisition="diligence" data-target="'+r.id+'" '+(investigate.ok&&!d?'':'disabled')+
+   '>CEO diligence · '+biCurrency(ACQ_DILIGENCE)+'</button> '+
+   '<button type="button" data-acquisition="buy" data-target="'+r.id+'" '+(gate.ok?'':'disabled')+
+   '>CEO acquire · '+biCurrency(d?.price||q.price)+'</button>'+
+   (!gate.ok?'<p class="small">'+esc(gate.reason)+'</p>':'<p class="small">Requires '+biCurrency(d.price+d.daily*ACQ_DAYS)+' surplus including integration reserve; future orders are not guaranteed.</p>')+'</div>';
+ }).join("");
+ const html='<p class="small">'+status+' Free cash after reserves '+biCurrency(f.available)+'. '+ready+
+  ' Simulated valuations can be wrong; integration may reduce bid odds and cause payable costs. At least one competitor remains independent.</p>'+
+  (assets||'<p class="small">No rivals acquired. Existing customers and staff remain intact.</p>')+
+  (cards||'<p class="small">No further acquisition targets.</p>');
+ if(root.innerHTML!==html)root.innerHTML=html;
+}

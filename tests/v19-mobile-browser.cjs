@@ -862,6 +862,7 @@ async function runBrowser(){
   await sleep(70);
  }
  assert.ok(acqInfo?.webSocketDebuggerUrl,"v23C HTTP browser target missing");
+ await sleep(450);
  const acqWs=new WebSocket(acqInfo.webSocketDebuggerUrl);
  await new Promise((resolve,reject)=>{
   const timeout=setTimeout(()=>reject(Error("v23C CDP connect timeout")),8000);
@@ -885,9 +886,9 @@ async function runBrowser(){
 
  for(const [width,height] of [[390,844],[414,896]]){
   await acqSend("Emulation.setDeviceMetricsOverride",{width,height,deviceScaleFactor:1,mobile:true});
-  await acqSend("Page.navigate",{url:acquisitionUrl});
+  // Already initialized on HTTP; avoid switching Chrome document targets.
   let ready=false;for(let n=0;n<95;n++){
-   const q=await acqSend("Runtime.evaluate",{expression:"document.documentElement.dataset.bossReady==='true'&&!!window.__bossQA",returnByValue:true});
+   let q;try{q=await acqSend("Runtime.evaluate",{expression:"document.documentElement.dataset.bossReady==='true'&&!!window.__bossQA",returnByValue:true});}catch{await sleep(150);continue;}
    if(q.result?.value){ready=true;break;}await sleep(110);
   }
   assert.ok(ready,"v23C real browser boot");

@@ -6420,7 +6420,7 @@ for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)day
 function refresh(){
 if(editableInteractionPending())return;
 v23Render();capitalRender();acquisitionRender();empireRender();peopleStoriesRender();factoryRender();
-campusRender();renderLeadershipContexts();renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderFounderStory();renderVisualWorld();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
+campusRender();renderLeadershipContexts();renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderFounderStory();renderVisualWorld();renderPlayMode();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);
@@ -6833,9 +6833,144 @@ $("boss-visual-empire").addEventListener("click",e=>{
   const allowed=["property-panel","growth-expand-businesses","factory-panel","acquisition-panel","growth-investments-property"];
   if(!allowed.includes(b.dataset.worldGo))return;
   const target=$(b.dataset.worldGo);if(!target)return;
+  if(S.ui.playPresentation!=="detailed")chooseGrowthFocus(b.dataset.worldGo);
   if(target.tagName==="DETAILS")target.open=true;
   target.scrollIntoView?.({behavior:"smooth",block:"start"});
  }
+});
+
+
+/* v26E: view-state-only presentation. Existing finances, entities and actions are canonical. */
+const BOSS_TEAM_FOCUS={people:"boss-team-people-panel",hiring:"boss-team-hiring-panel",
+ stories:"people-stories-panel",campus:"campus-panel"};
+function showGameSection(el,visible,attr){
+ if(!el)return;
+ if(visible)el.setAttribute?.(attr,"");
+ else el.removeAttribute?.(attr);
+}
+function visualGrowthFocus(targetId){
+ const el=$(targetId);if(!el)return false;
+ const root=$("view-growth");let top=el;
+ while(top&&top.parentElement&&top.parentElement!==root)top=top.parentElement;
+ if(!top||top.parentElement!==root)return false;
+ for(const child of root.children)showGameSection(child,child===top,"data-boss-growth-visible");
+ return true;
+}
+function visualTeamFocus(){
+ const root=$("view-team"),focus=S.ui?.teamFocus;
+ const target=BOSS_TEAM_FOCUS[focus]||null;
+ for(const child of root.children){
+  if(child.classList?.contains("view-intro")||child.id==="boss-team-story"||child.id==="boss-team-options")continue;
+  child.classList?.add("boss-team-hidden");
+  showGameSection(child,focus==="all"||!!target&&child.id===target,"data-boss-team-visible");
+ }
+}
+function renderPlayMode(){
+ if(!S?.ui)return;
+ const simple=S.ui.playPresentation!=="detailed";
+ document.body.classList.toggle("boss-simple-play",simple);
+ document.body.classList.toggle("boss-detailed-play",!simple);
+ document.body.classList.toggle("boss-work-details",!!S.ui.workReports);
+ const openWork=!!S.ui.workReports;
+ for(const el of document.querySelectorAll("#view-work>.boss-work-advanced"))
+  showGameSection(el,openWork,"data-boss-work-visible");
+ $("boss-work-reports-toggle").setAttribute?.("aria-pressed",String(openWork));
+ $("boss-work-reports-toggle").textContent=openWork?"📊 Hide business reports ↑":"📊 Business reports & details ▾";
+ const unassigned=S.deals.filter(d=>!d.w).length,active=S.deals.length,finished=S.market.completed||0;
+ $("boss-work-title").textContent=unassigned?"A customer is waiting for your team":active?"Your team is delivering":"Find your next customer";
+ $("boss-work-summary").textContent=unassigned?unassigned+" unassigned real project(s). Pick a colleague and get to work.":
+ active?active+" active real contract(s) · "+finished+" completed deliveries.":"Your team has completed "+finished+" projects. Explore new opportunities.";
+ $("boss-work-primary").textContent=unassigned?"Assign a teammate →":active?"See active projects →":"Explore opportunities →";
+ const people=S.team||[],selection=people.slice(0,5).map(p=>'<button type="button" class="boss-team-face" data-boss-person="'+p.id+'" title="Meet '+esc(p.n)+'">'+ceoPortrait(p.id%3,true)+
+ '<b>'+esc(p.n)+'</b><small>'+esc(p.role?.primary||"Team member")+'</small></button>').join("");
+ const faces=$("boss-team-faces");if(faces.innerHTML!==selection)faces.innerHTML=selection;
+ $("boss-team-summary").textContent=people.length+" real colleagues are part of your company. Tap a portrait to see their actual work and career.";
+ visualTeamFocus();
+ const growth=S.ui.growthFocus||"";
+ const focused=!!growth&&growth!=="all"&&visualGrowthFocus(growth);
+ const gRoot=$("view-growth");
+ if(!focused)for(const child of gRoot.children)child.removeAttribute?.("data-boss-growth-visible");
+ if(growth==="all")for(const child of gRoot.children)child.setAttribute?.("data-boss-growth-visible","");
+ $("boss-growth-back").hidden=!simple||!growth;
+ $("boss-growth-options").querySelectorAll?.("button[data-boss-growth-focus]").forEach(b=>b.setAttribute?.("aria-pressed",String(growth===b.dataset.bossGrowthFocus)));
+ $("boss-presentation-choices").querySelectorAll?.("button[data-boss-presentation]").forEach(b=>
+  b.setAttribute?.("aria-pressed",String((simple?"simple":"detailed")===b.dataset.bossPresentation)));
+}
+function chooseGrowthFocus(target){
+ if(!S?.ui)return false;
+ if(target==="all"){S.ui.growthFocus="all";}
+ else if(target&&$(target)&&visualGrowthFocus(target)){S.ui.growthFocus=target;
+  for(let el=$(target);el&&el!==$("view-growth");el=el.parentElement)if(el.tagName==="DETAILS")el.open=true;
+ }else if(target){return false;}else S.ui.growthFocus=null;
+ save();renderPlayMode();return true;
+}
+function chooseTeamFocus(key){
+ if(key!=="all"&&!BOSS_TEAM_FOCUS[key])return false;
+ S.ui.teamFocus=key;save();renderPlayMode();
+ if(key==="people")$("boss-team-people-panel")?.scrollIntoView?.({behavior:"auto",block:"start"});
+ else if(key==="hiring"){$("recruitment-panel").open=true;$("boss-team-hiring-panel")?.scrollIntoView?.({behavior:"auto",block:"start"});}
+ else if(key==="stories"){$("people-stories-panel").open=true;}
+ return true;
+}
+function bossSettings(open){
+ const panel=$("boss-settings-panel");panel.hidden=!open;
+ if(open){$("boss-settings-speed").value=String(spd);renderPlayMode();$("boss-settings-close")?.focus?.();}
+ else $("boss-settings-open")?.focus?.();
+}
+$("boss-settings-open").addEventListener("click",()=>bossSettings(true));
+$("boss-settings-close").addEventListener("click",()=>bossSettings(false));
+$("boss-settings-panel").addEventListener("click",e=>{if(e.target===$("boss-settings-panel"))bossSettings(false);});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("boss-settings-panel").hidden)bossSettings(false);});
+$("boss-presentation-choices").addEventListener("click",e=>{
+ const btn=e.target.closest?.("button[data-boss-presentation]");
+ if(!btn||!S?.ui||!["simple","detailed"].includes(btn.dataset.bossPresentation))return;
+ S.ui.playPresentation=btn.dataset.bossPresentation;save();renderPlayMode();
+});
+$("boss-settings-speed").addEventListener("change",()=>{
+ const v=$("boss-settings-speed").value;
+ if(!["1","3","8"].includes(v))return;
+ const original=$("speed-select");original.value=v;
+ original.dispatchEvent(new Event("change",{bubbles:true}));
+});
+$("boss-settings-backup").addEventListener("click",()=>$("export-save").click());
+$("boss-settings-reports").addEventListener("click",()=>{
+ if(!S?.ui)return;S.ui.playPresentation="detailed";S.ui.workReports=true;
+ save();bossSettings(false);renderPlayMode();navigate("work");
+ $("work-records").open=true;$("performance-panel").open=true;
+ $("work-records")?.scrollIntoView?.({behavior:"smooth",block:"start"});
+});
+$("boss-settings-restart").addEventListener("click",()=>{
+ if(!S?.ui)return;S.ui.playPresentation="detailed";S.ui.storyDetails=true;S.ui.managementRoom="all";
+ save();bossSettings(false);navigate("today");renderFounderStory();renderPlayMode();
+ $("today-options").open=true;$("office-panel").open=true;$("restart")?.scrollIntoView?.({behavior:"auto",block:"center"});
+});
+$("boss-work-reports-toggle").addEventListener("click",()=>{
+ if(!S?.ui)return;S.ui.workReports=!S.ui.workReports;save();renderPlayMode();
+});
+$("boss-work-primary").addEventListener("click",()=>{
+ const unassigned=S.deals.find(d=>!d.w);
+ navigate("work",unassigned?.id);$("deals")?.scrollIntoView?.({behavior:"auto",block:"start"});
+});
+$("boss-team-story").addEventListener("click",e=>{
+ const b=e.target.closest?.("button[data-boss-person]");
+ if(!b)return;
+ if(!S.team.some(p=>String(p.id)===b.dataset.bossPerson))return;
+ chooseTeamFocus("people");
+});
+$("boss-team-options").addEventListener("click",e=>{
+ const b=e.target.closest?.("button[data-boss-team-focus]");
+ if(b)chooseTeamFocus(b.dataset.bossTeamFocus);
+});
+$("boss-growth-options").addEventListener("click",e=>{
+ const b=e.target.closest?.("button[data-boss-growth-focus]");
+ if(!b)return;
+ if(chooseGrowthFocus(b.dataset.bossGrowthFocus)){
+  const id=b.dataset.bossGrowthFocus;
+  if(id!=="all")$(id)?.scrollIntoView?.({behavior:"auto",block:"start"});
+ }
+});
+$("boss-growth-back").addEventListener("click",()=>{
+ chooseGrowthFocus(null);$("boss-visual-empire")?.scrollIntoView?.({behavior:"auto",block:"start"});
 });
 
 function renderFounderStory(){

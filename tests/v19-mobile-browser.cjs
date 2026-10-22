@@ -327,6 +327,9 @@ document.addEventListener("DOMContentLoaded",async()=>{
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
 const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,ceoFactoryPriority,peopleStoryDay,peopleStoriesRender,empireRender,factoryDay,factoryRender,factoryQuote,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,acquisitionDiligence,acquisitionBuy,acquisitionRender,setupLeadership:stage=>{
  fresh();
+ // Historical v17-v25 browser fixtures intentionally inspect the full management UI.
+ // v26A starts real new players in story view; reveal management here after each fixture reset.
+ S.ui.founderIntro="done";S.ui.storyDetails=true;
  if(stage!=="founder"){
   while(S.team.length<(stage==="group"?11:8)){
    const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);

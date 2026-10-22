@@ -101,7 +101,16 @@ document.addEventListener("DOMContentLoaded",async()=>{
     byId("boss-world-facts")?.textContent.includes("0 active sites");
   byId("boss-world-filter")?.querySelector('[data-world-filter="businesses"]')?.click();
   result.checks.dBusinessDiagnostic={text:byId("boss-world-tiles")?.textContent.slice(0,220),owned:byId("boss-world-tiles")?.querySelectorAll('[data-world-asset]').length};
-  result.checks.dBusinessLocked=!!byId("boss-world-tiles")?.textContent.includes("launch your first real service");
+  const visualBusinesses=[...byId("boss-world-tiles").querySelectorAll("[data-world-asset]")];
+  result.checks.dBusinessLocked=visualBusinesses.length===0?
+   !!byId("boss-world-tiles")?.textContent.includes("launch your first real service"):
+   visualBusinesses.every(b=>{
+    const id=b.dataset.worldAsset,title=b.querySelector("strong")?.textContent||"";
+    if(id.startsWith("line-"))return byId("business-lines")?.textContent.includes(title);
+    if(id.startsWith("acq-"))return byId("acquisition-growth")?.textContent.includes(title);
+    if(id.startsWith("tool-"))return !!byId("economy-invest-"+id.slice(5))?.hidden;
+    return false;
+   });
   byId("boss-world-filter")?.querySelector('[data-world-filter="factory"]')?.click();
   result.checks.dFactoryLocked=!!byId("boss-world-tiles")?.textContent.includes("No physical machine");
   byId("boss-world-detail")?.querySelector('[data-world-go="factory-panel"]')?.click();

@@ -430,7 +430,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 @media(max-width:360px){.boss-intro-shell{padding:14px}.boss-look-card{padding:4px 2px}.boss-look-card svg{height:73px}.boss-intro-story svg{width:82px;flex-basis:82px}}
 @media(prefers-reduced-motion:reduce){.boss-hero *, .boss-intro *{animation:none!important;transition:none!important}}
 
-</style>
+.boss-room-stage{position:relative;height:162px;border-radius:12px;overflow:hidden;background:linear-gradient(#d9f0fd 61%,#a1c7a4 61%)}.boss-room-stage.office{background:linear-gradient(#c3dff1 61%,#8dc7b2 61%)}.boss-room-stage.hq{background:linear-gradient(#b9d2ec 61%,#91a9b9 61%)}.boss-room-stage .boss-room-people{margin:10px 35px 0 50px;gap:5px;justify-content:center}.boss-room-others{font-size:11px;background:#fff;padding:8px;border-radius:8px}.boss-mini-assets{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.boss-mini-assets button{flex:1 1 110px;min-height:33px;font-size:11px;font-weight:700;background:#f2fcff}</style>
 </head>
 <body>
 <main id="game-root">
@@ -6475,11 +6475,17 @@ function renderFounderStory(){
  $("boss-story-title").textContent=title;$("boss-story-copy").textContent=story;
  $("boss-story-stage").textContent=stage+" · Day "+S.day;
  const main=$("boss-story-next");main.textContent=action;
- const actual=S.team.slice(0,5);
  const sites=(S.exec?.property?.sites||[]).filter(x=>x.status==="active");
- const scene='<div class="boss-room-window"></div><div class="boss-room-desk"></div><div class="boss-room-plant" aria-hidden="true">🪴</div><div class="boss-room-people">'+actual.map((p,i)=>'<div class="boss-room-person">'+ceoPortrait((p.id+i)%CEO_LOOKS.length,true)+'<b>'+esc(p.n)+'</b></div>').join("")+'</div>';
+ const era=sites.some(x=>x.type==="building")?"hq":sites.length?"office":"startup";
+ const people=S.team.slice(0,5).map(p=>'<div class="boss-room-person">'+ceoPortrait(p.id%3,true)+'<b>'+esc(p.n)+'</b></div>').join("");
+ const more=S.team.length>5?'<span class="boss-room-others">+'+(S.team.length-5)+'</span>':"";
+ const assets=['👥 '+S.team.length+' people','🏢 '+sites.length+' sites'];
+ if(S.exec?.lines?.length)assets.push('🏬 '+S.exec.lines.length+' businesses');
+ if(S.factory?.installed&&sites.some(x=>x.id===S.factory.siteId))assets.push('🏭 Factory');
+ const n=Object.values(S.economy?.invested||{}).filter(Boolean).length;if(n)assets.push('⚙️ '+n+' upgrades');
+ const scene='<div class="boss-room-stage '+era+'"><div class="boss-room-window"></div><div class="boss-room-desk"></div><div class="boss-room-plant">🪴</div><div class="boss-room-people">'+people+more+'</div></div><div class="boss-mini-assets">'+assets.map((v,i)=>'<button type="button" data-world-nav="'+(i===0?'team':'growth')+'">'+v+'</button>').join("")+'</div>';
  const holder=$("boss-office-scene");if(holder.innerHTML!==scene)holder.innerHTML=scene;
- $("boss-scene-caption").textContent=sites.length?sites.length+" real active company site(s) · "+S.team.length+" employees":S.team.length+" real team members · illustrative startup workspace, no owned property";
+ $("boss-scene-caption").textContent=sites.length?S.team.length+" real employees · "+sites.length+" actual active sites":S.team.length+" real employees · illustrative workspace, no owned site";
  const guide=$("boss-work-guide");guide.hidden=!assigning||activeView!=="work";
  renderFounderIntro();
 }
@@ -6500,6 +6506,7 @@ $("boss-founder-intro").addEventListener("click",e=>{
   navigate("work",S.deals.find(d=>!d.w)?.id);paintControls();return;
  }
 });
+$("boss-office-scene").addEventListener("click",e=>{const b=e.target?.closest?.("button[data-world-nav]");if(b)navigate(b.dataset.worldNav);});
 $("boss-story-next").addEventListener("click",()=>{
  if(S.ui.founderIntro==="choose"||S.ui.founderIntro==="brief"){renderFounderIntro();return;}
  if(ceoDecisionInventory().approvals>0){S.ui.storyDetails=true;renderFounderStory();return;}

@@ -100,6 +100,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
   result.checks.dFounderHonest=!!byId("boss-world-tiles")?.textContent.includes("First workspace")&&
     byId("boss-world-facts")?.textContent.includes("0 active sites");
   byId("boss-world-filter")?.querySelector('[data-world-filter="businesses"]')?.click();
+  result.checks.dBusinessDiagnostic={text:byId("boss-world-tiles")?.textContent.slice(0,220),owned:byId("boss-world-tiles")?.querySelectorAll('[data-world-asset]').length};
   result.checks.dBusinessLocked=!!byId("boss-world-tiles")?.textContent.includes("launch your first real service");
   byId("boss-world-filter")?.querySelector('[data-world-filter="factory"]')?.click();
   result.checks.dFactoryLocked=!!byId("boss-world-tiles")?.textContent.includes("No physical machine");

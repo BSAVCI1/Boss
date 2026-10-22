@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
     byId("boss-story-detail-toggle").getAttribute("aria-expanded")==="true";
   // v22.4D browser acceptance for simplified but still accessible management.
   const strategy=byId("today-ceo-tools"),story=byId("company-story");
-  result.checks.simplifiedToday=!!strategy&&!strategy.open&&!!story&&!story.open&&byId("game-forward")?.getClientRects().length>0&&!!byId("ceo-action-center");
+  result.checks.simplifiedToday=!!strategy&&!strategy.open&&!!story&&!story.open&&!!byId("boss-executive-room")?.getClientRects().length&&!!byId("ceo-action-center");
   if(strategy){
    strategy.open=true;
    // v26C1: intentionally choose the illustrated People/Strategy room before testing
@@ -54,6 +54,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
    result.checks.executiveSeatCount=executiveRoom?.querySelectorAll("[data-boss-seat]").length===5;
    result.checks.legacyHiddenByDefault=!byId("today-ceo-tools")?.getClientRects().length;
    executiveRoom?.querySelector('[data-boss-room="leadership"]')?.click();
+   result.checks.managementDiagnostic={body:document.body.className,active:document.querySelector(".bottom-nav [aria-current=page]")?.dataset.view||"",room:byId("boss-executive-room").hidden,legacyDisplay:strategy.style.display,zone:strategy.getAttribute("data-mgmt-zone"),visible:!!strategy.getClientRects().length,quickDisplay:byId("boss-control-actions").style.display};
    result.checks.disclosureOpens=document.querySelector("#executive-officers-panel")?.getClientRects().length>0;
    const officeCards=[...document.querySelectorAll(".ceo-office-grid > div")];
    const first=officeCards[0]?.getBoundingClientRect(),second=officeCards[1]?.getBoundingClientRect();

@@ -27,7 +27,7 @@ check("Fresh Founder board shows real CEO with four honest vacant seats",()=>{
  assert.equal((room.match(/boss-exec-vacant/g)||[]).length,4);
  assert.ok(room.includes("Assistant")&&room.includes("CFO")&&room.includes("COO")&&room.includes("CHRO"));
  assert.equal(el("boss-executive-room").hidden,false);
- assert.equal(el("ceo-priority-card").attributes["data-mgmt-show"],"");
+ assert.equal(el("ceo-priority-card").attributes["data-mgmt-show"],undefined,"conversation starts without legacy cards");
  assert.equal(el("capital-today").attributes["data-mgmt-show"],undefined);
  assert.equal(JSON.stringify(s),before,"rendering never mutates payroll, cash, appointments or progress");
 });
@@ -41,7 +41,7 @@ check("Real appointed CFO and assistant gain named faces, without adding employe
 check("Leadership, business and records each expose original read-only detail modules",()=>{
  const s=G.state();
  for(const [room,id,hiddenId] of [["leadership","today-ceo-tools","ceo-priority-card"],["business","capital-today","executive-inbox-panel"],["records","ceo-records","factory-today"]]){
-  s.ui.managementRoom=room;const before=JSON.stringify(s);G.renderCEOOffice();
+  s.ui.managementRoom=room;s.ui.managementTopic=id;const before=JSON.stringify(s);G.renderCEOOffice();
   assert.equal(el(id).attributes["data-mgmt-show"],"",room+" shows "+id);
   assert.equal(el(hiddenId).attributes["data-mgmt-show"],undefined,room+" hides "+hiddenId);
   assert.equal(JSON.stringify(s),before);

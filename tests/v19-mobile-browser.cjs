@@ -117,8 +117,14 @@ document.addEventListener("DOMContentLoaded",async()=>{
   result.checks.dFactoryRealControls=byId("factory-panel")?.open===true;
   byId("boss-world-filter")?.querySelector('[data-world-filter="places"]')?.click();
   result.checks.dBackToActualPlaces=!!byId("boss-world-tiles")?.textContent.includes("First workspace");
-  // v26E: test story-first simple mode before explicitly returning to detailed
-  // mode for the historical management/edit/IndexedDB acceptance checks.
+  // Prior legacy suites deliberately open Full Management and can preserve
+  // detailed UI state. Select Simple via the actual Settings controls, then
+  // verify all 3 modern gameplay tabs and finally switch back to Detailed.
+  byId("boss-settings-open")?.click();
+  byId("boss-presentation-choices")?.querySelector('[data-boss-presentation="simple"]')?.click();
+  result.checks.eSimpleSelectable=document.body.classList.contains("boss-simple-play")&&
+    byId("boss-presentation-choices")?.querySelector('[data-boss-presentation="simple"]')?.getAttribute("aria-pressed")==="true";
+  byId("boss-settings-close")?.click();
   result.checks.eGrowthSimple=!!byId("boss-visual-empire")?.getClientRects().length&&
     !byId("growth-markets-customers")?.getClientRects().length;
   document.querySelector('.bottom-nav button[data-view="team"]').click();
@@ -486,7 +492,7 @@ async function runBrowser(){
    for(const field of ["dVisualWorld","dVisualCategories","dFounderHonest","dBusinessLocked","dFactoryLocked","dFactoryRealControls","dBackToActualPlaces"]){
     assert.equal(outcome.checks[field],true,"v26D visual world failed: "+field);
    }
-   for(const field of ["eGrowthSimple","eTeamPortraits","eTeamHiddenInitially","eTeamPeopleOnDemand","eWorkSimple","eReportsOnDemand","eSettingsModal","eSettingsSimpleSelected","eDetailedRestores","eSettingsCloses"]){
+   for(const field of ["eSimpleSelectable","eGrowthSimple","eTeamPortraits","eTeamHiddenInitially","eTeamPeopleOnDemand","eWorkSimple","eReportsOnDemand","eSettingsModal","eSettingsSimpleSelected","eDetailedRestores","eSettingsCloses"]){
     assert.equal(outcome.checks[field],true,"v26E simple/detailed real browser failure: "+field);
    }
    assert.equal(outcome.checks.simplifiedManagement,true,"Customer, rival and research archive should start collapsed");

@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
    result.checks.storyPersistent=JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.ceoName==="Avery"&&
      JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.ceoLook===2&&
      JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.founderIntro==="done";
+   document.querySelector('.bottom-nav button[data-view="today"]').click();
    byId("boss-story-detail-toggle").click();
    await new Promise(r=>setTimeout(r,90));
   }else{

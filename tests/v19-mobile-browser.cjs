@@ -91,6 +91,22 @@ document.addEventListener("DOMContentLoaded",async()=>{
    const clipped=[...panel.querySelectorAll("button,select,input")].filter(el=>{const b=el.getBoundingClientRect(),css=getComputedStyle(el);return b.width>8&&css.visibility!=="hidden"&&b.right>window.innerWidth+6;});
    if(clipped.length)throw Error(view+" clipped controls: "+clipped.slice(0,3).map(x=>x.id||x.name||x.tagName).join(","));
   }
+  // v26D: new visual world must respond to actual save assets, with no fictional
+  // properties/production and with safe navigation to the real factory section.
+  document.querySelector('.bottom-nav button[data-view="growth"]').click();
+  const visual=byId("boss-visual-empire");
+  result.checks.dVisualWorld=!!visual?.getClientRects().length;
+  result.checks.dVisualCategories=visual?.querySelectorAll("button[data-world-filter]").length===3;
+  result.checks.dFounderHonest=!!byId("boss-world-tiles")?.textContent.includes("First workspace")&&
+    byId("boss-world-facts")?.textContent.includes("0 active sites");
+  byId("boss-world-filter")?.querySelector('[data-world-filter="businesses"]')?.click();
+  result.checks.dBusinessLocked=!!byId("boss-world-tiles")?.textContent.includes("launch your first real service");
+  byId("boss-world-filter")?.querySelector('[data-world-filter="factory"]')?.click();
+  result.checks.dFactoryLocked=!!byId("boss-world-tiles")?.textContent.includes("No physical machine");
+  byId("boss-world-detail")?.querySelector('[data-world-go="factory-panel"]')?.click();
+  result.checks.dFactoryRealControls=byId("factory-panel")?.open===true;
+  byId("boss-world-filter")?.querySelector('[data-world-filter="places"]')?.click();
+  result.checks.dBackToActualPlaces=!!byId("boss-world-tiles")?.textContent.includes("First workspace");
   document.querySelector('.bottom-nav button[data-view="team"]').click();
   const org=byId("org-settings");if(org){org.open=true;org.dispatchEvent(new Event("toggle"));}
   result.checks.customBudgets=!!document.querySelector('[data-org-policy="training"]')&&!!document.querySelector('[data-org-policy="hiring"]');
@@ -430,6 +446,9 @@ async function runBrowser(){
    assert.equal(outcome.checks.disclosureOpens,true,"Advanced CEO offices must expand");
    for(const field of ["c2ConversationVisible","c2NoRawStack","c2TopicsVisible","c2SingleAreaBeforeChoice","c2TargetedReveal"]){
     assert.equal(outcome.checks[field],true,"v26C2 interactive player office failed: "+field);
+   }
+   for(const field of ["dVisualWorld","dVisualCategories","dFounderHonest","dBusinessLocked","dFactoryLocked","dFactoryRealControls","dBackToActualPlaces"]){
+    assert.equal(outcome.checks[field],true,"v26D visual world failed: "+field);
    }
    assert.equal(outcome.checks.simplifiedManagement,true,"Customer, rival and research archive should start collapsed");
    assert.equal(outcome.checks.noDuplicatedQuickActions,true,"Only one set of fast simulation actions");

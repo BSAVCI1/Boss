@@ -13,6 +13,34 @@ document.addEventListener("DOMContentLoaded",async()=>{
   const nav=document.querySelector(".bottom-nav");
   result.checks.bootstrapComplete=document.documentElement.dataset.bossReady==="true";
   result.checks.navPresent=!!nav;
+  // v26A: authentic first-run character selection, story and real project
+  // assignment precede the long-standing management regression journey.
+  const intro=byId("boss-founder-intro"),before=JSON.parse(localStorage.getItem("boss20")||"null");
+  result.checks.storyFirstRun=!!intro&&!!byId("boss-founder-hero")&&!!byId("boss-office-scene");
+  if(!intro?.hidden&&before?.ui?.founderIntro==="choose"){
+   result.checks.storyPaused=before.day===0;
+   const portraits=[...document.querySelectorAll("[data-founder-look]")];
+   result.checks.characterChoices=portraits.length===3;
+   portraits[2].click();
+   byId("boss-found-name").value="Avery";
+   byId("boss-intro-continue").click();
+   result.checks.assistantOpening=!!intro.textContent.includes("Your first customer is waiting");
+   byId("boss-intro-continue").click();
+   const assignButton=byId("deals").querySelector("button[data-deal][data-person]");
+   result.checks.realFirstAssignment=!!assignButton;
+   if(assignButton)assignButton.click();
+   await new Promise(r=>setTimeout(r,90));
+   result.checks.storyPersistent=JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.ceoName==="Avery"&&
+     JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.ceoLook===2&&
+     JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.founderIntro==="done";
+   byId("boss-story-detail-toggle").click();
+   await new Promise(r=>setTimeout(r,90));
+  }else{
+   result.checks.storyPaused=true;result.checks.characterChoices=true;result.checks.assistantOpening=true;
+   result.checks.realFirstAssignment=true;result.checks.storyPersistent=true;
+  }
+  result.checks.storyManagementAccessible=!!byId("boss-founder-hero")&&
+    byId("boss-story-detail-toggle").getAttribute("aria-expanded")==="true";
   // v22.4D browser acceptance for simplified but still accessible management.
   const strategy=byId("today-ceo-tools"),story=byId("company-story");
   result.checks.simplifiedToday=!!strategy&&!strategy.open&&!!story&&!story.open&&byId("game-forward")?.getClientRects().length>0&&!!byId("ceo-action-center");
@@ -299,6 +327,9 @@ document.addEventListener("DOMContentLoaded",async()=>{
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
 const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,ceoFactoryPriority,peopleStoryDay,peopleStoriesRender,empireRender,factoryDay,factoryRender,factoryQuote,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,acquisitionDiligence,acquisitionBuy,acquisitionRender,setupLeadership:stage=>{
  fresh();
+ // Historical v17-v25 browser fixtures intentionally inspect the full management UI.
+ // v26A starts real new players in story view; reveal management here after each fixture reset.
+ S.ui.founderIntro="done";S.ui.storyDetails=true;
  if(stage!=="founder"){
   while(S.team.length<(stage==="group"?11:8)){
    const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);
@@ -894,10 +925,10 @@ async function runBrowser(){
    if(q.result?.value){ready=true;break;}await sleep(110);
   }
   assert.ok(ready,"v23C real browser boot");
-  const setup=(await acqSend("Runtime.evaluate",{expression:"(async()=>{const qa=window.__bossQA;qa.pause();qa.resetEditShield();const stage=qa.setupLeadership('leader');qa.pause();const s=qa.state();s.cash+=50000;s.bi.openingCash+=50000;qa.grow(s.team.length);document.querySelector('.bottom-nav button[data-view=\"growth\"]').click();const panel=document.getElementById('acquisition-panel');panel.open=true;const before=s.cash;const diligence=panel.querySelector('button[data-acquisition=\"diligence\"][data-target=\"harbor\"]');const diligenceEnabled=!!diligence&&!diligence.disabled;if(diligenceEnabled){diligence.click();await new Promise(r=>setTimeout(r,420));qa.resetEditShield();qa.grow(qa.state().team.length);panel.open=true;}const buy=panel.querySelector('button[data-acquisition=\"buy\"][data-target=\"harbor\"]');const buyEnabled=!!buy&&!buy.disabled;if(buyEnabled){buy.click();await new Promise(r=>setTimeout(r,420));qa.resetEditShield();qa.grow(qa.state().team.length);panel.open=true;}return{stage,before,after:qa.state().cash,diligenceEnabled,buyEnabled,owned:qa.state().acquisitions.owned.length,investments:qa.state().bi.totals.investments,open:panel.open,saveStatus:document.getElementById('save-state')?.textContent,errors:window.__mobileErrors||[]}})()",returnByValue:true,awaitPromise:true})).result?.value;
+  const setup=(await acqSend("Runtime.evaluate",{expression:"(async()=>{const qa=window.__bossQA;qa.pause();qa.resetEditShield();qa.state().ui.storyDetails=true;document.body.classList.remove('boss-story-mode');const stage=qa.setupLeadership('leader');qa.pause();const s=qa.state();s.cash+=50000;s.bi.openingCash+=50000;qa.grow(s.team.length);document.querySelector('.bottom-nav button[data-view=\"growth\"]').click();const panel=document.getElementById('acquisition-panel');panel.open=true;const before=s.cash;const diligence=panel.querySelector('button[data-acquisition=\"diligence\"][data-target=\"harbor\"]');const diligenceEnabled=!!diligence&&!diligence.disabled;if(diligenceEnabled){diligence.click();await new Promise(r=>setTimeout(r,420));qa.resetEditShield();qa.grow(qa.state().team.length);panel.open=true;}const buy=panel.querySelector('button[data-acquisition=\"buy\"][data-target=\"harbor\"]');const buyEnabled=!!buy&&!buy.disabled;if(buyEnabled){buy.click();await new Promise(r=>setTimeout(r,420));qa.resetEditShield();qa.grow(qa.state().team.length);panel.open=true;}return{stage,before,after:qa.state().cash,diligenceEnabled,buyEnabled,owned:qa.state().acquisitions.owned.length,investments:qa.state().bi.totals.investments,open:panel.open,saveStatus:document.getElementById('save-state')?.textContent,errors:window.__mobileErrors||[]}})()",returnByValue:true,awaitPromise:true})).result?.value;
   assert.ok(setup&&setup.stage==="leader"&&setup.diligenceEnabled&&setup.buyEnabled&&setup.owned===1&&setup.investments>0&&setup.after<setup.before&&setup.open,"v23C real CEO purchase "+JSON.stringify(setup));
   for(const tab of ["growth","work","today"]){
-   const v=(await acqSend("Runtime.evaluate",{expression:"(()=>{const tab="+JSON.stringify(tab)+";document.querySelector('.bottom-nav button[data-view=\"'+tab+'\"]').click();const el=document.getElementById('acquisition-'+tab);if(el?.parentElement?.tagName==='DETAILS')el.parentElement.open=true;const text=el?.textContent||'';window.scrollTo({top:Math.max(0,scrollY+el.getBoundingClientRect().top-20),behavior:'instant'});return{width:innerWidth,tab,visible:!!el?.getClientRects().length,overflow:document.documentElement.scrollWidth>innerWidth+6,acquired:text.includes(tab==='growth'?'acquired Day':tab==='work'?'Acquisition financial bridge':'1 acquired'),action:tab==='growth'?!!el.querySelector('button[data-acquisition=\"buy\"]'):true}})()",returnByValue:true})).result?.value;
+   const v=(await acqSend("Runtime.evaluate",{expression:"(()=>{const tab="+JSON.stringify(tab)+";document.body.classList.remove('boss-story-mode');document.querySelector('.bottom-nav button[data-view=\"'+tab+'\"]').click();const el=document.getElementById('acquisition-'+tab);if(el?.parentElement?.tagName==='DETAILS')el.parentElement.open=true;const text=el?.textContent||'';window.scrollTo({top:Math.max(0,scrollY+el.getBoundingClientRect().top-20),behavior:'instant'});return{width:innerWidth,tab,visible:!!el?.getClientRects().length,overflow:document.documentElement.scrollWidth>innerWidth+6,acquired:text.includes(tab==='growth'?'acquired Day':tab==='work'?'Acquisition financial bridge':'1 acquired'),action:tab==='growth'?!!el.querySelector('button[data-acquisition=\"buy\"]'):true}})()",returnByValue:true})).result?.value;
    assert.ok(v&&v.width===width&&v.visible&&!v.overflow&&v.acquired&&v.action,"v23C mobile "+JSON.stringify(v));
    await sleep(230);
    const shot=await acqSend("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});

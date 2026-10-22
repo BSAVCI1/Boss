@@ -131,6 +131,9 @@ document.addEventListener("DOMContentLoaded",async()=>{
   result.checks.eSimpleRestored=!byId("factory-panel")?.getClientRects().length&&!byId("growth-expand-businesses")?.getClientRects().length;
   byId("boss-settings-close")?.click();
   result.checks.eSettingsClosed=!byId("boss-settings-panel")?.getClientRects().length;
+  // Settings updates save asynchronously; do not race legacy team-budget fixtures.
+  await new Promise(r=>setTimeout(r,700));
+  window.__bossQA?.resetEditShield?.();
   document.querySelector('.bottom-nav button[data-view="team"]').click();
   const org=byId("org-settings");if(org){org.open=true;org.dispatchEvent(new Event("toggle"));}
   result.checks.customBudgets=!!document.querySelector('[data-org-policy="training"]')&&!!document.querySelector('[data-org-policy="hiring"]');

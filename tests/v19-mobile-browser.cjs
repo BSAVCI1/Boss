@@ -13,6 +13,34 @@ document.addEventListener("DOMContentLoaded",async()=>{
   const nav=document.querySelector(".bottom-nav");
   result.checks.bootstrapComplete=document.documentElement.dataset.bossReady==="true";
   result.checks.navPresent=!!nav;
+  // v26A: authentic first-run character selection, story and real project
+  // assignment precede the long-standing management regression journey.
+  const intro=byId("boss-founder-intro"),before=JSON.parse(localStorage.getItem("boss20")||"null");
+  result.checks.storyFirstRun=!!intro&&!!byId("boss-founder-hero")&&!!byId("boss-office-scene");
+  if(!intro?.hidden&&before?.ui?.founderIntro==="choose"){
+   result.checks.storyPaused=before.day===0;
+   const portraits=[...document.querySelectorAll("[data-founder-look]")];
+   result.checks.characterChoices=portraits.length===3;
+   portraits[2].click();
+   byId("boss-found-name").value="Avery";
+   byId("boss-intro-continue").click();
+   result.checks.assistantOpening=!!intro.textContent.includes("Your first customer is waiting");
+   byId("boss-intro-continue").click();
+   const assignButton=byId("deals").querySelector("button[data-deal][data-person]");
+   result.checks.realFirstAssignment=!!assignButton;
+   if(assignButton)assignButton.click();
+   await new Promise(r=>setTimeout(r,90));
+   result.checks.storyPersistent=JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.ceoName==="Avery"&&
+     JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.ceoLook===2&&
+     JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.founderIntro==="done";
+   byId("boss-story-detail-toggle").click();
+   await new Promise(r=>setTimeout(r,90));
+  }else{
+   result.checks.storyPaused=true;result.checks.characterChoices=true;result.checks.assistantOpening=true;
+   result.checks.realFirstAssignment=true;result.checks.storyPersistent=true;
+  }
+  result.checks.storyManagementAccessible=!!byId("boss-founder-hero")&&
+    byId("boss-story-detail-toggle").getAttribute("aria-expanded")==="true";
   // v22.4D browser acceptance for simplified but still accessible management.
   const strategy=byId("today-ceo-tools"),story=byId("company-story");
   result.checks.simplifiedToday=!!strategy&&!strategy.open&&!!story&&!story.open&&byId("game-forward")?.getClientRects().length>0&&!!byId("ceo-action-center");

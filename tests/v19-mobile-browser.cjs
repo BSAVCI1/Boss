@@ -46,6 +46,13 @@ document.addEventListener("DOMContentLoaded",async()=>{
   result.checks.simplifiedToday=!!strategy&&!strategy.open&&!!story&&!story.open&&byId("game-forward")?.getClientRects().length>0&&!!byId("ceo-action-center");
   if(strategy){
    strategy.open=true;
+   // v26C1: intentionally choose the illustrated People/Strategy room before testing
+   // the pre-existing detailed appointment controls. They remain fully accessible.
+   const executiveRoom=byId("boss-executive-room");
+   result.checks.executiveRoomVisible=!!executiveRoom?.getClientRects().length;
+   result.checks.executiveSeatCount=executiveRoom?.querySelectorAll("[data-boss-seat]").length===5;
+   result.checks.legacyHiddenByDefault=!byId("today-ceo-tools")?.getClientRects().length;
+   executiveRoom?.querySelector('[data-boss-room="leadership"]')?.click();
    result.checks.disclosureOpens=document.querySelector("#executive-officers-panel")?.getClientRects().length>0;
    const officeCards=[...document.querySelectorAll(".ceo-office-grid > div")];
    const first=officeCards[0]?.getBoundingClientRect(),second=officeCards[1]?.getBoundingClientRect();

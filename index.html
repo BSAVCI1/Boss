@@ -430,7 +430,34 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 @media(max-width:360px){.boss-intro-shell{padding:14px}.boss-look-card{padding:4px 2px}.boss-look-card svg{height:73px}.boss-intro-story svg{width:82px;flex-basis:82px}}
 @media(prefers-reduced-motion:reduce){.boss-hero *, .boss-intro *{animation:none!important;transition:none!important}}
 
-.boss-room-stage{position:relative;height:162px;border-radius:12px;overflow:hidden;background:linear-gradient(#d9f0fd 61%,#a1c7a4 61%)}.boss-room-stage.office{background:linear-gradient(#c3dff1 61%,#8dc7b2 61%)}.boss-room-stage.hq{background:linear-gradient(#b9d2ec 61%,#91a9b9 61%)}.boss-room-stage .boss-room-people{margin:10px 35px 0 50px;gap:5px;justify-content:center}.boss-room-others{font-size:11px;background:#fff;padding:8px;border-radius:8px}.boss-mini-assets{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.boss-mini-assets button{flex:1 1 110px;min-height:33px;font-size:11px;font-weight:700;background:#f2fcff}</style>
+.boss-room-stage{position:relative;height:162px;border-radius:12px;overflow:hidden;background:linear-gradient(#d9f0fd 61%,#a1c7a4 61%)}.boss-room-stage.office{background:linear-gradient(#c3dff1 61%,#8dc7b2 61%)}.boss-room-stage.hq{background:linear-gradient(#b9d2ec 61%,#91a9b9 61%)}.boss-room-stage .boss-room-people{margin:10px 35px 0 50px;gap:5px;justify-content:center}.boss-room-others{font-size:11px;background:#fff;padding:8px;border-radius:8px}.boss-mini-assets{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.boss-mini-assets button{flex:1 1 110px;min-height:33px;font-size:11px;font-weight:700;background:#f2fcff}
+/* v26C1 — the management dashboard opens a visual executive office, not a card wall */
+#boss-executive-room[hidden]{display:none!important}
+.boss-executive-room{margin:0 0 14px;background:linear-gradient(155deg,#253e69,#4a637d 59%,#517f77);border-radius:19px;padding:15px;color:#f6fbff;overflow:hidden;box-shadow:0 8px 23px #13274730}
+.boss-room-kicker{font-size:10px;font-weight:800;letter-spacing:2px;color:#c6dcf1}
+.boss-executive-room h2{font-size:23px;margin:4px 0 5px;color:#fff}
+.boss-executive-room p{color:#e2ecf8;font-size:12px;margin:4px 0 11px}
+.boss-exec-people{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;background:#fff2;border:1px solid #ffffff38;border-radius:16px;padding:8px 4px;margin:10px 0}
+.boss-exec-seat{min-width:0;background:#ffffffed;border:2px solid transparent;color:#294258;border-radius:12px;padding:6px 2px;text-align:center;min-height:99px;overflow:hidden;cursor:pointer}
+.boss-exec-seat[aria-selected=true]{border-color:#e4ca88;background:#fffcf1}
+.boss-exec-seat svg{display:block;width:100%;height:57px}
+.boss-exec-seat b,.boss-exec-seat span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.boss-exec-seat b{font-size:11px}.boss-exec-seat span{font-size:9px;color:#476479}
+.boss-exec-vacant{height:57px;border:2px dashed #a6b5c7;border-radius:50%;width:41px;margin:0 auto 2px;display:flex;justify-content:center;align-items:center;color:#607b97;font-size:29px;background:#e8eef2}
+.boss-exec-desk{height:12px;margin:-2px 20px 9px;background:#c8a880;border:2px solid #f2d3a6;border-radius:50%;box-shadow:0 5px 0 #27455c}
+.boss-room-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.boss-room-tabs button{background:#ffffffed;border:1px solid #c9d9e8;border-radius:12px;padding:9px;min-height:55px;text-align:left;color:#263c5e;font-weight:800;font-size:13px}
+.boss-room-tabs button[aria-pressed=true]{background:#e8edff;border:2px solid #f7d493}
+.boss-room-tabs button small{display:block;font-size:10px;font-weight:500;color:#546c87}
+.boss-room-action{font-size:11px;margin-top:9px;color:#e1eef5}
+.boss-management #view-today>[data-mgmt-zone]:not([data-mgmt-show]){display:none!important}
+.boss-management #view-today>#ceo-priority-card,.boss-management #view-today>#executive-inbox-panel{border-left:4px solid #819ad1}
+.boss-management #view-today>#management-policy-center,.boss-management #view-today>#today-ceo-tools{border-left:4px solid #79b7a2}
+.boss-management #view-today>#capital-today,.boss-management #view-today>#v23-today{border-left:4px solid #d1aa72}
+.boss-management #view-today>[data-mgmt-show].card{box-shadow:0 3px 12px #202d4b11}
+@media(max-width:390px){.boss-executive-room{padding:11px}.boss-exec-seat{padding:4px 1px;min-height:88px}.boss-exec-seat svg,.boss-exec-vacant{height:47px}.boss-exec-seat b{font-size:10px}.boss-exec-vacant{width:34px}.boss-room-tabs button{padding:7px;font-size:12px}}
+
+</style>
 </head>
 <body>
 <main id="game-root">
@@ -441,12 +468,12 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
 <section id="boss-founder-hero" class="boss-hero" aria-label="My company story"><div class="boss-hero-top"><div id="boss-ceo-face" class="boss-hero-face" aria-hidden="true"></div><div><span class="boss-hero-kicker" id="boss-story-stage">My company</span><h2 id="boss-story-title">Your next chapter</h2><p id="boss-story-copy">The company grows through real decisions.</p></div></div><div id="boss-office-scene" class="boss-hero-room" aria-label="Illustrated view of actual employees at work"></div><span class="boss-hero-tag" id="boss-scene-caption">Your people at work</span><div class="boss-hero-action"><button type="button" id="boss-story-next" class="boss-hero-main">Start with your customers →</button><button type="button" id="boss-story-detail-toggle" aria-expanded="false">Management dashboard</button></div></section><div id="boss-work-guide" class="boss-guide" hidden role="status">Choose a real project and assign a teammate. The clock is paused until you do.</div>
-<section class="card" id="v23-today" aria-label="Business portfolio overview"></section><section class="card" id="capital-today" aria-label="Capital position"></section><section class="card" id="people-story-today" aria-label="Real people stories"></section><section class="card" id="factory-today" aria-label="Physical factory operations"></section><section class="card" id="acquisition-today" aria-label="Acquisitions and competition"></section><section class="card" id="ceo-priority-card" aria-label="CEO command center">
+<section id="boss-executive-room" class="boss-executive-room" aria-label="My executive office" hidden><div class="boss-room-kicker">THE CEO OFFICE · YOUR PEOPLE</div><h2 id="boss-room-title">Welcome to your office</h2><p id="boss-room-summary">Your leadership team brings the important decisions to you.</p><div id="boss-room-people" class="boss-exec-people" aria-label="Actual appointed leaders"></div><div class="boss-exec-desk" aria-hidden="true"></div><div class="boss-room-tabs" id="boss-room-tabs"><button type="button" data-boss-room="decisions">✨ Decisions<small>What needs me today</small></button><button type="button" data-boss-room="leadership">🤝 My leaders<small>People and strategy</small></button><button type="button" data-boss-room="business">🏢 Business<small>Results and investments</small></button><button type="button" data-boss-room="records">📚 Back office<small>Reports and settings</small></button></div><div class="boss-room-action" id="boss-room-action">Choose a room to explore.</div><button type="button" id="boss-room-all" class="small" style="margin-top:9px;min-height:35px;width:100%">Full management details ▾</button></section><section class="card" id="v23-today" aria-label="Business portfolio overview"></section><section class="card" id="capital-today" aria-label="Capital position"></section><section class="card" id="people-story-today" aria-label="Real people stories"></section><section class="card" id="factory-today" aria-label="Physical factory operations"></section><section class="card" id="acquisition-today" aria-label="Acquisitions and competition"></section><section class="card" id="ceo-priority-card" aria-label="CEO command center">
 <div class="lead"><b>CEO command center</b><span class="small">Decisions and delegated work</span></div>
 <div id="ceo-priority-content"><p class="small">Preparing your company priorities.</p></div>
 </section>
 <section class="card management-policy-center" id="management-policy-center" aria-label="CEO management policy"><p class="small">Preparing current management authorities.</p></section>
-<div class="ceo-quick-actions game-actions" aria-label="Quick simulation actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
+<div id="boss-control-actions" class="ceo-quick-actions game-actions" aria-label="Quick simulation actions"><button id="game-primary" type="button" class="game-primary">Review work →</button><button id="game-forward" type="button" aria-label="Advance the simulation by up to seven game days">Skip up to 7 days ›</button></div>
 <details class="management-pane" id="today-ceo-tools"><summary>CEO strategy, executive appointments &amp; company identity</summary>
 <div class="card ceo-office"><div class="eyebrow">CEO · COMPANY IDENTITY</div><h2 id="company-name">Business Services Group</h2><p id="company-identity"></p><div class="ceo-office-grid"><div><b>My direct reports</b><div id="ceo-direct-reports"></div></div><div><b>Executive Assistant</b><div id="ceo-assistant"></div></div></div></div>
 <div class="card" id="executive-officers-panel"><div class="lead"><b>Executive leadership · HR, CFO &amp; COO</b><span id="executive-officer-count" class="small">Founder-led</span></div><p class="small">Appoint proven employees only after business milestones. Actual payroll changes begin after CEO approval; delegated authority begins inactive until expressly granted.</p><div id="executive-officers"></div><p id="executive-officer-action-status" class="small" role="status"></p></div><div class="card ceo-direction"><div class="lead"><b>CEO 90-day company direction</b><span id="ceo-direction-time" class="small"></span></div><label for="ceo-priority">Company priority</label><select id="ceo-priority"><option value="grow">Grow the company</option><option value="specialize">Specialize</option><option value="rd">Invest in innovation</option><option value="newline">Launch a business line</option><option value="profit">Strengthen profitability</option><option value="people">Develop leaders</option></select><button id="ceo-set-direction" type="button">Set CEO direction</button><p id="ceo-direction-note" class="small"></p><p id="ceo-direction-confirm" class="small" role="status" aria-live="polite"></p></div>
@@ -6456,10 +6483,64 @@ function renderFounderIntro(){
   '<button type="button" id="boss-intro-continue" class="boss-intro-primary">Meet the team and choose a project →</button>';
  }
 }
+
+const BOSS_MGMT_ZONES={
+ "v23-today":"business","capital-today":"business","people-story-today":"business",
+ "factory-today":"business","acquisition-today":"business",
+ "ceo-priority-card":"decisions","executive-inbox-panel":"decisions","boss-control-actions":"decisions","attention-list":"decisions",
+ "management-policy-center":"leadership","today-ceo-tools":"leadership",
+ "company-story":"records","ceo-records":"records","today-options":"records","lab-today":"records"
+};
+function renderCEOOffice(){
+ const opened=!!S.ui?.storyDetails,root=$("boss-executive-room");root.hidden=!opened;
+ document.body.classList.toggle("boss-management",opened);
+ const room=["decisions","leadership","business","records","all"].includes(S.ui?.managementRoom)?S.ui.managementRoom:"decisions";
+ for(const [id,zone] of Object.entries(BOSS_MGMT_ZONES)){
+  const el=$(id);if(!el)continue;
+  if(el.setAttribute)el.setAttribute("data-mgmt-zone",zone);
+  if(zone===room||room==="all")el.setAttribute?.("data-mgmt-show","");
+  else el.removeAttribute?.("data-mgmt-show");
+ }
+ if(!opened)return;
+ const approvals=ceoDecisionInventory().approvals;
+ const copy=room==="decisions"?(approvals?approvals+" decisions need your attention. Your team handles the rest.":"No urgent approvals. Your team is keeping the company running."):
+ room==="leadership"?"Choose a colleague to understand their authority, growth and next milestone.":
+ room==="business"?"Your real companies, cash, customers and assets — without invented results.":
+ room==="records"?"The full reports and settings are available when you want them.":"All original management tools are available below.";
+ $("boss-room-title").textContent=room==="decisions"?"Your next move":room==="leadership"?"People make the company":room==="business"?"Your growing empire":room==="records"?"Behind the scenes":"Management details";
+ $("boss-room-summary").textContent=copy;
+ const officers=[["CEO",null,true],["Assistant",person(S.ops.assistantId),false],
+  ["CFO",person(S.exec.officers.cfo.id),false],["COO",person(S.exec.officers.coo.id),false],
+  ["CHRO",person(S.exec.officers.hr.id),false]];
+ const markup=officers.map(([role,p,isCEO],i)=>{
+  const face=isCEO?ceoPortrait(Number(S.ui.ceoLook)||0,true):p?ceoPortrait(p.id%3,true):'<div class="boss-exec-vacant" aria-hidden="true">+</div>';
+  const label=isCEO?(S.ui.ceoName||"Founder"):p?p.n:"Vacant";
+  const text=role==="CEO"?"Your character":p?"Appointed leader":"Not appointed";
+  return '<button type="button" class="boss-exec-seat" data-boss-seat="'+role+'" aria-selected="'+(room==="leadership"&&!isCEO)+'">'+face+'<b>'+esc(role)+'</b><span>'+esc(label)+'</span></button>';
+ }).join("");
+ const seats=$("boss-room-people");if(seats.innerHTML!==markup)seats.innerHTML=markup;
+ $("boss-room-tabs").querySelectorAll?.("button[data-boss-room]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.bossRoom===room)));
+ $("boss-room-all").textContent=room==="all"?"Show simple office ↑":"Full management details ▾";
+ $("boss-room-action").textContent=room==="decisions"?"Your executives bring genuine approvals here.":room==="leadership"?"Tap a leader for their existing appointments and policies.":room==="records"?"Nothing has been removed from the game.":"Information here comes from your saved company.";
+}
+$("boss-executive-room").addEventListener("click",e=>{
+ const btn=e.target.closest?.("button");if(!btn)return;
+ const role=btn.dataset.bossSeat;
+ let room=btn.dataset.bossRoom;
+ if(btn.id==="boss-room-all")room=S.ui.managementRoom==="all"?"decisions":"all";
+ if(role)room="leadership";
+ if(!["decisions","leadership","business","records","all"].includes(room))return;
+ S.ui.managementRoom=room;
+ if(room==="leadership")$("today-ceo-tools").open=true;
+ if(room==="records")$("company-story").open=true;
+ save();renderCEOOffice();
+});
+
 function renderFounderStory(){
  if(!S.ui) return;
  const show=S.ui.storyDetails===true;
  document.body.classList.toggle("boss-story-mode",!show);
+ renderCEOOffice();
  const button=$("boss-story-detail-toggle");button.textContent=show?"Hide management dashboard":"Management dashboard";
  if(typeof button.setAttribute==="function")button.setAttribute("aria-expanded",String(show));
  const name=(S.ui.ceoName||"Founder").trim().slice(0,22)||"Founder";
@@ -6509,11 +6590,11 @@ $("boss-founder-intro").addEventListener("click",e=>{
 $("boss-office-scene").addEventListener("click",e=>{const b=e.target?.closest?.("button[data-world-nav]");if(b)navigate(b.dataset.worldNav);});
 $("boss-story-next").addEventListener("click",()=>{
  if(S.ui.founderIntro==="choose"||S.ui.founderIntro==="brief"){renderFounderIntro();return;}
- if(ceoDecisionInventory().approvals>0){S.ui.storyDetails=true;renderFounderStory();return;}
+ if(ceoDecisionInventory().approvals>0){S.ui.storyDetails=true;S.ui.managementRoom="decisions";renderFounderStory();return;}
  const id=S.deals.find(d=>!d.w)?.id;
  navigate(id?"work":S.market.completed===0?"work":"growth",id);
 });
-$("boss-story-detail-toggle").addEventListener("click",()=>{S.ui.storyDetails=!S.ui.storyDetails;save();renderFounderStory();});
+$("boss-story-detail-toggle").addEventListener("click",()=>{S.ui.storyDetails=!S.ui.storyDetails;if(S.ui.storyDetails)S.ui.managementRoom="decisions";save();renderFounderStory();});
 
 S=load();if(!S)fresh();
 async function bootstrapBoss(){

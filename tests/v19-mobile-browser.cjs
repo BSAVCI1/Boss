@@ -61,6 +61,11 @@ document.addEventListener("DOMContentLoaded",async()=>{
    result.checks.ceoHierarchyStacked=officeCards.length===2&&first.height>0&&second.height>0&&second.top>=first.bottom-1;
    strategy.open=false;
   }
+  // Historical mobile, picker and persistence proofs intentionally use the
+  // optional Full Management Details mode after the visual opening is tested.
+  byId("boss-room-all")?.click();
+  result.checks.fullDetailsAvailable=!!byId("game-forward")?.getClientRects().length&&
+   !!byId("management-policy-center")?.getClientRects().length;
   const customer=byId("work-customers"),rivals=byId("growth-rivals"),archive=byId("upgrade-archive");
   result.checks.simplifiedManagement=!!customer&&!customer.open&&!!rivals&&!rivals.open&&!!archive&&!archive.open&&!!byId("ideas");
   result.checks.noDuplicatedQuickActions=document.querySelectorAll("#game-forward,#game-primary").length===2;

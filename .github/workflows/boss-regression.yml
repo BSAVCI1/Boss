@@ -140,8 +140,12 @@ jobs:
         with:
           node-version: '20'
       - name: Validate CEO decision clarity before long economic replays
-        run: node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-5a1-management-policy.cjs && node tests/v22-5a2-simplification.cjs && node tests/v22-5b-smart-management.cjs && node tests/v22-5c-autopilot.cjs && node tests/v22-6-leadership.cjs && node tests/v23a-product-customer.cjs && node tests/v23b-capital.cjs && node tests/v23c-acquisitions.cjs && node tests/v24a-campus.cjs && node tests/v24b-empire-stories.cjs && node tests/v24c-factory.cjs && node tests/v25-ceo-quality.cjs && node tests/v26a-story.cjs
+        run: node tests/v15-smoke.cjs && node tests/v17-game.cjs && node tests/v18-leadership.cjs && node tests/v19-delegation.cjs && node tests/v19-autonomy.cjs && node tests/v22-4-ceo-experience.cjs && node tests/v22-4c-ceo-today.cjs && node tests/v22-4-1-ceo-decision-clarity.cjs && node tests/v22-5a1-management-policy.cjs && node tests/v22-5a2-simplification.cjs && node tests/v22-5b-smart-management.cjs && node tests/v22-5c-autopilot.cjs && node tests/v22-6-leadership.cjs && node tests/v23a-product-customer.cjs && node tests/v23b-capital.cjs && node tests/v23c-acquisitions.cjs && node tests/v24a-campus.cjs && node tests/v24b-empire-stories.cjs && node tests/v24c-factory.cjs && node tests/v25-ceo-quality.cjs && node tests/v26a-story.cjs
+  # Temporary v26 development gate: owner approved deferring the multi-hour economic suite
+  # until the final v26F release. Fast CEO/mobile/story/finance smoke remains mandatory.
+  # Restore normal heavy regression policy after v26F ships.
   game:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.title, 'v26F') || contains(github.event.head_commit.message, 'v26F') }}
     needs: [ceo_clarity_fast, ceo_mobile_fast]
     runs-on: ubuntu-latest
     steps:
@@ -227,6 +231,7 @@ jobs:
   # Each sensitivity scenario uses independent simulated companies. Parallelize
   # without discarding model results or reducing assertions.
   economic_sensitivity:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.title, 'v26F') || contains(github.event.head_commit.message, 'v26F') }}
     needs: [ceo_clarity_fast, ceo_mobile_fast]
     strategy:
       fail-fast: false
@@ -252,6 +257,7 @@ jobs:
           if-no-files-found: error
 
   economic_compare:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.title, 'v26F') || contains(github.event.head_commit.message, 'v26F') }}
     needs: [game, economic_sensitivity]
     runs-on: ubuntu-latest
     steps:
@@ -298,8 +304,9 @@ jobs:
     needs: [ceo_mobile_fast, ceo_clarity_fast, game, economic_sensitivity, economic_compare]
     runs-on: ubuntu-latest
     steps:
-      - name: Require all financial and mobile checks successful
+      - name: Require v26 interim fast checks or final full economic suite
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
+          V26_FINAL: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.title, 'v26F') || contains(github.event.head_commit.message, 'v26F') }}
         run: |
-          node -e "const n=JSON.parse(process.env.NEEDS_JSON);for(const [k,v] of Object.entries(n)){if(v.result!=='success'){console.error(k+' ended '+v.result);process.exitCode=1}}"
+          node -e "const n=JSON.parse(process.env.NEEDS_JSON),full=process.env.V26_FINAL==='true';for(const [k,v] of Object.entries(n)){const required=full||k==='ceo_mobile_fast'||k==='ceo_clarity_fast';if(required&&v.result!=='success'){console.error('REQUIRED '+k+' ended '+v.result);process.exitCode=1}else if(!required&&v.result!=='skipped'){console.error('DEFERRED '+k+' unexpectedly '+v.result);process.exitCode=1}}console.log(full?'FINAL v26 full suite':'INTERIM v26 mandatory fast/mobile/finance smoke, economic suite deferred')"

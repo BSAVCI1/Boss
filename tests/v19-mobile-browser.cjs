@@ -53,7 +53,14 @@ document.addEventListener("DOMContentLoaded",async()=>{
    result.checks.executiveRoomVisible=!!executiveRoom?.getClientRects().length;
    result.checks.executiveSeatCount=executiveRoom?.querySelectorAll("[data-boss-seat]").length===5;
    result.checks.legacyHiddenByDefault=!byId("today-ceo-tools")?.getClientRects().length;
+   result.checks.c2ConversationVisible=!!byId("boss-conversation")?.getClientRects().length;
+   result.checks.c2NoRawStack=![...document.querySelectorAll("#view-today>[data-mgmt-zone]")].some(el=>el.getClientRects().length);
    executiveRoom?.querySelector('[data-boss-room="leadership"]')?.click();
+   result.checks.c2TopicsVisible=!!executiveRoom?.querySelector('[data-boss-topic="today-ceo-tools"]')?.getClientRects().length;
+   result.checks.c2SingleAreaBeforeChoice=![...document.querySelectorAll("#view-today>[data-mgmt-zone]")].some(el=>el.getClientRects().length);
+   executiveRoom?.querySelector('[data-boss-topic="today-ceo-tools"]')?.click();
+   result.checks.c2TargetedReveal=!!byId("today-ceo-tools")?.getClientRects().length&&
+     !byId("management-policy-center")?.getClientRects().length;
    result.checks.managementDiagnostic={body:document.body.className,active:document.querySelector(".bottom-nav [aria-current=page]")?.dataset.view||"",room:byId("boss-executive-room").hidden,legacyDisplay:strategy.style.display,zone:strategy.getAttribute("data-mgmt-zone"),visible:!!strategy.getClientRects().length,quickDisplay:byId("boss-control-actions").style.display};
    result.checks.disclosureOpens=document.querySelector("#executive-officers-panel")?.getClientRects().length>0;
    const officeCards=[...document.querySelectorAll(".ceo-office-grid > div")];

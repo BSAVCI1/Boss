@@ -458,6 +458,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 @media(max-width:390px){.boss-executive-room{padding:11px}.boss-exec-seat{padding:4px 1px;min-height:88px}.boss-exec-seat svg,.boss-exec-vacant{height:47px}.boss-exec-seat b{font-size:10px}.boss-exec-vacant{width:34px}.boss-room-tabs button{padding:7px;font-size:12px}}
 
 
+.boss-conversation[hidden],.boss-topic-actions[hidden],#boss-topic-back[hidden]{display:none!important}
 /* v26C2 — character conversations with one on-demand working panel */
 .boss-conversation{display:flex;gap:12px;align-items:center;background:#f7f3eb;border:2px solid #f0d9ac;border-radius:16px;padding:12px;margin:11px 0;color:#253b55}
 .boss-conversation-face{width:72px;min-width:72px;height:82px;overflow:hidden;border-radius:14px;background:#e2eaf4}
@@ -6591,7 +6592,7 @@ function renderCEOOffice(){
   const face=isCEO?ceoPortrait(Number(S.ui.ceoLook)||0,true):p?ceoPortrait(p.id%3,true):'<div class="boss-exec-vacant" aria-hidden="true">+</div>';
   const label=isCEO?(S.ui.ceoName||"Founder"):p?p.n:"Vacant";
   const text=role==="CEO"?"Your character":p?"Appointed leader":"Not appointed";
-  return '<button type="button" class="boss-exec-seat" data-boss-seat="'+role+'" aria-selected="'+(room==="leadership"&&!isCEO)+'">'+face+'<b>'+esc(role)+'</b><span>'+esc(label)+'</span></button>';
+  return '<button type="button" class="boss-exec-seat" data-boss-seat="'+role+'" aria-selected="'+((S.ui.managementSpeaker||"CEO")===role)+'">'+face+'<b>'+esc(role)+'</b><span>'+esc(label)+'</span></button>';
  }).join("");
  const seats=$("boss-room-people");if(seats.innerHTML!==markup)seats.innerHTML=markup;
  $("boss-room-tabs").querySelectorAll?.("button[data-boss-room]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.bossRoom===room)));

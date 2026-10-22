@@ -386,6 +386,50 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 @media(max-width:430px){.factory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.factory-actions{flex-direction:column}.factory-actions button{width:100%}}
 @media(prefers-reduced-motion:reduce){.factory-grid,.factory-actions{animation:none!important;transition:none!important}}
 
+
+/* v26A — story-first CEO identity, no external assets, all economic systems unchanged. */
+.boss-intro[hidden],#boss-founder-hero[hidden]{display:none!important}
+.boss-intro{position:fixed;inset:0;z-index:35;display:flex;align-items:center;justify-content:center;overflow:auto;padding:calc(18px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom));background:linear-gradient(145deg,#152d4e 5%,#254d78 53%,#654e84 100%);color:#172d48}
+.boss-intro-shell{background:#f8f4ee;border-radius:24px;padding:20px;max-width:500px;width:100%;max-height:96%;overflow-y:auto;box-shadow:0 25px 80px #09152895}
+.boss-intro-shell h2{font-size:29px;letter-spacing:-.7px;margin:6px 0 8px;line-height:1.12}
+.boss-intro-shell p{font-size:15px;color:#435367}
+.boss-intro-kicker{text-transform:uppercase;letter-spacing:2px;font-size:11px;font-weight:900;color:#81578c}
+.boss-intro-looks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:15px 0}
+.boss-look-card{background:#fff;border:2px solid #d8ddea;padding:9px 4px;border-radius:16px;min-width:0;text-align:center;color:#26344c;min-height:130px}
+.boss-look-card[aria-pressed=true]{background:#e4edf9;border-color:#315fc7;box-shadow:0 0 0 2px #315fc733}
+.boss-look-card svg{width:100%;max-width:88px;height:92px;display:block;margin:auto}
+.boss-look-card span{font-size:12px;font-weight:800}
+.boss-intro-name{display:grid;gap:5px;color:#26344c;font-weight:800;font-size:13px}
+.boss-intro-name input{min-height:44px;padding:10px;border:1px solid #a2abc0;background:#fff;color:#172d48;border-radius:10px;font:inherit}
+.boss-intro-primary{width:100%;background:#315fc7;border-color:#315fc7;color:#fff;min-height:51px;font-size:16px;font-weight:800;margin-top:17px}
+.boss-intro-story{display:flex;gap:15px;align-items:center;padding:15px;background:#e8edf5;border-radius:16px;margin:18px 0}
+.boss-intro-story svg{flex:0 0 110px;width:110px;height:128px}
+.boss-intro-story div{min-width:0;font-weight:600;line-height:1.5}
+.boss-hero{border-radius:21px;padding:16px;background:linear-gradient(135deg,#e0eeff,#d9eae1 70%,#f4e8cf);color:#1e3547;overflow:hidden;margin:0 0 13px;border:1px solid #bfd1d9}
+.boss-hero h2{margin:3px 0;font-size:22px;color:#193b56}
+.boss-hero p{margin:5px 0;font-size:13px;color:#344d60}
+.boss-hero .boss-hero-top{display:flex;align-items:center;gap:11px}
+.boss-hero .boss-hero-face{width:76px;height:86px;flex:0 0 76px;background:#d5ddec;border-radius:18px;overflow:hidden}
+.boss-hero .boss-hero-face svg{width:100%;height:100%}
+.boss-hero-kicker{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#526aa1;text-transform:uppercase}
+.boss-hero-room{margin-top:13px;background:linear-gradient(#e9f0f3 0 65%,#ccdacb 65% 100%);border:2px solid #b1cad0;min-height:135px;border-radius:16px;position:relative;overflow:hidden}
+.boss-room-window{position:absolute;top:8px;left:12px;background:linear-gradient(135deg,#90c7d5,#d6f3ed);border:5px solid #f8ffff;border-radius:9px;width:70px;height:53px;box-shadow:0 3px 3px #596a8030}
+.boss-room-plant{position:absolute;right:10px;bottom:11px;font-size:30px}
+.boss-room-desk{position:absolute;bottom:10px;left:10px;background:#ae8462;border:3px solid #82604c;border-radius:7px;width:65%;height:22px}
+.boss-room-people{display:flex;justify-content:center;gap:6px;position:relative;margin:16px 24px 0 50px;flex-wrap:wrap;max-height:100px;overflow:hidden}
+.boss-room-person{width:50px;min-width:0;text-align:center;position:relative}
+.boss-room-person svg{height:64px;width:50px;filter:drop-shadow(0 3px 2px #2342)}
+.boss-room-person b{display:block;font-size:10px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;color:#243745}
+.boss-hero-tag{font-size:11px;font-weight:700;display:block;margin-top:6px}
+.boss-hero-action{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+.boss-hero-action button{flex:1 1 130px;min-height:44px;border-color:#b0bfd6;color:#214169;background:#ffffffeb;font-weight:750}
+.boss-hero-action button.boss-hero-main{background:#315fc7;border-color:#315fc7;color:#fff}
+.boss-story-mode #view-today>#v23-today,.boss-story-mode #view-today>#capital-today,.boss-story-mode #view-today>#people-story-today,.boss-story-mode #view-today>#factory-today,.boss-story-mode #view-today>#acquisition-today,.boss-story-mode #view-today>#ceo-priority-card,.boss-story-mode #view-today>#management-policy-center,.boss-story-mode #view-today>#today-ceo-tools,.boss-story-mode #view-today>#executive-inbox-panel,.boss-story-mode #view-today>#company-story,.boss-story-mode #view-today>#ceo-records,.boss-story-mode #view-today>#today-options,.boss-story-mode #view-today>.ceo-quick-actions,.boss-story-mode #view-today>#attention-list{display:none!important}
+.boss-guide{padding:11px 13px;background:var(--accentWash);border:1px solid var(--accent);border-radius:12px;margin:0 0 12px;font-size:13px;font-weight:700}
+.boss-guide[hidden]{display:none}
+@media(max-width:360px){.boss-intro-shell{padding:14px}.boss-look-card{padding:4px 2px}.boss-look-card svg{height:73px}.boss-intro-story svg{width:82px;flex-basis:82px}}
+@media(prefers-reduced-motion:reduce){.boss-hero *, .boss-intro *{animation:none!important;transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -396,6 +440,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
+<section id="boss-founder-hero" class="boss-hero" aria-label="My company story"><div class="boss-hero-top"><div id="boss-ceo-face" class="boss-hero-face" aria-hidden="true"></div><div><span class="boss-hero-kicker" id="boss-story-stage">My company</span><h2 id="boss-story-title">Your next chapter</h2><p id="boss-story-copy">The company grows through real decisions.</p></div></div><div id="boss-office-scene" class="boss-hero-room" aria-label="Illustrated view of actual employees at work"></div><span class="boss-hero-tag" id="boss-scene-caption">Your people at work</span><div class="boss-hero-action"><button type="button" id="boss-story-next" class="boss-hero-main">Start with your customers →</button><button type="button" id="boss-story-detail-toggle" aria-expanded="false">Management dashboard</button></div></section><div id="boss-work-guide" class="boss-guide" hidden role="status">Choose a real project and assign a teammate. The clock is paused until you do.</div>
 <section class="card" id="v23-today" aria-label="Business portfolio overview"></section><section class="card" id="capital-today" aria-label="Capital position"></section><section class="card" id="people-story-today" aria-label="Real people stories"></section><section class="card" id="factory-today" aria-label="Physical factory operations"></section><section class="card" id="acquisition-today" aria-label="Acquisitions and competition"></section><section class="card" id="ceo-priority-card" aria-label="CEO command center">
 <div class="lead"><b>CEO command center</b><span class="small">Decisions and delegated work</span></div>
 <div id="ceo-priority-content"><p class="small">Preparing your company priorities.</p></div>
@@ -581,6 +626,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </main>
 <nav class="bottom-nav" aria-label="Main navigation"><button type="button" data-view="today" class="active" aria-current="page"><span aria-hidden="true">⌂</span>Today</button><button type="button" data-view="work"><span aria-hidden="true">▤</span>Work</button><button type="button" data-view="team"><span aria-hidden="true">♙</span>Team</button><button type="button" data-view="growth"><span aria-hidden="true">◈</span>Growth</button></nav>
 <div class="overlay" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="dialog"><h2 id="modal-title"></h2><p id="modal-text"></p><div id="choices" class="buttons"></div></div></div>
+<div class="boss-intro" id="boss-founder-intro" hidden role="dialog" aria-modal="true" aria-label="Begin your founder story"><div class="boss-intro-shell" id="boss-intro-content"></div></div>
 <script>
 (function(){
 "use strict";
@@ -2783,7 +2829,7 @@ S.market.customers[d.cl]=prev;}
 function fresh(){
  ceoDraftPriority=null;saveConflict=false;saveErrorReason="";paused=false;
  try{persistedRevision=Number(JSON.parse(localStorage.getItem(KEY)||"null")?._saveRevision)||0;}catch{persistedRevision=0;}
- S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now(),lastInterruptDay:0},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureCapital(S);ensureWorld(S);ensureAcquisitions(S);ensurePeopleStories(S);ensureFactory(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");}
+ S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now(),lastInterruptDay:0},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureCapital(S);ensureWorld(S);ensureAcquisitions(S);ensurePeopleStories(S);ensureFactory(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");S.ui.founderIntro="choose";S.ui.ceoLook=0;S.ui.ceoName="Founder";S.ui.storyDetails=false;}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="factory")return "Operating owned production line";if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.t==="exec")return "Executive leadership";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -2842,7 +2888,7 @@ contractProcurementSettle();acquisitionDay();peopleStoryDay();factoryDay();
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&S.day-S.flow.lastInterruptDay>=28)startDilemma();
 labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
-function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev||(d.w!==p.id&&!unitAssignmentAllowed(d,p)))return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;performanceAssign(d,p);}save();renderStructure();refresh();}
+function assign(did,pid){const d=deal(did),p=person(pid);if(!d||!p||S.ev||(d.w!==p.id&&!unitAssignmentAllowed(d,p)))return;p.career.autoRest=false;p.career.recoveryDays=0;if(S.ops.assistantId===p.id)S.ops.assistantId=null;if(d.w===p.id){release(p);}else{release(person(d.w));release(p);d.w=p.id;p.t="d"+d.id;performanceAssign(d,p);}if(d.w===p.id&&S.ui?.founderIntro==="assign"){S.ui.founderIntro="done";paused=false;logIt("Your first assignment is underway. Your company story begins.");}save();renderStructure();refresh();schedule();}
 function unitAssignmentAllowed(d,p){const owner=unitOfPerson(p.id);if(owner?.managerId===p.id)return false;return d.unitKey?owner?.key===d.unitKey||managementSupportAllowed(d,p):!owner;}
 function workerSpeed(p,d){if(!p||!d)return 0;const mood=.6+p.mood/250,loyal=p.loy>70?1.1:1,matched=LIKED_SKILLS[d.need].includes(p.interest)?1.1:1;
  const u=d.unitKey?unitOfPerson(p.id):null;
@@ -2937,12 +2983,12 @@ for(const b of document.querySelectorAll(".bottom-nav button[data-view]")){const
 if(view==="work"&&Number.isFinite(projectId)){for(const el of $("deals").querySelectorAll("details[data-project-id]"))if(Number(el.dataset.projectId)===projectId){el.open=true;projectExpanded.add(projectId);}}
 if(typeof window!=="undefined"&&typeof window.scrollTo==="function"){const target=Number.isFinite(projectId)?0:viewScroll[view]||0;requestAnimationFrame(()=>window.scrollTo(0,target));}
 }
-$("speed-select").addEventListener("change",()=>{spd=[1,3,8].includes(Number($("speed-select").value))?Number($("speed-select").value):1;S.ui.speed=spd;save();if(!saveConflict&&!saveErrorReason&&indexedWriteCount===0)paused=false;paintControls();schedule();});
-$("pause").addEventListener("click",()=>{if(saveConflict||saveErrorReason||indexedWriteCount>0)return;paused=!paused;paintControls();schedule();});
+$("speed-select").addEventListener("change",()=>{spd=[1,3,8].includes(Number($("speed-select").value))?Number($("speed-select").value):1;S.ui.speed=spd;save();if(!saveConflict&&!saveErrorReason&&indexedWriteCount===0&&(!S.ui?.founderIntro||S.ui.founderIntro==="done"))paused=false;paintControls();schedule();});
+$("pause").addEventListener("click",()=>{if(saveConflict||saveErrorReason||indexedWriteCount>0)return;if(S.ui?.founderIntro&&S.ui.founderIntro!=="done")return;paused=!paused;paintControls();schedule();});
 $("export-save").addEventListener("click",exportGameBackup);
 $("restart").addEventListener("click",()=>{if(saveConflict||saveErrorReason){saveState("Cannot restart while existing progress is unverified. Export your company backup first.",true);return;}if(!confirm("Restart the company from zero?"))return;
 fresh();selected=[];ideaMessage="";avatars.clear();structural="";logSignature="";sectorSignature="";customerSignature="";projectExpanded.clear();employeeExpanded.clear();careerExpanded.clear();roadmapExpanded.clear();attentionSignature="";orgControlsSignature="";for(const name of ["today","work","team","growth"])viewScroll[name]=0;
-paused=false;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();navigate("today");schedule();});
+paused=true;spd=1;save();renderStructure();renderCandidates();renderAssistantPolicy();renderIdeas();refresh();paintControls();navigate("today");schedule();});
 document.querySelector(".bottom-nav").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(b)navigate(b.dataset.view);});
 $("ceo-priority").addEventListener("change",()=>draftExecutiveDirection($("ceo-priority").value));
 $("ceo-set-direction").addEventListener("click",()=>{
@@ -5662,7 +5708,7 @@ $("game-journey-map").innerHTML=stages.map(([name,done])=>'<span class="game-jou
 const rivals=S.world?.rivals||[],rivalText=rivals.map(q=>'<div class="game-rival"><span class="game-rival-icon">◆</span><span><b>'+esc(q.name)+'</b><small>'+(q.acquired?'Acquired · ':'')+esc(q.archetype)+' approach · '+q.wins+' wins</small></span></div>').join("");
 if($("game-rivals").innerHTML!==rivalText)$("game-rivals").innerHTML=rivalText;
 }
-function gameAdvanceDays(){if(S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev||indexedWriteCount>0;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
+function gameAdvanceDays(){if(S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;if(S.ui?.founderIntro&&S.ui.founderIntro!=="done")return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<7&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev||indexedWriteCount>0;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
 
 // Strategic advice is not a pending CEO approval. No money moves here.
 function ceoPremisesOpportunity(){
@@ -6227,7 +6273,7 @@ for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)day
 function refresh(){
 if(editableInteractionPending())return;
 v23Render();capitalRender();acquisitionRender();empireRender();peopleStoriesRender();factoryRender();
-campusRender();renderLeadershipContexts();renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
+campusRender();renderLeadershipContexts();renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderFounderStory();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);
@@ -6344,7 +6390,7 @@ praise:"Sharing credit improves employee morale; taking credit favors short-term
 }
 function showModal(){const m=$("modal");if(!S.ev){m.hidden=true;document.body.classList.remove("modal-open");return;}const d=dilemmaInfo(S.ev);if(!d){S.ev=null;save();m.hidden=true;return;}if(m.hidden||$("modal-title").textContent!==d[0]){$("modal-title").textContent=d[0];$("modal-text").textContent=d[1]+(S.coach.mode==="guided"?"\n\nDecision preview: "+coachDecisionPreview(S.ev.k):"");$("choices").innerHTML=d[2].map((txt,i)=>{const cost=coachChoiceCost(S.ev.k,i);return '<button type="button" data-choice="'+i+'" '+(cost>S.cash?'disabled title="Insufficient cash"':'')+'>'+esc(txt)+(cost>S.cash?' · insufficient cash':'')+'</button>';}).join("");}m.hidden=false;document.body.classList.add("modal-open");}
 // 1× 2.4 seconds/day, 3× 0.8 seconds/day, 8× 0.3 seconds/day. The economy continues in game days.
-function schedule(){clearTimeout(clock);if(!paused&&!S.ev&&!saveConflict&&!saveErrorReason&&indexedWriteCount===0)clock=setTimeout(()=>{tick();schedule();},2400/spd);}
+function schedule(){clearTimeout(clock);if(!paused&&(!S.ui?.founderIntro||S.ui.founderIntro==="done")&&!S.ev&&!saveConflict&&!saveErrorReason&&indexedWriteCount===0)clock=setTimeout(()=>{tick();schedule();},2400/spd);}
 function bubble(id,emoji,frames){let a=avatars.get(id);if(!a){a={x:0,y:0,tx:0,ty:0,away:false,hold:0,emoji:"",frames:0};avatars.set(id,a);}a.emoji=emoji||"💬";a.frames=frames;}
 let lastCampusFrame=-1000;
 function avatarDraw(now=0){
@@ -6361,6 +6407,107 @@ ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(a.x,a.y,11,0,Math.PI*2);ctx.fill();c
 if(a.frames>0){ctx.font="19px system-ui";ctx.fillText(a.emoji,a.x,a.y-17);a.frames--;}
 });requestAnimationFrame(avatarDraw);}
 // Preserve the established test entry point; no persistence occurs before bootstrap.
+
+/* v26A — cosmetic portrait and first assignment story. State is only S.ui;
+   existing accounting, customer/work identities and authorization stay unchanged. */
+const CEO_LOOKS=[
+ {skin:"#efb48e",hair:"#30314a",jacket:"#4c74c8",cut:0,name:"The Builder"},
+ {skin:"#a86e4a",hair:"#322525",jacket:"#8954a2",cut:1,name:"The Visionary"},
+ {skin:"#db9975",hair:"#57352b",jacket:"#279788",cut:2,name:"The Strategist"}
+];
+function ceoLook(index){return CEO_LOOKS[index]||CEO_LOOKS[0];}
+function ceoPortrait(index,small=false){
+ const a=ceoLook(index),hair=a.cut===0?
+ '<path d="M27 65 Q19 24 56 25 Q96 18 96 64 L82 49 Q65 35 46 50 L29 70Z" fill="'+a.hair+'"/>':
+ a.cut===1?'<path d="M24 71 Q15 24 60 21 Q107 20 100 78 L91 91 L83 51 Q63 39 39 54 L34 85Z" fill="'+a.hair+'"/>':
+ '<path d="M23 70 Q14 28 45 24 Q60 13 78 26 Q101 20 100 68 L90 63 Q79 37 55 48 Q40 43 33 75Z" fill="'+a.hair+'"/>';
+ return '<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Illustrated founder portrait">'+
+ '<rect width="120" height="140" rx="16" fill="#dce9f4"/><circle cx="95" cy="24" r="26" fill="#f7eacb" opacity=".8"/>'+
+ '<path d="M12 137 Q12 98 43 96 L77 96 Q109 98 109 137" fill="'+a.jacket+'"/>'+
+ '<path d="M43 94 L58 111 L77 94 L74 117 L60 137 L46 117Z" fill="#fbfaf7"/>'+
+ '<rect x="52" y="83" width="17" height="25" rx="8" fill="'+a.skin+'"/>'+
+ '<ellipse cx="29" cy="69" rx="8" ry="12" fill="'+a.skin+'"/><ellipse cx="92" cy="69" rx="8" ry="12" fill="'+a.skin+'"/>'+
+ '<ellipse cx="60" cy="68" rx="32" ry="42" fill="'+a.skin+'"/>'+
+ hair+
+ '<path d="M40 62 Q46 58 52 62 M68 62 Q74 58 80 62" fill="none" stroke="'+a.hair+'" stroke-width="3" stroke-linecap="round"/>'+
+ '<circle cx="46" cy="69" r="2.8" fill="#253849"/><circle cx="74" cy="69" r="2.8" fill="#253849"/>'+
+ '<path d="M56 81 Q60 85 64 81" fill="none" stroke="#8f624e" stroke-width="2" stroke-linecap="round"/>'+
+ '<path d="M48 88 Q60 97 72 88" fill="none" stroke="#9d605d" stroke-width="2.4" stroke-linecap="round"/>'+
+ '</svg>';
+}
+function renderFounderIntro(){
+ const el=$("boss-founder-intro"),content=$("boss-intro-content");if(!el||!content)return;
+ const phase=S.ui?.founderIntro;
+ if(phase!=="choose"&&phase!=="brief"){el.hidden=true;document.body.classList.remove("boss-intro-open");return;}
+ el.hidden=false;document.body.classList.add("boss-intro-open");
+ if(el.dataset.phase===phase)return;el.dataset.phase=phase;
+ if(phase==="choose"){
+  const idx=Number(S.ui.ceoLook)||0;
+  content.innerHTML='<span class="boss-intro-kicker">Boss · chapter one</span>'+
+  '<h2>Every company begins with someone.</h2><p>You have an idea, a little starting cash and three teammates. Who will you be?</p>'+
+  '<div class="boss-intro-looks">'+CEO_LOOKS.map((a,i)=>'<button type="button" class="boss-look-card" data-founder-look="'+i+'" aria-pressed="'+(idx===i)+'">'+ceoPortrait(i)+'<span>'+a.name+'</span></button>').join("")+'</div>'+
+  '<label class="boss-intro-name" for="boss-found-name">What should your team call you?<input id="boss-found-name" type="text" maxlength="22" placeholder="Founder" value="'+esc(S.ui.ceoName||"Founder")+'"></label>'+
+  '<button type="button" id="boss-intro-continue" class="boss-intro-primary">Meet your first customer →</button>';
+ }else{
+  content.innerHTML='<span class="boss-intro-kicker">Chapter one · first morning</span>'+
+  '<h2>Your first customer is waiting.</h2><div class="boss-intro-story">'+ceoPortrait(S.ui.ceoLook)+
+  '<div>“We have two real customer projects and three people who believe in this company. Choose who should lead the first job.”</div></div>'+
+  '<p>Time is paused. Pick a project and assign a teammate; the business starts moving after your first decision. Your money and people are real parts of the simulation.</p>'+
+  '<button type="button" id="boss-intro-continue" class="boss-intro-primary">Meet the team and choose a project →</button>';
+ }
+}
+function renderFounderStory(){
+ if(!S.ui) return;
+ const show=S.ui.storyDetails===true;
+ document.body.classList.toggle("boss-story-mode",!show);
+ const button=$("boss-story-detail-toggle");button.textContent=show?"Hide management dashboard":"Management dashboard";
+ button.setAttribute("aria-expanded",String(show));
+ const name=(S.ui.ceoName||"Founder").trim().slice(0,22)||"Founder";
+ const face=$("boss-ceo-face"),look=Number(S.ui.ceoLook)||0;const portrait=ceoPortrait(look,true);
+ if(face.innerHTML!==portrait)face.innerHTML=portrait;
+ const stage=gameChapter(),completed=S.market.completed||0,assigning=S.ui.founderIntro==="assign";
+ const decision=ceoDecisionInventory();
+ let title,story,action;
+ if(assigning){title="Your first decision";story="The company is ready. Assign a real teammate to one of your first customer projects.";action="Choose my first project →";}
+ else if(!completed){title="Welcome, "+name;story="Your team has a first customer to impress. A successful delivery will build trust and unlock what comes next.";action="Review my customer projects →";}
+ else if(decision.approvals>0){title="Your team needs a decision";story=decision.approvals+" leadership request(s) await your judgment. Your managers keep ordinary work moving.";action="Review the decision →";}
+ else{title=stage==="founder"?"Your business is taking shape":"Your next chapter, "+name;story=completed+" customer deliveries. "+S.team.length+" real colleagues. Your choices are building a company with its own story.";action="Explore my company →";}
+ $("boss-story-title").textContent=title;$("boss-story-copy").textContent=story;
+ $("boss-story-stage").textContent=stage+" · Day "+S.day;
+ const main=$("boss-story-next");main.textContent=action;
+ const actual=S.team.slice(0,5);
+ const sites=(S.exec?.property?.sites||[]).filter(x=>x.status==="active");
+ const scene='<div class="boss-room-window"></div><div class="boss-room-desk"></div><div class="boss-room-plant" aria-hidden="true">🪴</div><div class="boss-room-people">'+actual.map((p,i)=>'<div class="boss-room-person">'+ceoPortrait((p.id+i)%CEO_LOOKS.length,true)+'<b>'+esc(p.n)+'</b></div>').join("")+'</div>';
+ const holder=$("boss-office-scene");if(holder.innerHTML!==scene)holder.innerHTML=scene;
+ $("boss-scene-caption").textContent=sites.length?sites.length+" real active company site(s) · "+S.team.length+" employees":S.team.length+" real team members · illustrative startup workspace, no owned property";
+ const guide=$("boss-work-guide");guide.hidden=!assigning||activeView!=="work";
+ renderFounderIntro();
+}
+$("boss-founder-intro").addEventListener("click",e=>{
+ const b=e.target.closest("button");if(!b)return;
+ if(b.dataset.founderLook!==undefined){
+  S.ui.ceoLook=Number(b.dataset.founderLook);
+  $("boss-intro-content").querySelectorAll("[data-founder-look]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+  save();renderFounderStory();return;
+ }
+ if(b.id!=="boss-intro-continue")return;
+ if(S.ui.founderIntro==="choose"){
+  S.ui.ceoName=String($("boss-found-name")?.value||"Founder").trim().slice(0,22)||"Founder";
+  S.ui.founderIntro="brief";save();renderFounderStory();return;
+ }
+ if(S.ui.founderIntro==="brief"){
+  S.ui.founderIntro="assign";save();renderFounderStory();
+  navigate("work",S.deals.find(d=>!d.w)?.id);paintControls();return;
+ }
+});
+$("boss-story-next").addEventListener("click",()=>{
+ if(S.ui.founderIntro==="choose"||S.ui.founderIntro==="brief"){renderFounderIntro();return;}
+ if(ceoDecisionInventory().approvals>0){S.ui.storyDetails=true;renderFounderStory();return;}
+ const id=S.deals.find(d=>!d.w)?.id;
+ navigate(id?"work":S.market.completed===0?"work":"growth",id);
+});
+$("boss-story-detail-toggle").addEventListener("click",()=>{S.ui.storyDetails=!S.ui.storyDetails;save();renderFounderStory();});
+
 S=load();if(!S)fresh();
 async function bootstrapBoss(){
  let existingSave=false,sourceStorageError=false;
@@ -6378,7 +6525,7 @@ async function bootstrapBoss(){
   }
  }
  const loadFailed=!chosen&&(existingSave||sourceStorageError||Boolean(backup));
- if(chosen)S=chosen;else fresh();
+ if(chosen)S=chosen;else fresh();if(S.ui?.founderIntro&&S.ui.founderIntro!=="done")paused=true;
  persistedRevision=Number(S._saveRevision)||0;
  if(S.ui?.pendingCEO&&CEO_PRIORITIES[S.ui.pendingCEO])ceoDraftPriority=S.ui.pendingCEO;
  spd=[1,3,8].includes(S.ui?.speed)?S.ui.speed:1;

@@ -33,7 +33,7 @@ test("First launch starts with real team and real projects, no new spend",()=>{
 });
 test("Portrait styles are self-contained and differ visibly",()=>{
  const pics=[0,1,2].map(i=>G.ceoPortrait(i));assert.ok(pics.every(x=>x.includes("<svg")&&x.includes("</svg>")));
- assert.equal(new Set(pics).size,3);assert.ok(pics.every(x=>!x.includes("<image")&&!x.includes("http://")));
+ assert.equal(new Set(pics).size,3);assert.ok(pics.every(x=>!x.includes("<image")&&!x.includes("href=")&&!x.includes("src=")));
 });
 test("Character cosmetic state survives serialization without changing economics",()=>{
  const s=fresh(),econ=JSON.stringify({cash:s.cash,bi:s.bi,team:s.team,deals:s.deals});

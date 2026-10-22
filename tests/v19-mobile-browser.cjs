@@ -297,7 +297,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
 });
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
-const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,peopleStoryDay,peopleStoriesRender,empireRender,factoryDay,factoryRender,factoryQuote,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,acquisitionDiligence,acquisitionBuy,acquisitionRender,setupLeadership:stage=>{
+const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,ceoFactoryPriority,peopleStoryDay,peopleStoriesRender,empireRender,factoryDay,factoryRender,factoryQuote,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,acquisitionDiligence,acquisitionBuy,acquisitionRender,setupLeadership:stage=>{
  fresh();
  if(stage!=="founder"){
   while(S.team.length<(stage==="group"?11:8)){
@@ -959,6 +959,28 @@ async function runBrowser(){
   await sleep(380);
   const made=(await acqSend("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.resetEditShield();qa.tick();qa.tick();qa.grow(qa.state().team.length);const s=qa.state();return{operator:s.factory.workerId,raw:s.factory.raw,stock:s.factory.finished,scrap:s.factory.defects,energy:s.factory.paidPower,orders:s.factory.orders.length,overflow:document.documentElement.scrollWidth>innerWidth+6}})()",returnByValue:true})).result?.value;
   assert.ok(made?.operator&&made.orders===0&&made.energy>0&&made.stock+made.scrap>0&&!made.overflow,"v24C actual material flow "+JSON.stringify(made));
+
+  // Final CEO quality: the existing Today priority must link to the real
+  // cash-funded, staffed factory. No transaction is created by navigation.
+  const ceoProofDir=path.resolve("reports/v25-mobile");fs.mkdirSync(ceoProofDir,{recursive:true});
+  const focus=(await acqSend("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA,reason=qa.ceoFactoryPriority();qa.resetEditShield();document.querySelector('.bottom-nav button[data-view=\"today\"]').click();qa.renderCEOFocus();const root=document.getElementById('ceo-priority-content');const action=root?.querySelector('button[data-ceo-nav=\"factory\"]');const priority=root?.querySelector('.ceo-focus-action')?.textContent||'';return{reason:reason?.title||'',go:reason?.go||'',action:!!action,priority:priority.slice(0,160),overflow:document.documentElement.scrollWidth>innerWidth+6,cash:qa.state().cash,stock:qa.state().factory.finished,rendered:!!root?.getClientRects().length}})()",returnByValue:true})).result?.value;
+  assert.ok(focus?.rendered&&!focus.overflow&&focus.stock>0&&focus.go==="factory"&&focus.action,
+   "Final CEO truthful strategic Today action "+JSON.stringify(focus));
+  const todayShot=await acqSend("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+  assert.ok(todayShot.data?.length>1500,"Final CEO Today screenshot required");
+  const todayName=path.join(ceoProofDir,"boss-v25-ceo-priority-"+width+"px.png");
+  fs.writeFileSync(todayName,Buffer.from(todayShot.data,"base64"));
+  console.log("PASS final CEO Chromium "+todayName+" "+JSON.stringify(focus));
+  const routed=(await acqSend("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA,cash=qa.state().cash,before=JSON.stringify(qa.state().factory);document.querySelector('#ceo-priority-content button[data-ceo-nav=\"factory\"]').click();const panel=document.getElementById('factory-panel');return{open:panel?.open,visible:!document.getElementById('view-growth').hidden,unchanged:cash===qa.state().cash&&before===JSON.stringify(qa.state().factory),overflow:document.documentElement.scrollWidth>innerWidth+6}})()",returnByValue:true})).result?.value;
+  assert.ok(routed?.open&&routed.visible&&routed.unchanged&&!routed.overflow,
+   "Final CEO navigation opens existing Growth factory without financial mutation "+JSON.stringify(routed));
+  await sleep(190);
+  const targetShot=await acqSend("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+  assert.ok(targetShot.data?.length>1500,"Final CEO routed Growth screenshot required");
+  const targetName=path.join(ceoProofDir,"boss-v25-factory-destination-"+width+"px.png");
+  fs.writeFileSync(targetName,Buffer.from(targetShot.data,"base64"));
+  console.log("PASS final CEO Chromium "+targetName+" "+JSON.stringify(routed));
+
   for(const mode of ["supply-chain","sale"]){
    const state=(await acqSend("Runtime.evaluate",{expression:"(()=>{const mode="+JSON.stringify(mode)+";document.querySelector('.bottom-nav button[data-view=\"growth\"]').click();document.getElementById('factory-panel').open=true;if(mode==='sale'){document.querySelector('#factory-growth button[data-factory=\"sell\"]:not([disabled])')?.click()}const el=document.getElementById('factory-growth');window.scrollTo({top:Math.max(0,scrollY+el.getBoundingClientRect().top-15),behavior:'instant'});return{visible:!!el.getClientRects().length,overflow:document.documentElement.scrollWidth>innerWidth+6,text:el.textContent?.slice(0,120),inventory:window.__bossQA.state().factory.finished}})()",returnByValue:true})).result?.value;
    assert.ok(state?.visible&&!state.overflow,"v24C Chromium "+mode+" "+JSON.stringify(state));

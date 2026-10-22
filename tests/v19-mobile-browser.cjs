@@ -53,6 +53,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
    result.checks.executiveRoomVisible=!!executiveRoom?.getClientRects().length;
    result.checks.executiveSeatCount=executiveRoom?.querySelectorAll("[data-boss-seat]").length===5;
    result.checks.legacyHiddenByDefault=!byId("today-ceo-tools")?.getClientRects().length;
+   executiveRoom?.querySelector('[data-boss-room="decisions"]')?.click();
    result.checks.c2ConversationVisible=!!byId("boss-conversation")?.getClientRects().length;
    result.checks.c2NoRawStack=![...document.querySelectorAll("#view-today>[data-mgmt-zone]")].some(el=>el.getClientRects().length);
    executiveRoom?.querySelector('[data-boss-room="leadership"]')?.click();
@@ -427,6 +428,9 @@ async function runBrowser(){
   assert.equal(outcome.checks.navPresent,true);
    assert.equal(outcome.checks.simplifiedToday,true,"CEO dashboard and simulation actions visible without opening dossiers");
    assert.equal(outcome.checks.disclosureOpens,true,"Advanced CEO offices must expand");
+   for(const field of ["c2ConversationVisible","c2NoRawStack","c2TopicsVisible","c2SingleAreaBeforeChoice","c2TargetedReveal"]){
+    assert.equal(outcome.checks[field],true,"v26C2 interactive player office failed: "+field);
+   }
    assert.equal(outcome.checks.simplifiedManagement,true,"Customer, rival and research archive should start collapsed");
    assert.equal(outcome.checks.noDuplicatedQuickActions,true,"Only one set of fast simulation actions");
   assert.equal(outcome.checks.navInViewport,true);

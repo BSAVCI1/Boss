@@ -117,6 +117,32 @@ document.addEventListener("DOMContentLoaded",async()=>{
   result.checks.dFactoryRealControls=byId("factory-panel")?.open===true;
   byId("boss-world-filter")?.querySelector('[data-world-filter="places"]')?.click();
   result.checks.dBackToActualPlaces=!!byId("boss-world-tiles")?.textContent.includes("First workspace");
+  // v26E: test story-first simple mode before explicitly returning to detailed
+  // mode for the historical management/edit/IndexedDB acceptance checks.
+  result.checks.eGrowthSimple=!!byId("boss-visual-empire")?.getClientRects().length&&
+    !byId("growth-markets-customers")?.getClientRects().length;
+  document.querySelector('.bottom-nav button[data-view="team"]').click();
+  result.checks.eTeamPortraits=!!byId("boss-team-story")?.getClientRects().length&&
+    byId("boss-team-faces")?.querySelectorAll("[data-boss-person]").length===3;
+  result.checks.eTeamHiddenInitially=!byId("campus-panel")?.getClientRects().length;
+  byId("boss-team-options")?.querySelector('[data-boss-team-focus="people"]')?.click();
+  result.checks.eTeamPeopleOnDemand=!!byId("boss-team-people-panel")?.getClientRects().length&&
+    !byId("boss-team-hiring-panel")?.getClientRects().length;
+  document.querySelector('.bottom-nav button[data-view="work"]').click();
+  result.checks.eWorkSimple=!!byId("boss-work-mission")?.getClientRects().length&&
+    !byId("work-records")?.getClientRects().length;
+  byId("boss-work-reports-toggle")?.click();
+  result.checks.eReportsOnDemand=!!byId("work-records")?.getClientRects().length&&
+    byId("boss-work-reports-toggle")?.getAttribute("aria-pressed")==="true";
+  byId("boss-settings-open")?.click();
+  result.checks.eSettingsModal=!!byId("boss-settings-panel")?.getClientRects().length&&
+    byId("boss-settings-panel")?.getAttribute("aria-modal")==="true";
+  result.checks.eSettingsSimpleSelected=byId("boss-presentation-choices")?.querySelector('[data-boss-presentation="simple"]')?.getAttribute("aria-pressed")==="true";
+  byId("boss-presentation-choices")?.querySelector('[data-boss-presentation="detailed"]')?.click();
+  result.checks.eDetailedRestores=document.body.classList.contains("boss-detailed-play")&&
+    !!byId("work-records")?.getClientRects().length;
+  byId("boss-settings-close")?.click();
+  result.checks.eSettingsCloses=!byId("boss-settings-panel")?.getClientRects().length;
   document.querySelector('.bottom-nav button[data-view="team"]').click();
   const org=byId("org-settings");if(org){org.open=true;org.dispatchEvent(new Event("toggle"));}
   result.checks.customBudgets=!!document.querySelector('[data-org-policy="training"]')&&!!document.querySelector('[data-org-policy="hiring"]');
@@ -459,6 +485,9 @@ async function runBrowser(){
    }
    for(const field of ["dVisualWorld","dVisualCategories","dFounderHonest","dBusinessLocked","dFactoryLocked","dFactoryRealControls","dBackToActualPlaces"]){
     assert.equal(outcome.checks[field],true,"v26D visual world failed: "+field);
+   }
+   for(const field of ["eGrowthSimple","eTeamPortraits","eTeamHiddenInitially","eTeamPeopleOnDemand","eWorkSimple","eReportsOnDemand","eSettingsModal","eSettingsSimpleSelected","eDetailedRestores","eSettingsCloses"]){
+    assert.equal(outcome.checks[field],true,"v26E simple/detailed real browser failure: "+field);
    }
    assert.equal(outcome.checks.simplifiedManagement,true,"Customer, rival and research archive should start collapsed");
    assert.equal(outcome.checks.noDuplicatedQuickActions,true,"Only one set of fast simulation actions");

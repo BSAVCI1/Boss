@@ -6461,7 +6461,7 @@ function renderFounderStory(){
  const show=S.ui.storyDetails===true;
  document.body.classList.toggle("boss-story-mode",!show);
  const button=$("boss-story-detail-toggle");button.textContent=show?"Hide management dashboard":"Management dashboard";
- button.setAttribute("aria-expanded",String(show));
+ if(typeof button.setAttribute==="function")button.setAttribute("aria-expanded",String(show));
  const name=(S.ui.ceoName||"Founder").trim().slice(0,22)||"Founder";
  const face=$("boss-ceo-face"),look=Number(S.ui.ceoLook)||0;const portrait=ceoPortrait(look,true);
  if(face.innerHTML!==portrait)face.innerHTML=portrait;

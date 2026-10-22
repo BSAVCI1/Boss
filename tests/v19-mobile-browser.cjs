@@ -117,6 +117,20 @@ document.addEventListener("DOMContentLoaded",async()=>{
   result.checks.dFactoryRealControls=byId("factory-panel")?.open===true;
   byId("boss-world-filter")?.querySelector('[data-world-filter="places"]')?.click();
   result.checks.dBackToActualPlaces=!!byId("boss-world-tiles")?.textContent.includes("First workspace");
+  result.checks.eVisualBeforeDetails=!!(byId("boss-visual-empire").compareDocumentPosition(byId("boss-growth-focus"))&Node.DOCUMENT_POSITION_FOLLOWING);
+  result.checks.eFactoryControlsFocused=!!byId("factory-panel")?.getClientRects().length&&!byId("growth-expand-businesses")?.getClientRects().length;
+  byId("boss-growth-choices").querySelector('[data-growth-focus="businesses"]')?.click();
+  result.checks.eBusinessFocusVisible=!!byId("growth-expand-businesses")?.getClientRects().length&&!byId("factory-panel")?.getClientRects().length;
+  byId("boss-growth-choices").querySelector('[data-growth-focus="world"]')?.click();
+  result.checks.eBackToWorld=!!byId("boss-visual-empire")?.getClientRects().length&&!byId("growth-expand-businesses")?.getClientRects().length;
+  byId("boss-settings-open")?.click();
+  result.checks.eSettingsOpen=!!byId("boss-settings-panel")?.getClientRects().length&&byId("boss-settings-panel")?.contains(byId("export-save"));
+  byId("boss-settings-advanced")?.click();
+  result.checks.eAdvancedWorks=!!byId("factory-panel")?.getClientRects().length&&!!byId("growth-expand-businesses")?.getClientRects().length;
+  byId("boss-settings-advanced")?.click();
+  result.checks.eSimpleRestored=!byId("factory-panel")?.getClientRects().length&&!byId("growth-expand-businesses")?.getClientRects().length;
+  byId("boss-settings-close")?.click();
+  result.checks.eSettingsClosed=!byId("boss-settings-panel")?.getClientRects().length;
   document.querySelector('.bottom-nav button[data-view="team"]').click();
   const org=byId("org-settings");if(org){org.open=true;org.dispatchEvent(new Event("toggle"));}
   result.checks.customBudgets=!!document.querySelector('[data-org-policy="training"]')&&!!document.querySelector('[data-org-policy="hiring"]');
@@ -456,6 +470,9 @@ async function runBrowser(){
    assert.equal(outcome.checks.disclosureOpens,true,"Advanced CEO offices must expand");
    for(const field of ["c2ConversationVisible","c2NoRawStack","c2TopicsVisible","c2SingleAreaBeforeChoice","c2TargetedReveal"]){
     assert.equal(outcome.checks[field],true,"v26C2 interactive player office failed: "+field);
+   }
+   for(const field of ["eVisualBeforeDetails","eFactoryControlsFocused","eBusinessFocusVisible","eBackToWorld","eSettingsOpen","eAdvancedWorks","eSimpleRestored","eSettingsClosed"]){
+    assert.equal(outcome.checks[field],true,"v26E visual-first and Settings mobile interaction failed: "+field);
    }
    for(const field of ["dVisualWorld","dVisualCategories","dFounderHonest","dBusinessLocked","dFactoryLocked","dFactoryRealControls","dBackToActualPlaces"]){
     assert.equal(outcome.checks[field],true,"v26D visual world failed: "+field);

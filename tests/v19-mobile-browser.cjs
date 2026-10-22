@@ -336,7 +336,7 @@ const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>
  fresh();
  // Historical v17-v25 browser fixtures intentionally inspect the full management UI.
  // v26A starts real new players in story view; reveal management here after each fixture reset.
- S.ui.founderIntro="done";S.ui.storyDetails=true;
+ S.ui.founderIntro="done";S.ui.storyDetails=true;S.ui.managementRoom="all";
  if(stage!=="founder"){
   while(S.team.length<(stage==="group"?11:8)){
    const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);

@@ -3006,6 +3006,7 @@ $("ceo-priority-card").addEventListener("click",e=>{
  const target=button.dataset.ceoNav;
  if(target==="property"){$("property-options").open=true;navigate("growth");requestAnimationFrame(()=>$("property-panel").scrollIntoView({block:"start"}));}
  else if(target==="launch"){navigate("growth");$("business-line-create").open=true;renderLaunchGuide();requestAnimationFrame(()=>$("company-unlock-guide").scrollIntoView({block:"start"}));}
+ else if(target==="factory"){navigate("growth");$("factory-panel").open=true;factoryRender();requestAnimationFrame(()=>$("factory-panel").scrollIntoView({block:"start"}));}
  else if(target==="strategy"){$("today-ceo-tools").open=true;requestAnimationFrame(()=>$("ceo-priority").scrollIntoView({block:"center"}));}
  else if(target==="commercial"){navigate("growth");$("world-panel").open=true;worldRender();requestAnimationFrame(()=>$("world-strategy").scrollIntoView({block:"center"}));}
  else if(target==="sector"){navigate("growth");$("sector-explore").open=true;requestAnimationFrame(()=>$("sector-focus-name").scrollIntoView({block:"center"}));}
@@ -6017,6 +6018,39 @@ $("acquisition-growth").addEventListener("click",event=>{
  const result=b.dataset.acquisition==="diligence"?acquisitionDiligence(b.dataset.target):b.dataset.acquisition==="buy"?acquisitionBuy(b.dataset.target):false;
  if(result&&typeof result.then==="function")result.catch(()=>{});
 });
+
+/* Final CEO quality gate: the existing CEO Today priority must tell the truth about
+   actual saved factory work; this is advice only and never commits a transaction. */
+function ceoFactoryPriority(){
+ const f=S.factory;if(!f?.installed||leadershipMaturity().stage!=="group")return null;
+ if(!factorySite())return{title:"Restore access to the owned production site",
+  why:"The factory machine is installed, but its saved corporate building is not currently active. No goods can be produced until the existing premises decision is resolved.",
+  go:"property",label:"Review the real production site →"};
+ const q=factoryQuote();
+ if(q.units>0&&!q.already)return{title:"Decide whether to offer finished factory goods",
+  why:q.units+" actual completed kits · "+biCurrency(q.price)+" per kit · "+
+   Math.round(q.threshold*100)+"% modeled acceptance probability. A buyer may decline; revenue only exists after an accepted sale.",
+  go:"factory",label:"Review the wholesale offer →"};
+ const worker=factoryWorker();
+ if(!worker){
+  const eligible=factoryCandidates();
+  return{title:eligible.length?"Assign a real factory operator":"Free or develop a production operator",
+   why:eligible.length?eligible.length+" available product/operations employee(s). Assignment uses existing payroll; there is no free factory workforce.":
+    "No idle, qualified corporate employee can operate the line. The factory cannot make output without a real eligible worker.",
+   go:eligible.length?"factory":"team",label:eligible.length?"Review existing employees →":"Review employee capacity →"};
+ }
+ const pending=f.orders.reduce((n,x)=>n+x.qty,0);
+ if(f.raw<FACTORY_LINE.componentsPerKit&&!pending){
+  const price=FACTORY_LINE.orderSize*FACTORY_LINE.componentPrice;
+  return{title:"Review factory material shortage",
+   why:"Only "+f.raw+" paid components in stock and no supplier delivery pending. "+
+   FACTORY_LINE.orderSize+" more components cost "+biCurrency(price)+
+   " and take "+FACTORY_LINE.leadDays+" game days. Capital reserves remain protected.",
+   go:"factory",label:"Review a cash-funded materials order →"};
+ }
+ return null;
+}
+
 function renderCEOFocus(){
  const root=$("ceo-priority-content");if(!root||editableInteractionPending())return;
  const inventory=ceoDecisionInventory(),direction=companyDirection(),office=ceoPremisesOpportunity(),warnings=propertyWarnings(),review=ceoStrategyReview(),maturity=leadershipMaturity();
@@ -6031,7 +6065,7 @@ function renderCEOFocus(){
   once:x.cost||0,recurring:x.type==="raise"?.25:x.type==="hire"?1.5*S.mod.cost:x.type==="submanager"?.5*S.mod.cost:0,location:"proposals"}))];
  const managed=managementOutcomeCards();
  if(!managed.length)managed.push("No completed delegated management action recorded in the last 30 game days. Existing managers continue within their actual approved authority.");
- const first=requests[0];
+ const first=requests[0],factoryPriority=ceoFactoryPriority();
  const severity=risky?"Cash covers fewer than 7 days of payroll + active premises; review collections and spending.":
   office?"Workplace crowding: "+office.people+" people for "+office.capacity+" corporate seats.":
   warnings[0]||"No immediate premises or payroll emergency identified.";
@@ -6049,6 +6083,7 @@ function renderCEOFocus(){
    {title:"Review departmental performance",why:maturity.reviewed.length+" of "+maturity.headed.length+" manager-led departments reviewed.",go:"team",label:"Review managers →"}:
    maturity.stage==="leader"&&maturity.headed.length>0?
    {title:"Review manager outcomes and growth",why:maturity.headed.map(k=>DEPARTMENTS[k].name+": "+S.org.departments[k].stats.delivered+" deliveries, "+S.org.departments[k].reviews.length+" reviews").join("; ")+". CEO approval requests: "+inventory.approvals+".",go:"team",label:"Review department leaders →"}:
+   factoryPriority?factoryPriority:
    maturity.stage==="group"&&maturity.operating.length>=2?
    {title:"Review business-unit results and executive accountability",why:maturity.operating.map(u=>(SERVICE_LINES[u.key]?.name||u.key)+": "+u.delivered+" delivered / "+u.reviews.length+" GM reviews").join("; ")+". "+maturity.activeExecutives.length+" valid executive mandates.",go:"growth",label:"Review portfolio →"}:
    direction.key&&companyLaunchReadiness(direction.key).ready?

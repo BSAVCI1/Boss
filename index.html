@@ -483,6 +483,40 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 @media(max-width:390px){.boss-conversation{padding:9px;gap:8px}.boss-conversation-face{width:58px;min-width:58px;height:70px}.boss-conversation-words{font-size:12px}.boss-topic-actions button{padding:7px;min-height:63px}}
 @media(prefers-reduced-motion:reduce){.boss-management #view-today>[data-mgmt-show]{animation:none!important}}
 
+
+/* v26D: illustrated live business world. All artwork is bundled as SVG/CSS. */
+.boss-visual-empire{margin:0 0 16px;border-radius:19px;overflow:hidden;background:linear-gradient(165deg,#153b59,#236979 64%,#277f72);color:#f5faf9;box-shadow:0 7px 20px #0a34502b}
+.boss-visual-head{padding:16px 15px 4px}
+.boss-visual-kicker{font-size:10px;text-transform:uppercase;letter-spacing:1.9px;color:#c2ebed;font-weight:900}
+.boss-visual-head h2{font-size:25px;margin:3px 0 5px;color:#fff}
+.boss-visual-head p{font-size:12px;color:#def5f5;margin:2px 0 9px}
+.boss-visual-facts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+.boss-visual-facts span{font-size:10px;font-weight:800;background:#ffffff28;border:1px solid #ffffff48;border-radius:20px;padding:5px 9px}
+.boss-visual-filter{display:flex;gap:5px;padding:5px 12px 11px;overflow-x:auto;scrollbar-width:thin}
+.boss-visual-filter button{flex:1 0 auto;min-height:39px;white-space:nowrap;color:#d2ecee;border:1px solid #80b5bb88;border-radius:10px;background:#fff2;padding:7px 12px;font-weight:800;font-size:12px}
+.boss-visual-filter button[aria-pressed=true]{background:#fff5db;color:#2d4b5a;border-color:#fce4ac}
+.boss-visual-world{background:linear-gradient(180deg,#a8e3f6 0%,#d1f4ed 46%,#91d2a0 46%,#78b990 100%);border-radius:16px 16px 0 0;position:relative;overflow:hidden;margin:0 11px;min-height:253px;padding:13px 8px}
+.boss-visual-world::before{content:"";position:absolute;right:16px;top:13px;width:34px;height:34px;border-radius:50%;background:#ffdf86;box-shadow:0 0 0 9px #ffffdd60}
+.boss-visual-world::after{content:"";position:absolute;bottom:0;left:-15px;right:-15px;height:24px;background:repeating-linear-gradient(125deg,#a1c69a 0 24px,#a4cc9d 24px 52px);opacity:.7;pointer-events:none}
+.boss-world-row{position:relative;z-index:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-items:stretch}
+.boss-world-tile{min-width:0;min-height:153px;border-radius:13px;padding:9px 5px 8px;background:linear-gradient(#ffffffce,#eff8f6ef);border:2px solid #e6f8f4;text-align:center;color:#22465a;box-shadow:0 4px 0 #3a937b44;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:3px}
+.boss-world-tile[aria-pressed=true]{border-color:#e7ac50;box-shadow:0 0 0 2px #ffdb8b90,0 5px 0 #3a937b44;background:#fff9e8}
+.boss-world-tile svg{height:82px;width:100%;max-width:150px;display:block;flex:0 0 82px}
+.boss-world-tile strong{font-size:12px;line-height:1.2;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.boss-world-tile small{display:block;font-size:10px;color:#547183;line-height:1.2}
+.boss-world-empty{font-size:13px;padding:22px 15px;background:#fffef6ee;color:#304f60;border-radius:15px;grid-column:1/-1;text-align:center;align-self:center}
+.boss-world-empty strong{display:block;font-size:16px;margin-bottom:5px}
+.boss-world-detail{margin:10px 11px 12px;padding:13px;border:1px solid #ffffff66;border-radius:13px;background:#f3f9f1;color:#254556;display:flex;align-items:center;justify-content:space-between;gap:9px}
+.boss-world-detail div{min-width:0}
+.boss-world-detail b{font-size:14px;line-height:1.2;display:block}
+.boss-world-detail p{color:#425e69;font-size:11px;margin:5px 0 0;line-height:1.35}
+.boss-world-detail button{flex:0 0 auto;background:#2b7291;border:1px solid #195477;color:#fff;font-weight:850;font-size:11px;border-radius:10px;padding:9px 10px;min-height:42px;max-width:110px}
+.boss-world-bottom{display:block;padding:0 14px 12px;color:#c7e9e8;font-size:10px;line-height:1.35}
+.boss-world-welcome{font-size:10px;letter-spacing:.7px;font-weight:850;color:#28647a;background:#fffef6d9;border-radius:15px;padding:5px 9px;width:max-content;max-width:90%;margin:0 auto 9px;position:relative;z-index:1}
+@media(min-width:520px){.boss-world-row{grid-template-columns:repeat(3,minmax(0,1fr))}.boss-visual-world{min-height:230px}}
+@media(max-width:390px){.boss-visual-head{padding:12px 10px 3px}.boss-visual-head h2{font-size:22px}.boss-visual-world{padding:10px 5px;margin:0 7px}.boss-world-tile{padding:6px 3px;min-height:140px}.boss-world-tile svg{height:72px;flex-basis:72px}.boss-world-detail{margin:9px 7px;padding:10px}.boss-world-detail button{max-width:94px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){.boss-visual-empire *{animation:none!important;transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -621,7 +655,12 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </details>
 </section>
 <section id="view-growth" class="app-view" data-page="growth" aria-label="Strategy and capabilities" hidden>
-<div class="view-intro"><h2>Growth</h2><p>Businesses, markets and investments</p></div><details class="card" id="factory-panel"><summary>Factory & supply chain · real production and wholesale sales</summary><p class="small">A separate physical production line: buy equipment, order components, allocate a real worker, make quality-tested goods and sell them only to willing buyers. Cash, physical stock and operating profit are not the same.</p><div id="factory-growth"></div></details><details class="card" id="empire-panel"><summary>Our business empire · only real owned assets</summary><p class="small">A schematic overview, not a geographic map. Properties, staffed divisions, acquired rivals and financial investments are different kinds of assets, not separate banks or free income.</p><div id="empire-world"></div></details><details class="card"><summary>Product portfolio · actual commercial performance</summary><div id="v23-growth"></div></details><details class="card" id="capital-panel"><summary>Investment portfolio · capital & risks</summary><div id="capital-growth"></div></details><details class="card" id="acquisition-panel"><summary>Acquisitions · diligence, integration &amp; competition</summary><div id="acquisition-growth"></div></details><section class="card leadership-context" id="leadership-context-growth" aria-label="Growth leadership focus"></section>
+<div class="view-intro"><h2>Growth</h2><p>Businesses, markets and investments</p></div><section class="boss-visual-empire" id="boss-visual-empire" aria-label="My living business world">
+ <div class="boss-visual-head"><span class="boss-visual-kicker">YOUR WORLD · BUILT THROUGH REAL DECISIONS</span><h2>Watch your business grow</h2><p>Your people, properties and businesses take shape as you earn them.</p><div class="boss-visual-facts" id="boss-world-facts"></div></div>
+ <div class="boss-visual-filter" id="boss-world-filter" aria-label="Explore the company world"><button type="button" data-world-filter="places" aria-pressed="true">🏘️ Places</button><button type="button" data-world-filter="businesses">🏬 Businesses</button><button type="button" data-world-filter="factory">🏭 Factory</button></div>
+ <div class="boss-visual-world" id="boss-world-visual"><div class="boss-world-welcome">Every achievement changes your world</div><div class="boss-world-row" id="boss-world-tiles"></div></div>
+ <div id="boss-world-detail" class="boss-world-detail" role="status"></div><span class="boss-world-bottom">Visuals follow your saved game. A shared workspace is not owned property; a launched service is not a new building. No imaginary staff, machines or income.</span>
+ </section><details class="card" id="factory-panel"><summary>Factory & supply chain · real production and wholesale sales</summary><p class="small">A separate physical production line: buy equipment, order components, allocate a real worker, make quality-tested goods and sell them only to willing buyers. Cash, physical stock and operating profit are not the same.</p><div id="factory-growth"></div></details><details class="card" id="empire-panel"><summary>Our business empire · only real owned assets</summary><p class="small">A schematic overview, not a geographic map. Properties, staffed divisions, acquired rivals and financial investments are different kinds of assets, not separate banks or free income.</p><div id="empire-world"></div></details><details class="card"><summary>Product portfolio · actual commercial performance</summary><div id="v23-growth"></div></details><details class="card" id="capital-panel"><summary>Investment portfolio · capital & risks</summary><div id="capital-growth"></div></details><details class="card" id="acquisition-panel"><summary>Acquisitions · diligence, integration &amp; competition</summary><div id="acquisition-growth"></div></details><section class="card leadership-context" id="leadership-context-growth" aria-label="Growth leadership focus"></section>
 <section class="boss-primary-section" id="growth-expand-businesses"><h2>1. Expand businesses</h2><p class="small">Owned service lines, operating units, GMs and next eligible expansion; real prerequisites and CEO approval apply.</p><p class="small boss-summary" id="growth-business-status"></p><section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Purchased service lines start as shared service portfolios. You can now organize a purchased line into an operating unit below, appoint a General Manager and allocate dedicated employees. These units are internal operating divisions, not independent subsidiaries or separate bank accounts. Company cash and financial records remain consolidated; unit results only track future work. Shared department budgets and advanced unit delegations evolve in later releases. Revenue is never counted twice.</p><div id="company-unlock-guide" class="filter-note"></div><p id="company-launch-status" class="small" role="status"></p><div id="business-lines"></div><div id="business-units" aria-label="Operating unit management"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">New launches require proven delivery, leadership, qualified staffing and financial runway. Previously purchased lines remain yours. No future revenue is guaranteed.</p></details></section>
 </section>
 <section class="boss-primary-section" id="growth-markets-customers"><h2>2. Markets and customers</h2><p class="small">Target sector and commercial positioning affect new customers; CEO direction and each GM strategy are separate.</p><section class="card"><div class="lead"><b>Current market focus</b></div><p class="small boss-summary" id="growth-focus-summary"></p></section><section aria-labelledby="market-title"><h2 id="market-title">Target customer sector</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><details class="aux-details" id="sector-explore"><summary>Explore customer markets</summary><div id="sector-options" class="sector-buttons"></div></details><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
@@ -6326,7 +6365,7 @@ for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)day
 function refresh(){
 if(editableInteractionPending())return;
 v23Render();capitalRender();acquisitionRender();empireRender();peopleStoriesRender();factoryRender();
-campusRender();renderLeadershipContexts();renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderFounderStory();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
+campusRender();renderLeadershipContexts();renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderFounderStory();renderVisualWorld();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);
@@ -6627,6 +6666,121 @@ $("boss-executive-room").addEventListener("click",e=>{
  if(!["decisions","leadership","business","records","all"].includes(room))return;
  if(S.ui.managementRoom!==room){S.ui.managementTopic=null;if(!role)S.ui.managementSpeaker=null;}
  S.ui.managementRoom=room;save();renderCEOOffice();
+});
+
+
+/* v26D: visually project canonical owned premises, services, acquired assets,
+   investments and factory stock. Pure read; never creates people or resources. */
+function visualWorldBuilding(kind,variant){
+ const colors={shared:["#f7eee0","#7b99ac","#b2d8d6"],studio:["#f6e6c9","#6d8ba4","#9dced9"],
+ office:["#e4f2f8","#5d91a9","#81c5db"],building:["#d4e9fa","#457c9e","#75bacf"],hq:["#e7e7fa","#4f6caa","#9bcddf"],
+ satellite:["#f2e6cb","#699c88","#8bcac1"],marketing:["#ffe7e9","#b75c87","#ffb5bd"],product:["#f5e4fd","#8760aa","#b2a3e1"],
+ operations:["#e4f3e8","#528879","#8fd0b3"],technology:["#e5e9ff","#5578ba","#a6c1ed"],
+ acquired:["#fbebda","#996752","#e5ab81"],factory:["#deecf0","#587d8e","#b4d5d9"],
+ toolkit:["#f0e5c6","#8c7857","#c8ae77"]};
+ const c=colors[kind]||colors.shared;const tall=kind==="hq",industrial=kind==="factory",
+ building=kind==="building"||tall,store=["marketing","product","operations","technology","acquired"].includes(kind);
+ const roof=industrial?'<path d="M18 52 L38 41 L57 50 L76 35 L96 45 L125 31 L143 42 L143 55 L18 67Z" fill="'+c[1]+'" stroke="#466678" stroke-width="2"/>':
+ '<path d="M12 45 L77 18 L149 45 L85 68Z" fill="'+c[1]+'" stroke="#45677a" stroke-width="2"/>'+
+ (tall?'<path d="M77 4 L77 18" stroke="#42698d" stroke-width="3"/><circle cx="77" cy="4" r="4" fill="#f7d17c"/>':"");
+ const wins=Array.from({length:tall?12:building?9:6},(_,i)=>{
+ const cols=tall?4:3,x=31+(i%cols)*27,y=54+Math.floor(i/cols)*(tall?15:20);
+ return '<rect x="'+x+'" y="'+y+'" width="17" height="12" rx="2" fill="'+c[2]+'" stroke="#ffffff" stroke-width="2"/>';
+ }).join("");
+ const machine=industrial?'<rect x="20" y="87" width="116" height="17" rx="4" fill="#6b8594"/>'+
+ '<g fill="#f2d69c"><rect x="38" y="78" width="18" height="16" rx="2"/><rect x="66" y="74" width="18" height="20" rx="2"/><rect x="98" y="82" width="16" height="12" rx="2"/></g>'+
+ '<circle cx="44" cy="108" r="5" fill="#455e74"/><circle cx="109" cy="108" r="5" fill="#455e74"/>':
+ store?'<path d="M24 49 L135 49 L129 60 L29 60Z" fill="#fff5e5" stroke="'+c[1]+'" stroke-width="2"/>'+
+ '<path d="M43 49v11m23-11v11m23-11v11m23-11v11" stroke="'+c[1]+'" stroke-width="5" opacity=".6"/>':"";
+ const extra=industrial?'<rect x="119" y="20" width="17" height="30" fill="#668da1"/><ellipse cx="129" cy="19" rx="12" ry="5" fill="#a6c5d0"/>':
+ kind==="toolkit"?'<rect x="45" y="48" width="70" height="45" rx="4" fill="#3d687d"/><rect x="52" y="55" width="56" height="29" fill="#9bd6df"/><path d="M39 95h82" stroke="#587c8f" stroke-width="7" stroke-linecap="round"/>':"";
+ const base='<path d="M12 45 L77 66 L149 45 L149 104 L77 123 L12 104Z" fill="'+c[0]+'" stroke="#5f8495" stroke-width="2"/>'+
+ '<path d="M77 66 L77 123 L149 104 L149 45" fill="none" stroke="#b2c4c3" stroke-width="1"/>';
+ return '<svg role="img" aria-label="'+(industrial?"Factory with equipment":store?"Business service illustration":"Office building illustration")+'" viewBox="0 0 160 130" xmlns="http://www.w3.org/2000/svg">'+
+ '<ellipse cx="78" cy="120" rx="70" ry="9" fill="#43786c" opacity=".2"/>'+base+roof+(!industrial&&kind!=="toolkit"?wins:"")+
+ (kind==="toolkit"?extra:machine+(industrial?extra:""))+
+ '<rect x="64" y="91" width="22" height="31" rx="3" fill="'+c[1]+'" stroke="#f5fdff" stroke-width="2"/>'+
+ '</svg>';
+}
+function getVisualWorldState(){
+ const places=[],businesses=[],factories=[],sites=(S.exec?.property?.sites||[]).filter(x=>x.status==="active");
+ const corporate=sites.filter(x=>!x.unitKey),people=S.team||[],lines=(S.exec?.lines||[]).filter(x=>SERVICE_LINES[x.key]);
+ const mk=(id,kind,title,subtitle,note,action,target,variant)=>({id,kind,title,subtitle,note,action,target,variant});
+ if(!corporate.length)places.push(mk("shared","shared","First workspace",
+  people.length+" colleagues · distributed","Illustrated founder workspace. No office has been leased or purchased.","Explore offices","property-panel",0));
+ for(const x of sites){
+ const label=PROPERTY_TYPES[x.type]?.name||"Company premises",unit=SERVICE_LINES[x.unitKey]?.name||"Corporate";
+ places.push(mk("site-"+x.id,x.type,label,(x.unitKey?unit:"Corporate")+" · "+PROPERTY_TYPES[x.type]?.capacity+" seats",
+ "Real active "+(PROPERTY_TYPES[x.type]?.kind==="owned"?"owned property":"leased site")+". "+(x.unitKey?unit:"Corporate company")+" uses this workplace.",
+ "Manage property","property-panel",x.id));
+ }
+ for(const x of lines){
+ const unit=S.exec.units.find(u=>u.key===x.key),staff=unit?.staffIds?.length||0;
+ businesses.push(mk("line-"+x.key,x.key,SERVICE_LINES[x.key].name,
+ (unit?"Operating division · "+staff+" assigned":"Service portfolio · shared team"),
+ (x.delivered||0)+" delivered contracts attributed to this line. "+(unit?"Assigned team and GM are managed in Growth.":"No independent building or guaranteed income."),
+ "Manage business","growth-expand-businesses",x.key));
+ }
+ for(const a of S.acquisitions?.owned||[])businesses.push(mk("acq-"+a.id,"acquired",a.name,
+  "Acquired competitor · Day "+a.day,
+  "This acquired asset remains part of the group. Its integration and actual future results are tracked separately. No free employees or revenue.",
+  "Review acquisition","acquisition-panel",a.id));
+ const invested=S.economy?.invested||{};
+ for(const [key,label] of [["operations","Delivery toolkit"],["commercial","Sales toolkit"]])
+ if(invested[key])businesses.push(mk("tool-"+key,"toolkit",label,"Funded business equipment",
+ "An actual paid capability. Its gameplay effect is calculated by the existing business economics.",
+ "View toolkit","growth-investments-property",key));
+ const installed=!!S.factory?.installed,site=factorySite(),worker=factoryWorker();
+ if(installed)factories.push(mk("production","factory","Your production line",
+  "Materials "+S.factory.raw+" · Finished "+S.factory.finished,
+  "Installed machine "+(site?"at an active owned office":"with no currently active site")+". "+
+  (worker?"Operator: "+worker.n+".":"No eligible active operator.")+
+  " "+(S.factory.orders||[]).reduce((n,x)=>n+x.qty,0)+" materials ordered. "+
+  S.factory.totalBuilt+" kits produced; "+S.factory.totalSold+" sold.",
+  "Open factory","factory-panel",S.factory.siteId));
+ return {places,businesses,factories,sites,lines,people,installed};
+}
+function renderVisualWorld(){
+ const node=$("boss-visual-empire");if(!node||!S?.ui)return;
+ const w=getVisualWorldState(),allowed=["places","businesses","factory"],category=allowed.includes(S.ui.visualWorldFilter)?S.ui.visualWorldFilter:"places";
+ const all=category==="places"?w.places:category==="businesses"?w.businesses:w.factories;
+ const valid=all.find(a=>a.id===S.ui.visualWorldSelected);
+ const chosen=valid||all[0]||null;
+ const facts='<span>'+w.people.length+' real people</span><span>'+w.sites.length+' active sites</span><span>'+w.lines.length+' service lines</span>'+
+ (w.installed?'<span>Production owned</span>':"");
+ const heading=$("boss-world-facts");if(heading.innerHTML!==facts)heading.innerHTML=facts;
+ const tabs=$("boss-world-filter");tabs.querySelectorAll?.("[data-world-filter]").forEach(b=>b.setAttribute?.("aria-pressed",String(b.dataset.worldFilter===category)));
+ const graphics=all.length?all.slice(0,8).map(a=>'<button type="button" class="boss-world-tile" data-world-asset="'+esc(a.id)+'" aria-pressed="'+(chosen===a)+'">'+
+ visualWorldBuilding(a.kind,a.variant)+'<strong>'+esc(a.title)+'</strong><small>'+esc(a.subtitle)+'</small></button>').join(""):"";
+ const empty=category==="businesses"?'<div class="boss-world-empty"><strong>Every empire starts somewhere.</strong>Win customers and launch your first real service line. Your businesses will appear here when you earn them.</div>':
+ category==="factory"?'<div class="boss-world-empty"><strong>Your future factory.</strong>No physical machine is installed yet. Build leadership, buy an eligible company site and fund your first production line.</div>':
+ '<div class="boss-world-empty"><strong>Your first workspace.</strong>Start with people and customer work.</div>';
+ const tile=$("boss-world-tiles");const view=graphics||empty;if(tile.innerHTML!==view)tile.innerHTML=view;
+ const detail=chosen?'<div><b>'+esc(chosen.title)+'</b><p>'+esc(chosen.note)+'</p></div>'+
+ '<button type="button" data-world-go="'+esc(chosen.target)+'">'+esc(chosen.action)+' →</button>':
+ '<div><b>Not unlocked yet</b><p>We only show assets that are truly in your saved company.</p></div>'+
+ '<button type="button" data-world-go="'+(category==="factory"?"factory-panel":"growth-expand-businesses")+'">Explore how →</button>';
+ const root=$("boss-world-detail");if(root.innerHTML!==detail)root.innerHTML=detail;
+}
+$("boss-visual-empire").addEventListener("click",e=>{
+ const b=e.target.closest?.("button");if(!b||!S?.ui)return;
+ if(b.dataset.worldFilter){
+  if(!["places","businesses","factory"].includes(b.dataset.worldFilter))return;
+  S.ui.visualWorldFilter=b.dataset.worldFilter;S.ui.visualWorldSelected=null;save();renderVisualWorld();return;
+ }
+ if(b.dataset.worldAsset){
+  const w=getVisualWorldState(),cat=S.ui.visualWorldFilter||"places";
+  const list=cat==="places"?w.places:cat==="businesses"?w.businesses:w.factories;
+  if(!list.some(x=>x.id===b.dataset.worldAsset))return;
+  S.ui.visualWorldSelected=b.dataset.worldAsset;save();renderVisualWorld();return;
+ }
+ if(b.dataset.worldGo){
+  const allowed=["property-panel","growth-expand-businesses","factory-panel","acquisition-panel","growth-investments-property"];
+  if(!allowed.includes(b.dataset.worldGo))return;
+  const target=$(b.dataset.worldGo);if(!target)return;
+  if(target.tagName==="DETAILS")target.open=true;
+  target.scrollIntoView?.({behavior:"smooth",block:"start"});
+ }
 });
 
 function renderFounderStory(){

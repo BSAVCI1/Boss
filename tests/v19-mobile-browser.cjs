@@ -844,6 +844,12 @@ async function runBrowser(){
       await sleep(150);
       await send("Runtime.evaluate",{expression:"document.querySelector('.bottom-nav button[data-view="+tab+"]').click()",returnByValue:true});
      }
+     // v26E hides deep Growth tools by default; historical screenshots must
+     // deliberately select the real Full Management Details control.
+     if(stage==="after"&&tab==="growth"){
+      const expanded=await send("Runtime.evaluate",{expression:"(()=>{const b=document.getElementById('boss-growth-full');if(!b)return false;if(b.getAttribute('aria-pressed')!=='true')b.click();return b.getAttribute('aria-pressed')==='true'&&document.getElementById('growth-expand-businesses')?.getClientRects().length>0})()",returnByValue:true});
+      assert.equal(expanded.result?.value,true,"v26E historical Growth controls must remain accessible");
+     }
      const probe=await send("Runtime.evaluate",{expression:"(()=>{const el=document.querySelector("+JSON.stringify(selector)+");if(!el)return null;document.documentElement.style.scrollBehavior='auto';window.scrollTo({top:Math.max(0,window.scrollY+el.getBoundingClientRect().top-12),behavior:'instant'});const b=el.getBoundingClientRect();return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,visible:!!el.getClientRects().length,top:b.top,text:el.innerText.slice(0,180),uniqueIds:document.querySelectorAll('[id]').length===new Set([...document.querySelectorAll('[id]')].map(x=>x.id)).size,headings:[...document.querySelectorAll('#view-growth .boss-primary-section>h2')].map(x=>x.textContent),hierarchy:document.getElementById('org-explorer')?.innerText||''}})()",returnByValue:true});
      const info=probe.result?.value;
      assert.ok(info&&info.visible&&info.width===width&&!info.overflow&&info.uniqueIds,"v22.5A2 mobile layout: "+JSON.stringify(info));

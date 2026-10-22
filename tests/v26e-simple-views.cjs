@@ -56,7 +56,7 @@ check("Full detail preference exposes all original zones and persists in old sav
  assert.equal(el("boss-growth-full").attributes["aria-pressed"],"true");
  const snapshot=JSON.stringify(s),restored=G.load(snapshot);assert.ok(restored);
  assert.equal(restored.ui.advancedViews,true);
- assert.equal(restored.ui.growthFocus,"investments");
+ assert.equal(restored.ui.growthFocus,"businesses");
 });
 check("Legacy saves without focus settings remain simple without data migrations",()=>{
  G.fresh();const s=G.state();s.day=125;delete s.ui.advancedViews;delete s.ui.growthFocus;

@@ -1,0 +1,43 @@
+name: Boss v24C stacked development acceptance
+on:
+  push:
+    branches: [feature/v24c-factory-supply-chain]
+  workflow_dispatch:
+jobs:
+  factory_fast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify factory and inherited v24B engine on exact SHA
+        run: |
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          node tests/v24b-empire-stories.cjs
+          node tests/v24c-factory.cjs
+  factory_chromium:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Restore genuine immutable legacy comparison baseline
+        run: |
+          set -euo pipefail
+          BASELINE=c7ea477261bf76cd5b700e2878d7dfed949ad4b2
+          mkdir -p reports
+          git fetch --no-tags --depth=1 origin "$BASELINE"
+          test "$(git rev-parse FETCH_HEAD)" = "$BASELINE"
+          git show "$BASELINE:index.html" > reports/v22-5a2-before.html
+          test -s reports/v22-5a2-before.html
+      - name: Run real 390/414 Chromium v24C and inherited mobile acceptance
+        run: node --experimental-websocket tests/v19-mobile-browser.cjs
+      - name: Retain factual v24C phone screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v24c-stacked-development-screenshots
+          path: reports/v24c-mobile/*.png
+          if-no-files-found: warn

@@ -297,7 +297,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
 });
 `;
 const file=path.join(fs.mkdtempSync(path.join(os.tmpdir(),"boss-mobile-")),"index.html");
-const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,peopleStoryDay,peopleStoriesRender,empireRender,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,acquisitionDiligence,acquisitionBuy,acquisitionRender,setupLeadership:stage=>{
+const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>S,peopleStoryDay,peopleStoriesRender,empireRender,factoryDay,factoryRender,factoryQuote,tick:()=>{const before=paused;paused=false;try{tick()}finally{paused=before;clearTimeout(clock)}},renderCEOFocus,renderCEODecisions,renderLeadershipContexts,leadershipMaturity,acquisitionDiligence,acquisitionBuy,acquisitionRender,setupLeadership:stage=>{
  fresh();
  if(stage!=="founder"){
   while(S.team.length<(stage==="group"?11:8)){
@@ -940,6 +940,34 @@ async function runBrowser(){
    const fileName=path.join(storiesDir,"boss-v24b-"+mode+"-"+width+"px.png");
    fs.writeFileSync(fileName,Buffer.from(shot.data,"base64"));
    console.log("PASS v24B Chromium "+fileName+" "+JSON.stringify(v));
+  }
+
+
+  // v24C: actual owned site, operator, paid supplier, delivered raw inventory
+  // and a real attempted wholesale sale on isolated HTTP-origin Chromium.
+  const factoryDir=path.resolve("reports/v24c-mobile");fs.mkdirSync(factoryDir,{recursive:true});
+  const factoryReady=(await acqSend("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.resetEditShield();qa.setupLeadership('group');qa.pause();const s=qa.state();s.cash+=35000;s.bi.openingCash+=35000;s.exec.property.sites.push({id:977,type:'building',status:'active',location:'park',dayCost:1.2,boost:1.06,since:s.day,investment:1800,book:1800,lastDepreciation:s.day,arrears:0,unitKey:null});s.nextEv=999;qa.grow(s.team.length);document.querySelector('.bottom-nav button[data-view=\"growth\"]').click();document.getElementById('factory-panel').open=true;return{stage:s.day,group:document.getElementById('factory-growth')?.textContent?.includes('owned machine'),available:!!document.querySelector('#factory-growth button[data-factory=\"buy\"]:not([disabled])'),width:innerWidth}})()",returnByValue:true})).result?.value;
+  assert.ok(factoryReady?.group&&factoryReady.available&&factoryReady.width===width,"v24C real group factory eligibility "+JSON.stringify(factoryReady));
+  const bought=(await acqSend("Runtime.evaluate",{expression:"(()=>{const button=document.querySelector('#factory-growth button[data-factory=\"buy\"]');button.click();return !!button})()",returnByValue:true})).result?.value;
+  assert.ok(bought,"v24C real CEO machinery click");
+  await sleep(380);
+  const ordered=(await acqSend("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.resetEditShield();qa.grow(qa.state().team.length);document.getElementById('factory-panel').open=true;const btn=document.querySelector('#factory-growth button[data-factory=\"order\"]');const available=!!btn&&!btn.disabled;if(available)btn.click();return{available,installed:qa.state().factory.installed}})()",returnByValue:true})).result?.value;
+  assert.ok(ordered?.installed&&ordered?.available,"v24C factory physical material purchase "+JSON.stringify(ordered));
+  await sleep(380);
+  const assigned=(await acqSend("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.resetEditShield();qa.grow(qa.state().team.length);document.getElementById('factory-panel').open=true;const btn=document.querySelector('#factory-growth button[data-factory=\"assign\"]');const available=!!btn&&!btn.disabled;if(available)btn.click();return{available,orders:qa.state().factory.orders.length}})()",returnByValue:true})).result?.value;
+  assert.ok(assigned?.available&&assigned.orders===1,"v24C assign real available employee "+JSON.stringify(assigned));
+  await sleep(380);
+  const made=(await acqSend("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.resetEditShield();qa.tick();qa.tick();qa.grow(qa.state().team.length);const s=qa.state();return{operator:s.factory.workerId,raw:s.factory.raw,stock:s.factory.finished,scrap:s.factory.defects,energy:s.factory.paidPower,orders:s.factory.orders.length,overflow:document.documentElement.scrollWidth>innerWidth+6}})()",returnByValue:true})).result?.value;
+  assert.ok(made?.operator&&made.orders===0&&made.energy>0&&made.stock+made.scrap>0&&!made.overflow,"v24C actual material flow "+JSON.stringify(made));
+  for(const mode of ["supply-chain","sale"]){
+   const state=(await acqSend("Runtime.evaluate",{expression:"(()=>{const mode="+JSON.stringify(mode)+";document.querySelector('.bottom-nav button[data-view=\"growth\"]').click();document.getElementById('factory-panel').open=true;if(mode==='sale'){document.querySelector('#factory-growth button[data-factory=\"sell\"]:not([disabled])')?.click()}const el=document.getElementById('factory-growth');window.scrollTo({top:Math.max(0,scrollY+el.getBoundingClientRect().top-15),behavior:'instant'});return{visible:!!el.getClientRects().length,overflow:document.documentElement.scrollWidth>innerWidth+6,text:el.textContent?.slice(0,120),inventory:window.__bossQA.state().factory.finished}})()",returnByValue:true})).result?.value;
+   assert.ok(state?.visible&&!state.overflow,"v24C Chromium "+mode+" "+JSON.stringify(state));
+   await sleep(280);
+   const shot=await acqSend("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});
+   assert.ok(shot.data?.length>1500,"v24C actual screenshot required");
+   const name=path.join(factoryDir,"boss-v24c-"+mode+"-"+width+"px.png");
+   fs.writeFileSync(name,Buffer.from(shot.data,"base64"));
+   console.log("PASS v24C Chromium "+name+" "+JSON.stringify(state));
   }
 
  }

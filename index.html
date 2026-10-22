@@ -6859,7 +6859,7 @@ function visualGrowthFocus(targetId){
 function visualTeamFocus(){
  const root=$("view-team"),focus=S.ui?.teamFocus;
  const target=BOSS_TEAM_FOCUS[focus]||null;
- for(const child of root.children){
+ for(const child of (root.children||[])){
   if(child.classList?.contains("view-intro")||child.id==="boss-team-story"||child.id==="boss-team-options")continue;
   child.classList?.add("boss-team-hidden");
   showGameSection(child,focus==="all"||!!target&&child.id===target,"data-boss-team-visible");
@@ -6889,8 +6889,8 @@ function renderPlayMode(){
  const growth=S.ui.growthFocus||"";
  const focused=!!growth&&growth!=="all"&&visualGrowthFocus(growth);
  const gRoot=$("view-growth");
- if(!focused)for(const child of gRoot.children)child.removeAttribute?.("data-boss-growth-visible");
- if(growth==="all")for(const child of gRoot.children)child.setAttribute?.("data-boss-growth-visible","");
+ if(!focused)for(const child of (gRoot.children||[]))child.removeAttribute?.("data-boss-growth-visible");
+ if(growth==="all")for(const child of (gRoot.children||[]))child.setAttribute?.("data-boss-growth-visible","");
  $("boss-growth-back").hidden=!simple||!growth;
  $("boss-growth-options").querySelectorAll?.("button[data-boss-growth-focus]").forEach(b=>b.setAttribute?.("aria-pressed",String(growth===b.dataset.bossGrowthFocus)));
  $("boss-presentation-choices").querySelectorAll?.("button[data-boss-presentation]").forEach(b=>

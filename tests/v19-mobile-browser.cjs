@@ -117,6 +117,23 @@ document.addEventListener("DOMContentLoaded",async()=>{
   result.checks.dFactoryRealControls=byId("factory-panel")?.open===true;
   byId("boss-world-filter")?.querySelector('[data-world-filter="places"]')?.click();
   result.checks.dBackToActualPlaces=!!byId("boss-world-tiles")?.textContent.includes("First workspace");
+  result.checks.eVisualBeforeDetails=!!(byId("boss-visual-empire").compareDocumentPosition(byId("boss-growth-focus"))&Node.DOCUMENT_POSITION_FOLLOWING);
+  result.checks.eFactoryControlsFocused=!!byId("factory-panel")?.getClientRects().length&&!byId("growth-expand-businesses")?.getClientRects().length;
+  byId("boss-growth-choices").querySelector('[data-growth-focus="businesses"]')?.click();
+  result.checks.eBusinessFocusVisible=!!byId("growth-expand-businesses")?.getClientRects().length&&!byId("factory-panel")?.getClientRects().length;
+  byId("boss-growth-choices").querySelector('[data-growth-focus="world"]')?.click();
+  result.checks.eBackToWorld=!!byId("boss-visual-empire")?.getClientRects().length&&!byId("growth-expand-businesses")?.getClientRects().length;
+  byId("boss-settings-open")?.click();
+  result.checks.eSettingsOpen=!!byId("boss-settings-panel")?.getClientRects().length&&byId("boss-settings-panel")?.contains(byId("export-save"));
+  byId("boss-settings-advanced")?.click();
+  result.checks.eAdvancedWorks=!!byId("factory-panel")?.getClientRects().length&&!!byId("growth-expand-businesses")?.getClientRects().length;
+  byId("boss-settings-advanced")?.click();
+  result.checks.eSimpleRestored=!byId("factory-panel")?.getClientRects().length&&!byId("growth-expand-businesses")?.getClientRects().length;
+  byId("boss-settings-close")?.click();
+  result.checks.eSettingsClosed=!byId("boss-settings-panel")?.getClientRects().length;
+  // Settings updates save asynchronously; do not race legacy team-budget fixtures.
+  await new Promise(r=>setTimeout(r,700));
+  window.__bossQA?.resetEditShield?.();
   document.querySelector('.bottom-nav button[data-view="team"]').click();
   const org=byId("org-settings");if(org){org.open=true;org.dispatchEvent(new Event("toggle"));}
   result.checks.customBudgets=!!document.querySelector('[data-org-policy="training"]')&&!!document.querySelector('[data-org-policy="hiring"]');
@@ -377,7 +394,7 @@ const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>
  fresh();
  // Historical v17-v25 browser fixtures intentionally inspect the full management UI.
  // v26A starts real new players in story view; reveal management here after each fixture reset.
- S.ui.founderIntro="done";S.ui.storyDetails=true;S.ui.managementRoom="all";
+ S.ui.founderIntro="done";S.ui.storyDetails=true;S.ui.managementRoom="all";S.ui.advancedViews=true;
  if(stage!=="founder"){
   while(S.team.length<(stage==="group"?11:8)){
    const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);
@@ -456,6 +473,9 @@ async function runBrowser(){
    assert.equal(outcome.checks.disclosureOpens,true,"Advanced CEO offices must expand");
    for(const field of ["c2ConversationVisible","c2NoRawStack","c2TopicsVisible","c2SingleAreaBeforeChoice","c2TargetedReveal"]){
     assert.equal(outcome.checks[field],true,"v26C2 interactive player office failed: "+field);
+   }
+   for(const field of ["eVisualBeforeDetails","eFactoryControlsFocused","eBusinessFocusVisible","eBackToWorld","eSettingsOpen","eAdvancedWorks","eSimpleRestored","eSettingsClosed"]){
+    assert.equal(outcome.checks[field],true,"v26E visual-first and Settings mobile interaction failed: "+field);
    }
    for(const field of ["dVisualWorld","dVisualCategories","dFounderHonest","dBusinessLocked","dFactoryLocked","dFactoryRealControls","dBackToActualPlaces"]){
     assert.equal(outcome.checks[field],true,"v26D visual world failed: "+field);
@@ -824,6 +844,12 @@ async function runBrowser(){
       await sleep(150);
       await send("Runtime.evaluate",{expression:"document.querySelector('.bottom-nav button[data-view="+tab+"]').click()",returnByValue:true});
      }
+     // v26E hides deep Growth tools by default; historical screenshots must
+     // deliberately select the real Full Management Details control.
+     if(stage==="after"&&tab==="growth"){
+      const expanded=await send("Runtime.evaluate",{expression:"(()=>{const b=document.getElementById('boss-growth-full');if(!b)return false;if(b.getAttribute('aria-pressed')!=='true')b.click();return b.getAttribute('aria-pressed')==='true'&&document.getElementById('growth-expand-businesses')?.getClientRects().length>0})()",returnByValue:true});
+      assert.equal(expanded.result?.value,true,"v26E historical Growth controls must remain accessible");
+     }
      const probe=await send("Runtime.evaluate",{expression:"(()=>{const el=document.querySelector("+JSON.stringify(selector)+");if(!el)return null;document.documentElement.style.scrollBehavior='auto';window.scrollTo({top:Math.max(0,window.scrollY+el.getBoundingClientRect().top-12),behavior:'instant'});const b=el.getBoundingClientRect();return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+6,visible:!!el.getClientRects().length,top:b.top,text:el.innerText.slice(0,180),uniqueIds:document.querySelectorAll('[id]').length===new Set([...document.querySelectorAll('[id]')].map(x=>x.id)).size,headings:[...document.querySelectorAll('#view-growth .boss-primary-section>h2')].map(x=>x.textContent),hierarchy:document.getElementById('org-explorer')?.innerText||''}})()",returnByValue:true});
      const info=probe.result?.value;
      assert.ok(info&&info.visible&&info.width===width&&!info.overflow&&info.uniqueIds,"v22.5A2 mobile layout: "+JSON.stringify(info));
@@ -894,6 +920,12 @@ async function runBrowser(){
   const fixture=await send("Runtime.evaluate",{expression:"(()=>{const qa=window.__bossQA;qa.pause();qa.resetEditShield();qa.setupLeadership('founder');const s=qa.state();s.exec.lines.push({key:'marketing',since:0,delivered:2,revenue:450,spent:120},{key:'product',since:0,delivered:1,revenue:280,spent:120});const a=s.deals[0],b=s.deals[1];a.serviceLine='marketing';a.serviceOffer='Brand launch campaign';a.v23={kind:'campaign',channel:'focused',creative:7.2,reach:850,leads:45,conversions:8,tested:false,spent:0};b.serviceLine='product';b.serviceOffer='Client prototype';b.v23={kind:'prototype',built:6,verified:2.5,debt:1.4,accepted:false,tested:false,spent:0};qa.grow(3);qa.pause();return{lines:s.exec.lines.length,marketing:!!document.getElementById('v23-project-'+a.id),product:!!document.getElementById('v23-project-'+b.id)}})()",returnByValue:true});
   assert.ok(fixture.result?.value?.marketing&&fixture.result?.value?.product,"v23A distinct project contracts");
   for(const tab of ["work","growth"]){
+   if(tab==="growth"){
+    // Real owner UI intentionally defaults to visual-first. Archived v23A
+    // portfolio screenshots explicitly enter the original Full Details mode.
+    const advanced=await send("Runtime.evaluate",{expression:"(()=>{document.querySelector('.bottom-nav button[data-view=growth]').click();const b=document.getElementById('boss-growth-full');if(b&&b.getAttribute('aria-pressed')!=='true')b.click();const panel=document.getElementById('growth-product-portfolio');return {available:!!panel,visible:!!panel?.getClientRects().length,advanced:b?.getAttribute('aria-pressed'),className:document.body.className}})()",returnByValue:true});
+    assert.ok(advanced.result?.value?.visible,"Original product portfolio not available via Full Details: "+JSON.stringify(advanced.result?.value));
+   }
    const view=await send("Runtime.evaluate",{expression:"(()=>{document.querySelector('.bottom-nav button[data-view="+tab+"]').click();const panel=document.getElementById('view-"+tab+"');const portfolio=document.getElementById('v23-"+tab+"');if(portfolio?.parentElement?.tagName==='DETAILS')portfolio.parentElement.open=true;const cards=portfolio?.textContent||'';if("+JSON.stringify(tab)+"==='work'){const project=document.querySelector('#deals details[data-project-id]');if(project)project.open=true;}window.scrollTo({top:Math.max(0,window.scrollY+(portfolio?.getBoundingClientRect().top||0)-15),behavior:'instant'});return{width:innerWidth,active:!panel.hidden,overflow:document.documentElement.scrollWidth>innerWidth+6,marketing:cards.includes('Marketing Studio'),product:cards.includes('Product Development'),core:cards.includes('Core B2B services'),visible:!!portfolio?.getClientRects().length}})()",returnByValue:true});
    const v=view.result?.value;assert.ok(v&&v.width===width&&v.active&&!v.overflow&&v.marketing&&v.product&&v.core&&v.visible,"v23A browser "+JSON.stringify(v));
    await sleep(220);const screenshot=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false,fromSurface:true});

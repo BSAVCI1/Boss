@@ -517,13 +517,50 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 @media(max-width:390px){.boss-visual-head{padding:12px 10px 3px}.boss-visual-head h2{font-size:22px}.boss-visual-world{padding:10px 5px;margin:0 7px}.boss-world-tile{padding:6px 3px;min-height:140px}.boss-world-tile svg{height:72px;flex-basis:72px}.boss-world-detail{margin:9px 7px;padding:10px}.boss-world-detail button{max-width:94px;font-size:10px}}
 @media(prefers-reduced-motion:reduce){.boss-visual-empire *{animation:none!important;transition:none!important}}
 
+
+@media(max-width:460px){.app-header{flex-wrap:wrap;gap:5px;min-width:0}.app-header h1{font-size:24px;margin-right:auto}.compact-controls{gap:4px;min-width:0}.compact-controls label{display:none}.compact-controls select{width:66px;min-width:0}.compact-controls button{min-width:60px}.boss-settings-button{flex:0 0 auto}}
+/* v26E — joyful gameplay first, advanced financial/technical detail on demand. */
+.boss-settings-button{padding:6px 10px;min-height:38px;font-weight:750;font-size:12px;white-space:nowrap;border-radius:9px;background:var(--panel);border:1px solid var(--line)}
+#boss-settings-panel[hidden]{display:none!important}
+.boss-settings-panel{position:relative;padding:13px;margin:9px 0;border-radius:14px;background:#eaf2f8;border:1px solid #c3d9e9;color:#1c3754;box-shadow:0 5px 14px #203e5b16}
+.boss-settings-head{display:flex;justify-content:space-between;align-items:center;gap:7px}
+.boss-settings-head h2{font-size:18px;margin:0;color:#1f3953}
+.boss-settings-panel p{font-size:12px;color:#486073;margin:7px 0}
+.boss-settings-panel .boss-settings-option{display:flex;align-items:center;gap:8px;background:#fff9;border-radius:9px;padding:9px;margin:9px 0;font-size:13px;font-weight:750}
+.boss-settings-option input{width:20px;height:20px;flex:0 0 auto;accent-color:#3d74b5}
+.boss-settings-panel button{min-height:40px}
+.boss-settings-panel .save-export{margin-top:4px;width:100%;text-align:center}
+.boss-settings-close{border:1px solid #bdd2e5;background:#fff8;color:#34587a}
+.boss-growth-focus{margin:12px 0;border:1px solid #a8d1d6;border-radius:16px;padding:12px;background:linear-gradient(140deg,#f8fff5,#e8f5f7);color:#244d5f}
+.boss-growth-focus h3{font-size:17px;margin:0 0 4px;color:#225769}
+.boss-growth-focus p{font-size:12px;margin:0 0 10px;color:#4c6b78}
+.boss-growth-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.boss-growth-choices button{border:1px solid #bdd7db;background:#fff;border-radius:11px;padding:9px;min-width:0;min-height:62px;text-align:left;color:#24536a;font-weight:850;font-size:12px}
+.boss-growth-choices button[aria-pressed=true]{background:#e1f0fc;border:2px solid #427ca7}
+.boss-growth-choices button small{display:block;margin-top:4px;font-size:10px;font-weight:550;color:#53758a}
+.boss-growth-footer{display:flex;justify-content:space-between;align-items:center;gap:7px;margin-top:10px}
+.boss-growth-footer span{font-size:11px;font-weight:750;color:#456a72}
+.boss-growth-footer button{min-height:37px;border-radius:9px;background:#fff;border:1px solid #a8cbd1;font-weight:750;font-size:11px;max-width:52%}
+.boss-growth-simple #view-growth>[data-growth-area]:not([data-growth-show]){display:none!important}
+.boss-growth-simple #view-growth>#leadership-context-growth{display:none!important}
+.boss-growth-simple #view-growth>.view-intro{margin-bottom:7px}
+#boss-growth-focus[hidden]{display:none}
+@media(max-width:390px){.boss-settings-button{font-size:11px;padding:6px 7px}.boss-growth-choices{gap:6px}.boss-growth-choices button{font-size:11px;padding:7px;min-height:57px}.boss-growth-focus{padding:10px}}
+
 </style>
 </head>
 <body>
 <main id="game-root">
 <header class="app-header"><h1>Boss</h1><div class="compact-controls" id="controls">
-<label for="speed-select">Speed</label><select id="speed-select" aria-label="Simulation speed"><option value="1">1× · Standard</option><option value="3">3× · Fast</option><option value="8">8× · Turbo</option></select><button type="button" id="pause" aria-pressed="false">Pause</button></div></header>
-<div class="save-toolbar"><span id="save-state" class="save-state" aria-live="polite">Checking saved game…</span><button id="export-save" type="button" class="save-export">Export game backup</button></div><div id="save-warning" class="save-error" role="alert" hidden></div>
+<label for="speed-select">Speed</label><select id="speed-select" aria-label="Simulation speed"><option value="1">1× · Standard</option><option value="3">3× · Fast</option><option value="8">8× · Turbo</option></select><button type="button" id="pause" aria-pressed="false">Pause</button></div><button type="button" id="boss-settings-open" class="boss-settings-button" aria-expanded="false" aria-controls="boss-settings-panel">⚙ Settings</button></header>
+<section id="boss-settings-panel" class="boss-settings-panel" hidden aria-label="Game settings">
+ <div class="boss-settings-head"><h2>Game settings</h2><button type="button" class="boss-settings-close" id="boss-settings-close">Close ✕</button></div>
+ <p>Play the CEO story with simpler screens. The full business model and saved company remain available.</p>
+ <label class="boss-settings-option" for="boss-settings-advanced"><input id="boss-settings-advanced" type="checkbox"> Show all detailed business panels in Growth</label>
+ <p><strong>Game speed & pause:</strong> use the controls above. Your company continues using the same real simulation.</p>
+ <p><strong>Saved company:</strong> changes save locally on this device. Export a backup before changing phones or browsers.</p>
+ <button id="export-save" type="button" class="save-export">Export game backup</button>
+ </section><div class="save-toolbar"><span id="save-state" class="save-state" aria-live="polite">Checking saved game…</span></div><div id="save-warning" class="save-error" role="alert" hidden></div>
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
@@ -660,7 +697,17 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
  <div class="boss-visual-filter" id="boss-world-filter" aria-label="Explore the company world"><button type="button" data-world-filter="places" aria-pressed="true">🏘️ Places</button><button type="button" data-world-filter="businesses">🏬 Businesses</button><button type="button" data-world-filter="factory">🏭 Factory</button></div>
  <div class="boss-visual-world" id="boss-world-visual"><div class="boss-world-welcome">Every achievement changes your world</div><div class="boss-world-row" id="boss-world-tiles"></div></div>
  <div id="boss-world-detail" class="boss-world-detail" role="status"></div><span class="boss-world-bottom">Visuals follow your saved game. A shared workspace is not owned property; a launched service is not a new building. No imaginary staff, machines or income.</span>
- </section><details class="card" id="factory-panel"><summary>Factory & supply chain · real production and wholesale sales</summary><p class="small">A separate physical production line: buy equipment, order components, allocate a real worker, make quality-tested goods and sell them only to willing buyers. Cash, physical stock and operating profit are not the same.</p><div id="factory-growth"></div></details><details class="card" id="empire-panel"><summary>Our business empire · only real owned assets</summary><p class="small">A schematic overview, not a geographic map. Properties, staffed divisions, acquired rivals and financial investments are different kinds of assets, not separate banks or free income.</p><div id="empire-world"></div></details><details class="card"><summary>Product portfolio · actual commercial performance</summary><div id="v23-growth"></div></details><details class="card" id="capital-panel"><summary>Investment portfolio · capital & risks</summary><div id="capital-growth"></div></details><details class="card" id="acquisition-panel"><summary>Acquisitions · diligence, integration &amp; competition</summary><div id="acquisition-growth"></div></details><section class="card leadership-context" id="leadership-context-growth" aria-label="Growth leadership focus"></section>
+ </section><section class="boss-growth-focus" id="boss-growth-focus" aria-label="What do you want to grow?">
+ <h3>Your next move</h3><p>See your business world first. Open only the area you want to manage.</p>
+ <div class="boss-growth-choices" id="boss-growth-choices">
+ <button type="button" data-growth-focus="businesses">🏬 Businesses<small>Build and lead service lines</small></button>
+ <button type="button" data-growth-focus="markets">🤝 Customers<small>Find markets and beat rivals</small></button>
+ <button type="button" data-growth-focus="investments">🏘️ Property & money<small>Offices, upgrades, capital</small></button>
+ <button type="button" data-growth-focus="factory">🏭 Production<small>Build and run a real factory</small></button>
+ <button type="button" data-growth-focus="records">📚 Deep records<small>History, research and reports</small></button>
+ <button type="button" data-growth-focus="world">🗺️ Just explore<small>Return to the visual world</small></button>
+ </div><div class="boss-growth-footer"><span id="boss-growth-focus-caption">Your illustrated world comes first.</span><button id="boss-growth-full" type="button" aria-pressed="false">Full management details ▾</button></div>
+ </section><details class="card" id="factory-panel"><summary>Factory & supply chain · real production and wholesale sales</summary><p class="small">A separate physical production line: buy equipment, order components, allocate a real worker, make quality-tested goods and sell them only to willing buyers. Cash, physical stock and operating profit are not the same.</p><div id="factory-growth"></div></details><details class="card" id="empire-panel"><summary>Our business empire · only real owned assets</summary><p class="small">A schematic overview, not a geographic map. Properties, staffed divisions, acquired rivals and financial investments are different kinds of assets, not separate banks or free income.</p><div id="empire-world"></div></details><details class="card" id="growth-product-portfolio"><summary>Product portfolio · actual commercial performance</summary><div id="v23-growth"></div></details><details class="card" id="capital-panel"><summary>Investment portfolio · capital & risks</summary><div id="capital-growth"></div></details><details class="card" id="acquisition-panel"><summary>Acquisitions · diligence, integration &amp; competition</summary><div id="acquisition-growth"></div></details><section class="card leadership-context" id="leadership-context-growth" aria-label="Growth leadership focus"></section>
 <section class="boss-primary-section" id="growth-expand-businesses"><h2>1. Expand businesses</h2><p class="small">Owned service lines, operating units, GMs and next eligible expansion; real prerequisites and CEO approval apply.</p><p class="small boss-summary" id="growth-business-status"></p><section class="card" aria-label="Business lines"><div class="lead"><b>Business lines</b><span class="small" id="business-lines-summary"></span></div><p class="small">Purchased service lines start as shared service portfolios. You can now organize a purchased line into an operating unit below, appoint a General Manager and allocate dedicated employees. These units are internal operating divisions, not independent subsidiaries or separate bank accounts. Company cash and financial records remain consolidated; unit results only track future work. Shared department budgets and advanced unit delegations evolve in later releases. Revenue is never counted twice.</p><div id="company-unlock-guide" class="filter-note"></div><p id="company-launch-status" class="small" role="status"></p><div id="business-lines"></div><div id="business-units" aria-label="Operating unit management"></div><details class="aux-details" id="business-line-create"><summary>Launch a new business line</summary><label for="service-line-select">Service</label><select id="service-line-select"><option value="marketing">Marketing studio</option><option value="product">Product development</option><option value="operations">Operations consulting</option><option value="technology">Technology advisory</option></select><button id="launch-service-line" type="button">Approve business-line launch · $120</button><p class="small">New launches require proven delivery, leadership, qualified staffing and financial runway. Previously purchased lines remain yours. No future revenue is guaranteed.</p></details></section>
 </section>
 <section class="boss-primary-section" id="growth-markets-customers"><h2>2. Markets and customers</h2><p class="small">Target sector and commercial positioning affect new customers; CEO direction and each GM strategy are separate.</p><section class="card"><div class="lead"><b>Current market focus</b></div><p class="small boss-summary" id="growth-focus-summary"></p></section><section aria-labelledby="market-title"><h2 id="market-title">Target customer sector</h2><div class="card"><div class="lead"><b id="sector-focus-name">Focus: Hospitality</b><span class="small" id="sector-level">Company stage 1</span></div><p class="small" id="market-direction-help"></p><details class="aux-details" id="sector-explore"><summary>Explore customer markets</summary><div id="sector-options" class="sector-buttons"></div></details><details class="aux-details"><summary>Sector strategy and investment guide</summary><div id="coach-sector-analysis"></div></details><p id="sector-status" class="filter-note"></p></div></section>
@@ -6740,8 +6787,78 @@ function getVisualWorldState(){
   "Open factory","factory-panel",S.factory.siteId));
  return {places,businesses,factories,sites,lines,people,installed};
 }
+
+const BOSS_GROWTH_FOCUS={
+ "factory-panel":"factory",
+ "empire-panel":"records",
+ "growth-product-portfolio":"businesses",
+ "capital-panel":"investments",
+ "acquisition-panel":"businesses",
+ "growth-expand-businesses":"businesses",
+ "growth-markets-customers":"markets",
+ "growth-rivals":"markets",
+ "growth-investments-property":"investments",
+ "growth-research":"records",
+ "leadership-context-growth":"records"
+};
+const BOSS_GROWTH_TARGETS={
+ "property-panel":"investments","growth-expand-businesses":"businesses",
+ "factory-panel":"factory","acquisition-panel":"businesses",
+ "growth-investments-property":"investments"
+};
+function renderGameSettings(){
+ const open=$("boss-settings-panel")?.hidden===false;
+ $("boss-settings-open")?.setAttribute?.("aria-expanded",String(open));
+ if($("boss-settings-advanced"))$("boss-settings-advanced").checked=!!S.ui.advancedViews;
+}
+function renderGrowthFocus(){
+ if(!S?.ui)return;
+ const complete=["world","businesses","markets","investments","factory","records"];
+ const selected=complete.includes(S.ui.growthFocus)?S.ui.growthFocus:"world";
+ const simple=!S.ui.advancedViews;
+ document.body.classList.toggle("boss-growth-simple",simple);
+ for(const [id,area] of Object.entries(BOSS_GROWTH_FOCUS)){
+  const elem=$(id);if(!elem)continue;
+  elem.setAttribute?.("data-growth-area",area);
+  if(!simple||area===selected)elem.setAttribute?.("data-growth-show","");
+  else elem.removeAttribute?.("data-growth-show");
+ }
+ $("boss-growth-choices")?.querySelectorAll?.("[data-growth-focus]").forEach(b=>b.setAttribute?.("aria-pressed",String(b.dataset.growthFocus===selected)));
+ $("boss-growth-full").textContent=simple?"Full management details ▾":"Return to simple view ↑";
+ $("boss-growth-full").setAttribute?.("aria-pressed",String(!simple));
+ const messages={world:"Take a look around your company.",
+ businesses:"Manage your launched business lines and acquisitions.",
+ markets:"Choose your customers and face actual competition.",
+ investments:"Explore real offices, toolkits and company capital.",
+ factory:"Operate production with real equipment and inventory.",
+ records:"Open deeper business history and research."};
+ $("boss-growth-focus-caption").textContent=messages[selected];
+ renderGameSettings();
+}
+$("boss-growth-focus").addEventListener("click",e=>{
+ const target=e.target.closest?.("button");if(!target)return;
+ if(target.id==="boss-growth-full"){
+  S.ui.advancedViews=!S.ui.advancedViews;save();renderGrowthFocus();return;
+ }
+ const area=target.dataset.growthFocus;
+ if(!["world","businesses","markets","investments","factory","records"].includes(area))return;
+ S.ui.growthFocus=area;
+ if(S.ui.advancedViews)S.ui.advancedViews=false;
+ save();renderGrowthFocus();
+ const chosen=area==="factory"?"factory-panel":area==="businesses"?"growth-expand-businesses":
+  area==="markets"?"growth-markets-customers":area==="investments"?"growth-investments-property":area==="records"?"empire-panel":null;
+ const el=chosen&&$(chosen);if(el?.tagName==="DETAILS")el.open=true;
+ el?.scrollIntoView?.({behavior:"auto",block:"nearest"});
+});
+$("boss-settings-open").addEventListener("click",()=>{$("boss-settings-panel").hidden=!$("boss-settings-panel").hidden;renderGameSettings();});
+$("boss-settings-close").addEventListener("click",()=>{$("boss-settings-panel").hidden=true;renderGameSettings();});
+$("boss-settings-advanced").addEventListener("change",e=>{
+ S.ui.advancedViews=!!e.target.checked;save();renderGrowthFocus();
+});
+
 function renderVisualWorld(){
  const node=$("boss-visual-empire");if(!node||!S?.ui)return;
+ renderGrowthFocus();
  const w=getVisualWorldState(),allowed=["places","businesses","factory"],category=allowed.includes(S.ui.visualWorldFilter)?S.ui.visualWorldFilter:"places";
  const all=category==="places"?w.places:category==="businesses"?w.businesses:w.factories;
  const valid=all.find(a=>a.id===S.ui.visualWorldSelected);
@@ -6778,8 +6895,11 @@ $("boss-visual-empire").addEventListener("click",e=>{
   const allowed=["property-panel","growth-expand-businesses","factory-panel","acquisition-panel","growth-investments-property"];
   if(!allowed.includes(b.dataset.worldGo))return;
   const target=$(b.dataset.worldGo);if(!target)return;
+  S.ui.growthFocus=BOSS_GROWTH_TARGETS[b.dataset.worldGo]||"world";
+  if(S.ui.advancedViews)S.ui.advancedViews=false;
+  save();renderGrowthFocus();
   if(target.tagName==="DETAILS")target.open=true;
-  target.scrollIntoView?.({behavior:"smooth",block:"start"});
+  target.scrollIntoView?.({behavior:"auto",block:"start"});
  }
 });
 

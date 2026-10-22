@@ -6500,6 +6500,7 @@ function renderCEOOffice(){
   if(el.setAttribute)el.setAttribute("data-mgmt-zone",zone);
   if(zone===room||room==="all")el.setAttribute?.("data-mgmt-show","");
   else el.removeAttribute?.("data-mgmt-show");
+  if(el.style)el.style.display=(!opened||zone===room||room==="all")?"":"none";
  }
  if(!opened)return;
  const approvals=ceoDecisionInventory().approvals;

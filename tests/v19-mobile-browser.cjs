@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
    result.checks.storyPersistent=JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.ceoName==="Avery"&&
      JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.ceoLook===2&&
      JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.founderIntro==="done";
+   document.querySelector('.bottom-nav button[data-view="today"]').click();
    byId("boss-story-detail-toggle").click();
    await new Promise(r=>setTimeout(r,90));
   }else{
@@ -43,15 +44,28 @@ document.addEventListener("DOMContentLoaded",async()=>{
     byId("boss-story-detail-toggle").getAttribute("aria-expanded")==="true";
   // v22.4D browser acceptance for simplified but still accessible management.
   const strategy=byId("today-ceo-tools"),story=byId("company-story");
-  result.checks.simplifiedToday=!!strategy&&!strategy.open&&!!story&&!story.open&&byId("game-forward")?.getClientRects().length>0&&!!byId("ceo-action-center");
+  result.checks.simplifiedToday=!!strategy&&!strategy.open&&!!story&&!story.open&&!!byId("boss-executive-room")?.getClientRects().length&&!!byId("ceo-action-center");
   if(strategy){
    strategy.open=true;
+   // v26C1: intentionally choose the illustrated People/Strategy room before testing
+   // the pre-existing detailed appointment controls. They remain fully accessible.
+   const executiveRoom=byId("boss-executive-room");
+   result.checks.executiveRoomVisible=!!executiveRoom?.getClientRects().length;
+   result.checks.executiveSeatCount=executiveRoom?.querySelectorAll("[data-boss-seat]").length===5;
+   result.checks.legacyHiddenByDefault=!byId("today-ceo-tools")?.getClientRects().length;
+   executiveRoom?.querySelector('[data-boss-room="leadership"]')?.click();
+   result.checks.managementDiagnostic={body:document.body.className,active:document.querySelector(".bottom-nav [aria-current=page]")?.dataset.view||"",room:byId("boss-executive-room").hidden,legacyDisplay:strategy.style.display,zone:strategy.getAttribute("data-mgmt-zone"),visible:!!strategy.getClientRects().length,quickDisplay:byId("boss-control-actions").style.display};
    result.checks.disclosureOpens=document.querySelector("#executive-officers-panel")?.getClientRects().length>0;
    const officeCards=[...document.querySelectorAll(".ceo-office-grid > div")];
    const first=officeCards[0]?.getBoundingClientRect(),second=officeCards[1]?.getBoundingClientRect();
    result.checks.ceoHierarchyStacked=officeCards.length===2&&first.height>0&&second.height>0&&second.top>=first.bottom-1;
    strategy.open=false;
   }
+  // Historical mobile, picker and persistence proofs intentionally use the
+  // optional Full Management Details mode after the visual opening is tested.
+  byId("boss-room-all")?.click();
+  result.checks.fullDetailsAvailable=!!byId("game-forward")?.getClientRects().length&&
+   !!byId("management-policy-center")?.getClientRects().length;
   const customer=byId("work-customers"),rivals=byId("growth-rivals"),archive=byId("upgrade-archive");
   result.checks.simplifiedManagement=!!customer&&!customer.open&&!!rivals&&!rivals.open&&!!archive&&!archive.open&&!!byId("ideas");
   result.checks.noDuplicatedQuickActions=document.querySelectorAll("#game-forward,#game-primary").length===2;
@@ -329,7 +343,7 @@ const qaHtml=html.replace("S=load();if(!S)fresh();",`window.__bossQA={state:()=>
  fresh();
  // Historical v17-v25 browser fixtures intentionally inspect the full management UI.
  // v26A starts real new players in story view; reveal management here after each fixture reset.
- S.ui.founderIntro="done";S.ui.storyDetails=true;
+ S.ui.founderIntro="done";S.ui.storyDetails=true;S.ui.managementRoom="all";
  if(stage!=="founder"){
   while(S.team.length<(stage==="group"?11:8)){
    const p=createPerson();ensureCareer(p);ensureRole(p);ensureDepartment(p);ensurePerformance(p,S.day);

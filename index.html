@@ -548,6 +548,18 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 @media(max-width:390px){.boss-settings-button{font-size:11px;padding:6px 7px}.boss-growth-choices{gap:6px}.boss-growth-choices button{font-size:11px;padding:7px;min-height:57px}.boss-growth-focus{padding:10px}}
 
 
+/* v26F — individual character scenes use real saved employment and assignment data. */
+#boss-teammate-scene[hidden]{display:none!important}
+.boss-team-face[aria-pressed="true"]{border:2px solid #316d8c;background:#fff8df;box-shadow:0 2px 9px #2d536629}
+.boss-teammate-scene{margin:12px 0 0;padding:12px;border:1px solid #a6c6c5;border-radius:15px;background:#fffef9;text-align:left}
+.boss-teammate-scene .boss-teammate-heading{display:flex;align-items:center;gap:12px}
+.boss-teammate-scene .boss-teammate-heading svg{height:91px;width:78px;flex:none}
+.boss-teammate-scene h3{font-size:17px;color:#25465a;margin:0 0 4px}
+.boss-teammate-scene p{font-size:12px;line-height:1.55;margin:8px 0}
+.boss-teammate-scene .boss-teammate-facts{font-size:11px;color:#436776}
+.boss-teammate-scene button{width:100%;min-height:42px;padding:10px;background:#2c698d;border-color:#2c698d;color:white;font-weight:750}
+@media(max-width:410px){.boss-teammate-scene .boss-teammate-heading{gap:7px}.boss-teammate-scene .boss-teammate-heading svg{height:78px;width:67px}}
+
 /* v26E2 — real people and customer missions lead, administration moves backstage. */
 .boss-team-scene-simple #view-work>.boss-work-advanced:not([data-work-visible]){display:none!important}
 .boss-team-scene-simple #view-team>.boss-team-hidden:not([data-team-visible]){display:none!important}
@@ -677,7 +689,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </section>
 <section id="view-team" class="app-view" data-page="team" aria-label="People and delegation" hidden>
 <div class="view-intro"><h2>Team</h2><p>Reporting, careers and people needing support</p></div>
-<section class="boss-team-story" id="boss-team-story" aria-label="Meet the people in your company"><span class="boss-visual-kicker">PEOPLE MAKE THE COMPANY</span><h2>Meet your team</h2><p id="boss-team-summary">Every teammate has their own strengths, challenges and career.</p><div class="boss-team-faces" id="boss-team-faces"></div></section>
+<section class="boss-team-story" id="boss-team-story" aria-label="Meet the people in your company"><span class="boss-visual-kicker">PEOPLE MAKE THE COMPANY</span><h2>Meet your team</h2><p id="boss-team-summary">Every teammate has their own strengths, challenges and career.</p><div class="boss-team-faces" id="boss-team-faces"></div><section id="boss-teammate-scene" class="boss-teammate-scene" hidden aria-live="polite" aria-label="Selected colleague profile"></section></section>
 <section class="boss-focus-header" id="boss-team-options"><strong>What would you like to do with your team?</strong><p>Talk to a colleague, recruit someone or explore your office.</p><div class="boss-focus-buttons"><button type="button" data-boss-team-focus="people">💬 My colleagues</button><button type="button" data-boss-team-focus="hiring">🤝 Recruit & assistant</button><button type="button" data-boss-team-focus="stories">💛 People stories</button><button type="button" data-boss-team-focus="campus">🏢 Workplace</button><button type="button" data-boss-team-focus="all">📚 All team details</button></div></section><section class="card leadership-context" id="leadership-context-team" aria-label="Team leadership focus"></section><details class="card" id="people-stories-panel"><summary>People stories · work-earned leadership choices</summary><p class="small">Real work, coaching and strain create stories at most once every 14 game days. The CEO may respond; ignoring a story spends nothing and never blocks existing managers.</p><div id="people-stories"></div></details>
 <section class="card"><div class="lead"><b>People and management capacity</b><span class="small">Actual appointments</span></div><p class="small" id="team-simple-summary"></p><p class="small">Company-wide limits are approved at <b>Today → Management policies</b>. Optional empty positions are not urgent when teams can operate effectively.</p></section>
 <section class="card" id="campus-panel" aria-label="Living company campus">
@@ -6935,6 +6947,27 @@ $("boss-visual-empire").addEventListener("click",e=>{
 /* v26E2: scenes are pure presentation of canonical saved people and contracts. */
 const TEAM_SCENE_PANELS={people:"boss-team-people-panel",hiring:"boss-team-hiring-panel",
  stories:"people-stories-panel",campus:"campus-panel"};
+// Purely visual selection: no new persistent employee ID, wages, roles or approvals.
+let focusedTeammateId=null;
+function renderFocusedTeammate(){
+ const root=$("boss-teammate-scene");if(!root)return;
+ const p=S.team.find(x=>x.id===focusedTeammateId);
+ if(!p){root.hidden=true;if(root.innerHTML)root.innerHTML="";return;}
+ const job=S.deals.find(d=>d.w===p.id),role=ROLE_NAMES[p.role?.primary]||"Team member";
+ const demanding=(p.career?.stress||0)>=70||(p.career?.burnout||0)>=35;
+ const wellbeing=demanding?"Needs support after sustained workload":p.mood>=65?"Motivated today":p.mood>=35?"Steady today":"Could use encouragement";
+ const work=job?"Working on "+job.cl+"'s real customer project · "+job.dl+" days remaining":taskText(p);
+ const content='<div class="boss-teammate-heading">'+ceoPortrait(p.id%3,true)+
+ '<div><span class="boss-visual-kicker">MEET YOUR COLLEAGUE</span><h3>'+esc(p.n)+'</h3>'+
+ '<div class="boss-teammate-facts">'+esc(role)+' · '+esc(rankName(p))+'</div></div></div>'+
+ '<p><b>On the job:</b> '+esc(work)+'</p><p><b>How things are going:</b> '+esc(wellbeing)+'. '+esc(p.trait||"")+'</p>'+
+ '<button type="button" data-boss-open-career="'+p.id+'">Open '+esc(p.n)+"'s actual career and actions →</button>";
+ if(root.innerHTML!==content)root.innerHTML=content;root.hidden=false;
+}
+function focusTeammate(personId){
+ const p=S.team.find(x=>x.id===personId);if(!p)return false;
+ focusedTeammateId=p.id;renderWorkTeamScenes();return true;
+}
 function renderWorkTeamScenes(){
  if(!S?.ui)return;
  const simple=!S.ui.advancedViews;
@@ -6948,14 +6981,17 @@ function renderWorkTeamScenes(){
  $("boss-work-reports-toggle").textContent=extra?"📊 Hide business reports ↑":"📊 Business reports & details ▾";
  const unassigned=S.deals.filter(d=>!d.w).length,active=S.deals.length,completed=S.market.completed||0;
  $("boss-work-title").textContent=unassigned?"A customer is waiting for your team":active?"Your team is delivering":"Find your next customer";
- $("boss-work-summary").textContent=unassigned?unassigned+" unassigned real project(s). Pick a colleague and get to work.":
-  active?active+" active real contract(s) · "+completed+" completed deliveries.":
+ const waiting=S.deals.find(d=>!d.w),delivering=S.deals.find(d=>d.w);
+ $("boss-work-summary").textContent=waiting?
+  waiting.cl+" needs "+(waiting.serviceOffer||SKILLS[waiting.need]||"a service")+". "+waiting.dl+" game days left — choose a real teammate to lead it."+(unassigned>1?" "+(unassigned-1)+" other project(s) waiting.":""):
+  delivering?delivering.cl+"'s real project is underway with "+(person(delivering.w)?.n||"your team")+". "+active+" active contract(s) · "+completed+" delivered.":
   "Your team has completed "+completed+" projects. Explore new opportunities.";
  $("boss-work-primary").textContent=unassigned?"Assign a teammate →":active?"See active projects →":"Explore opportunities →";
- const people=S.team||[],selection=people.slice(0,5).map(p=>'<button type="button" class="boss-team-face" data-boss-person="'+p.id+'" title="Meet '+esc(p.n)+'">'+ceoPortrait(p.id%3,true)+
+ const people=S.team||[],selection=people.slice(0,5).map(p=>'<button type="button" class="boss-team-face" data-boss-person="'+p.id+'" aria-pressed="'+(focusedTeammateId===p.id)+'" title="Meet '+esc(p.n)+'">'+ceoPortrait(p.id%3,true)+
  '<b>'+esc(p.n)+'</b><small>'+esc(p.role?.primary||"Team member")+'</small></button>').join("");
  const faces=$("boss-team-faces");if(faces.innerHTML!==selection)faces.innerHTML=selection;
  $("boss-team-summary").textContent=people.length+" real colleagues are part of your company. Tap a portrait to see their actual work and career.";
+ renderFocusedTeammate();
  const team=$("view-team"),focus=S.ui.teamFocus,selected=TEAM_SCENE_PANELS[focus];
  for(const child of (team.children||[])){
   if(child.classList?.contains("view-intro")||["boss-team-story","boss-team-options"].includes(child.id))continue;
@@ -6987,8 +7023,19 @@ $("boss-work-primary").addEventListener("click",()=>{
  $("deals")?.scrollIntoView?.({behavior:"auto",block:"nearest"});
 });
 $("boss-team-story").addEventListener("click",e=>{
- const b=e.target.closest?.("button[data-boss-person]");if(!b)return;
- if(S.team.some(p=>String(p.id)===b.dataset.bossPerson))focusTeamScene("people");
+ const b=e.target.closest?.("button");if(!b)return;
+ if(b.dataset.bossPerson!==undefined){
+  const p=S.team.find(p=>String(p.id)===b.dataset.bossPerson);
+  if(p)focusTeammate(p.id);return;
+ }
+ if(b.dataset.bossOpenCareer!==undefined){
+  const p=S.team.find(p=>String(p.id)===b.dataset.bossOpenCareer);if(!p)return;
+  focusTeamScene("people");
+  const record=document.querySelector('#people details[data-employee-id="'+p.id+'"]');
+  if(!record)return;
+  const group=record.closest?.("details[data-team-group]");if(group)group.open=true;
+  record.open=true;record.scrollIntoView?.({behavior:"auto",block:"center"});
+ }
 });
 $("boss-team-options").addEventListener("click",e=>{
  const b=e.target.closest?.("button[data-boss-team-focus]");

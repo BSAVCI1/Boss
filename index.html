@@ -547,6 +547,30 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 #boss-growth-focus[hidden]{display:none}
 @media(max-width:390px){.boss-settings-button{font-size:11px;padding:6px 7px}.boss-growth-choices{gap:6px}.boss-growth-choices button{font-size:11px;padding:7px;min-height:57px}.boss-growth-focus{padding:10px}}
 
+
+/* v26E2 — real people and customer missions lead, administration moves backstage. */
+.boss-team-scene-simple #view-work>.boss-work-advanced:not([data-work-visible]){display:none!important}
+.boss-team-scene-simple #view-team>.boss-team-hidden:not([data-team-visible]){display:none!important}
+.boss-team-scene-simple #view-team>.leadership-context{display:none!important}
+.boss-team-scene-simple #view-work>.leadership-context{display:none!important}
+.boss-focus-header{margin:11px 0;padding:12px 13px;border-radius:17px;background:linear-gradient(120deg,#e6f6f2,#e4effb);color:#244559;border:1px solid #bddeea}
+.boss-focus-header strong{display:block;font-size:16px}.boss-focus-header p{margin:5px 0 9px;font-size:12px;color:#506879}
+.boss-focus-buttons{display:flex;gap:7px;flex-wrap:wrap}
+.boss-focus-buttons button{min-height:42px;flex:1 1 135px;background:#fff;border:1px solid #b3cbd7;border-radius:11px;text-align:left;padding:9px 10px;color:#244c66;font-weight:800;font-size:12px}
+.boss-focus-buttons button[aria-pressed=true]{background:#285b7e;color:#fff;border-color:#1e567b}
+.boss-team-story{border-radius:19px;padding:15px;background:linear-gradient(155deg,#e4eef8,#e4f2e7);color:#264a5e}
+.boss-team-story h2{margin:4px 0 3px;font-size:23px}.boss-team-story p{font-size:12px;color:#506977;margin:6px 0 10px}
+.boss-team-faces{display:flex;align-items:stretch;gap:7px;overflow-x:auto;scrollbar-width:thin;margin:9px 0}
+.boss-team-face{min-width:81px;flex:1 0 81px;max-width:135px;background:#ffffffd9;border:1px solid #accad4;border-radius:14px;padding:7px 4px;color:#244257;text-align:center}
+.boss-team-face svg{height:85px;width:70px;max-width:100%;display:block;margin:auto}
+.boss-team-face b{display:block;font-size:11px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.boss-team-face small{display:block;font-size:10px;color:#577184}
+.boss-work-mission{padding:12px 14px;background:linear-gradient(130deg,#dff0ff,#e8f5e3);border-radius:16px;color:#29495e}
+.boss-work-mission h2{font-size:19px;margin:0 0 5px}.boss-work-mission p{font-size:12px;margin:4px 0 10px;color:#546e7f}
+.boss-work-mission button{min-height:42px;background:#2c698d;color:#fff;border-radius:10px;border-color:#2c698d;font-weight:850}
+.boss-focus-close{width:100%;min-height:40px;border-radius:12px;background:#f1f8fa;color:#254a60;font-weight:800;margin:8px 0}
+
+
 </style>
 </head>
 <body>
@@ -606,10 +630,12 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <details class="aux-details"><summary>Company history <span class="small" id="log-recent"></span></summary><div class="card" id="log" aria-live="off"></div></details>
 </details></section>
 <section id="view-work" class="app-view" data-page="work" aria-label="Projects and sales" hidden>
-<div class="view-intro"><h2>Work</h2><p>Deliver projects, win customers and protect cash</p></div><details class="card" open><summary>Our businesses · products, buyers & results</summary><div id="v23-work"></div></details><section class="card leadership-context" id="leadership-context-work" aria-label="Work leadership focus"></section>
+<div class="view-intro"><h2>Work</h2><p>Deliver projects, win customers and protect cash</p></div>
+<section class="boss-work-mission" id="boss-work-mission"><h2 id="boss-work-title">Your next customer</h2><p id="boss-work-summary">One completed project can change the company.</p><button type="button" id="boss-work-primary">Choose a real project →</button></section>
+<section class="boss-focus-header" id="boss-work-options"><strong>Work at your own pace</strong><p>Contracts and customers first. Reports and technical controls are optional.</p><div class="boss-focus-buttons"><button id="boss-work-reports-toggle" type="button" aria-pressed="false">📊 Business reports & details ▾</button></div></section><details class="card boss-work-advanced" open><summary>Our businesses · products, buyers & results</summary><div id="v23-work"></div></details><section class="card leadership-context" id="leadership-context-work" aria-label="Work leadership focus"></section>
 <section aria-labelledby="deals-title"><h2 id="deals-title">Active projects</h2><p class="small" id="intake-status"></p><div id="deals"></div></section>
-<section class="card"><div class="lead"><b>Financial position</b><span class="small">Current company totals</span></div><div class="boss-overview" id="work-finance-snapshot"></div><div id="capital-work"></div><div id="acquisition-work"></div><p id="work-finance-action" class="small boss-summary"></p></section>
-<section class="card"><div class="lead"><b>Owned capabilities</b><span class="small">Permanent toolkit benefits</span></div><div id="work-owned-capabilities"></div></section>
+<section class="card boss-work-advanced"><div class="lead"><b>Financial position</b><span class="small">Current company totals</span></div><div class="boss-overview" id="work-finance-snapshot"></div><div id="capital-work"></div><div id="acquisition-work"></div><p id="work-finance-action" class="small boss-summary"></p></section>
+<section class="card boss-work-advanced"><div class="lead"><b>Owned capabilities</b><span class="small">Permanent toolkit benefits</span></div><div id="work-owned-capabilities"></div></section>
 <section class="card" id="work-project-watch"><div class="lead"><b>Projects requiring attention</b><span id="work-project-watch-count" class="small"></span></div><p id="work-project-watch-summary" class="small"></p></section>
 
 
@@ -623,8 +649,8 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </details><div id="pipeline-stages" class="pipeline-stages"></div><details class="aux-details"><summary>Lead details</summary><div id="pipeline-details" class="small"></div></details>
 </div></section>
 
-<details class="management-pane" id="work-customers"><summary>Customer relationships · optional portfolio detail</summary><section aria-labelledby="customers-title"><h2 id="customers-title">Customer relationships</h2><div class="card"><div class="assistant-queue"><div class="lead"><b>Customer relationships</b><span class="small" id="customer-summary">No customers yet</span></div><div id="customer-portfolio" class="small">Finish projects to build customer loyalty.</div></div></div></section></details>
-<details class="aux-details game-advanced" id="work-records"><summary>Advanced Finance &amp; business records · credit, invoices and ledger</summary>
+<details class="management-pane boss-work-advanced" id="work-customers"><summary>Customer relationships · optional portfolio detail</summary><section aria-labelledby="customers-title"><h2 id="customers-title">Customer relationships</h2><div class="card"><div class="assistant-queue"><div class="lead"><b>Customer relationships</b><span class="small" id="customer-summary">No customers yet</span></div><div id="customer-portfolio" class="small">Finish projects to build customer loyalty.</div></div></div></section></details>
+<details class="aux-details game-advanced boss-work-advanced" id="work-records"><summary>Advanced Finance &amp; business records · credit, invoices and ledger</summary>
 <details class="aux-details" id="performance-panel">
 <summary>Business intelligence — Finance, Sales, Delivery &amp; People</summary>
 <div class="bi-report">
@@ -650,7 +676,9 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </details>
 </section>
 <section id="view-team" class="app-view" data-page="team" aria-label="People and delegation" hidden>
-<div class="view-intro"><h2>Team</h2><p>Reporting, careers and people needing support</p></div><section class="card leadership-context" id="leadership-context-team" aria-label="Team leadership focus"></section><details class="card" id="people-stories-panel"><summary>People stories · work-earned leadership choices</summary><p class="small">Real work, coaching and strain create stories at most once every 14 game days. The CEO may respond; ignoring a story spends nothing and never blocks existing managers.</p><div id="people-stories"></div></details>
+<div class="view-intro"><h2>Team</h2><p>Reporting, careers and people needing support</p></div>
+<section class="boss-team-story" id="boss-team-story" aria-label="Meet the people in your company"><span class="boss-visual-kicker">PEOPLE MAKE THE COMPANY</span><h2>Meet your team</h2><p id="boss-team-summary">Every teammate has their own strengths, challenges and career.</p><div class="boss-team-faces" id="boss-team-faces"></div></section>
+<section class="boss-focus-header" id="boss-team-options"><strong>What would you like to do with your team?</strong><p>Talk to a colleague, recruit someone or explore your office.</p><div class="boss-focus-buttons"><button type="button" data-boss-team-focus="people">💬 My colleagues</button><button type="button" data-boss-team-focus="hiring">🤝 Recruit & assistant</button><button type="button" data-boss-team-focus="stories">💛 People stories</button><button type="button" data-boss-team-focus="campus">🏢 Workplace</button><button type="button" data-boss-team-focus="all">📚 All team details</button></div></section><section class="card leadership-context" id="leadership-context-team" aria-label="Team leadership focus"></section><details class="card" id="people-stories-panel"><summary>People stories · work-earned leadership choices</summary><p class="small">Real work, coaching and strain create stories at most once every 14 game days. The CEO may respond; ignoring a story spends nothing and never blocks existing managers.</p><div id="people-stories"></div></details>
 <section class="card"><div class="lead"><b>People and management capacity</b><span class="small">Actual appointments</span></div><p class="small" id="team-simple-summary"></p><p class="small">Company-wide limits are approved at <b>Today → Management policies</b>. Optional empty positions are not urgent when teams can operate effectively.</p></section>
 <section class="card" id="campus-panel" aria-label="Living company campus">
 <div class="campus-head"><b>Live company campus</b><span class="small">Real people · saved premises · current work</span></div>
@@ -663,8 +691,8 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 </details>
 </section>
 <section class="card org-explorer"><div class="lead"><b>Company reporting tree</b><span id="org-people-count" class="small"></span></div><p class="small">Saved reporting lines and actual appointments. Career grade and delegated management authority are separate.</p><div id="org-explorer"></div></section><details class="aux-details game-advanced" id="leadership-details"><summary>Advanced leadership progression · governed by Management policies</summary><div id="leadership-growth"></div></details>
-<section aria-labelledby="team-title"><h2 id="team-title">Your people · by manager</h2><p class="small" id="team-wellbeing">Each employee appears once. Open a reporting group, then an employee for legitimate actions and promotion requirements.</p><div id="people"></div></section>
-<section aria-labelledby="hiring-title"><h2 id="hiring-title">Grow the team</h2><div class="card"><details class="aux-details" id="recruitment-panel"><summary>Search and hire employees</summary><div class="filter-grid"><div><label for="hire-skill">Specialty to find</label><select id="hire-skill"><option value="">Any skill</option><option value="sales">Sales</option><option value="mkt">Marketing</option><option value="prod">Product</option><option value="ops">Operations</option></select></div><div><label for="hire-interest">Personal interest</label><select id="hire-interest"><option value="">Any interest</option><option value="customers">Customer relationships</option><option value="creative">Creative projects</option><option value="technology">Technology</option><option value="learning">Learning and growth</option><option value="people">Helping colleagues</option><option value="systems">Better processes</option></select></div></div><p class="filter-note">Search is free; hiring has a one-time fee. Each teammate adds $1.50 per day in salary costs, before cost breakthroughs.</p><div class="buttons"><button type="button" id="search-talent">Search candidates</button></div><div class="candidate-list" id="candidates"></div></details><div class="team-culture"><b>Executive assistant · CEO support</b><p class="filter-note" id="assistant-status">No executive assistant appointed.</p><div class="buttons"><button type="button" id="hire-assistant">Hire executive assistant ($20)</button></div>
+<section id="boss-team-people-panel" aria-labelledby="team-title"><h2 id="team-title">Your people · by manager</h2><p class="small" id="team-wellbeing">Each employee appears once. Open a reporting group, then an employee for legitimate actions and promotion requirements.</p><div id="people"></div></section>
+<section id="boss-team-hiring-panel" aria-labelledby="hiring-title"><h2 id="hiring-title">Grow the team</h2><div class="card"><details class="aux-details" id="recruitment-panel"><summary>Search and hire employees</summary><div class="filter-grid"><div><label for="hire-skill">Specialty to find</label><select id="hire-skill"><option value="">Any skill</option><option value="sales">Sales</option><option value="mkt">Marketing</option><option value="prod">Product</option><option value="ops">Operations</option></select></div><div><label for="hire-interest">Personal interest</label><select id="hire-interest"><option value="">Any interest</option><option value="customers">Customer relationships</option><option value="creative">Creative projects</option><option value="technology">Technology</option><option value="learning">Learning and growth</option><option value="people">Helping colleagues</option><option value="systems">Better processes</option></select></div></div><p class="filter-note">Search is free; hiring has a one-time fee. Each teammate adds $1.50 per day in salary costs, before cost breakthroughs.</p><div class="buttons"><button type="button" id="search-talent">Search candidates</button></div><div class="candidate-list" id="candidates"></div></details><div class="team-culture"><b>Executive assistant · CEO support</b><p class="filter-note" id="assistant-status">No executive assistant appointed.</p><div class="buttons"><button type="button" id="hire-assistant">Hire executive assistant ($20)</button></div>
 <p class="filter-note">Hire for $20 or appoint an existing colleague. Configure exactly what the assistant may do; they never displace someone you assigned. Your high-stakes people decisions stay with you.</p>
 <details class="assistant-settings"><summary>Advanced assistant tasks · spending limits in CEO Management policies</summary>
 <label class="assistant-toggle"><input type="checkbox" id="policy-assign"> Auto-assign unstaffed deals to idle colleagues</label>
@@ -6412,7 +6440,7 @@ for(const f of urgent.slice(0,2)){const days=$("alert-days-"+f.d.id);if(days)day
 function refresh(){
 if(editableInteractionPending())return;
 v23Render();capitalRender();acquisitionRender();empireRender();peopleStoriesRender();factoryRender();
-campusRender();renderLeadershipContexts();renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderFounderStory();renderVisualWorld();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
+campusRender();renderLeadershipContexts();renderLadder();renderManagementPolicies();renderExecutiveOfficers();renderLaunchGuide();renderProperties();economyRender();worldRender();renderIdeaProgress();renderSectorChoices();renderCustomerPortfolio();renderPipeline();renderSkillMap();renderOrganization();renderBriefing();renderCEOFocus();executiveShow();renderCEODecisions();gameRender();renderFounderStory();renderVisualWorld();renderWorkTeamScenes();renderBI();renderLab();coachRender();for(const employee of S.team){const status=coachCareerStatus(employee),a=$("career-promotion-"+employee.id),b=$("career-readiness-"+employee.id);if(a)a.textContent=status.text;if(b)b.textContent=status.reason;const clarity=$("career-clarity-"+employee.id);if(clarity){const explanation=clearCareerRequirements(employee);if(clarity.innerHTML!==explanation)clarity.innerHTML=explanation;}}
 $("work-mode").value=S.pipeline.mode;$("pipeline-target").value=String(S.pipeline.target);$("auto-work").checked=S.pipeline.auto;
 $("focus-toggle").textContent=S.flow.focus?"Resume intake":"Enable Focus";
 $("focus-toggle").classList.toggle("selected",S.flow.focus);
@@ -6853,7 +6881,7 @@ $("boss-growth-focus").addEventListener("click",e=>{
 $("boss-settings-open").addEventListener("click",()=>{$("boss-settings-panel").hidden=!$("boss-settings-panel").hidden;renderGameSettings();});
 $("boss-settings-close").addEventListener("click",()=>{$("boss-settings-panel").hidden=true;renderGameSettings();});
 $("boss-settings-advanced").addEventListener("change",e=>{
- S.ui.advancedViews=!!e.target.checked;save();renderGrowthFocus();
+ S.ui.advancedViews=!!e.target.checked;save();renderGrowthFocus();renderWorkTeamScenes();
 });
 
 function renderVisualWorld(){
@@ -6901,6 +6929,70 @@ $("boss-visual-empire").addEventListener("click",e=>{
   if(target.tagName==="DETAILS")target.open=true;
   target.scrollIntoView?.({behavior:"auto",block:"start"});
  }
+});
+
+
+/* v26E2: scenes are pure presentation of canonical saved people and contracts. */
+const TEAM_SCENE_PANELS={people:"boss-team-people-panel",hiring:"boss-team-hiring-panel",
+ stories:"people-stories-panel",campus:"campus-panel"};
+function renderWorkTeamScenes(){
+ if(!S?.ui)return;
+ const simple=!S.ui.advancedViews;
+ document.body.classList.toggle("boss-team-scene-simple",simple);
+ const extra=!!S.ui.workReports;
+ for(const el of document.querySelectorAll("#view-work>.boss-work-advanced")){
+  if(extra)el.setAttribute("data-work-visible","");
+  else el.removeAttribute("data-work-visible");
+ }
+ $("boss-work-reports-toggle").setAttribute?.("aria-pressed",String(extra));
+ $("boss-work-reports-toggle").textContent=extra?"📊 Hide business reports ↑":"📊 Business reports & details ▾";
+ const unassigned=S.deals.filter(d=>!d.w).length,active=S.deals.length,completed=S.market.completed||0;
+ $("boss-work-title").textContent=unassigned?"A customer is waiting for your team":active?"Your team is delivering":"Find your next customer";
+ $("boss-work-summary").textContent=unassigned?unassigned+" unassigned real project(s). Pick a colleague and get to work.":
+  active?active+" active real contract(s) · "+completed+" completed deliveries.":
+  "Your team has completed "+completed+" projects. Explore new opportunities.";
+ $("boss-work-primary").textContent=unassigned?"Assign a teammate →":active?"See active projects →":"Explore opportunities →";
+ const people=S.team||[],selection=people.slice(0,5).map(p=>'<button type="button" class="boss-team-face" data-boss-person="'+p.id+'" title="Meet '+esc(p.n)+'">'+ceoPortrait(p.id%3,true)+
+ '<b>'+esc(p.n)+'</b><small>'+esc(p.role?.primary||"Team member")+'</small></button>').join("");
+ const faces=$("boss-team-faces");if(faces.innerHTML!==selection)faces.innerHTML=selection;
+ $("boss-team-summary").textContent=people.length+" real colleagues are part of your company. Tap a portrait to see their actual work and career.";
+ const team=$("view-team"),focus=S.ui.teamFocus,selected=TEAM_SCENE_PANELS[focus];
+ for(const child of (team.children||[])){
+  if(child.classList?.contains("view-intro")||["boss-team-story","boss-team-options"].includes(child.id))continue;
+  child.classList?.add("boss-team-hidden");
+  if(selected&&child.id===selected)child.setAttribute?.("data-team-visible","");
+  else child.removeAttribute?.("data-team-visible");
+ }
+ $("boss-team-options").querySelectorAll?.("[data-boss-team-focus]").forEach(b=>
+  b.setAttribute?.("aria-pressed",String(b.dataset.bossTeamFocus===focus)));
+}
+function focusTeamScene(kind){
+ if(kind==="details"){
+  S.ui.advancedViews=true;save();renderGrowthFocus();renderWorkTeamScenes();return;
+ }
+ if(kind==="simple"){
+  S.ui.advancedViews=false;S.ui.teamFocus=null;save();renderGrowthFocus();renderWorkTeamScenes();return;
+ }
+ const id=TEAM_SCENE_PANELS[kind];if(!id)return;
+ S.ui.teamFocus=kind;save();renderWorkTeamScenes();
+ if(kind==="hiring")$("recruitment-panel").open=true;
+ if(kind==="stories")$("people-stories-panel").open=true;
+ $(id)?.scrollIntoView?.({behavior:"auto",block:"nearest"});
+}
+$("boss-work-reports-toggle").addEventListener("click",()=>{
+ S.ui.workReports=!S.ui.workReports;save();renderWorkTeamScenes();
+});
+$("boss-work-primary").addEventListener("click",()=>{
+ const deal=S.deals.find(d=>!d.w);navigate("work",deal?.id);
+ $("deals")?.scrollIntoView?.({behavior:"auto",block:"nearest"});
+});
+$("boss-team-story").addEventListener("click",e=>{
+ const b=e.target.closest?.("button[data-boss-person]");if(!b)return;
+ if(S.team.some(p=>String(p.id)===b.dataset.bossPerson))focusTeamScene("people");
+});
+$("boss-team-options").addEventListener("click",e=>{
+ const b=e.target.closest?.("button[data-boss-team-focus]");
+ if(b)focusTeamScene(b.dataset.bossTeamFocus);
 });
 
 function renderFounderStory(){

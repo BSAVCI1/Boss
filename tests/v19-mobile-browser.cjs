@@ -131,6 +131,26 @@ document.addEventListener("DOMContentLoaded",async()=>{
   result.checks.eSimpleRestored=!byId("factory-panel")?.getClientRects().length&&!byId("growth-expand-businesses")?.getClientRects().length;
   byId("boss-settings-close")?.click();
   result.checks.eSettingsClosed=!byId("boss-settings-panel")?.getClientRects().length;
+
+  // v26E2: actual narrative Work & Team, real portraits and focused existing actions.
+  document.querySelector('.bottom-nav button[data-view="work"]').click();
+  result.checks.e2WorkMission=!!byId("boss-work-mission")?.getClientRects().length;
+  result.checks.e2WorkFinancialHidden=!byId("work-finance-snapshot")?.getClientRects().length;
+  byId("boss-work-reports-toggle")?.click();
+  result.checks.e2WorkFinancialReachable=!!byId("work-finance-snapshot")?.getClientRects().length;
+  byId("boss-work-reports-toggle")?.click();
+  document.querySelector('.bottom-nav button[data-view="team"]').click();
+  result.checks.e2FacesReal=byId("boss-team-faces")?.querySelectorAll("[data-boss-person]").length===Math.min(5,window.__bossQA.state().team.length);
+  result.checks.e2TeamInitiallySimple=!byId("boss-team-people-panel")?.getClientRects().length;
+  byId("boss-team-options")?.querySelector('[data-boss-team-focus="people"]')?.click();
+  result.checks.e2PeopleCanOpen=!!byId("boss-team-people-panel")?.getClientRects().length;
+  byId("boss-team-options")?.querySelector('[data-boss-team-focus="hiring"]')?.click();
+  result.checks.e2HiringCanOpen=!!byId("boss-team-hiring-panel")?.getClientRects().length&&!byId("boss-team-people-panel")?.getClientRects().length;
+  byId("boss-settings-open")?.click();
+  byId("boss-settings-advanced")?.click();
+  result.checks.e2DetailedRestored=!!byId("boss-team-people-panel")?.getClientRects().length&&!!byId("boss-team-hiring-panel")?.getClientRects().length;
+  byId("boss-settings-close")?.click();
+
   // Settings updates save asynchronously; do not race legacy team-budget fixtures.
   await new Promise(r=>setTimeout(r,700));
   window.__bossQA?.resetEditShield?.();
@@ -473,6 +493,9 @@ async function runBrowser(){
    assert.equal(outcome.checks.disclosureOpens,true,"Advanced CEO offices must expand");
    for(const field of ["c2ConversationVisible","c2NoRawStack","c2TopicsVisible","c2SingleAreaBeforeChoice","c2TargetedReveal"]){
     assert.equal(outcome.checks[field],true,"v26C2 interactive player office failed: "+field);
+   }
+   for(const field of ["e2WorkMission","e2WorkFinancialHidden","e2WorkFinancialReachable","e2FacesReal","e2TeamInitiallySimple","e2PeopleCanOpen","e2HiringCanOpen","e2DetailedRestored"]){
+    assert.equal(outcome.checks[field],true,"v26E2 Work/Team playable screen failed: "+field);
    }
    for(const field of ["eVisualBeforeDetails","eFactoryControlsFocused","eBusinessFocusVisible","eBackToWorld","eSettingsOpen","eAdvancedWorks","eSimpleRestored","eSettingsClosed"]){
     assert.equal(outcome.checks[field],true,"v26E visual-first and Settings mobile interaction failed: "+field);

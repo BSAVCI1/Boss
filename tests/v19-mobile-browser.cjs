@@ -35,11 +35,11 @@ document.addEventListener("DOMContentLoaded",async()=>{
    if(firstChoice)firstChoice.click();
    result.checks.v27ChapterCommitted=JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.v27Arc?.choice==="balanced"&&
      JSON.parse(localStorage.getItem("boss20")||"null")?.pipeline?.mode==="balanced";
-   result.checks.v27EndDayVisible=!!byId("boss-end-day")?.getClientRects()?.length;
    result.checks.storyPersistent=JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.ceoName==="Avery"&&
      JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.ceoLook===2&&
      JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.founderIntro==="done";
    document.querySelector('.bottom-nav button[data-view="today"]').click();
+   result.checks.v27EndDayVisible=!!byId("boss-end-day")?.getClientRects()?.length;
    byId("boss-story-detail-toggle").click();
    await new Promise(r=>setTimeout(r,90));
   }else{

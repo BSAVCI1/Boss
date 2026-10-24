@@ -153,8 +153,9 @@ test("730-day rented headquarters books exactly one daily property expense witho
  money(s);G.save();assert.equal(G.load().day,730);
 });
 
-test("v22 game pace runs 30 game days in 72/24/9 seconds at 1×/3×/8×",()=>{
- assert.ok(script.includes("2400/spd"));
+test("v27A day pace advances 30 game days in 900/300/112.5 seconds at 1×/3×/8×",()=>{
+ assert.ok(script.includes("const BOSS_DAY_MS=30000"));
+ assert.ok(script.includes("BOSS_DAY_MS/spd"));
  assert.ok(script.includes("S.day-S.flow.lastInterruptDay>=28"));
  assert.ok(!script.includes("Date.now()-S.flow.lastInterruptAt>=45000"));
 });

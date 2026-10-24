@@ -7,7 +7,7 @@ assert.match(html,/boss-seat-focus/);
 assert.equal((html.match(/function ceoConversation\(room\)/g)||[]).length,1);
 const nodes=new Map(),store=new Map();
 function el(id){if(!nodes.has(id))nodes.set(id,{id,innerHTML:"",textContent:"",value:"",hidden:false,disabled:false,style:{},dataset:{},
- classList:{add(){},remove(){},toggle(){}},setAttribute(){},removeAttribute(){},addEventListener(){},
+ classList:{add(){},remove(){},toggle(){}},setAttribute(){},removeAttribute(){},addEventListener(){},getContext(){return new Proxy({},{get:()=>()=>{}})},
  querySelector(){return null},querySelectorAll(){return []},scrollIntoView(){},parentNode:{open:true}});
  return nodes.get(id);}
 const host={document:{getElementById:el,querySelector:()=>el("q"),querySelectorAll:()=>[],body:el("body"),documentElement:el("html"),activeElement:null,addEventListener(){}},

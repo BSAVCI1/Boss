@@ -60,7 +60,9 @@ test("service line and factory badges require canonical paid installations",()=>
  s.exec.lines.push({key:"marketing",spent:120,since:s.day});
  assert.equal(G.project().find(x=>x.id==="line").earned,true);
  assert.equal(G.project().find(x=>x.id==="plant").earned,false);
- s.factory.installed=true;
+ s.factory.installed=true;s.factory.siteId=712;
+ assert.equal(G.project().find(x=>x.id==="plant").earned,false,"inactive or missing factory site is not active production");
+ s.exec.property.sites.push({id:712,status:"active",type:"office",unitKey:null});
  assert.equal(G.project().find(x=>x.id==="plant").earned,true);
  assert.ok(G.wall().includes("🏪"));assert.ok(G.wall().includes("🏭"));
 });

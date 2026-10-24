@@ -4693,7 +4693,8 @@ function v28MentorPair(){
  for(const learner of S.team){
   if(learner.id===S.ops.assistantId||learner.career.autoRest||learner.career.recoveryDays>0)continue;
   if(learner.career.satisfaction>73||learner.career.stress>=78)continue;
-  const relevant=(LIKED_SKILLS[learner.role?.primary]||KEYS).slice().sort((a,b)=>learner.s[a]-learner.s[b]);
+  const roleSkills={sales:["sales","mkt"],mkt:["mkt","sales"],prod:["prod","ops"],ops:["ops","prod"]};
+  const relevant=(roleSkills[learner.role?.primary]||KEYS).slice().sort((a,b)=>learner.s[a]-learner.s[b]);
   for(const skill of relevant){
    const mentor=S.team.filter(x=>x.id!==learner.id&&x.id!==S.ops.assistantId&&
     x.career.stress<72&&!x.career.autoRest&&x.career.recoveryDays===0&&x.s[skill]>=learner.s[skill]+.18)

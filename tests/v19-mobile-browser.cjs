@@ -30,6 +30,12 @@ document.addEventListener("DOMContentLoaded",async()=>{
    result.checks.realFirstAssignment=!!assignButton;
    if(assignButton)assignButton.click();
    await new Promise(r=>setTimeout(r,90));
+   result.checks.v27ChapterOffered=!!byId("boss-v27-chapter")?.textContent?.includes("What kind of company");
+   const firstChoice=byId("boss-v27-chapter")?.querySelector('[data-v27-choice="balanced"]');
+   if(firstChoice)firstChoice.click();
+   result.checks.v27ChapterCommitted=JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.v27Arc?.choice==="balanced"&&
+     JSON.parse(localStorage.getItem("boss20")||"null")?.pipeline?.mode==="balanced";
+   result.checks.v27EndDayVisible=!!byId("boss-end-day")?.getClientRects()?.length;
    result.checks.storyPersistent=JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.ceoName==="Avery"&&
      JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.ceoLook===2&&
      JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.founderIntro==="done";
@@ -39,7 +45,10 @@ document.addEventListener("DOMContentLoaded",async()=>{
   }else{
    result.checks.storyPaused=true;result.checks.characterChoices=true;result.checks.assistantOpening=true;
    result.checks.realFirstAssignment=true;result.checks.storyPersistent=true;
+   result.checks.v27ChapterOffered=true;result.checks.v27ChapterCommitted=true;result.checks.v27EndDayVisible=true;
   }
+  if(!result.checks.v27ChapterOffered||!result.checks.v27ChapterCommitted||!result.checks.v27EndDayVisible)
+   throw Error("v27A chapter/mode/End Day failed: "+JSON.stringify({offered:result.checks.v27ChapterOffered,choice:result.checks.v27ChapterCommitted,endDay:result.checks.v27EndDayVisible}));
   result.checks.storyManagementAccessible=!!byId("boss-founder-hero")&&
     byId("boss-story-detail-toggle").getAttribute("aria-expanded")==="true";
   // v22.4D browser acceptance for simplified but still accessible management.
@@ -329,7 +338,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
    const originalGMValue=gmPicker.value,originalWorkerValue=workerPicker.value;
    const pickerDay=Number(byId("day")?.textContent?.replace("Day ",""));
    gmPicker.focus();gmPicker.dispatchEvent(new Event("pointerdown",{bubbles:true}));
-   await new Promise(r=>setTimeout(r,1600)); // More than three active 3x simulation ticks.
+   await new Promise(r=>setTimeout(r,11500)); // v27: one real 3× 10-second tick with picker open.
    result.checks.nativeGMDropdownStable=gmPicker===byId("unit-gm-technology")&&gmPicker.isConnected&&gmPicker.value===originalGMValue;
    result.checks.nativeTeammateDropdownStable=workerPicker===byId("unit-employee-technology")&&workerPicker.isConnected&&workerPicker.value===originalWorkerValue;
    const liveDay=Number(JSON.parse(localStorage.getItem("boss20")||"null")?.day);

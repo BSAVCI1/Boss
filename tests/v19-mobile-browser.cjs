@@ -40,15 +40,25 @@ document.addEventListener("DOMContentLoaded",async()=>{
      JSON.parse(localStorage.getItem("boss20")||"null")?.ui?.founderIntro==="done";
    document.querySelector('.bottom-nav button[data-view="today"]').click();
    result.checks.v27EndDayVisible=!!byId("boss-end-day")?.getClientRects()?.length;
+   result.checks.v27DailyBriefVisible=!!byId("boss-v27-day")&&!byId("boss-v27-day").hidden&&
+    !!byId("boss-v27-day-prompt")?.textContent?.trim()&&
+    !!byId("boss-v27-day-facts")?.textContent?.includes("assigned projects");
+   result.checks.v27DailyClockVisible=!!byId("boss-v27-day-phase")?.textContent?.trim()&&
+    !!byId("boss-v27-day-remaining")?.textContent?.trim()&&
+    !!byId("boss-v27-day-progress")&&
+    !!byId("boss-v27-day-work")&&!!byId("boss-v27-day-team");
    byId("boss-story-detail-toggle").click();
    await new Promise(r=>setTimeout(r,90));
   }else{
    result.checks.storyPaused=true;result.checks.characterChoices=true;result.checks.assistantOpening=true;
    result.checks.realFirstAssignment=true;result.checks.storyPersistent=true;
    result.checks.v27ChapterOffered=true;result.checks.v27ChapterCommitted=true;result.checks.v27EndDayVisible=true;
+   result.checks.v27DailyBriefVisible=true;result.checks.v27DailyClockVisible=true;
   }
   if(!result.checks.v27ChapterOffered||!result.checks.v27ChapterCommitted||!result.checks.v27EndDayVisible)
    throw Error("v27A chapter/mode/End Day failed: "+JSON.stringify({offered:result.checks.v27ChapterOffered,choice:result.checks.v27ChapterCommitted,endDay:result.checks.v27EndDayVisible}));
+  if(!result.checks.v27DailyBriefVisible||!result.checks.v27DailyClockVisible)
+   throw Error("v27D daily briefing or clock hidden/blank at real mobile width");
   result.checks.storyManagementAccessible=!!byId("boss-founder-hero")&&
     byId("boss-story-detail-toggle").getAttribute("aria-expanded")==="true";
   // v22.4D browser acceptance for simplified but still accessible management.

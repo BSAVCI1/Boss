@@ -5906,7 +5906,7 @@ $("game-journey-map").innerHTML=stages.map(([name,done])=>'<span class="game-jou
 const rivals=S.world?.rivals||[],rivalText=rivals.map(q=>'<div class="game-rival"><span class="game-rival-icon">◆</span><span><b>'+esc(q.name)+'</b><small>'+(q.acquired?'Acquired · ':'')+esc(q.archetype)+' approach · '+q.wins+' wins</small></span></div>').join("");
 if($("game-rivals").innerHTML!==rivalText)$("game-rivals").innerHTML=rivalText;
 }
-function gameAdvanceDays(limit=1){if(S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;if(S.ui?.founderIntro&&S.ui.founderIntro!=="done")return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<Math.min(7,Math.max(1,limit))&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev||indexedWriteCount>0;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
+function gameAdvanceDays(limit=7){if(S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return;if(S.ui?.founderIntro&&S.ui.founderIntro!=="done")return;const previous=paused;clearTimeout(clock);paused=false;let count=0;for(let i=0;i<Math.min(7,Math.max(1,limit))&&!S.ev;i++){const day=S.day;tick();if(S.day===day)break;count++;}paused=previous||!!S.ev||indexedWriteCount>0;paintControls();schedule();if(!count)gameToast("Make your current decision before continuing.");}
 
 // Strategic advice is not a pending CEO approval. No money moves here.
 function ceoPremisesOpportunity(){

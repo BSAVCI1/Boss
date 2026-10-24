@@ -659,6 +659,8 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .boss-v28-friction .friction-options{display:grid;gap:7px;margin-top:10px}
 .boss-v28-friction button{border:1px solid #a8bbc9;background:#fff;color:#31546c;min-height:44px;border-radius:10px;text-align:left;padding:8px 10px;font-size:12px;font-weight:750}
 @media(max-width:370px){.boss-v28-friction{padding:10px}.boss-v28-friction .friction-people svg{width:45px;height:55px}}
+/* v28C — true officer outcomes and mandate status beneath recurring executive portraits. */
+.boss-exec-seat .boss-seat-focus{display:block;line-height:1.25;font-size:10px;font-weight:500;opacity:.75;max-width:100%;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -6966,6 +6968,41 @@ const BOSS_MGMT_TOPICS={
  ["ceo-records","📋 Executive records","Detailed business information"],
  ["today-options","⚙️ Controls and preferences","Advanced settings"]]
 };
+/* v28C — recurring executive voices driven by the real roster, mandate and results.
+   Pure presentation: no inferred permission, salary, project, people or cash movement. */
+function v28cOfficerStatus(key){
+ if(key==="CEO")return "YOU · CEO";
+ if(key==="Assistant")return "ASSISTANT · BRIEFING ONLY";
+ const role={CFO:"cfo",COO:"coo",CHRO:"hr"}[key];
+ if(!role)return key;
+ const appointed=person(S.exec?.officers?.[role]?.id);
+ const active=!!executiveOfficer(role,"act");
+ return key+" · "+(appointed?(active?"AUTHORIZED · 90-DAY MANDATE":"ADVISORY · NO ACTIVE MANDATE"):"VACANT");
+}
+function v28cOfficerImpact(key){
+ const day=S.day;
+ if(key==="CFO"){
+  const daily=S.team.reduce((n,p)=>n+dailySalary(p),0)+propertySummary().daily;
+  const cover=daily>0?Math.max(0,Math.floor(S.cash/daily)):null;
+  return cover===null?"No recurring payroll/premises cost":cover+" days of payroll and premises cover";
+ }
+ if(key==="COO"){
+  const cases=managementOps().history.filter(x=>x.role==="COO"&&x.kind==="shared"&&x.day>=day-30);
+  return cases.length?cases.length+" real specialist-sharing action"+(cases.length===1?"":"s")+" in 30 days":
+   S.deals.filter(d=>!d.w).length+" customer contracts awaiting assignment";
+ }
+ if(key==="CHRO"){
+  const o=S.exec?.officers?.hr;
+  const actions=(o?.history||[]).filter(x=>x.day>=day-30&&(x.action==="people"||x.action==="priority-mediation"));
+  const hires=actions.reduce((n,x)=>n+(x.hired||0),0);
+  const recovery=actions.reduce((n,x)=>n+(x.recovery||0),0);
+  const mediation=actions.filter(x=>x.action==="priority-mediation").length;
+  return actions.length?hires+" hires · "+recovery+" recovery assignments · "+mediation+" mediations (30d)":
+   S.team.filter(p=>p.career.stress>=65||p.career.burnout>=30).length+" colleagues with measured strain";
+ }
+ if(key==="Assistant")return ceoDecisionInventory().approvals+" real CEO approvals waiting";
+ return S.market.completed+" completed customer deliveries";
+}
 function ceoConversation(room){
  const appointed=S.exec?.officers||{};
  const roles={CEO:null,Assistant:person(S.ops.assistantId),CFO:person(appointed.cfo?.id),
@@ -6975,21 +7012,58 @@ function ceoConversation(room){
  const key=(requested&&(requested==="CEO"||roles[requested]))?requested:roles[preferred]?preferred:"CEO";
  const p=roles[key],who=key==="CEO"?(S.ui.ceoName||"Founder"):p.n;
  const face=key==="CEO"?ceoPortrait(Number(S.ui.ceoLook)||0,true):ceoPortrait(p.id%3,true);
- const approvals=ceoDecisionInventory().approvals,unassigned=S.deals.filter(d=>!d.w).length;
- const words=key==="CFO"?"Our cash is "+biCurrency(S.cash)+". We have "+(S.market.completed||0)+" completed customer deliveries. What should we examine?":
- key==="COO"?"There are "+S.team.length+" colleagues and "+unassigned+" unassigned contracts. Let us concentrate on what needs your decision.":
- key==="CHRO"?"We have "+S.team.length+" colleagues. Let us look at their development, leadership responsibilities and real employee situations.":
- key==="Assistant"?(approvals?approvals+" requests await your approval. I can take you to the actual decision.":"Good morning, Boss. No approvals are currently pending. What shall we focus on?"):
- room==="business"?"We have "+(S.exec.lines?.length||0)+" launched businesses and "+biCurrency(S.cash)+" in cash. Which area should we explore?":
- room==="leadership"?"Our company has "+S.team.length+" colleagues. Let us give them the right responsibilities.":
- room==="records"?"Our business records are available whenever you want to review them.":"Our company is moving. You can focus on what matters and delegate the rest.";
- return {key,p,who,face,words};
+ const approvals=ceoDecisionInventory().approvals;
+ const unassigned=S.deals.filter(d=>!d.w).length;
+ const threatened=S.deals.filter(d=>d.dl<=5&&d.prog<d.work).length;
+ const active=key==="CFO"?!!executiveOfficer("cfo","protect"):
+  key==="COO"?!!executiveOfficer("coo","coordinate"):
+  key==="CHRO"?!!executiveOfficer("hr","people"):false;
+ let words;
+ if(key==="CFO"){
+  const daily=S.team.reduce((n,e)=>n+dailySalary(e),0)+propertySummary().daily;
+  const reserve=daily*30;
+  words="I look after the downside before we invest. Cash: "+biCurrency(S.cash)+
+   ". We have "+(S.market.completed||0)+" completed customer deliveries. Thirty-day payroll and premises reserve: "+biCurrency(reserve)+". "+
+   (active?(S.cash<reserve?"I am holding delegated spending against that reserve.":"My active mandate guards this reserve when spending is proposed."):
+    "I can explain the numbers; spending veto requires a CEO-granted mandate.");
+ }else if(key==="COO"){
+  const latest=managementOps().history.find(x=>x.role==="COO"&&x.kind==="shared"&&x.day>=S.day-30);
+  const colleague=latest&&person(latest.employeeId);
+  words="My job is keeping real customers moving. "+unassigned+" unassigned contracts; "+threatened+
+   " near-deadline deliveries. "+(latest&&colleague?
+    "On Day "+latest.day+" I coordinated "+colleague.n+"'s recorded temporary unit support. ":
+    "No COO-led specialist transfer is recorded in the last 30 days. ")+
+   (active?"I can coordinate within the active mandate.":"I need your delegation before I can act on staffing.");
+ }else if(key==="CHRO"){
+  const strained=S.team.filter(e=>e.career.stress>=65||e.career.burnout>=30).length;
+  const recent=(appointed.hr?.history||[]).find(x=>x.day>=S.day-30&&(x.action==="people"||x.action==="priority-mediation"));
+  const a=recent&&person(recent.employeeId),b=recent&&person(recent.peerId);
+  words="I measure people by their growth and wellbeing, not just output. "+strained+
+   " colleagues have elevated stress or burnout. "+
+   (recent?.action==="priority-mediation"&&a&&b?"On Day "+recent.day+" I mediated the real priorities of "+a.n+" and "+b.n+". ":
+    recent?.action==="people"?"On Day "+recent.day+" I recorded "+(recent.hired||0)+" authorized hires and "+(recent.recovery||0)+" recovery assignments. ":
+    "No delegated people intervention is recorded in the last 30 days. ")+
+   (active?"The CEO-approved people mandate is active.":"People interventions require an active CEO mandate.");
+ }else if(key==="Assistant"){
+  const risk=executiveWeeklySnapshot().risks;
+  words=approvals?approvals+" real decisions await your approval; "+risk+
+    " customer deadlines need attention. I can take you straight to the right topic.":
+   "Good morning. You have no outstanding CEO approvals. "+risk+
+   " delivery risks are visible in the weekly briefing; routine work stays with your managers.";
+ }else{
+  words=room==="business"?"We have "+(S.exec.lines?.length||0)+" launched businesses and "+biCurrency(S.cash)+
+    " in cash. Let us decide where to grow.":
+   room==="leadership"?"Our "+S.team.length+" colleagues each have responsibilities and real development goals. Let us lead them well.":
+   room==="records"?"Your actual records and settings remain here whenever you need them.":
+   "The company is moving. Choose the next consequential CEO decision; let your leaders handle the routine.";
+ }
+ return {key,p,who,face,words,status:v28cOfficerStatus(key),impact:v28cOfficerImpact(key)};
 }
 function renderCEOConversation(room){
  const selected=S.ui.managementTopic,rows=BOSS_MGMT_TOPICS[room]||[],speaker=ceoConversation(room);
  const avatar=$("boss-conversation-face");if(avatar.innerHTML!==speaker.face)avatar.innerHTML=speaker.face;
  $("boss-conversation-name").textContent=speaker.who;
- $("boss-conversation-status").textContent=speaker.key==="CEO"?"YOU · CEO":speaker.key+" · APPOINTED";
+ $("boss-conversation-status").textContent=speaker.status+" · "+speaker.impact;
  $("boss-conversation-words").textContent=speaker.words;
  const buttons=rows.map(([id,title,hint])=>'<button type="button" data-boss-topic="'+id+'" aria-pressed="'+(selected===id)+'"><span>'+title+'</span><small>'+hint+'</small></button>').join("");
  const topics=$("boss-topic-actions");if(topics.innerHTML!==buttons)topics.innerHTML=buttons;
@@ -7024,7 +7098,7 @@ function renderCEOOffice(){
   const face=isCEO?ceoPortrait(Number(S.ui.ceoLook)||0,true):p?ceoPortrait(p.id%3,true):'<div class="boss-exec-vacant" aria-hidden="true">+</div>';
   const label=isCEO?(S.ui.ceoName||"Founder"):p?p.n:"Vacant";
   const text=role==="CEO"?"Your character":p?"Appointed leader":"Not appointed";
-  return '<button type="button" class="boss-exec-seat" data-boss-seat="'+role+'" aria-selected="'+((S.ui.managementSpeaker||"CEO")===role)+'">'+face+'<b>'+esc(role)+'</b><span>'+esc(label)+'</span></button>';
+  return '<button type="button" class="boss-exec-seat" data-boss-seat="'+role+'" aria-selected="'+((S.ui.managementSpeaker||"CEO")===role)+'">'+face+'<b>'+esc(role)+'</b><span>'+esc(label)+'</span><small class="boss-seat-focus">'+esc(p||isCEO?v28cOfficerImpact(role):"Seat available")+'</small></button>';
  }).join("");
  const seats=$("boss-room-people");if(seats.innerHTML!==markup)seats.innerHTML=markup;
  $("boss-room-tabs").querySelectorAll?.("button[data-boss-room]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.bossRoom===room)));

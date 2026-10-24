@@ -649,6 +649,16 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .boss-v28-ambition .ambition-progress{height:7px;border-radius:8px;background:#cfdbdc;overflow:hidden;margin:9px 0}
 .boss-v28-ambition .ambition-progress div{height:100%;background:linear-gradient(90deg,#6db6a6,#d9b16c)}
 @media(max-width:360px){.boss-v28-ambition{padding:10px}.boss-v28-ambition .ambition-person svg{height:66px;width:57px}}
+/* v28B — genuine competing client priorities and governed people mediation. */
+.boss-v28-friction[hidden]{display:none!important}
+.boss-v28-friction{border:1px solid #c2c5d6;border-radius:17px;padding:14px;margin:0 0 14px;background:linear-gradient(130deg,#f4ebd8,#e4edf7 74%);color:#33465b}
+.boss-v28-friction .friction-people{display:flex;gap:8px;align-items:center}.boss-v28-friction .friction-people svg{width:54px;height:64px}
+.boss-v28-friction h3{font-size:17px;margin:2px 0 6px}.boss-v28-friction p{font-size:12px;line-height:1.5;margin:8px 0}
+.boss-v28-friction small{font-size:10px;color:#526679;letter-spacing:1.1px;font-weight:900}
+.boss-v28-friction .friction-proof{border:1px solid #d4c6b4;background:#ffffffb8;border-radius:9px;padding:9px;font-size:11px}
+.boss-v28-friction .friction-options{display:grid;gap:7px;margin-top:10px}
+.boss-v28-friction button{border:1px solid #a8bbc9;background:#fff;color:#31546c;min-height:44px;border-radius:10px;text-align:left;padding:8px 10px;font-size:12px;font-weight:750}
+@media(max-width:370px){.boss-v28-friction{padding:10px}.boss-v28-friction .friction-people svg{width:45px;height:55px}}
 </style>
 </head>
 <body>
@@ -666,7 +676,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong><span id="boss-game-calendar">Week 1 · Monday</span></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
-<section id="boss-founder-hero" class="boss-hero" aria-label="My company story"><div class="boss-hero-top"><div id="boss-ceo-face" class="boss-hero-face" aria-hidden="true"></div><div><span class="boss-hero-kicker" id="boss-story-stage">My company</span><h2 id="boss-story-title">Your next chapter</h2><p id="boss-story-copy">The company grows through real decisions.</p></div></div><div id="boss-office-scene" class="boss-hero-room" aria-label="Illustrated view of actual employees at work"></div><span class="boss-hero-tag" id="boss-scene-caption">Your people at work</span><div class="boss-hero-action"><button type="button" id="boss-story-next" class="boss-hero-main">Start with your customers →</button><button type="button" id="boss-story-detail-toggle" aria-expanded="false">Management dashboard</button><button type="button" id="boss-end-day" aria-label="Finish today and advance one game day">🌙 Finish day →</button></div></section><section id="boss-v27-day" class="boss-v27-day" aria-label="Today at your company" hidden><h3>☀️ Today at your company</h3><p id="boss-v27-day-prompt"></p><div class="day-clock"><b id="boss-v27-day-phase">Planning</b><span id="boss-v27-day-remaining">30s until tomorrow</span></div><div class="day-rail"><div id="boss-v27-day-progress"></div></div><div class="day-facts" id="boss-v27-day-facts"></div><div class="day-actions"><button type="button" id="boss-v27-day-work">📋 Review actual work</button><button type="button" id="boss-v27-day-team">👥 Check on people</button></div><div id="boss-v27-day-summary" class="day-summary" hidden></div></section><section class="boss-v27-chapter" id="boss-v27-chapter" hidden aria-label="My CEO story chapter" aria-live="polite"></section><section class="boss-v27-person" id="boss-v27-person" hidden aria-label="A real colleague wants to talk" aria-live="polite"></section><section class="boss-v28-ambition" id="boss-v28-ambition" hidden aria-label="An employee ambition and real relationship" aria-live="polite"></section><section class="boss-v27-awards" id="boss-v27-awards" hidden aria-label="Earned company trophies"><h3>🏆 Earned company milestones <span id="boss-v27-award-count"></span></h3><div class="award-grid" id="boss-v27-award-grid"></div><p class="award-detail" id="boss-v27-award-proof" role="status"></p><p id="boss-v27-award-next"></p></section><div id="boss-work-guide" class="boss-guide" hidden role="status">Choose a real project and assign a teammate. The clock is paused until you do.</div>
+<section id="boss-founder-hero" class="boss-hero" aria-label="My company story"><div class="boss-hero-top"><div id="boss-ceo-face" class="boss-hero-face" aria-hidden="true"></div><div><span class="boss-hero-kicker" id="boss-story-stage">My company</span><h2 id="boss-story-title">Your next chapter</h2><p id="boss-story-copy">The company grows through real decisions.</p></div></div><div id="boss-office-scene" class="boss-hero-room" aria-label="Illustrated view of actual employees at work"></div><span class="boss-hero-tag" id="boss-scene-caption">Your people at work</span><div class="boss-hero-action"><button type="button" id="boss-story-next" class="boss-hero-main">Start with your customers →</button><button type="button" id="boss-story-detail-toggle" aria-expanded="false">Management dashboard</button><button type="button" id="boss-end-day" aria-label="Finish today and advance one game day">🌙 Finish day →</button></div></section><section id="boss-v27-day" class="boss-v27-day" aria-label="Today at your company" hidden><h3>☀️ Today at your company</h3><p id="boss-v27-day-prompt"></p><div class="day-clock"><b id="boss-v27-day-phase">Planning</b><span id="boss-v27-day-remaining">30s until tomorrow</span></div><div class="day-rail"><div id="boss-v27-day-progress"></div></div><div class="day-facts" id="boss-v27-day-facts"></div><div class="day-actions"><button type="button" id="boss-v27-day-work">📋 Review actual work</button><button type="button" id="boss-v27-day-team">👥 Check on people</button></div><div id="boss-v27-day-summary" class="day-summary" hidden></div></section><section class="boss-v27-chapter" id="boss-v27-chapter" hidden aria-label="My CEO story chapter" aria-live="polite"></section><section class="boss-v27-person" id="boss-v27-person" hidden aria-label="A real colleague wants to talk" aria-live="polite"></section><section class="boss-v28-ambition" id="boss-v28-ambition" hidden aria-label="An employee ambition and real relationship" aria-live="polite"></section><section class="boss-v28-friction" id="boss-v28-friction" hidden aria-label="Real employee priorities need resolution" aria-live="polite"></section><section class="boss-v27-awards" id="boss-v27-awards" hidden aria-label="Earned company trophies"><h3>🏆 Earned company milestones <span id="boss-v27-award-count"></span></h3><div class="award-grid" id="boss-v27-award-grid"></div><p class="award-detail" id="boss-v27-award-proof" role="status"></p><p id="boss-v27-award-next"></p></section><div id="boss-work-guide" class="boss-guide" hidden role="status">Choose a real project and assign a teammate. The clock is paused until you do.</div>
 <section id="boss-executive-room" class="boss-executive-room" aria-label="My executive office" hidden><button id="boss-room-close" type="button" class="boss-room-close">← Back to my company</button><div class="boss-room-kicker">THE CEO OFFICE · YOUR PEOPLE</div><h2 id="boss-room-title">Welcome to your office</h2><p id="boss-room-summary">Your leadership team brings the important decisions to you.</p><div id="boss-room-people" class="boss-exec-people" aria-label="Actual appointed leaders"></div><div class="boss-exec-desk" aria-hidden="true"></div><div class="boss-room-tabs" id="boss-room-tabs"><button type="button" data-boss-room="decisions">✨ Decisions<small>What needs me today</small></button><button type="button" data-boss-room="leadership">🤝 My leaders<small>People and strategy</small></button><button type="button" data-boss-room="business">🏢 Business<small>Results and investments</small></button><button type="button" data-boss-room="records">📚 Back office<small>Reports and settings</small></button></div><div class="boss-conversation" id="boss-conversation" aria-label="Executive conversation"><div id="boss-conversation-face" class="boss-conversation-face" aria-hidden="true"></div><div><div id="boss-conversation-name" class="boss-conversation-name"></div><div id="boss-conversation-status" class="boss-conversation-status"></div><div id="boss-conversation-words" class="boss-conversation-words" role="status"></div></div></div><div class="boss-topic-title">What would you like to discuss?</div><div id="boss-topic-actions" class="boss-topic-actions" aria-label="Management conversation choices"></div><div class="boss-topic-foot"><span id="boss-room-action">Choose one topic. The full records remain available.</span><button id="boss-topic-back" type="button" hidden>Close details ↑</button></div><button type="button" id="boss-room-all" class="small" style="margin-top:9px;min-height:35px;width:100%">Full management details ▾</button></section><section class="card" id="v23-today" aria-label="Business portfolio overview"></section><section class="card" id="capital-today" aria-label="Capital position"></section><section class="card" id="people-story-today" aria-label="Real people stories"></section><section class="card" id="factory-today" aria-label="Physical factory operations"></section><section class="card" id="acquisition-today" aria-label="Acquisitions and competition"></section><section class="card" id="ceo-priority-card" aria-label="CEO command center">
 <div class="lead"><b>CEO command center</b><span class="small">Decisions and delegated work</span></div>
 <div id="ceo-priority-content"><p class="small">Preparing your company priorities.</p></div>
@@ -1772,7 +1782,7 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
-ensureOrganization(s);ensureExecutive(s);ensureBI(s);restoreRecordedLines(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureCapital(s);ensureWorld(s);ensureAcquisitions(s);ensurePeopleStories(s);ensureAmbitions(s);ensureFactory(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
+ensureOrganization(s);ensureExecutive(s);ensureBI(s);restoreRecordedLines(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureCapital(s);ensureWorld(s);ensureAcquisitions(s);ensurePeopleStories(s);ensureAmbitions(s);ensureTeamPriorities(s);ensureFactory(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
 for(const d of s.deals)if(!Number.isFinite(d.agreedFee))d.agreedFee=d.biBooked&&Number.isFinite(d.bookVal)?d.bookVal:estimatedFee(d,s);
 persistedRevision=Number(s._saveRevision)||0;return s;}catch(e){return null;}}
 const BI_FIELDS=["deliveryEligibleDays","deliveryRoleWorkDays","revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
@@ -3074,7 +3084,7 @@ S.market.customers[d.cl]=prev;}
 function fresh(){
  ceoDraftPriority=null;saveConflict=false;saveErrorReason="";paused=false;
  try{persistedRevision=Number(JSON.parse(localStorage.getItem(KEY)||"null")?._saveRevision)||0;}catch{persistedRevision=0;}
- S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now(),lastInterruptDay:0},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureCapital(S);ensureWorld(S);ensureAcquisitions(S);ensurePeopleStories(S);ensureAmbitions(S);ensureFactory(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");S.ui.founderIntro="choose";S.ui.ceoLook=0;S.ui.ceoName="Founder";S.ui.storyDetails=false;S.ui.v27Arc={choice:null};}
+ S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now(),lastInterruptDay:0},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureCapital(S);ensureWorld(S);ensureAcquisitions(S);ensurePeopleStories(S);ensureAmbitions(S);ensureTeamPriorities(S);ensureFactory(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");S.ui.founderIntro="choose";S.ui.ceoLook=0;S.ui.ceoName="Founder";S.ui.storyDetails=false;S.ui.v27Arc={choice:null};}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="factory")return "Operating owned production line";if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.t==="exec")return "Executive leadership";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -3129,7 +3139,7 @@ unitPayrollDay();
  const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(Math.max(0,S.cash),salary);S.cash-=actuallyPaid;
 biMoney("payroll",salary,"Daily payroll",actuallyPaid);
 // Pay prior procurement liabilities after payroll, without silently creating negative cash.
-contractProcurementSettle();acquisitionDay();peopleStoryDay();v28AmbitionDay();factoryDay();
+contractProcurementSettle();acquisitionDay();peopleStoryDay();v28AmbitionDay();v28TeamPrioritiesDay();factoryDay();
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&S.day-S.flow.lastInterruptDay>=28)startDilemma();
 labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
@@ -4772,6 +4782,107 @@ function v28AmbitionChoose(id,choice){
   S.ambitions.history=S.ambitions.history.slice(-15);
   S.ambitions.offer=null;
   return true;
+ });
+}
+/* v28B — a work-priority conflict is based on TWO actual assigned clients and the
+   strained employee's measured workload. It does not claim a fabricated quarrel. */
+function ensureTeamPriorities(st){
+ if(!st.teamPriorities||typeof st.teamPriorities!=="object")
+  st.teamPriorities={version:1,lastScan:st.day,lastOffer:-99,nextId:1,pending:null,history:[]};
+ const d=st.teamPriorities;
+ if(!Number.isFinite(d.lastScan))d.lastScan=st.day;
+ if(!Number.isFinite(d.lastOffer))d.lastOffer=-99;
+ if(!Number.isInteger(d.nextId)||d.nextId<1)d.nextId=1;
+ if(!Array.isArray(d.history))d.history=[];
+ d.history=d.history.filter(x=>x&&Number.isInteger(x.id)&&Number.isFinite(x.day)&&
+  ["align","recovery","delivery","officer","withdrawn"].includes(x.decision)).slice(-30);
+ if(d.pending&&(!Number.isInteger(d.pending.id)||!Number.isInteger(d.pending.employeeId)||
+   !Number.isInteger(d.pending.peerId)||!Number.isFinite(d.pending.day)))d.pending=null;
+ d.version=1;
+}
+function v28WorkPrioritiesPair(){
+ const assigned=S.deals.filter(d=>Number.isInteger(d.w)&&person(d.w)&&d.dl<=10);
+ const candidates=[];
+ for(const job of assigned){
+  const strained=person(job.w);
+  if(strained.career.stress<60&&strained.career.burnout<28)continue;
+  for(const otherJob of assigned){
+   if(job.id===otherJob.id||job.w===otherJob.w)continue;
+   const peer=person(otherJob.w);
+   if(peer.career.recoveryDays>0||peer.career.autoRest)continue;
+   candidates.push({strained,peer,job,otherJob});
+  }
+ }
+ candidates.sort((a,b)=>b.strained.career.stress-a.strained.career.stress||
+  a.job.dl-b.job.dl||a.strained.id-b.strained.id||a.peer.id-b.peer.id);
+ return candidates[0]||null;
+}
+function v28ResolvePriority(pending,decision,actor="CEO"){
+ const a=person(pending.employeeId),b=person(pending.peerId);
+ if(!a||!b)return false;
+ if(decision==="align"||decision==="officer"){
+  const relief=decision==="officer"?6:4;
+  a.career.stress=clamp(a.career.stress-relief);b.career.stress=clamp(b.career.stress-relief);
+  a.career.satisfaction=clamp(a.career.satisfaction+2);
+  b.career.satisfaction=clamp(b.career.satisfaction+2);
+ }else if(decision==="recovery"){
+  a.career.recoveryDays=Math.max(a.career.recoveryDays,3);
+  a.career.stress=clamp(a.career.stress-8);
+  a.career.satisfaction=clamp(a.career.satisfaction+5);
+ }else if(decision==="delivery"){
+  a.career.stress=clamp(a.career.stress+2);
+  a.career.satisfaction=clamp(a.career.satisfaction-3);
+ }else return false;
+ const state=S.teamPriorities;
+ state.history.push({id:pending.id,day:S.day,reported:pending.day,employeeId:a.id,peerId:b.id,
+  projectId:pending.projectId,peerProjectId:pending.peerProjectId,decision,actor,cost:0});
+ state.history=state.history.slice(-30);state.pending=null;
+ logIt(actor+" resolved competing real client priorities for "+a.n+" and "+b.n+
+  " via "+decision+" (no additional cash); actual contracts and deadlines unchanged.");
+ return true;
+}
+function v28TeamPrioritiesDay(){
+ const state=S.teamPriorities;if(!state)return;
+ if(state.pending&&(!person(state.pending.employeeId)||!person(state.pending.peerId)||
+  !S.deals.some(d=>d.id===state.pending.projectId&&d.w===state.pending.employeeId)||
+  !S.deals.some(d=>d.id===state.pending.peerProjectId&&d.w===state.pending.peerId))){
+  state.history.push({id:state.pending.id,day:S.day,reported:state.pending.day,employeeId:state.pending.employeeId,
+   peerId:state.pending.peerId,decision:"withdrawn",actor:"Actual client work changed",cost:0});
+  state.pending=null;
+ }
+ if(S.day<28||S.day%14!==0||state.lastScan===S.day)return;
+ state.lastScan=S.day;
+ if(state.pending||S.day-state.lastOffer<56||S.ambitions?.offer||
+   S.peopleStories?.items.some(x=>x.status==="open"&&person(x.personId)))return;
+ const pair=v28WorkPrioritiesPair();if(!pair)return;
+ const pending={id:state.nextId++,day:S.day,employeeId:pair.strained.id,peerId:pair.peer.id,
+  projectId:pair.job.id,peerProjectId:pair.otherJob.id,stress:pair.strained.career.stress,
+  firstClient:pair.job.cl,secondClient:pair.otherJob.cl,firstDeadline:pair.job.dl,secondDeadline:pair.otherJob.dl};
+ state.lastOffer=S.day;
+ const officer=executiveOfficer("hr","people");
+ if(officer){
+  v28ResolvePriority(pending,"officer",officer.n+" (authorized People Officer)");
+  const o=S.exec.officers.hr;
+  o.history.unshift({day:S.day,action:"priority-mediation",employeeId:pending.employeeId,
+   peerId:pending.peerId,mandate:"active people",cost:0});
+  o.history=o.history.slice(-32);
+ }else{
+  state.pending=pending;
+  logIt("Real competing client commitments require CEO attention: "+pair.strained.n+" ("+
+   pair.job.cl+") and "+pair.peer.n+" ("+pair.otherJob.cl+").");
+ }
+}
+function v28ChoosePriority(id,choice){
+ const state=S.teamPriorities,p=state?.pending;
+ if(!p||p.id!==id||!["align","recovery","delivery"].includes(choice)||
+   S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return false;
+ if(!person(p.employeeId)||!person(p.peerId))return false;
+ return unitCommit(()=>{
+  const current=S.teamPriorities.pending;
+  if(!current||current.id!==id)return false;
+  if(!S.deals.some(d=>d.id===current.projectId&&d.w===current.employeeId)||
+     !S.deals.some(d=>d.id===current.peerProjectId&&d.w===current.peerId))return false;
+  return v28ResolvePriority(current,choice);
  });
 }
 function peopleStoryEvidence(p){
@@ -7492,12 +7603,57 @@ $("boss-v28-ambition").addEventListener("click",e=>{
  const done=ok=>{if(ok){renderV28Ambition();gameToast("Your leadership decision is saved to real career records.");}};
  if(result&&typeof result.then==="function")result.then(done).catch(()=>{});else done(result);
 });
+function renderV28TeamPriorities(){
+ const root=$("boss-v28-friction");if(!root)return;
+ if(S.ui?.founderIntro&&S.ui.founderIntro!=="done"){root.hidden=true;return;}
+ const d=S.teamPriorities||{},issue=d.pending;
+ if(issue&&person(issue.employeeId)&&person(issue.peerId)){
+  const a=person(issue.employeeId),b=person(issue.peerId);
+  const html='<div class="friction-people">'+ceoPortrait(a.id%3,true)+ceoPortrait(b.id%3,true)+
+   '<div><small>Real team priorities · Day '+issue.day+'</small><h3>'+esc(a.n)+' and '+esc(b.n)+
+   ' need direction</h3></div></div>'+
+   '<p>“We are both delivering customer commitments, but '+esc(a.n)+
+   ' has growing work pressure. Which priority should the team protect?”</p>'+
+   '<div class="friction-proof"><b>Evidence from actual jobs:</b> '+esc(a.n)+
+   ' handles '+esc(issue.firstClient)+' ('+issue.firstDeadline+' game days to deadline); '+
+   esc(b.n)+' handles '+esc(issue.secondClient)+' ('+issue.secondDeadline+
+   ' days). Measured strain for '+esc(a.n)+': '+Math.round(a.career.stress)+'/100.</div>'+
+   '<div class="friction-options">'+
+   '<button data-v28-conflict="'+issue.id+'" data-v28-resolution="align">🤝 Align priorities · Small stress relief for both, no charge</button>'+
+   '<button data-v28-conflict="'+issue.id+'" data-v28-resolution="recovery">🛌 Protect '+esc(a.n)+
+   ' with 3 recovery days · Current client delivery pauses, no charge</button>'+
+   '<button data-v28-conflict="'+issue.id+'" data-v28-resolution="delivery">📦 Prioritize deadlines · No assignment change, '+esc(a.n)+
+   ' takes the extra pressure</button></div>'+
+   '<p>Both customer deadlines and all payroll remain genuine. A mandated People Officer can mediate this automatically later in the game.</p>';
+  if(root.innerHTML!==html)root.innerHTML=html;root.hidden=false;return;
+ }
+ const outcome=[...(d.history||[])].reverse().find(x=>x.decision!=="withdrawn"&&
+  S.day-x.day>=0&&S.day-x.day<=7&&person(x.employeeId)&&person(x.peerId));
+ if(outcome){
+  const a=person(outcome.employeeId),b=person(outcome.peerId);
+  const html='<div class="friction-people">'+ceoPortrait(a.id%3,true)+ceoPortrait(b.id%3,true)+
+   '<div><small>Measured leadership outcome · Day '+outcome.day+'</small>'+
+   '<h3>'+esc(a.n)+' & '+esc(b.n)+'</h3></div></div>'+
+   '<p>'+esc(outcome.actor)+': '+esc(outcome.decision)+
+   ' · no extra cash spent. Actual current strain: '+Math.round(a.career.stress)+
+   '/100, satisfaction: '+Math.round(a.career.satisfaction)+'/100.</p>';
+  if(root.innerHTML!==html)root.innerHTML=html;root.hidden=false;return;
+ }
+ root.hidden=true;if(root.innerHTML)root.innerHTML="";
+}
+$("boss-v28-friction").addEventListener("click",e=>{
+ const b=e.target.closest?.("button[data-v28-conflict]");if(!b||b.disabled)return;
+ const result=v28ChoosePriority(Number(b.dataset.v28Conflict),b.dataset.v28Resolution);
+ const done=ok=>{if(ok){renderV28TeamPriorities();gameToast("Your real-team decision is recorded.");}};
+ if(result&&typeof result.then==="function")result.then(done).catch(()=>{});else done(result);
+});
 function renderFounderStory(){
  if(!S.ui) return;
  renderV27DailyBrief();
  renderV27Chapter();
  renderV27PeopleRoom();
  renderV28Ambition();
+ renderV28TeamPriorities();
  renderV27Awards();
  const show=S.ui.storyDetails===true;
  document.body.classList.toggle("boss-story-mode",!show);

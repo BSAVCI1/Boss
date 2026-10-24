@@ -7113,7 +7113,8 @@ function chooseV27Leadership(key){
  S.ui.v27Arc={choice:key,atDay:S.day,atCash:S.cash,atCompleted:S.market.completed||0};
  S.pipeline.mode=v.mode;S.pipeline.target=v.target;
  logIt("CEO direction: "+v.name+". Future work policy updated; no money spent.",true);
- save();refresh();return true;
+ save();renderV27Chapter();$("work-mode").value=v.mode;$("pipeline-target").value=String(v.target);
+ gameToast("Company direction set: "+v.name+". Let the real outcomes unfold.");return true;
 }
 $("boss-v27-chapter").addEventListener("click",e=>{
  const b=e.target.closest?.("button[data-v27-choice]");

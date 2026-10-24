@@ -54,7 +54,7 @@ check("CHRO responds to true role-recorded mediation and real people, no phantom
  assert.equal(s.cash,cash);assert.equal(JSON.stringify(s),before);
 });
 check("assistant reports real approvals without mutating historical save",()=>{
- const s=fresh();s.ui.managementSpeaker="Assistant";const before=JSON.stringify(s),v=G.conversation("decisions");
+ const s=fresh();s.ops.assistantId=s.team[0].id;s.ui.managementSpeaker="Assistant";const before=JSON.stringify(s),v=G.conversation("decisions");
  assert.equal(v.key,"Assistant");assert.match(v.status,/BRIEFING ONLY/);assert.equal(JSON.stringify(s),before);
 });
 console.log("v28C executive personas evidence and permission checks complete.");

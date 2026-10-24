@@ -634,6 +634,21 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 .boss-v27-day .day-summary strong{font-size:12px}.boss-v27-day .day-summary p{font-size:11px}
 .boss-v27-day .day-actions{display:flex;gap:7px;margin-top:8px}.boss-v27-day .day-actions button{flex:1;min-height:39px;border-radius:9px;border:1px solid #9eb8c3;background:#fff;color:#205067;font-size:11px;font-weight:750;padding:8px 4px}
 @media(max-width:370px){.boss-v27-day{padding:9px}.boss-v27-day .day-facts span{font-size:10px}}
+/* v28A — live human ambitions grounded in saved career, competence and payroll. */
+.boss-v28-ambition[hidden]{display:none!important}
+.boss-v28-ambition{margin:0 0 14px;border-radius:18px;border:1px solid #b5c8d2;background:linear-gradient(135deg,#e5f0f7,#f7eed8 76%);padding:14px;color:#263d52}
+.boss-v28-ambition .ambition-person{display:flex;gap:12px;align-items:center}
+.boss-v28-ambition .ambition-person svg{height:78px;width:68px;flex:none}
+.boss-v28-ambition small{font-size:10px;letter-spacing:1.2px;color:#567389;text-transform:uppercase;font-weight:850}
+.boss-v28-ambition h3{margin:3px 0 4px;font-size:18px}
+.boss-v28-ambition p{font-size:12px;line-height:1.5;margin:8px 0}
+.boss-v28-ambition .ambition-evidence{border:1px solid #baccd3;background:#ffffffb9;border-radius:10px;padding:9px;font-size:11px}
+.boss-v28-ambition .ambition-options{display:grid;gap:7px;margin-top:11px}
+.boss-v28-ambition button{width:100%;min-height:45px;background:#fff;border:1px solid #abc3cb;border-radius:11px;padding:9px;color:#265371;text-align:left;font-weight:800;font-size:12px}
+.boss-v28-ambition button[disabled]{opacity:.5}
+.boss-v28-ambition .ambition-progress{height:7px;border-radius:8px;background:#cfdbdc;overflow:hidden;margin:9px 0}
+.boss-v28-ambition .ambition-progress div{height:100%;background:linear-gradient(90deg,#6db6a6,#d9b16c)}
+@media(max-width:360px){.boss-v28-ambition{padding:10px}.boss-v28-ambition .ambition-person svg{height:66px;width:57px}}
 </style>
 </head>
 <body>
@@ -651,7 +666,7 @@ button,.compact-controls select,.bottom-nav button{min-height:44px}
 <div class="grid4 stats-bar" aria-label="Company statistics">
 <div class="stat"><small>Cash</small><strong id="cash">$90</strong></div><div class="stat"><small>Reputation</small><strong id="rep">0</strong></div><div class="stat"><small>Day</small><strong id="day">Day 0</strong><span id="boss-game-calendar">Week 1 · Monday</span></div><div class="stat"><small>Team</small><strong id="teamcount">3</strong></div></div>
 <section id="view-today" class="app-view" data-page="today" aria-label="Executive briefing">
-<section id="boss-founder-hero" class="boss-hero" aria-label="My company story"><div class="boss-hero-top"><div id="boss-ceo-face" class="boss-hero-face" aria-hidden="true"></div><div><span class="boss-hero-kicker" id="boss-story-stage">My company</span><h2 id="boss-story-title">Your next chapter</h2><p id="boss-story-copy">The company grows through real decisions.</p></div></div><div id="boss-office-scene" class="boss-hero-room" aria-label="Illustrated view of actual employees at work"></div><span class="boss-hero-tag" id="boss-scene-caption">Your people at work</span><div class="boss-hero-action"><button type="button" id="boss-story-next" class="boss-hero-main">Start with your customers →</button><button type="button" id="boss-story-detail-toggle" aria-expanded="false">Management dashboard</button><button type="button" id="boss-end-day" aria-label="Finish today and advance one game day">🌙 Finish day →</button></div></section><section id="boss-v27-day" class="boss-v27-day" aria-label="Today at your company" hidden><h3>☀️ Today at your company</h3><p id="boss-v27-day-prompt"></p><div class="day-clock"><b id="boss-v27-day-phase">Planning</b><span id="boss-v27-day-remaining">30s until tomorrow</span></div><div class="day-rail"><div id="boss-v27-day-progress"></div></div><div class="day-facts" id="boss-v27-day-facts"></div><div class="day-actions"><button type="button" id="boss-v27-day-work">📋 Review actual work</button><button type="button" id="boss-v27-day-team">👥 Check on people</button></div><div id="boss-v27-day-summary" class="day-summary" hidden></div></section><section class="boss-v27-chapter" id="boss-v27-chapter" hidden aria-label="My CEO story chapter" aria-live="polite"></section><section class="boss-v27-person" id="boss-v27-person" hidden aria-label="A real colleague wants to talk" aria-live="polite"></section><section class="boss-v27-awards" id="boss-v27-awards" hidden aria-label="Earned company trophies"><h3>🏆 Earned company milestones <span id="boss-v27-award-count"></span></h3><div class="award-grid" id="boss-v27-award-grid"></div><p class="award-detail" id="boss-v27-award-proof" role="status"></p><p id="boss-v27-award-next"></p></section><div id="boss-work-guide" class="boss-guide" hidden role="status">Choose a real project and assign a teammate. The clock is paused until you do.</div>
+<section id="boss-founder-hero" class="boss-hero" aria-label="My company story"><div class="boss-hero-top"><div id="boss-ceo-face" class="boss-hero-face" aria-hidden="true"></div><div><span class="boss-hero-kicker" id="boss-story-stage">My company</span><h2 id="boss-story-title">Your next chapter</h2><p id="boss-story-copy">The company grows through real decisions.</p></div></div><div id="boss-office-scene" class="boss-hero-room" aria-label="Illustrated view of actual employees at work"></div><span class="boss-hero-tag" id="boss-scene-caption">Your people at work</span><div class="boss-hero-action"><button type="button" id="boss-story-next" class="boss-hero-main">Start with your customers →</button><button type="button" id="boss-story-detail-toggle" aria-expanded="false">Management dashboard</button><button type="button" id="boss-end-day" aria-label="Finish today and advance one game day">🌙 Finish day →</button></div></section><section id="boss-v27-day" class="boss-v27-day" aria-label="Today at your company" hidden><h3>☀️ Today at your company</h3><p id="boss-v27-day-prompt"></p><div class="day-clock"><b id="boss-v27-day-phase">Planning</b><span id="boss-v27-day-remaining">30s until tomorrow</span></div><div class="day-rail"><div id="boss-v27-day-progress"></div></div><div class="day-facts" id="boss-v27-day-facts"></div><div class="day-actions"><button type="button" id="boss-v27-day-work">📋 Review actual work</button><button type="button" id="boss-v27-day-team">👥 Check on people</button></div><div id="boss-v27-day-summary" class="day-summary" hidden></div></section><section class="boss-v27-chapter" id="boss-v27-chapter" hidden aria-label="My CEO story chapter" aria-live="polite"></section><section class="boss-v27-person" id="boss-v27-person" hidden aria-label="A real colleague wants to talk" aria-live="polite"></section><section class="boss-v28-ambition" id="boss-v28-ambition" hidden aria-label="An employee ambition and real relationship" aria-live="polite"></section><section class="boss-v27-awards" id="boss-v27-awards" hidden aria-label="Earned company trophies"><h3>🏆 Earned company milestones <span id="boss-v27-award-count"></span></h3><div class="award-grid" id="boss-v27-award-grid"></div><p class="award-detail" id="boss-v27-award-proof" role="status"></p><p id="boss-v27-award-next"></p></section><div id="boss-work-guide" class="boss-guide" hidden role="status">Choose a real project and assign a teammate. The clock is paused until you do.</div>
 <section id="boss-executive-room" class="boss-executive-room" aria-label="My executive office" hidden><button id="boss-room-close" type="button" class="boss-room-close">← Back to my company</button><div class="boss-room-kicker">THE CEO OFFICE · YOUR PEOPLE</div><h2 id="boss-room-title">Welcome to your office</h2><p id="boss-room-summary">Your leadership team brings the important decisions to you.</p><div id="boss-room-people" class="boss-exec-people" aria-label="Actual appointed leaders"></div><div class="boss-exec-desk" aria-hidden="true"></div><div class="boss-room-tabs" id="boss-room-tabs"><button type="button" data-boss-room="decisions">✨ Decisions<small>What needs me today</small></button><button type="button" data-boss-room="leadership">🤝 My leaders<small>People and strategy</small></button><button type="button" data-boss-room="business">🏢 Business<small>Results and investments</small></button><button type="button" data-boss-room="records">📚 Back office<small>Reports and settings</small></button></div><div class="boss-conversation" id="boss-conversation" aria-label="Executive conversation"><div id="boss-conversation-face" class="boss-conversation-face" aria-hidden="true"></div><div><div id="boss-conversation-name" class="boss-conversation-name"></div><div id="boss-conversation-status" class="boss-conversation-status"></div><div id="boss-conversation-words" class="boss-conversation-words" role="status"></div></div></div><div class="boss-topic-title">What would you like to discuss?</div><div id="boss-topic-actions" class="boss-topic-actions" aria-label="Management conversation choices"></div><div class="boss-topic-foot"><span id="boss-room-action">Choose one topic. The full records remain available.</span><button id="boss-topic-back" type="button" hidden>Close details ↑</button></div><button type="button" id="boss-room-all" class="small" style="margin-top:9px;min-height:35px;width:100%">Full management details ▾</button></section><section class="card" id="v23-today" aria-label="Business portfolio overview"></section><section class="card" id="capital-today" aria-label="Capital position"></section><section class="card" id="people-story-today" aria-label="Real people stories"></section><section class="card" id="factory-today" aria-label="Physical factory operations"></section><section class="card" id="acquisition-today" aria-label="Acquisitions and competition"></section><section class="card" id="ceo-priority-card" aria-label="CEO command center">
 <div class="lead"><b>CEO command center</b><span class="small">Decisions and delegated work</span></div>
 <div id="ceo-priority-content"><p class="small">Preparing your company priorities.</p></div>
@@ -1757,7 +1772,7 @@ if(!Number.isFinite(s.pipeline.prospecting))s.pipeline.prospecting=0;
 if(!Number.isFinite(s.pipeline.nextInbound))s.pipeline.nextInbound=s.day+12;
 if(!Number.isFinite(s.pipeline.closed))s.pipeline.closed=0;if(!Number.isFinite(s.pipeline.lastWon))s.pipeline.lastWon=s.day-10;
 if(s.ev&&(!s.team.some(p=>p.id===s.ev.a)||!s.team.some(p=>p.id===s.ev.b)))s.ev=null;
-ensureOrganization(s);ensureExecutive(s);ensureBI(s);restoreRecordedLines(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureCapital(s);ensureWorld(s);ensureAcquisitions(s);ensurePeopleStories(s);ensureFactory(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
+ensureOrganization(s);ensureExecutive(s);ensureBI(s);restoreRecordedLines(s);ensureLab(s);ensureCoach(s);ensureEconomy(s);ensureCapital(s);ensureWorld(s);ensureAcquisitions(s);ensurePeopleStories(s);ensureAmbitions(s);ensureFactory(s);ensureViewState(s);ensureImprovements(s);ensureIdeaWork(s);
 for(const d of s.deals)if(!Number.isFinite(d.agreedFee))d.agreedFee=d.biBooked&&Number.isFinite(d.bookVal)?d.bookVal:estimatedFee(d,s);
 persistedRevision=Number(s._saveRevision)||0;return s;}catch(e){return null;}}
 const BI_FIELDS=["deliveryEligibleDays","deliveryRoleWorkDays","revenue","costs","cashIn","cashOut","booked","bookedDelivered","realizedComparable","investments","acquisitionLabor","delivered","missed","onTime","qualityTotal","laborAllocated","directAllocated","projectContribution","staffDays","billableDays","salesDays","marketingDays","developmentDays","restDays","leads","qualified","proposals","negotiations","wins","lost"];
@@ -3059,7 +3074,7 @@ S.market.customers[d.cl]=prev;}
 function fresh(){
  ceoDraftPriority=null;saveConflict=false;saveErrorReason="";paused=false;
  try{persistedRevision=Number(JSON.parse(localStorage.getItem(KEY)||"null")?._saveRevision)||0;}catch{persistedRevision=0;}
- S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now(),lastInterruptDay:0},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureCapital(S);ensureWorld(S);ensureAcquisitions(S);ensurePeopleStories(S);ensureFactory(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");S.ui.founderIntro="choose";S.ui.ceoLook=0;S.ui.ceoName="Founder";S.ui.storyDetails=false;S.ui.v27Arc={choice:null};}
+ S={day:0,cash:90,rep:0,pid:1,did:1,team:[],deals:[],seeds:[],built:[],mod:{reward:1,speed:1,cost:1,learn:1,deals:1,rep:1,morale:1},log:[],ev:null,nextEv:30,flow:{nextLead:13,focus:false,lastLeadAt:Date.now(),lastInterruptAt:Date.now(),lastInterruptDay:0},ops:{assistantId:null,handled:0,assigned:0,policy:{assign:true,priority:"balanced",praise:true,family:true,mistake:false,idea:false,budget:10,totalBudget:60,days:90,since:0,spent:0,alerts:true},alerted:{}},market:{open:["hospitality","retail"],focus:"hospitality",completed:0,customers:{},sectorWins:{}},pipeline:{leads:[],seq:1,mode:"balanced",target:4,auto:true,prospecting:0,nextInbound:12,closed:0,lastWon:-10},hr:{pool:[],skill:"",interest:"",searchNumber:0,lastTeamDay:-99},org:null,bi:null,lab:null,coach:null,economy:null,world:null};ensureBI(S);ensureLab(S);ensureCoach(S);ensureEconomy(S);ensureCapital(S);ensureWorld(S);ensureAcquisitions(S);ensurePeopleStories(S);ensureAmbitions(S);ensureFactory(S);ensureViewState(S);ensureImprovements(S);ensureIdeaWork(S);for(let i=0;i<3;i++){const p=createPerson();ensureCareer(p);ensureRole(p);p.role.primary=["sales","prod","ops"][i];ensureDepartment(p);S.team.push(p);}ensureOrganization(S);ensureExecutive(S);for(const p of S.team)ensurePerformance(p,S.day);createDeal();createDeal();logIt("You founded the company. Assign people to client deals!");S.ui.founderIntro="choose";S.ui.ceoLook=0;S.ui.ceoName="Founder";S.ui.storyDetails=false;S.ui.v27Arc={choice:null};}
 function person(id){return S.team.find(p=>p.id===id);}
 function deal(id){return S.deals.find(d=>d.id===id);}
 function taskText(p){if(p.t==="factory")return "Operating owned production line";if(p.t==="prospect")return "Finding customers";if(p.t==="market")return "Marketing campaigns";if(p.t==="coachteam")return "Team mentoring";if(p.t==="exec")return "Executive leadership";if(p.career?.recoveryDays>0)return "recovering before continuing "+(deal(Number(p.t.slice(1)))?.cl||"work");if(p.t.startsWith("d")){const d=deal(Number(p.t.slice(1)));return d?"working for "+d.cl:"idle";}return({idle:"idle",study:"Study",teach:"Teach",exp:"Experiment",rest:"Rest",assist:"Executive Assistant",prospect:"Prospecting",market:"Marketing",coachteam:"Coaching"})[p.t]||"idle";}
@@ -3114,7 +3129,7 @@ unitPayrollDay();
  const salary=S.team.reduce((total,p)=>total+dailySalary(p),0);const actuallyPaid=Math.min(Math.max(0,S.cash),salary);S.cash-=actuallyPaid;
 biMoney("payroll",salary,"Daily payroll",actuallyPaid);
 // Pay prior procurement liabilities after payroll, without silently creating negative cash.
-contractProcurementSettle();acquisitionDay();peopleStoryDay();factoryDay();
+contractProcurementSettle();acquisitionDay();peopleStoryDay();v28AmbitionDay();factoryDay();
 if(actuallyPaid<salary){for(const p of S.team)p.mood=clamp(p.mood-2);if(S.day%5===0)logIt("The company cannot afford full salaries. Unpaid payroll is recorded.",true);}
 if(!S.flow.focus&&!S.ev&&S.day>=S.nextEv&&S.day-S.flow.lastInterruptDay>=28)startDilemma();
 labDay();coachFollowups();save();renderStructure();if(ideaDirty)renderIdeas();refresh();}
@@ -4654,6 +4669,110 @@ function ensurePeopleStories(st){
  q.nextId=Math.max(Number.isInteger(q.nextId)?q.nextId:1,1,...q.items.map(x=>x.id+1));
  if(!Number.isFinite(q.lastScan))q.lastScan=st.day;
  q.items=q.items.slice(-65);q.version=1;
+}
+/* v28A — career ambitions and earned one-on-one mentorship.
+   Both employees are existing salaried colleagues. Study occurs only when BOTH
+   are genuinely available, never by advancing the clock or awarding phantom XP. */
+function ensureAmbitions(st){
+ if(!st.ambitions||typeof st.ambitions!=="object")st.ambitions={version:1,lastScan:st.day,lastOffer:-99,nextId:1,offer:null,relations:[],history:[]};
+ const a=st.ambitions;
+ if(!Array.isArray(a.relations))a.relations=[];
+ if(!Array.isArray(a.history))a.history=[];
+ a.relations=a.relations.filter(x=>x&&Number.isInteger(x.menteeId)&&Number.isInteger(x.mentorId)&&KEYS.includes(x.skill)&&
+  Number.isFinite(x.startDay)&&Number.isFinite(x.days)&&["active","completed","expired","interrupted"].includes(x.status)).slice(-15);
+ a.history=a.history.filter(x=>x&&Number.isFinite(x.day)&&Number.isInteger(x.personId)).slice(-15);
+ if(!Number.isFinite(a.lastScan))a.lastScan=st.day;
+ if(!Number.isFinite(a.lastOffer))a.lastOffer=-99;
+ if(!Number.isInteger(a.nextId)||a.nextId<1)a.nextId=1;
+ if(a.offer&&(!Number.isInteger(a.offer.id)||!Number.isInteger(a.offer.menteeId)||
+   !Number.isInteger(a.offer.mentorId)||!KEYS.includes(a.offer.skill)))a.offer=null;
+ a.version=1;
+}
+function v28MentorPair(){
+ const candidates=[];
+ for(const learner of S.team){
+  if(learner.id===S.ops.assistantId||learner.career.autoRest||learner.career.recoveryDays>0)continue;
+  if(learner.career.satisfaction>73||learner.career.stress>=78)continue;
+  const roleSkills={sales:["sales","mkt"],mkt:["mkt","sales"],prod:["prod","ops"],ops:["ops","prod"]};
+  const relevant=(roleSkills[learner.role?.primary]||KEYS).slice().sort((a,b)=>learner.s[a]-learner.s[b]);
+  for(const skill of relevant){
+   const mentor=S.team.filter(x=>x.id!==learner.id&&x.id!==S.ops.assistantId&&
+    x.career.stress<72&&!x.career.autoRest&&x.career.recoveryDays===0&&x.s[skill]>=learner.s[skill]+.18)
+    .sort((a,b)=>b.s[skill]-a.s[skill]||a.id-b.id)[0];
+   if(mentor){
+    candidates.push({learner,mentor,skill,gap:mentor.s[skill]-learner.s[skill]});
+    break;
+   }
+  }
+ }
+ candidates.sort((a,b)=>(a.learner.career.goal==="growth"?0:1)-
+   (b.learner.career.goal==="growth"?0:1)||a.learner.career.satisfaction-b.learner.career.satisfaction||
+   b.gap-a.gap||a.learner.id-b.learner.id);
+ return candidates[0]||null;
+}
+function v28AmbitionDay(){
+ const a=S.ambitions;if(!a)return;
+ if(a.offer&&(!person(a.offer.menteeId)||!person(a.offer.mentorId)))a.offer=null;
+ for(const r of a.relations.filter(x=>x.status==="active")){
+  const mentee=person(r.menteeId),mentor=person(r.mentorId);
+  if(!mentee||!mentor){r.status="interrupted";r.endDay=S.day;continue;}
+  if(S.day<=r.startDay||r.lastSessionDay===S.day)continue;
+  // Using only genuinely free salaried time; reassignment delays the plan.
+  if(mentee.t==="idle"&&mentor.t==="idle"&&mentee.career.stress<72&&mentor.career.stress<72&&
+     mentee.career.recoveryDays===0&&mentor.career.recoveryDays===0){
+   const gap=Math.max(0,mentor.s[r.skill]-mentee.s[r.skill]);
+   const gain=Math.min(.045,gap*.1);
+   if(gain>.001){
+    mentee.s[r.skill]=+(mentee.s[r.skill]+gain).toFixed(4);
+    mentee.career.practice.learning+=1;mentor.career.practice.coaching+=1;
+    r.lastSessionDay=S.day;r.days+=1;r.gained=+(mentee.s[r.skill]-r.initialSkill).toFixed(4);
+    mentee.career.satisfaction=clamp(mentee.career.satisfaction+.45);
+    mentor.career.satisfaction=clamp(mentor.career.satisfaction+.16);
+   }
+  }
+  if(r.days>=7||S.day-r.startDay>=28){
+   r.status=r.days>=7?"completed":"expired";r.endDay=S.day;
+   if(r.days>=7){mentee.mood=clamp(mentee.mood+3);mentor.mood=clamp(mentor.mood+2);
+    logIt(mentor.n+" and "+mentee.n+" completed seven genuine free-day mentoring sessions. "+
+     mentee.n+"'s "+SKILLS[r.skill]+" improved by "+r.gained.toFixed(3)+".");
+   }else logIt(mentee.n+" and "+mentor.n+" ended a mentoring plan after "+r.days+" free-day sessions; customer work took priority.");
+  }
+ }
+ if(S.day<14||S.day%14!==0||a.lastScan===S.day)return;
+ a.lastScan=S.day;
+ if(a.offer||a.relations.some(x=>x.status==="active")||S.day-a.lastOffer<28)return;
+ const pair=v28MentorPair();if(!pair)return;
+ a.offer={id:a.nextId++,day:S.day,menteeId:pair.learner.id,mentorId:pair.mentor.id,skill:pair.skill,
+  initialSkill:pair.learner.s[pair.skill],mentorSkill:pair.mentor.s[pair.skill],goal:pair.learner.career.goal,
+  satisfaction:pair.learner.career.satisfaction};
+ a.lastOffer=S.day;
+ logIt(pair.learner.n+" wants to discuss a real career ambition and mentoring with "+pair.mentor.n+".");
+}
+function v28AmbitionChoose(id,choice){
+ const a=S.ambitions,offer=a?.offer;
+ if(!offer||offer.id!==id||!["mentor","recognize","defer"].includes(choice)||S.ev||saveConflict||saveErrorReason||indexedWriteCount>0)return false;
+ const learner=person(offer.menteeId),mentor=person(offer.mentorId);
+ if(!learner||!mentor||learner.id===mentor.id)return false;
+ if(choice==="mentor"&&(a.relations.some(x=>x.status==="active")||mentor.s[offer.skill]<learner.s[offer.skill]+.10))return false;
+ return unitCommit(()=>{
+  const current=S.ambitions.offer;
+  if(!current||current.id!==id)return false;
+  if(choice==="mentor"){
+   S.ambitions.relations.push({id,menteeId:learner.id,mentorId:mentor.id,skill:offer.skill,
+    initialSkill:learner.s[offer.skill],gained:0,startDay:S.day,days:0,status:"active"});
+   logIt("CEO supported a seven-free-day mentorship between "+mentor.n+" and "+learner.n+
+    ". Both must be free for actual sessions; existing salaries continue.");
+  }else if(choice==="recognize"){
+   learner.career.satisfaction=clamp(learner.career.satisfaction+4);
+   learner.mood=clamp(learner.mood+3);
+   learner.career.recognizedAt=S.day;
+   logIt("CEO recognized "+learner.n+"'s existing "+GOALS[learner.career.goal]+" ambition, at no cash cost.");
+  }else logIt("CEO deferred "+learner.n+"'s career conversation; no staffing or cash changed.");
+  S.ambitions.history.push({id,day:S.day,personId:learner.id,mentorId:mentor.id,skill:offer.skill,action:choice});
+  S.ambitions.history=S.ambitions.history.slice(-15);
+  S.ambitions.offer=null;
+  return true;
+ });
 }
 function peopleStoryEvidence(p){
  if(p.career.stress>=72||p.career.burnout>=35)
@@ -7324,11 +7443,61 @@ function updateV27DayClock(){
 }
 $("boss-v27-day-work").addEventListener("click",()=>navigate("work"));
 $("boss-v27-day-team").addEventListener("click",()=>navigate("team"));
+/* v28A: one understandable conversation in the visual CEO office, plus actual
+   measured relationship outcomes. No read-time game or ledger mutation. */
+function renderV28Ambition(){
+ const root=$("boss-v28-ambition");if(!root||!S?.ambitions)return;
+ if(S.ui?.founderIntro&&S.ui.founderIntro!=="done"){root.hidden=true;return;}
+ const a=S.ambitions,offer=a.offer,relation=a.relations.find(x=>x.status==="active")||
+  [...a.relations].reverse().find(x=>x.endDay!=null&&S.day-x.endDay<=7);
+ if(offer&&person(offer.menteeId)&&person(offer.mentorId)){
+  const learner=person(offer.menteeId),mentor=person(offer.mentorId);
+  const html='<div class="ambition-person">'+ceoPortrait(learner.id%3,true)+
+   '<div><small>Living leadership · Real career goal</small><h3>'+esc(learner.n)+' wants to grow</h3>'+
+   '<p>'+esc(rankName(learner))+' · '+esc(GOALS[learner.career.goal]||"Career development")+'</p></div></div>'+
+   '<p><b>'+esc(learner.n)+':</b> “I see a chance to learn from '+esc(mentor.n)+
+   '. But there is always another customer deadline. What matters most for my career?”</p>'+
+   '<div class="ambition-evidence"><b>Real evidence:</b> '+esc(learner.n)+' · career satisfaction '+
+   Math.round(learner.career.satisfaction)+'/100 · '+esc(SKILLS[offer.skill])+' '+learner.s[offer.skill].toFixed(2)+
+   '. '+esc(mentor.n)+' knows '+esc(SKILLS[offer.skill])+' at '+mentor.s[offer.skill].toFixed(2)+
+   '. Both are existing employees on normal payroll.</div>'+
+   '<div class="ambition-options">'+
+   '<button type="button" data-v28-id="'+offer.id+'" data-v28-action="mentor">🤝 Back a real seven-day mentorship · No extra fee</button>'+
+   '<button type="button" data-v28-id="'+offer.id+'" data-v28-action="recognize">💬 Recognize the ambition today · Free</button>'+
+   '<button type="button" data-v28-id="'+offer.id+'" data-v28-action="defer">Keep their current priorities · Free</button></div>'+
+   '<p>Mentoring gains count only on game days when <b>both people are idle and healthy enough</b>. Customer work takes precedence.</p>';
+  if(root.innerHTML!==html)root.innerHTML=html;root.hidden=false;return;
+ }
+ if(relation){
+  const learner=person(relation.menteeId),mentor=person(relation.mentorId);
+  if(learner&&mentor){
+   const completed=relation.status==="completed",active=relation.status==="active";
+   const html='<div class="ambition-person">'+ceoPortrait(learner.id%3,true)+
+    '<div><small>Growing a genuine relationship · '+(active?'In progress':completed?'Completed':'Ended')+'</small>'+
+    '<h3>'+esc(mentor.n)+' mentors '+esc(learner.n)+'</h3></div></div>'+
+    '<p>'+relation.days+'/7 actual free-day sessions · '+esc(SKILLS[relation.skill])+
+    ' skill change: +'+Number(relation.gained||0).toFixed(3)+'</p>'+
+    '<div class="ambition-progress"><div style="width:'+(100*Math.min(7,relation.days)/7).toFixed(0)+'%"></div></div>'+
+    '<div class="ambition-evidence">'+(active?'Both colleagues must be idle and below the stress threshold to practice. A customer assignment pauses their sessions.':
+      completed?'Seven real learning sessions completed. Employee skills and career practice records were updated.':
+      'The programme ended before seven qualified sessions; only completed learning days counted.')+'</div>';
+   if(root.innerHTML!==html)root.innerHTML=html;root.hidden=false;return;
+  }
+ }
+ root.hidden=true;if(root.innerHTML)root.innerHTML="";
+}
+$("boss-v28-ambition").addEventListener("click",e=>{
+ const btn=e.target.closest?.("button[data-v28-id]");if(!btn||btn.disabled)return;
+ const result=v28AmbitionChoose(Number(btn.dataset.v28Id),btn.dataset.v28Action);
+ const done=ok=>{if(ok){renderV28Ambition();gameToast("Your leadership decision is saved to real career records.");}};
+ if(result&&typeof result.then==="function")result.then(done).catch(()=>{});else done(result);
+});
 function renderFounderStory(){
  if(!S.ui) return;
  renderV27DailyBrief();
  renderV27Chapter();
  renderV27PeopleRoom();
+ renderV28Ambition();
  renderV27Awards();
  const show=S.ui.storyDetails===true;
  document.body.classList.toggle("boss-story-mode",!show);

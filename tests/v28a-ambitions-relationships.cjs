@@ -24,8 +24,8 @@ function check(name,fn){fn();console.log("PASS v28A "+name);}
 function fresh(){fail=false;store.clear();G.fresh();G.state().ui.founderIntro="done";return G.state();}
 function prepare(){
  const s=fresh(),learner=s.team[0],mentor=s.team[1],third=s.team[2];
- learner.career.goal="growth";learner.career.satisfaction=42;learner.s.sales=1.1;
- mentor.career.satisfaction=88;mentor.s.sales=2.4;
+ learner.career.goal="growth";learner.career.satisfaction=42;learner.s.sales=1.1;learner.s.mkt=2.3;
+ mentor.career.satisfaction=88;mentor.s.sales=2.4;mentor.s.mkt=1.2;
  third.career.satisfaction=90;third.s.sales=1.02;
  s.day=14;G.day();assert.equal(s.ambitions.offer?.menteeId,learner.id);
  assert.equal(s.ambitions.offer?.mentorId,mentor.id);

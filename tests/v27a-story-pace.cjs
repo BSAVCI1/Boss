@@ -5,7 +5,7 @@ const html=fs.readFileSync("index.html","utf8");
 const source=html.slice(html.indexOf("<script>")+8,html.lastIndexOf("</script>"));
 new vm.Script(source,{filename:"boss-v27a.js"});
 for(const id of ["speed-select","boss-week-skip","boss-game-calendar",
- "boss-v27-chapter","game-forward","boss-settings-panel"]){
+ "boss-v27-chapter","game-forward","boss-end-day","boss-settings-panel"]){
  assert.equal((html.match(new RegExp('id="'+id+'"',"g"))||[]).length,1,id+" unique");
 }
 assert.ok(html.includes('value="1">1× · Story (30s/day)'));
@@ -36,7 +36,7 @@ queries.set("#view-work>.boss-work-advanced",[]);
 vm.createContext(sandbox);
 const boot=source.indexOf("S=load();if(!S)fresh();");assert.ok(boot>0,"bootstrap boundary");
 vm.runInContext(source.slice(0,boot)+
- "globalThis.G={fresh,load,state:()=>S,schedule,renderV27Chapter,chooseV27Leadership,v27TimeLabel,renderFounderStory,gameAdvanceDays,updateButtons,setPaused:v=>{paused=v},setSpeed:v=>{spd=v},getPaused:()=>paused};})();",sandbox);
+ "globalThis.G={fresh,load,state:()=>S,schedule,renderV27Chapter,chooseV27Leadership,v27TimeLabel,renderFounderStory,gameAdvanceDays,updateButtons,setPaused:v=>{paused=v},setSpeed:v=>{spd=v},setTick:fn=>{tick=fn},getPaused:()=>paused};})();",sandbox);
 const G=sandbox.G,check=(name,fn)=>{fn();console.log("PASS v27A "+name)};
 check("fresh game records an unchosen story and original economic truth",()=>{
  G.fresh();const s=G.state();assert.equal(s.cash,90);assert.equal(s.day,0);
@@ -100,7 +100,7 @@ check("day scheduling is 30s at Story, 10s Fast, and 3.75s Turbo",()=>{
 });
 check("End day advances exactly one economic day, advanced week skip retains max-seven",()=>{
  G.fresh();const s=G.state();s.ui.founderIntro="done";s.nextEv=99999;
- G.setPaused(true);G.gameAdvanceDays(1);assert.equal(s.day,1);
+ G.setTick(()=>{s.day+=1});G.setPaused(true);G.gameAdvanceDays(1);assert.equal(s.day,1);
  G.gameAdvanceDays(7);assert.equal(s.day,8);
 });
 console.log("v27A story and realistic-day engine checks passed.");

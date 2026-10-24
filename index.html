@@ -7023,7 +7023,7 @@ function ceoConversation(room){
   const daily=S.team.reduce((n,e)=>n+dailySalary(e),0)+propertySummary().daily;
   const reserve=daily*30;
   words="I look after the downside before we invest. Cash: "+biCurrency(S.cash)+
-   ". Thirty-day payroll and premises reserve: "+biCurrency(reserve)+". "+
+   ". We have "+(S.market.completed||0)+" completed customer deliveries. Thirty-day payroll and premises reserve: "+biCurrency(reserve)+". "+
    (active?(S.cash<reserve?"I am holding delegated spending against that reserve.":"My active mandate guards this reserve when spending is proposed."):
     "I can explain the numbers; spending veto requires a CEO-granted mandate.");
  }else if(key==="COO"){

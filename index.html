@@ -4711,10 +4711,11 @@ function v28MentorPair(){
 }
 function v28AmbitionDay(){
  const a=S.ambitions;if(!a)return;
+ if(a.offer&&(!person(a.offer.menteeId)||!person(a.offer.mentorId)))a.offer=null;
  for(const r of a.relations.filter(x=>x.status==="active")){
   const mentee=person(r.menteeId),mentor=person(r.mentorId);
   if(!mentee||!mentor){r.status="interrupted";r.endDay=S.day;continue;}
-  if(S.day<=r.startDay)continue;
+  if(S.day<=r.startDay||r.lastSessionDay===S.day)continue;
   // Using only genuinely free salaried time; reassignment delays the plan.
   if(mentee.t==="idle"&&mentor.t==="idle"&&mentee.career.stress<72&&mentor.career.stress<72&&
      mentee.career.recoveryDays===0&&mentor.career.recoveryDays===0){
@@ -4723,7 +4724,7 @@ function v28AmbitionDay(){
    if(gain>.001){
     mentee.s[r.skill]=+(mentee.s[r.skill]+gain).toFixed(4);
     mentee.career.practice.learning+=1;mentor.career.practice.coaching+=1;
-    r.days+=1;r.gained=+(mentee.s[r.skill]-r.initialSkill).toFixed(4);
+    r.lastSessionDay=S.day;r.days+=1;r.gained=+(mentee.s[r.skill]-r.initialSkill).toFixed(4);
     mentee.career.satisfaction=clamp(mentee.career.satisfaction+.45);
     mentor.career.satisfaction=clamp(mentor.career.satisfaction+.16);
    }

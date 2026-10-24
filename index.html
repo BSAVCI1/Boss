@@ -7298,7 +7298,7 @@ function renderV27DailyBrief(){
  const recap=$("boss-v27-day-summary");
  const last=v27LastDayReport;
  if(last&&last.day===S.day){
-  const cash=(last.cash>=0?"+":"")+biCurrency(last.cash);
+  const cash=(last.cash>=0?"+":"-")+"$"+Math.abs(last.cash).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
   const line='<strong>🌙 Day '+last.day+' finished — real company results</strong>'+
    '<p>Cash moved '+esc(cash)+' through actual transactions, including salaries and collected revenue. '+
    (last.completed?last.completed+' real customer delivery/deliveries completed. ':'No customer deliveries completed. ')+

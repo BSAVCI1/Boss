@@ -7208,7 +7208,7 @@ function v27EarnedAwards(){
  const won=S.market?.completed||0,n=S.team?.length||0;
  const sites=(S.exec?.property?.sites||[]).filter(x=>x.status==="active"&&!x.unitKey).length;
  const lines=(S.exec?.lines||[]).filter(x=>SERVICE_LINES[x.key]).length;
- const built=!!S.factory?.installed;
+ const built=!!S.factory?.installed&&(S.exec?.property?.sites||[]).some(x=>x.id===S.factory.siteId&&x.status==="active");
  return [
   {id:"first",icon:"📜",title:"First customer",earned:won>=1,proof:won+" real customer deliveries",next:"Deliver your first genuine customer project."},
   {id:"trust",icon:"🏅",title:"Trusted agency",earned:won>=3,proof:won+" real customer deliveries",next:"Deliver three genuine customer projects."},
